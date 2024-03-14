@@ -5,11 +5,11 @@ import {
 } from "../unit.js";
 import {
     diffAngle, moyAngle, sumAngle
-} from "../../geometry.js";
+} from "../../board/geometry.js";
 import {
-    CBHex,
-    CBHexSideId
-} from "../map.js";
+    WHex,
+    WHexSideId
+} from "../../wargame/map.js";
 
 export class CBMapTeacher {
 
@@ -219,7 +219,7 @@ export class CBMapTeacher {
     }
 
     getPotentialForwardZone(unit, hexLocation, angle) {
-        if (hexLocation instanceof CBHexSideId) {
+        if (hexLocation instanceof WHexSideId) {
             let zone1 = this._filterUnitZone(unit, hexLocation.fromHex, this.getForwardZone(hexLocation.fromHex, angle));
             let zone2 = this._filterUnitZone(unit, hexLocation.toHex, this.getForwardZone(hexLocation.toHex, angle));
             return this._formatUnitZone(this._mergeUnitZone(zone1, zone2, [hexLocation.fromHex, hexLocation.toHex]));
@@ -234,7 +234,7 @@ export class CBMapTeacher {
     }
 
     getPotentialBackwardZone(unit, hexLocation, angle) {
-        if (hexLocation instanceof CBHexSideId) {
+        if (hexLocation instanceof WHexSideId) {
             let zone1 = this._filterUnitZone(unit, hexLocation.fromHex, this.getBackwardZone(hexLocation.fromHex, angle));
             let zone2 = this._filterUnitZone(unit, hexLocation.toHex, this.getBackwardZone(hexLocation.toHex, angle));
             return this._formatUnitZone(this._mergeUnitZone(zone1, zone2, [hexLocation.fromHex, hexLocation.toHex]));
@@ -267,37 +267,37 @@ export class CBMapTeacher {
     }
 
     isClearGround(hexId) {
-        return hexId.type === CBHex.HEX_TYPES.OUTDOOR_CLEAR ||
-            hexId.type === CBHex.HEX_TYPES.OUTDOOR_CLEAR_FLAMMABLE ||
-            hexId.type === CBHex.HEX_TYPES.CAVE_CLEAR ||
-            hexId.type === CBHex.HEX_TYPES.CAVE_CLEAR_FLAMMABLE;
+        return hexId.type === WHex.HEX_TYPES.OUTDOOR_CLEAR ||
+            hexId.type === WHex.HEX_TYPES.OUTDOOR_CLEAR_FLAMMABLE ||
+            hexId.type === WHex.HEX_TYPES.CAVE_CLEAR ||
+            hexId.type === WHex.HEX_TYPES.CAVE_CLEAR_FLAMMABLE;
     }
 
     isClearHexSide(hexSideId) {
-        return hexSideId.type === CBHex.HEXSIDE_TYPES.NORMAL ||
-            hexSideId.type === CBHex.HEXSIDE_TYPES.EASY;
+        return hexSideId.type === WHex.HEXSIDE_TYPES.NORMAL ||
+            hexSideId.type === WHex.HEXSIDE_TYPES.EASY;
     }
 
     isRoughGround(hexId) {
-        return hexId.type === CBHex.HEX_TYPES.OUTDOOR_ROUGH ||
-            hexId.type === CBHex.HEX_TYPES.OUTDOOR_ROUGH_FLAMMABLE ||
-            hexId.type === CBHex.HEX_TYPES.CAVE_ROUGH ||
-            hexId.type === CBHex.HEX_TYPES.CAVE_ROUGH_FLAMMABLE;
+        return hexId.type === WHex.HEX_TYPES.OUTDOOR_ROUGH ||
+            hexId.type === WHex.HEX_TYPES.OUTDOOR_ROUGH_FLAMMABLE ||
+            hexId.type === WHex.HEX_TYPES.CAVE_ROUGH ||
+            hexId.type === WHex.HEX_TYPES.CAVE_ROUGH_FLAMMABLE;
     }
 
     isDifficultGround(hexId) {
-        return hexId.type === CBHex.HEX_TYPES.OUTDOOR_DIFFICULT ||
-            hexId.type === CBHex.HEX_TYPES.OUTDOOR_DIFFICULT_FLAMMABLE ||
-            hexId.type === CBHex.HEX_TYPES.CAVE_DIFFICULT ||
-            hexId.type === CBHex.HEX_TYPES.CAVE_DIFFICULT_FLAMMABLE;
+        return hexId.type === WHex.HEX_TYPES.OUTDOOR_DIFFICULT ||
+            hexId.type === WHex.HEX_TYPES.OUTDOOR_DIFFICULT_FLAMMABLE ||
+            hexId.type === WHex.HEX_TYPES.CAVE_DIFFICULT ||
+            hexId.type === WHex.HEX_TYPES.CAVE_DIFFICULT_FLAMMABLE;
     }
 
     isDifficultHexSide(hexSideId) {
-        return hexSideId.type === CBHex.HEXSIDE_TYPES.DIFFICULT;
+        return hexSideId.type === WHex.HEXSIDE_TYPES.DIFFICULT;
     }
 
     isImpassableHexSide(hexSideId) {
-        return hexSideId.type === CBHex.HEXSIDE_TYPES.CLIMB ||
-            hexSideId.type === CBHex.HEXSIDE_TYPES.WALL;
+        return hexSideId.type === WHex.HEXSIDE_TYPES.CLIMB ||
+            hexSideId.type === WHex.HEXSIDE_TYPES.WALL;
     }
 }

@@ -2,20 +2,20 @@
 
 import {
     describe, it, before, assert, executeTimeouts
-} from "../jstest/jtest.js";
+} from "../../jstest/jtest.js";
 import {
     Point2D, Dimension2D
-} from "../jslib/geometry.js";
+} from "../../jslib/board/geometry.js";
 import {
     DAnimator,
     DImage, getDrawPlatform, setDrawPlatform
-} from "../jslib/draw.js";
+} from "../../jslib/board/draw.js";
 import {
     Mechanisms, Memento
-} from "../jslib/mechanisms.js";
+} from "../../jslib/board/mechanisms.js";
 import {
     DBoard, DMultiImagesArtifact, DStaticLevel
-} from "../jslib/board.js";
+} from "../../jslib/board/board.js";
 import {
     mockPlatform, getDirectives, resetDirectives, loadAllImages, createEvent, getLayers
 } from "./mocks.js";
@@ -40,11 +40,11 @@ import {
     D2StatesIconMenuItem,
     DOk,
     DCancel,
-    DPlus, DMinus
-} from "../jslib/widget.js";
+    DPlus, DMinus, DDice10, DDice20, DDice10x10
+} from "../../jslib/board/widget.js";
 import {
     clickOnArtifact, mouseMoveOnArtifact, mouseMoveOutOfArtifact
-} from "./cblades/interactive-tools.js";
+} from "../cblades/interactive-tools.js";
 
 describe("Widget", ()=> {
 
@@ -915,12 +915,12 @@ describe("Widget", ()=> {
                 "save()",
                     "setTransform(1, 0, 0, 1, 40, -10)",
                     "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(./../images/dice/d1.png, -50, -44.5, 100, 89)",
+                    "drawImage(./../images/dice/d6c-1.png, -50, -48, 100, 96)",
                 "restore()",
                 "save()",
                     "setTransform(1, 0, 0, 1, -20, 50)",
                     "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(./../images/dice/d1.png, -50, -44.5, 100, 89)",
+                    "drawImage(./../images/dice/d6c-1.png, -50, -48, 100, 96)",
                 "restore()"
             ]);
         when:
@@ -933,18 +933,19 @@ describe("Widget", ()=> {
             var event = createEvent("click", {offsetX:diceVPLocation.x, offsetY:diceVPLocation.y});
             mockPlatform.dispatchEvent(board.root, "click", event);
             executeTimeouts();
+
         then:
             assert(dice.active).isTrue();
             assert(getDirectives(itemsLayer, 4)).arrayEqualsTo([
                 "save()",
                     "setTransform(-0.309, 0.9511, -0.9511, -0.309, 40, -30)",
                     "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(./../images/dice/d3.png, -50, -44.5, 100, 89)",
+                    "drawImage(./../images/dice/d6c-3.png, -50, -48, 100, 96)",
                 "restore()",
                 "save()",
                     "setTransform(-0.3256, -0.9455, 0.9455, -0.3256, -8, 5)",
                     "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(./../images/dice/d5.png, -50, -44.5, 100, 89)",
+                    "drawImage(./../images/dice/d6c-5.png, -50, -48, 100, 96)",
                 "restore()"
             ]);
         when:
@@ -958,12 +959,12 @@ describe("Widget", ()=> {
                 "save()",
                     "setTransform(1, 0, 0, 1, 40, -10)",
                     "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(./../images/dice/d1.png, -50, -44.5, 100, 89)",
+                    "drawImage(./../images/dice/d6c-1.png, -50, -48, 100, 96)",
                 "restore()",
                 "save()",
                     "setTransform(1, 0, 0, 1, -20, 50)",
                     "shadowColor = #00FFFF", "shadowBlur = 10",
-                    "drawImage(./../images/dice/d2.png, -50, -44.5, 100, 89)",
+                    "drawImage(./../images/dice/d6c-2.png, -50, -48, 100, 96)",
                 "restore()"
             ]);
             assert(dice.result).arrayEqualsTo([1, 2]);
@@ -976,12 +977,12 @@ describe("Widget", ()=> {
                 "save()",
                     "setTransform(1, 0, 0, 1, 40, -10)",
                     "shadowColor = #FF0000", "shadowBlur = 10",
-                    "drawImage(./../images/dice/d1.png, -50, -44.5, 100, 89)",
+                    "drawImage(./../images/dice/d6c-1.png, -50, -48, 100, 96)",
                 "restore()",
                 "save()",
                     "setTransform(1, 0, 0, 1, -20, 50)",
                     "shadowColor = #FF0000", "shadowBlur = 10",
-                    "drawImage(./../images/dice/d2.png, -50, -44.5, 100, 89)",
+                    "drawImage(./../images/dice/d6c-2.png, -50, -48, 100, 96)",
                 "restore()"
             ]);
         when: // Dice still active : images have blue shadow when mouse out of
@@ -993,12 +994,12 @@ describe("Widget", ()=> {
                 'save()',
                     'setTransform(1, 0, 0, 1, 40, -10)',
                     'shadowColor = #00FFFF', 'shadowBlur = 10',
-                    'drawImage(./../images/dice/d1.png, -50, -44.5, 100, 89)',
+                    'drawImage(./../images/dice/d6c-1.png, -50, -48, 100, 96)',
                 'restore()',
                 'save()',
                     'setTransform(1, 0, 0, 1, -20, 50)',
                     'shadowColor = #00FFFF', 'shadowBlur = 10',
-                    'drawImage(./../images/dice/d2.png, -50, -44.5, 100, 89)',
+                    'drawImage(./../images/dice/d6c-2.png, -50, -48, 100, 96)',
                 'restore()'
             ]);
         when: // Inactivation : shadows become black
@@ -1013,12 +1014,12 @@ describe("Widget", ()=> {
                 "save()",
                     "setTransform(1, 0, 0, 1, 40, -10)",
                     "shadowColor = #000000", "shadowBlur = 10",
-                    "drawImage(./../images/dice/d1.png, -50, -44.5, 100, 89)",
+                    "drawImage(./../images/dice/d6c-1.png, -50, -48, 100, 96)",
                 "restore()",
                 "save()",
                     "setTransform(1, 0, 0, 1, -20, 50)",
                     "shadowColor = #000000", "shadowBlur = 10",
-                    "drawImage(./../images/dice/d2.png, -50, -44.5, 100, 89)",
+                    "drawImage(./../images/dice/d6c-2.png, -50, -48, 100, 96)",
                 "restore()"
             ]);
         when: // Dice not active : dice are not redrawn
@@ -1068,12 +1069,12 @@ describe("Widget", ()=> {
                 "save()",
                 "setTransform(1, 0, 0, 1, 40, -10)",
                 "shadowColor = #00FFFF", "shadowBlur = 10",
-                "drawImage(./../images/dice/d5.png, -50, -44.5, 100, 89)",
+                "drawImage(./../images/dice/d6c-5.png, -50, -48, 100, 96)",
                 "restore()",
                 "save()",
                 "setTransform(1, 0, 0, 1, -20, 50)",
                 "shadowColor = #00FFFF", "shadowBlur = 10",
-                "drawImage(./../images/dice/d6.png, -50, -44.5, 100, 89)",
+                "drawImage(./../images/dice/d6c-6.png, -50, -48, 100, 96)",
                 "restore()"
             ]);
             assert(dice.result).arrayEqualsTo([5, 6]);
@@ -1097,12 +1098,12 @@ describe("Widget", ()=> {
                 "save()",
                 "setTransform(1, 0, 0, 1, 40, -10)",
                 "shadowColor = #000000", "shadowBlur = 10",
-                "drawImage(./../images/dice/d1.png, -50, -44.5, 100, 89)",
+                "drawImage(./../images/dice/d6c-1.png, -50, -48, 100, 96)",
                 "restore()",
                 "save()",
                 "setTransform(1, 0, 0, 1, -20, 50)",
                 "shadowColor = #000000", "shadowBlur = 10",
-                "drawImage(./../images/dice/d1.png, -50, -44.5, 100, 89)",
+                "drawImage(./../images/dice/d6c-1.png, -50, -48, 100, 96)",
                 "restore()"
             ]);
         when:
@@ -1135,12 +1136,12 @@ describe("Widget", ()=> {
                 "save()",
                 "setTransform(1, 0, 0, 1, 40, -10)",
                 "shadowColor = #000000", "shadowBlur = 10",
-                "drawImage(./../images/dice/d1.png, -50, -44.5, 100, 89)",
+                "drawImage(./../images/dice/d6c-1.png, -50, -48, 100, 96)",
                 "restore()",
                 "save()",
                 "setTransform(1, 0, 0, 1, -20, 50)",
                 "shadowColor = #000000", "shadowBlur = 10",
-                "drawImage(./../images/dice/d1.png, -50, -44.5, 100, 89)",
+                "drawImage(./../images/dice/d6c-1.png, -50, -48, 100, 96)",
                 "restore()"
             ]);
         when:
@@ -1165,15 +1166,219 @@ describe("Widget", ()=> {
                 "save()",
                 "setTransform(1, 0, 0, 1, 40, -10)",
                 "shadowColor = #000000", "shadowBlur = 10",
-                "drawImage(./../images/dice/d1.png, -50, -44.5, 100, 89)",
+                "drawImage(./../images/dice/d6c-1.png, -50, -48, 100, 96)",
                 "restore()",
                 "save()",
                 "setTransform(1, 0, 0, 1, -20, 50)",
                 "shadowColor = #000000", "shadowBlur = 10",
-                "drawImage(./../images/dice/d3.png, -50, -44.5, 100, 89)",
+                "drawImage(./../images/dice/d6c-3.png, -50, -48, 100, 96)",
                 "restore()"
             ]);
             assert(dice.result).arrayEqualsTo([1, 3]);
+    });
+
+    it("Checks six-sided dice widget", () => {
+        function getDirectives(dice, x, y) {
+            return [
+                'save()',
+                'setTransform(1, 0, 0, 1, '+x+', '+y+')',
+                'shadowColor = #000000', 'shadowBlur = 10',
+                'drawImage(./../images/dice/d6c-'+dice+'.png, -50, -48, 100, 96)',
+                'restore()'
+            ];
+        }
+        given:
+            var { board, itemsLayer } = createBoardWithWidgetLevel(1000, 600, 500, 300);
+            let dice = new DDice6([
+                new Point2D(10, -10), new Point2D(-10, 10),
+                new Point2D(20, -20), new Point2D(-20, 20),
+                new Point2D(30, -30), new Point2D(-30, 30)
+            ]);
+            loadAllImages();
+            dice.open(board, new Point2D(10, 20));
+            board.paint();
+        when:
+            dice.cheat([1, 2, 3, 4, 5, 6]);
+            for (let index=0; index<40; index++) {
+                getDrawPlatform().setRandoms(0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9);
+            }
+            var diceVPLocation = dice.trigger[0].viewportLocation;
+            var event = createEvent("click", {offsetX:diceVPLocation.x, offsetY:diceVPLocation.y});
+            mockPlatform.dispatchEvent(board.root, "click", event);
+            var directives = executeAllAnimations(itemsLayer);
+        then:
+            assert(directives).arrayEqualsTo([
+                'save()',
+                'resetTransform()',
+                'clearRect(0, 0, 500, 300)',
+                'restore()',
+                ...getDirectives(1, 20, 10),
+                ...getDirectives(2, 0, 30),
+                ...getDirectives(3, 30, 0),
+                ...getDirectives(4, -10, 40),
+                ...getDirectives(5, 40, -10),
+                ...getDirectives(6, -20, 50)
+            ]);
+            assert(dice.result).arrayEqualsTo([1, 2, 3, 4, 5, 6]);
+    });
+
+    it("Checks ten-sided dice widget", () => {
+        function getDirectives(dice, x, y) {
+            return [
+                'save()',
+                'setTransform(1, 0, 0, 1, '+x+', '+y+')',
+                'shadowColor = #000000', 'shadowBlur = 10',
+                'drawImage(./../images/dice/d10-'+dice+'.png, -50, -48, 100, 96)',
+                'restore()'
+            ];
+        }
+        given:
+            var { board, itemsLayer } = createBoardWithWidgetLevel(1000, 600, 500, 300);
+            let dice = new DDice10([
+                new Point2D(10, -10), new Point2D(-10, 10),
+                new Point2D(20, -20), new Point2D(-20, 20),
+                new Point2D(30, -30), new Point2D(-30, 30),
+                new Point2D(40, -40), new Point2D(-40, 40),
+                new Point2D(50, -50), new Point2D(-50, 50)
+            ]);
+            loadAllImages();
+            dice.open(board, new Point2D(10, 20));
+            board.paint();
+        when:
+            dice.cheat([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
+            var diceVPLocation = dice.trigger[0].viewportLocation;
+            var event = createEvent("click", {offsetX:diceVPLocation.x, offsetY:diceVPLocation.y});
+            mockPlatform.dispatchEvent(board.root, "click", event);
+            var directives = executeAllAnimations(itemsLayer);
+        then:
+            assert(directives).arrayEqualsTo([
+                'save()',
+                'resetTransform()',
+                'clearRect(0, 0, 500, 300)',
+                'restore()',
+                ...getDirectives(0, 20, 10),
+                ...getDirectives(1, 0, 30),
+                ...getDirectives(2, 30, 0),
+                ...getDirectives(3, -10, 40),
+                ...getDirectives(4, 40, -10),
+                ...getDirectives(5, -20, 50),
+                ...getDirectives(6, 50, -20),
+                ...getDirectives(7, -30, 60),
+                ...getDirectives(8, 60, -30),
+                ...getDirectives(9, -40, 70)
+            ]);
+            assert(dice.result).arrayEqualsTo([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
+    });
+
+    it("Checks tenth-sided dice widget", () => {
+        function getDirectives(dice, x, y) {
+            return [
+                'save()',
+                'setTransform(1, 0, 0, 1, '+x+', '+y+')',
+                'shadowColor = #000000', 'shadowBlur = 10',
+                'drawImage(./../images/dice/d10-'+((dice===0)?"00":dice)+'.png, -50, -48, 100, 96)',
+                'restore()'
+            ];
+        }
+        given:
+            var { board, itemsLayer } = createBoardWithWidgetLevel(1000, 600, 500, 300);
+            let dice = new DDice10x10([
+                new Point2D(10, -10), new Point2D(-10, 10),
+                new Point2D(20, -20), new Point2D(-20, 20),
+                new Point2D(30, -30), new Point2D(-30, 30),
+                new Point2D(40, -40), new Point2D(-40, 40),
+                new Point2D(50, -50), new Point2D(-50, 50)
+            ]);
+            loadAllImages();
+            dice.open(board, new Point2D(10, 20));
+            board.paint();
+        when:
+            dice.cheat([0, 10, 20, 30, 40, 50, 60, 70, 80, 90]);
+            var diceVPLocation = dice.trigger[0].viewportLocation;
+            var event = createEvent("click", {offsetX:diceVPLocation.x, offsetY:diceVPLocation.y});
+            mockPlatform.dispatchEvent(board.root, "click", event);
+            var directives = executeAllAnimations(itemsLayer);
+        then:
+            assert(directives).arrayEqualsTo([
+                'save()',
+                'resetTransform()',
+                'clearRect(0, 0, 500, 300)',
+                'restore()',
+                ...getDirectives(0, 20, 10),
+                ...getDirectives(10, 0, 30),
+                ...getDirectives(20, 30, 0),
+                ...getDirectives(30, -10, 40),
+                ...getDirectives(40, 40, -10),
+                ...getDirectives(50, -20, 50),
+                ...getDirectives(60, 50, -20),
+                ...getDirectives(70, -30, 60),
+                ...getDirectives(80, 60, -30),
+                ...getDirectives(90, -40, 70)
+            ]);
+            assert(dice.result).arrayEqualsTo([0, 10, 20, 30, 40, 50, 60, 70, 80, 90]);
+    });
+
+    it("Checks twenty-sided dice widget", () => {
+        function getDirectives(dice, x, y) {
+            return [
+                'save()',
+                'setTransform(1, 0, 0, 1, '+x+', '+y+')',
+                'shadowColor = #000000', 'shadowBlur = 10',
+                'drawImage(./../images/dice/d20-'+dice+'.png, -50, -48, 100, 96)',
+                'restore()'
+            ];
+        }
+        given:
+            var { board, itemsLayer } = createBoardWithWidgetLevel(1000, 600, 500, 300);
+            let dice = new DDice20([
+                new Point2D(10, -10), new Point2D(-10, 10),
+                new Point2D(20, -20), new Point2D(-20, 20),
+                new Point2D(30, -30), new Point2D(-30, 30),
+                new Point2D(40, -40), new Point2D(-40, 40),
+                new Point2D(50, -50), new Point2D(-50, 50),
+                new Point2D(10, -10), new Point2D(-10, 10),
+                new Point2D(20, -20), new Point2D(-20, 20),
+                new Point2D(30, -30), new Point2D(-30, 30),
+                new Point2D(40, -40), new Point2D(-40, 40),
+                new Point2D(50, -50), new Point2D(-50, 50)
+            ]);
+            loadAllImages();
+            dice.open(board, new Point2D(10, 20));
+            board.paint();
+        when:
+            dice.cheat([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]);
+            var diceVPLocation = dice.trigger[0].viewportLocation;
+            var event = createEvent("click", {offsetX:diceVPLocation.x, offsetY:diceVPLocation.y});
+            mockPlatform.dispatchEvent(board.root, "click", event);
+            var directives = executeAllAnimations(itemsLayer);
+        then:
+            assert(directives).arrayEqualsTo([
+                'save()',
+                'resetTransform()',
+                'clearRect(0, 0, 500, 300)',
+                'restore()',
+                ...getDirectives(1, 20, 10),
+                ...getDirectives(2, 0, 30),
+                ...getDirectives(3, 30, 0),
+                ...getDirectives(4, -10, 40),
+                ...getDirectives(5, 40, -10),
+                ...getDirectives(6, -20, 50),
+                ...getDirectives(7, 50, -20),
+                ...getDirectives(8, -30, 60),
+                ...getDirectives(9, 60, -30),
+                ...getDirectives(10, -40, 70),
+                ...getDirectives(11, 20, 10),
+                ...getDirectives(12, 0, 30),
+                ...getDirectives(13, 30, 0),
+                ...getDirectives(14, -10, 40),
+                ...getDirectives(15, 40, -10),
+                ...getDirectives(16, -20, 50),
+                ...getDirectives(17, 50, -20),
+                ...getDirectives(18, -30, 60),
+                ...getDirectives(19, 60, -30),
+                ...getDirectives(20, -40, 70)
+            ]);
+            assert(dice.result).arrayEqualsTo([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,17, 18, 19, 20]);
     });
 
     it("Checks indicator widget basic features", () => {

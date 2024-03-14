@@ -8,40 +8,40 @@ import {
 import {
     DAnimator,
     DImage, setDrawPlatform
-} from "../../jslib/draw.js";
+} from "../../jslib/board/draw.js";
 import {
     assertClearDirectives, assertDirectives, assertNoMoreDirectives, createEvent, getDirectives,
     getLayers, loadAllImages,
     mockPlatform, resetDirectives
-} from "../mocks.js";
+} from "../board/mocks.js";
 import {
     Mechanisms, Memento
-} from "../../jslib/mechanisms.js";
+} from "../../jslib/board/mechanisms.js";
 import {
-    CBStacking,
+    WStacking,
     BelongsToPlayerMixin,
-    CBAbstractArbitrator,
-    CBAction, CBPiece, CBPieceImageArtifact, HexLocatableMixin, PlayableMixin, CBAbstractGame, CBActuator
-} from "../../jslib/cblades/game.js";
+    WAbstractArbitrator,
+    WAction, WPiece, WPieceImageArtifact, HexLocatableMixin, PlayableMixin, WAbstractGame, WActuator
+} from "../../jslib/wargame/game.js";
 import {
-    CBInsert,
-    CBMask,
-    CBGame,
+    WInsert,
+    WMask,
+    WGame,
     RetractablePieceMixin,
     RetractableArtifactMixin,
     SelectableArtifactMixin,
-    CBLevelBuilder,
-    CBActionActuator,
-    CBActuatorImageTrigger,
+    WLevelBuilder,
+    WActionActuator,
+    WActuatorImageTrigger,
     RetractableActuatorMixin,
-    CBActuatorMultiImagesTrigger,
-    CBHexCounter,
+    WActuatorMultiImagesTrigger,
+    WHexCounter,
     ActivableArtifactMixin,
-    CBPlayableActuatorTrigger,
-    CBBasicPlayer,
-    CBAbstractInsert,
+    WPlayableActuatorTrigger,
+    WPlayer,
+    WAbstractInsert,
     NeighborActuatorMixin, NeighborActuatorArtifactMixin, GhostArtifactMixin
-} from "../../jslib/cblades/playable.js";
+} from "../../jslib/wargame/playable.js";
 import {
     clickOnTrigger, clickOnPiece,
     executeAllAnimations, mouseMoveOnTrigger, mouseMoveOutOfTrigger,
@@ -52,24 +52,24 @@ import {
     showOverTroop, showSelectedActuatorTrigger, showSelectedTroop,
     showTroop,
     zoomAndRotate0, zoomAndRotate60, zoomAndRotate90, showOverActuatorTrigger
-} from "./interactive-tools.js";
+} from "../cblades/interactive-tools.js";
 import {
-    CBHexSideId, CBMap
-} from "../../jslib/cblades/map.js";
+    WHexSideId, WMap
+} from "../../jslib/wargame/map.js";
 import {
     Area2D,
     Dimension2D, Point2D
-} from "../../jslib/geometry.js";
+} from "../../jslib/board/geometry.js";
 import {
     DInsertFrame
-} from "../../jslib/widget.js";
+} from "../../jslib/board/widget.js";
 
-class CBTestPlayer extends CBBasicPlayer {
+class CBTestPlayer extends WPlayer {
 
     constructor(...args) {
         super(...args);
         this.launched = 0;
-        this.actionClass = CBAction;
+        this.actionClass = WAction;
     }
 
     setAction(actionClass) {
@@ -96,7 +96,7 @@ class CBTestPlayer extends CBBasicPlayer {
     fromSpecs(game, specs, context) {
         super.fromSpecs(game, specs, context);
         for (let playableSpecs of specs.playables) {
-            let playable = new CBTestPlayable(this, playableSpecs.name, playableSpecs.paths);
+            let playable = new CBTestPlayable(this, game, playableSpecs.name, playableSpecs.paths);
             playable.fromSpecs(playableSpecs, context);
             context.pieceMap.set(playableSpecs.name, playable);
         }
@@ -105,7 +105,7 @@ class CBTestPlayer extends CBBasicPlayer {
 
 }
 
-class CBTestMultiImagesActuator extends CBActionActuator {
+class CBTestMultiImagesActuator extends WActionActuator {
 
     constructor(action) {
         super(action);
@@ -114,7 +114,7 @@ class CBTestMultiImagesActuator extends CBActionActuator {
             DImage.getImage("./../images/actuators/test2.png")
         ];
         let imageArtifacts = [];
-        this.trigger = new CBActuatorMultiImagesTrigger(this, "actuators", images,
+        this.trigger = new WActuatorMultiImagesTrigger(this, "actuators", images,
             new Point2D(0, 0), new Dimension2D(50, 50));
         this.trigger.position = new Point2D(0, 0);
         imageArtifacts.push(this.trigger);
@@ -138,15 +138,15 @@ class CBTestMultiImagesActuator extends CBActionActuator {
     }
 }
 
-class CBTestPlayableActuatorTrigger extends CBPlayableActuatorTrigger {
+class CBTestPlayableActuatorTrigger extends WPlayableActuatorTrigger {
 
     get layer() {
-        return CBLevelBuilder.ULAYERS.ACTUATORS;
+        return WLevelBuilder.ULAYERS.ACTUATORS;
     }
 
 }
 
-class CBTestPlayableActuator extends RetractableActuatorMixin(CBActionActuator) {
+class CBTestPlayableActuator extends RetractableActuatorMixin(WActionActuator) {
 
     constructor(action, playable) {
         super(action);
@@ -165,7 +165,7 @@ class CBTestPlayableActuator extends RetractableActuatorMixin(CBActionActuator) 
 
 }
 
-class TestPlayableImageArtifact extends RetractableArtifactMixin(SelectableArtifactMixin(CBPieceImageArtifact)) {
+class TestPlayableImageArtifact extends RetractableArtifactMixin(SelectableArtifactMixin(WPieceImageArtifact)) {
 
     constructor(playable, ...args) {
         super(playable, ...args);
@@ -180,14 +180,14 @@ class TestPlayableImageArtifact extends RetractableArtifactMixin(SelectableArtif
     }
 
     get layer() {
-        return CBLevelBuilder.ULAYERS.UNITS;
+        return WLevelBuilder.ULAYERS.UNITS;
     }
 
 }
 
-class CBTestPlayable extends RetractablePieceMixin(HexLocatableMixin(BelongsToPlayerMixin(PlayableMixin(CBPiece)))) {
+class CBTestPlayable extends RetractablePieceMixin(HexLocatableMixin(BelongsToPlayerMixin(PlayableMixin(WPiece)))) {
 
-    constructor(game, player, name, paths) {
+    constructor(player, game, name, paths) {
         super("units", game, paths, new Dimension2D(142, 142));
         this.player = player;
         this.name = name;
@@ -221,10 +221,10 @@ class CBTestPlayable extends RetractablePieceMixin(HexLocatableMixin(BelongsToPl
 
 }
 
-class CBTestHexCounter extends CBHexCounter {
+class CBTestHexCounter extends WHexCounter {
 
-    constructor() {
-        super("ground", ["./../images/units/misc/counter.png"], new Dimension2D(50, 50));
+    constructor(game) {
+        super("ground", game, ["./../images/units/misc/counter.png"], new Dimension2D(50, 50));
     }
 
     toSpecs(context) {
@@ -234,7 +234,7 @@ class CBTestHexCounter extends CBHexCounter {
     }
 }
 
-class TestCounterImageArtifact extends RetractableArtifactMixin(SelectableArtifactMixin(CBPieceImageArtifact)) {
+class TestCounterImageArtifact extends RetractableArtifactMixin(SelectableArtifactMixin(WPieceImageArtifact)) {
 
     constructor(playable, ...args) {
         super(playable, ...args);
@@ -249,14 +249,14 @@ class TestCounterImageArtifact extends RetractableArtifactMixin(SelectableArtifa
     }
 
     get layer() {
-        return CBLevelBuilder.ULAYERS.SPELLS;
+        return WLevelBuilder.ULAYERS.SPELLS;
     }
 
 }
 
-class CBTestCounter extends RetractablePieceMixin(HexLocatableMixin(BelongsToPlayerMixin(PlayableMixin(CBPiece)))) {
+class CBTestCounter extends RetractablePieceMixin(HexLocatableMixin(BelongsToPlayerMixin(PlayableMixin(WPiece)))) {
 
-    constructor(game, owner, paths) {
+    constructor(owner, game, paths) {
         super("units", game, paths, new Dimension2D(142, 142));
         this.owner = owner;
     }
@@ -284,13 +284,13 @@ class CBTestCounter extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
 
 }
 
-class CBTestMarker extends CBPieceImageArtifact {
+class CBTestMarker extends WPieceImageArtifact {
 
     constructor(...args) {
         super(...args);
     }
     get layer() {
-        return this.piece.formationNature ? CBLevelBuilder.ULAYERS.FMARKERS : CBLevelBuilder.ULAYERS.MARKERS;
+        return this.piece.formationNature ? WLevelBuilder.ULAYERS.FMARKERS : WLevelBuilder.ULAYERS.MARKERS;
     }
     get slot() {
         return this.piece.slot;
@@ -298,14 +298,14 @@ class CBTestMarker extends CBPieceImageArtifact {
 
 }
 
-class CBTestFormation extends RetractablePieceMixin(HexLocatableMixin(BelongsToPlayerMixin(PlayableMixin(CBPiece)))) {
+class CBTestFormation extends RetractablePieceMixin(HexLocatableMixin(BelongsToPlayerMixin(PlayableMixin(WPiece)))) {
 
-    constructor(game, player, paths) {
+    constructor(player, game, paths) {
         super("units", game, paths, new Dimension2D(142*2, 142));
         this.player = player;
         Object.defineProperty(this.artifact, "layer", {
             get: function () {
-                return CBLevelBuilder.ULAYERS.FORMATIONS;
+                return WLevelBuilder.ULAYERS.FORMATIONS;
             }
         });
     }
@@ -333,13 +333,13 @@ class CBTestFormation extends RetractablePieceMixin(HexLocatableMixin(BelongsToP
 
 }
 
-class CBTestActionActuator extends CBActionActuator {
+class CBTestActionActuator extends WActionActuator {
 
     constructor(action) {
         super(action);
         let image = DImage.getImage("./../images/actuators/test.png");
         let imageArtifacts = [];
-        this.trigger = new CBActuatorImageTrigger(this, "actuators", image,
+        this.trigger = new WActuatorImageTrigger(this, "actuators", image,
             new Point2D(0, 0), new Dimension2D(50, 50));
         this.trigger.position = new Point2D(0, 0);
         imageArtifacts.push(this.trigger);
@@ -364,16 +364,16 @@ class CBTestActionActuator extends CBActionActuator {
 
     setVisibility(level) {
         super.setVisibility(level);
-        this.trigger.alpha = (level===CBGame.FULL_VISIBILITY ? 1:0);
+        this.trigger.alpha = (level===WGame.FULL_VISIBILITY ? 1:0);
     }
 
 }
 
 function createBasicGame() {
-    var game = new CBGame(1);
-    var arbitrator = new CBAbstractArbitrator();
+    var game = new WGame(1);
+    var arbitrator = new WAbstractArbitrator();
     game.setArbitrator(arbitrator);
-    var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+    var map = new WMap([{path:"./../images/maps/map.png", col:0, row:0}]);
     game.setMap(map);
     game.start();
     loadAllImages();
@@ -384,7 +384,7 @@ function createTinyGame() {
     var { game, map, arbitrator } = createBasicGame();
     var player = new CBTestPlayer("player1");
     game.addPlayer(player);
-    let playable = new CBTestPlayable(player, "u1", ["./../images/units/misc/unit.png"]);
+    let playable = new CBTestPlayable(player, game,"u1", ["./../images/units/misc/unit.png"]);
     playable.addToMap(map.getHex(5, 8));
     repaint(game);
     loadAllImages();
@@ -395,9 +395,9 @@ function create2PlayablesTinyGame() {
     var { game, map, arbitrator } = createBasicGame();
     var player = new CBTestPlayer("player1");
     game.addPlayer(player);
-    let playable1 = new CBTestPlayable(player, "u1", ["./../images/units/misc/unit1.png"]);
+    let playable1 = new CBTestPlayable(player, game,"u1", ["./../images/units/misc/unit1.png"]);
     playable1.addToMap(map.getHex(5, 6));
-    let playable2 = new CBTestPlayable(player, "u2", ["./../images/units/misc/unit2.png"]);
+    let playable2 = new CBTestPlayable(player, game,"u2", ["./../images/units/misc/unit2.png"]);
     playable2.addToMap(map.getHex(5, 7));
     repaint(game);
     loadAllImages();
@@ -410,11 +410,11 @@ function create2PlayersTinyGame() {
     game.addPlayer(player1);
     let player2 = new CBTestPlayer();
     game.addPlayer(player2);
-    let unit0 = new CBTestPlayable(player1, "u1",  ["./../images/units/misc/unit0.png"]);
+    let unit0 = new CBTestPlayable(player1, game,"u1",  ["./../images/units/misc/unit0.png"]);
     unit0.addToMap(map.getHex(5, 8));
-    let unit1 = new CBTestPlayable(player1, "u2",  ["./../images/units/misc/unit1.png"]);
+    let unit1 = new CBTestPlayable(player1, game, "u2",  ["./../images/units/misc/unit1.png"]);
     unit1.addToMap(map.getHex(5, 8));
-    let unit2 = new CBTestPlayable(player2, "u3", ["./../images/units/misc/unit2.png"]);
+    let unit2 = new CBTestPlayable(player2, game, "u3", ["./../images/units/misc/unit2.png"]);
     unit2.addToMap(map.getHex(5, 7));
     game.start();
     loadAllImages();
@@ -451,7 +451,7 @@ function showActiveFakePiece(image, [a, b, c, d, e, f], s=50) {
     ];
 }
 
-export class CBTestHexNeighborTrigger extends NeighborActuatorArtifactMixin(CBActuatorImageTrigger) {
+export class CBTestHexNeighborTrigger extends NeighborActuatorArtifactMixin(WActuatorImageTrigger) {
 
     constructor(actuator, hex) {
         super(hex, actuator, "actuators", DImage.getImage("./../images/actuators/hex.png"),
@@ -460,7 +460,7 @@ export class CBTestHexNeighborTrigger extends NeighborActuatorArtifactMixin(CBAc
 
 }
 
-export class CBTestHexNeighborActuator extends NeighborActuatorMixin(CBActuator) {
+export class CBTestHexNeighborActuator extends NeighborActuatorMixin(WActuator) {
 
     constructor(map) {
         super();
@@ -478,7 +478,7 @@ export class CBTestHexNeighborActuator extends NeighborActuatorMixin(CBActuator)
 
 }
 
-export class CBTestHexGhostTrigger extends GhostArtifactMixin(CBActuatorImageTrigger) {
+export class CBTestHexGhostTrigger extends GhostArtifactMixin(WActuatorImageTrigger) {
 
     constructor(actuator, hex) {
         super(actuator, "actuators", DImage.getImage("./../images/actuators/hex.png"),
@@ -488,7 +488,7 @@ export class CBTestHexGhostTrigger extends GhostArtifactMixin(CBActuatorImageTri
 
 }
 
-export class CBTestHexGhostActuator extends CBActuator {
+export class CBTestHexGhostActuator extends WActuator {
 
     constructor(map) {
         super();
@@ -519,7 +519,7 @@ describe("Playable", ()=> {
     });
 
     after(() => {
-        CBHexCounter.resetTokenType();
+        WHexCounter.resetTokenType();
     });
 
     it("Checks that actuator is hidden if the game visibility level is lowered", () => {
@@ -529,7 +529,7 @@ describe("Playable", ()=> {
             game.setMenu();
             game._showCommand.action();
         when:
-            var action = new CBAction(game, playable);
+            var action = new WAction(game, playable);
             var actuator = new CBTestActionActuator(action);
             game.openActuator(actuator);
             repaint(game);
@@ -555,8 +555,8 @@ describe("Playable", ()=> {
 
     it("Checks global push menu button", () => {
         given:
-            var game = new CBGame(1);
-            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+            var game = new WGame(1);
+            var map = new WMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             game.setMap(map);
             var [commandsLayer] = getLayers(game.board, "widget-commands");
         when:
@@ -597,8 +597,8 @@ describe("Playable", ()=> {
 
     it("Checks undo/redo push menu button", () => {
         given:
-            var game = new CBGame(1);
-            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+            var game = new WGame(1);
+            var map = new WMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             game.setMap(map);
             game.setMenu();
             game.start();
@@ -628,8 +628,8 @@ describe("Playable", ()=> {
 
     it("Checks full screen push menu button", () => {
         given:
-            var game = new CBGame(1);
-            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+            var game = new WGame(1);
+            var map = new WMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             game.setMap(map);
             game.setMenu();
             game.start();
@@ -712,7 +712,7 @@ describe("Playable", ()=> {
             var {game, unit1} = create2PlayersTinyGame();
             game.setMenu();
             game.setSelectedPlayable(unit1);
-            let action = new CBAction(game, unit1);
+            let action = new WAction(game, unit1);
             action.isFinishable = ()=>false;
             unit1.launchAction(action);
             action.markAsStarted();
@@ -725,7 +725,7 @@ describe("Playable", ()=> {
             var {game, unit1} = create2PlayersTinyGame();
             game.setMenu();
             unit1.isFinishable = ()=>false;
-            Mechanisms.fire(game, CBGame.TURN_EVENT);
+            Mechanisms.fire(game, WGame.TURN_EVENT);
         then:
             assert(game._endOfTurnCommand.active).isFalse();
     });
@@ -740,7 +740,7 @@ describe("Playable", ()=> {
             assert(unit1.isCurrentPlayer()).isTrue();
         when:
             unit1._select();
-            unit1.launchAction(new CBAction(game, unit1, dummyEvent));
+            unit1.launchAction(new WAction(game, unit1, dummyEvent));
         then:
             assert(game.selectedPlayable).equalsTo(unit1);
         when:
@@ -757,7 +757,7 @@ describe("Playable", ()=> {
         given:
             var { game, playable } = createTinyGame();
             var [actuatorsLayer] = getLayers(game.board, "actuators");
-            var action = new CBAction(game, playable);
+            var action = new WAction(game, playable);
             var actuator = new CBTestActionActuator(action);
             game.openActuator(actuator);
         when:
@@ -792,7 +792,7 @@ describe("Playable", ()=> {
             var {game, playable1, playable2} = create2PlayablesTinyGame();
             var [actuatorsLayer] = getLayers(game.board, "actuators-0");
         when:
-            var action = new CBAction(game, playable1);
+            var action = new WAction(game, playable1);
             var actuator = new CBTestPlayableActuator(action, playable2);
             game.openActuator(actuator);
             repaint(game);
@@ -811,7 +811,7 @@ describe("Playable", ()=> {
             var {game, playable} = createTinyGame();
             var [actuatorsLayer] = getLayers(game.board, "actuators");
         when:
-            var action = new CBAction(game, playable);
+            var action = new WAction(game, playable);
             var actuator = new CBTestMultiImagesActuator(action);
             resetDirectives(actuatorsLayer);
             game.openActuator(actuator);
@@ -899,7 +899,7 @@ describe("Playable", ()=> {
             assertNoMoreDirectives(actuatorsLayer);
     });
 
-    class TestInsert extends CBInsert {
+    class TestInsert extends WInsert {
 
         constructor() {
             super("./../images/inserts/test-insert.png", new Dimension2D(200, 300));
@@ -909,8 +909,8 @@ describe("Playable", ()=> {
 
     it("Checks visibility level management on insert", () => {
         given:
-            var game = new CBGame(1);
-            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+            var game = new WGame(1);
+            var map = new WMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             game.setMap(map);
             var [widgetsLevel] = getLayers(game.board, "widgets");
             game.setMenu();
@@ -948,7 +948,7 @@ describe("Playable", ()=> {
             assert([...Mechanisms.manager._listeners]).doesNotContain(insert);
     });
 
-    class TestAbstractInsert extends CBAbstractInsert {
+    class TestAbstractInsert extends WAbstractInsert {
 
         constructor() {
             super("./../images/inserts/test-insert.png", new Dimension2D(200, 300));
@@ -962,8 +962,8 @@ describe("Playable", ()=> {
 
     it("Checks visibility level management on abstract insert", () => {
         given:
-            var game = new CBGame(1);
-            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+            var game = new WGame(1);
+            var map = new WMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             game.setMap(map);
             var [widgetsLevel] = getLayers(game.board, "widgets");
             game.setMenu();
@@ -1003,8 +1003,8 @@ describe("Playable", ()=> {
 
     it("Checks mask that depends on the visibility level", () => {
         given:
-            var game = new CBGame(1);
-            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+            var game = new WGame(1);
+            var map = new WMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             game.setMap(map);
             var [widgetsLevel] = getLayers(game.board, "widgets");
             game.start();
@@ -1012,7 +1012,7 @@ describe("Playable", ()=> {
             game._showCommand.action();
             executeAllAnimations();
         when:
-            var mask = new CBMask();
+            var mask = new WMask();
             resetDirectives(widgetsLevel);
             mask.open(game.board);
             paint(game);
@@ -1064,10 +1064,10 @@ describe("Playable", ()=> {
     it("Checks appearance of ground playable", () => {
         given:
             var { game, map } = createBasicGame();
-            var blaze = new CBTestActivableCounter("ground", ["./../images/units/misc/blaze.png"], new Dimension2D(50, 50));
-            class BlazeMarker extends CBPieceImageArtifact {
+            var blaze = new CBTestActivableCounter("ground", game,["./../images/units/misc/blaze.png"], new Dimension2D(50, 50));
+            class BlazeMarker extends WPieceImageArtifact {
                 get layer() {
-                    return CBLevelBuilder.GLAYERS.MARKERS;
+                    return WLevelBuilder.GLAYERS.MARKERS;
                 }
             }
             var blazeMarker = new BlazeMarker(blaze, "ground", [DImage.getImage("./../images/units/misc/blazeMarker.png")],
@@ -1132,9 +1132,9 @@ describe("Playable", ()=> {
             var { game, map } = createBasicGame();
             var player = new CBTestPlayer("player1");
             game.addPlayer(player);
-            let counter1 = new CBTestPlayable(player, "u1",  ["./../images/units/misc/counter1.png"]);
-            let counter2 = new CBTestPlayable(player, "u2",  ["./../images/units/misc/counter2.png"]);
-            let counter3 = new CBTestPlayable(player, "u3", ["./../images/units/misc/counter3.png"]);
+            let counter1 = new CBTestPlayable(player, game,"u1",  ["./../images/units/misc/counter1.png"]);
+            let counter2 = new CBTestPlayable(player, game,"u2",  ["./../images/units/misc/counter2.png"]);
+            let counter3 = new CBTestPlayable(player, game,"u3", ["./../images/units/misc/counter3.png"]);
             counter1.addToMap(map.getHex(4, 5));
             counter2.addToMap(map.getHex(4, 5));
             counter3.addToMap(map.getHex(4, 5));
@@ -1182,8 +1182,8 @@ describe("Playable", ()=> {
             var { game, map } = createBasicGame();
             var player = new CBTestPlayer("player1");
             game.addPlayer(player);
-            let counter1 = new CBTestPlayable(player, "u1",  ["./../images/units/misc/counter1.png"]);
-            let counter2 = new CBTestPlayable(player, "u2", ["./../images/units/misc/counter2.png"]);
+            let counter1 = new CBTestPlayable(player, game,"u1",  ["./../images/units/misc/counter1.png"]);
+            let counter2 = new CBTestPlayable(player, game,"u2", ["./../images/units/misc/counter2.png"]);
             counter1.addToMap(map.getHex(4, 5));
             counter2.addToMap(map.getHex(4, 5));
             repaint(game);
@@ -1212,8 +1212,8 @@ describe("Playable", ()=> {
             var { game, map } = createBasicGame();
             var player = new CBTestPlayer("player1");
             game.addPlayer(player);
-            let counter1 = new CBTestPlayable(player, "u1", ["./../images/units/misc/counter1.png"]);
-            let counter2 = new CBTestPlayable(player, "u2", ["./../images/units/misc/counter2.png"]);
+            let counter1 = new CBTestPlayable(player, game,"u1", ["./../images/units/misc/counter1.png"]);
+            let counter2 = new CBTestPlayable(player, game,"u2", ["./../images/units/misc/counter2.png"]);
             counter1.addToMap(map.getHex(4, 5));
             counter2.addToMap(map.getHex(4, 5));
             mouseMove(game, 333-71/2+5, 111-71/2+5); // On counter0 but not counter1
@@ -1243,7 +1243,7 @@ describe("Playable", ()=> {
         given:
             var { game, playable1, playable2 } = create2PlayablesTinyGame();
             playable2.hexLocation = playable1.hexLocation;
-            var action = new CBAction(game, playable1);
+            var action = new WAction(game, playable1);
             var actuator = new CBTestPlayableActuator(action, playable1);
             game.openActuator(actuator);
             game.start();
@@ -1281,7 +1281,7 @@ describe("Playable", ()=> {
         given:
             var { game, playable1, playable2 } = create2PlayablesTinyGame();
             playable2.hexLocation = playable1.hexLocation;
-            var action = new CBAction(game, playable1);
+            var action = new WAction(game, playable1);
             var actuator = new CBTestPlayableActuator(action, playable2);
             game.openActuator(actuator);
             game.start();
@@ -1322,11 +1322,11 @@ describe("Playable", ()=> {
             var { game, map } = createBasicGame();
             var player = new CBTestPlayer("player1");
             game.addPlayer(player);
-            let formation1 = new CBTestFormation(player, ["./../images/units/misc/formation1.png"]);
+            let formation1 = new CBTestFormation(player, game,["./../images/units/misc/formation1.png"]);
             formation1.angle = 90;
-            let counter2 = new CBTestPlayable(player,  "u1",["./../images/units/misc/counter2.png"]);
-            let counter3 = new CBTestPlayable(player,  "u2", ["./../images/units/misc/counter3.png"]);
-            formation1.addToMap(new CBHexSideId(map.getHex(4, 5), map.getHex(4, 6)));
+            let counter2 = new CBTestPlayable(player, game,"u1",["./../images/units/misc/counter2.png"]);
+            let counter3 = new CBTestPlayable(player, game, "u2", ["./../images/units/misc/counter3.png"]);
+            formation1.addToMap(new WHexSideId(map.getHex(4, 5), map.getHex(4, 6)));
             counter2.addToMap(map.getHex(4, 5));
             counter3.addToMap(map.getHex(4, 6));
             repaint(game);
@@ -1399,7 +1399,7 @@ describe("Playable", ()=> {
         ];
     }
 
-    class TestOptionImageArtifact extends CBPieceImageArtifact {
+    class TestOptionImageArtifact extends WPieceImageArtifact {
 
         constructor(...args) {
             super(...args);
@@ -1410,12 +1410,12 @@ describe("Playable", ()=> {
         }
 
         get layer() {
-            return this.piece.owner.formationNature ? CBLevelBuilder.ULAYERS.FOPTIONS : CBLevelBuilder.ULAYERS.OPTIONS;
+            return this.piece.owner.formationNature ? WLevelBuilder.ULAYERS.FOPTIONS : WLevelBuilder.ULAYERS.OPTIONS;
         }
 
     }
 
-    class CBTestOption extends HexLocatableMixin(PlayableMixin(CBPiece)) {
+    class CBTestOption extends HexLocatableMixin(PlayableMixin(WPiece)) {
 
         constructor(owner, ...args) {
             super(...args);
@@ -1436,20 +1436,20 @@ describe("Playable", ()=> {
             var { game, map } = createBasicGame();
             var player = new CBTestPlayer("player1");
             game.addPlayer(player);
-            let playable1 = new CBTestPlayable(player,  "u1", ["./../images/units/misc/unit1.png"]);
+            let playable1 = new CBTestPlayable(player, game, "u1", ["./../images/units/misc/unit1.png"]);
             let markerImage = DImage.getImage("./../images/markers/misc/markers1.png");
             let marker = new CBTestMarker(playable1, "units", [markerImage],
                 new Point2D(0, 0), new Dimension2D(64, 64));
             playable1._element.addArtifact(marker);
-            let playable2 = new CBTestPlayable(player,  "u2", ["./../images/units/misc/unit2.png"]);
-            let spell = new CBTestCounter(playable2, ["./../images/units/misc/spell.png"]);
-            let option = new CBTestOption(playable2, "units",  ["./../images/units/misc/option.png"], new Dimension2D(142, 142));
+            let playable2 = new CBTestPlayable(player, game, "u2", ["./../images/units/misc/unit2.png"]);
+            let spell = new CBTestCounter(playable2, game,["./../images/units/misc/spell.png"]);
+            let option = new CBTestOption(playable2, "units",  game, ["./../images/units/misc/option.png"], new Dimension2D(142, 142));
             option.artifact.option = option;
             option.playable = playable2;
             loadAllImages();
             var hexId = map.getHex(4, 5);
-            playable1.addToMap(hexId, CBStacking.TOP);
-            playable2.addToMap(hexId, CBStacking.TOP);
+            playable1.addToMap(hexId, WStacking.TOP);
+            playable2.addToMap(hexId, WStacking.TOP);
             spell.addToMap(hexId);
             option.addToMap(hexId);
             paint(game);
@@ -1480,23 +1480,23 @@ describe("Playable", ()=> {
             var { game, map } = createBasicGame();
             var player = new CBTestPlayer("player1");
             game.addPlayer(player);
-            let formation1 = new CBTestFormation(player, ["./../images/units/misc/formation1.png"]);
+            let formation1 = new CBTestFormation(player, game,["./../images/units/misc/formation1.png"]);
             formation1.angle = 60;
             let markerImage = DImage.getImage("./../images/markers/misc/markers1.png");
             let marker = new CBTestMarker(formation1, "units", [markerImage],
                 new Point2D(0, 0), new Dimension2D(64, 64));
             formation1._element.addArtifact(marker);
-            let formation2 = new CBTestFormation(player, ["./../images/units/misc/formation2.png"]);
+            let formation2 = new CBTestFormation(player, game,["./../images/units/misc/formation2.png"]);
             formation2.angle = 60;
-            let option = new CBTestOption(formation2, "units",  ["./../images/units/misc/option.png"],
+            let option = new CBTestOption(formation2, "units",  game, ["./../images/units/misc/option.png"],
                 new Dimension2D(142, 142));
             option.artifact.option = option;
             option.playable = formation2;
             loadAllImages();
             var hexId = map.getHex(4, 5);
-            var hexSideId = new CBHexSideId(hexId, hexId.getNearHex(120))
-            formation1.addToMap(hexSideId, CBStacking.TOP);
-            formation2.addToMap(hexSideId, CBStacking.TOP);
+            var hexSideId = new WHexSideId(hexId, hexId.getNearHex(120))
+            formation1.addToMap(hexSideId, WStacking.TOP);
+            formation2.addToMap(hexSideId, WStacking.TOP);
             option.addToMap(hexId);
             paint(game);
         when:
@@ -1556,7 +1556,7 @@ describe("Playable", ()=> {
         given:
             var {game, player, playable1, playable2} = create2PlayablesTinyGame();
             player.launchPlayableAction = function(playable, point) {
-                playable.launchAction(new CBAction(game, playable));
+                playable.launchAction(new WAction(game, playable));
             }
             player.canPlay = function() { return true; };
         when:
@@ -1610,25 +1610,25 @@ describe("Playable", ()=> {
 
     it("Checks CBHexCounter features", () => {
         given:
-            var { game, map } = createBasicGame();
-            var TestBlaze = class extends CBHexCounter {
-                constructor() {super("ground", ["./../images/units/misc/blaze.png"], new Dimension2D(50, 50));}
+            var { game } = createBasicGame();
+            var TestBlaze = class extends WHexCounter {
+                constructor() {super("ground", game, ["./../images/units/misc/blaze.png"], new Dimension2D(50, 50));}
                 static fromSpecs(specs, context) {
                     return new TestBlaze();
                 }
             }
-            var TestMagic = class extends CBHexCounter {
-                constructor() {super("ground", ["./../images/units/misc/spell.png"], new Dimension2D(50, 50));}
+            var TestMagic = class extends WHexCounter {
+                constructor() {super("ground", game, ["./../images/units/misc/spell.png"], new Dimension2D(50, 50));}
                 static fromSpecs(specs, context) {
                     return new TestMagic();
                 }
             }
         when:
-            CBHexCounter.registerTokenType("blaze", TestBlaze);
-            CBHexCounter.registerTokenType("magic", TestMagic);
+            WHexCounter.registerTokenType("blaze", TestBlaze);
+            WHexCounter.registerTokenType("magic", TestMagic);
             let context = new Map();
             context.game = game;
-            var blaze = CBHexCounter.fromSpecs({type:"blaze", id:2, version:3}, context);
+            var blaze = WHexCounter.fromSpecs({type:"blaze", id:2, version:3}, context);
         then:
             assert(blaze._oid).equalsTo(2);
             assert(blaze._oversion).equalsTo(3);
@@ -1639,9 +1639,9 @@ describe("Playable", ()=> {
         it("Checks playable sorting on Hex", () => {
         given:
             var { game, map } = createBasicGame();
-            var spell = new CBHexCounter("ground", ["./../images/units/misc/spell.png"], new Dimension2D(50, 50));
+            var spell = new WHexCounter("ground", game, ["./../images/units/misc/spell.png"], new Dimension2D(50, 50));
             spell.spellNature = true;
-            var blaze = new CBHexCounter("ground", ["./../images/units/misc/blaze.png"], new Dimension2D(50, 50));
+            var blaze = new WHexCounter("ground", game, ["./../images/units/misc/blaze.png"], new Dimension2D(50, 50));
             blaze.elementNature = true;
             var [hexLayer0] = getLayers(game.board, "hex-0");
             var hex = map.getHex(4, 5);
@@ -1657,7 +1657,7 @@ describe("Playable", ()=> {
             assertDirectives(hexLayer1, showInactiveFakePiece("misc/spell", zoomAndRotate0(323.5582, 111.327)));
             assertNoMoreDirectives(hexLayer1);
         when:
-            var trap = new CBHexCounter("ground", ["./../images/units/misc/trap.png"], new Dimension2D(50, 50));
+            var trap = new WHexCounter("ground", game, ["./../images/units/misc/trap.png"], new Dimension2D(50, 50));
             trap.featureNature = true;
             trap.appendToMap(map.getHex(4, 5));
             repaint(game);
@@ -1674,7 +1674,7 @@ describe("Playable", ()=> {
             assertNoMoreDirectives(hexLayer2);
     });
 
-    class TestActivableCounterImageArtifact extends ActivableArtifactMixin(CBPieceImageArtifact) {
+    class TestActivableCounterImageArtifact extends ActivableArtifactMixin(WPieceImageArtifact) {
 
         constructor(playable, ...args) {
             super(playable, ...args);
@@ -1689,12 +1689,12 @@ describe("Playable", ()=> {
         }
 
         get layer() {
-            return CBLevelBuilder.GLAYERS.COUNTERS;
+            return WLevelBuilder.GLAYERS.COUNTERS;
         }
 
     }
 
-    class CBTestActivableCounter extends RetractablePieceMixin(HexLocatableMixin(BelongsToPlayerMixin(PlayableMixin(CBPiece)))) {
+    class CBTestActivableCounter extends RetractablePieceMixin(HexLocatableMixin(BelongsToPlayerMixin(PlayableMixin(WPiece)))) {
 
         constructor(layer, game, paths, dimension) {
             super(layer, game, paths, dimension);
@@ -1709,7 +1709,7 @@ describe("Playable", ()=> {
     it("Checks activation/desactivation of an artifact", () => {
         given:
             var { game, map } = createBasicGame();
-            var blaze = new CBTestActivableCounter("ground", ["./../images/units/misc/blaze.png"], new Dimension2D(50, 50));
+            var blaze = new CBTestActivableCounter("ground", game, ["./../images/units/misc/blaze.png"], new Dimension2D(50, 50));
             blaze.elementNature = true;
             var [groundLayer] = getLayers(game.board, "hex-0");
             var hex = map.getHex(4, 5);
@@ -1751,9 +1751,9 @@ describe("Playable", ()=> {
         var { game, map, arbitrator } = createBasicGame();
         var player = new CBTestPlayer("player1");
         game.addPlayer(player);
-        let playable = new CBTestPlayable(player, "u1", ["./../images/units/misc/unit1.png"]);
+        let playable = new CBTestPlayable(player, game,"u1", ["./../images/units/misc/unit1.png"]);
         playable.addToMap(map.getHex(5, 6));
-        let counter = new CBTestHexCounter();
+        let counter = new CBTestHexCounter(game);
         counter.addToMap(map.getHex(5, 7));
         loadAllImages();
         return {game, map, arbitrator, playable, counter, player};
@@ -1800,8 +1800,8 @@ describe("Playable", ()=> {
 
     it("Checks game import", () => {
         given:
-            CBHexCounter.registerTokenType("counter", CBTestHexCounter);
-            var game = new CBGame(1);
+            WHexCounter.registerTokenType("counter", CBTestHexCounter);
+            var game = new WGame(1);
             var context = new Map();
             var specs = {
                 "id":1,"version":0,

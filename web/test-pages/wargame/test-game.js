@@ -6,53 +6,53 @@ import {
 import {
     DAnimator,
     DImage, setDrawPlatform
-} from "../../jslib/draw.js";
+} from "../../jslib/board/draw.js";
 import {
     assertDirectives, assertNoMoreDirectives, assertClearDirectives,
     createEvent,
     getDirectives, getLayers, loadAllImages, mockPlatform, resetDirectives, skipDirectives
-} from "../mocks.js";
+} from "../board/mocks.js";
 import {
     Mechanisms, Memento
-} from "../../jslib/mechanisms.js";
+} from "../../jslib/board/mechanisms.js";
 import {
-    CBMap,
-    CBAbstractMap,
-    CBHexSideId
-} from "../../jslib/cblades/map.js";
+    WMap,
+    WAbstractMap,
+    WHexSideId
+} from "../../jslib/wargame/map.js";
 import {
-    BelongsToPlayerMixin, CBCounterDisplay,
-    CBPiece,
-    CBStacking, DisplayLocatableMixin, HexLocatableMixin, PlayableMixin
-} from "../../jslib/cblades/game.js";
+    BelongsToPlayerMixin, WCounterDisplay,
+    WPiece,
+    WStacking, DisplayLocatableMixin, HexLocatableMixin, PlayableMixin
+} from "../../jslib/wargame/game.js";
 import {
-    CBAbstractGame,
-    CBAbstractPlayer,
-    CBAbstractArbitrator,
-    CBAction,
-    CBPieceImageArtifact,
-    CBActuator
-} from "../../jslib/cblades/game.js";
+    WAbstractGame,
+    WAbstractPlayer,
+    WAbstractArbitrator,
+    WAction,
+    WPieceImageArtifact,
+    WActuator
+} from "../../jslib/wargame/game.js";
 import {
     DBoard, DElement, DImageArtifact, DSimpleLevel, DStaticLevel
-} from "../../jslib/board.js";
+} from "../../jslib/board/board.js";
 import {
     Dimension2D,
     Point2D
-} from "../../jslib/geometry.js";
+} from "../../jslib/board/geometry.js";
 import {
     DMask,
     DPopup, DPushButton
-} from "../../jslib/widget.js";
+} from "../../jslib/board/widget.js";
 import {
     paint,
     repaint,
     showTroop,
     zoomAndRotate0,
     showMap, showMask, executeAllAnimations
-} from "./interactive-tools.js";
+} from "../cblades/interactive-tools.js";
 
-class CBTestGame extends CBAbstractGame {
+class CBTestGame extends WAbstractGame {
 
     constructor() {
         super(1, [
@@ -71,19 +71,19 @@ class CBTestGame extends CBAbstractGame {
         super._preparePiece(pieceSpec, hexLocation, context);
         if (context.tokenCount===undefined) context.tokenCount=0;
         pieceSpec.name = "t"+context.tokenCount++;
-        let piece = new CBTestPlayable("units", pieceSpec.paths);
+        let piece = new CBTestPlayable("units", context.game, pieceSpec.paths);
         piece.fromSpecs(pieceSpec, context);
         context.pieceMap.set(pieceSpec.name, piece);
     }
 
 }
 
-class CBTestPlayer extends CBAbstractPlayer {
+class CBTestPlayer extends WAbstractPlayer {
 
     constructor(...args) {
         super(...args);
         this.launched = 0;
-        this.actionClass = CBAction;
+        this.actionClass = WAction;
     }
 
     setAction(actionClass) {
@@ -143,7 +143,7 @@ class CBTestActuatorTrigger extends DImageArtifact {
 
 }
 
-class CBTestActuator extends CBActuator {
+class CBTestActuator extends WActuator {
 
     constructor() {
         super();
@@ -174,7 +174,7 @@ class CBTestActuator extends CBActuator {
 
 }
 
-class TestPlayableArtifact extends CBPieceImageArtifact {
+class TestPlayableArtifact extends WPieceImageArtifact {
 
     get slot() {
         return this.piece.slot;
@@ -195,7 +195,7 @@ class TestPlayableArtifact extends CBPieceImageArtifact {
 
 }
 
-class CBTestPlayable extends HexLocatableMixin(PlayableMixin(CBPiece)) {
+class CBTestPlayable extends HexLocatableMixin(PlayableMixin(WPiece)) {
 
     constructor(layerName, game, paths, dimension = new Dimension2D(142, 142)) {
         super(layerName, game, paths, dimension);
@@ -229,8 +229,8 @@ class CBTestPlayable extends HexLocatableMixin(PlayableMixin(CBPiece)) {
 
 class CBTestBelongsToPlayerPlayable extends BelongsToPlayerMixin(CBTestPlayable) {
 
-    constructor(layerName, player, paths, dimension = new Dimension2D(142, 142)) {
-        super(layerName, paths, dimension);
+    constructor(layerName, game, player, paths, dimension = new Dimension2D(142, 142)) {
+        super(layerName, game, paths, dimension);
         this.player = player;
     }
 
@@ -240,7 +240,7 @@ class CBTestBelongsToPlayerPlayable extends BelongsToPlayerMixin(CBTestPlayable)
 
 }
 
-class CBTestDisplayPlayable extends DisplayLocatableMixin(PlayableMixin(CBPiece)) {
+class CBTestDisplayPlayable extends DisplayLocatableMixin(PlayableMixin(WPiece)) {
 
     constructor(layerName, game, paths, dimension = new Dimension2D(142, 142)) {
         super(layerName, game, paths, dimension);
@@ -251,16 +251,16 @@ class CBTestDisplayPlayable extends DisplayLocatableMixin(PlayableMixin(CBPiece)
     }
 
     play() {
-        this.launchAction(new CBAction(this.game, this));
+        this.launchAction(new WAction(this.game, this));
     }
 
 }
 
 function createBasicGame() {
     var game = new CBTestGame();
-    var arbitrator = new CBAbstractArbitrator();
+    var arbitrator = new WAbstractArbitrator();
     game.setArbitrator(arbitrator);
-    var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+    var map = new WMap([{path:"./../images/maps/map.png", col:0, row:0}]);
     game.setMap(map);
     game.start();
     loadAllImages();
@@ -271,7 +271,7 @@ function createTinyGame() {
     var { game, map, arbitrator } = createBasicGame();
     var player = new CBTestPlayer("player1");
     game.addPlayer(player);
-    let playable = new CBTestBelongsToPlayerPlayable("units", player, ["./../images/units/misc/unit.png"]);
+    let playable = new CBTestBelongsToPlayerPlayable("units", game, player, ["./../images/units/misc/unit.png"]);
     playable.addToMap(map.getHex(5, 8));
     repaint(game);
     loadAllImages();
@@ -282,8 +282,8 @@ function createSmallGame() {
     var { game, map, arbitrator } = createBasicGame();
     var player = new CBTestPlayer("player1");
     game.addPlayer(player);
-    let playable1 = new CBTestPlayable("units", ["./../images/units/misc/unit.png"]);
-    let playable2 = new CBTestPlayable("units", ["./../images/units/misc/unit.png"]);
+    let playable1 = new CBTestPlayable("units", game,["./../images/units/misc/unit.png"]);
+    let playable2 = new CBTestPlayable("units", game,["./../images/units/misc/unit.png"]);
     playable1.addToMap(map.getHex(5, 8));
     playable2.addToMap(map.getHex(5, 9));
     repaint(game);
@@ -295,9 +295,9 @@ function createOneStackGame() {
     var { game, map, arbitrator } = createBasicGame();
     var player = new CBTestPlayer("player1");
     game.addPlayer(player);
-    let playable1 = new CBTestPlayable("units", ["./../images/units/misc/unit1.png"]);
-    let playable2 = new CBTestPlayable("units", ["./../images/units/misc/unit2.png"]);
-    let playable3 = new CBTestPlayable("units", ["./../images/units/misc/unit3.png"]);
+    let playable1 = new CBTestPlayable("units", game,["./../images/units/misc/unit1.png"]);
+    let playable2 = new CBTestPlayable("units", game,["./../images/units/misc/unit2.png"]);
+    let playable3 = new CBTestPlayable("units", game,["./../images/units/misc/unit3.png"]);
     playable3.addToMap(map.getHex(5, 9));
     playable2.addToMap(map.getHex(5, 9));
     playable1.addToMap(map.getHex(5, 9));
@@ -312,11 +312,11 @@ function create2PlayersTinyGame() {
     game.addPlayer(player1);
     let player2 = new CBTestPlayer("player2", "./players/player2.png");
     game.addPlayer(player2);
-    let playable0 = new CBTestBelongsToPlayerPlayable("units", player1, ["./../images/units/misc/unit0.png"]);
+    let playable0 = new CBTestBelongsToPlayerPlayable("units", game, player1, ["./../images/units/misc/unit0.png"]);
     playable0.addToMap(map.getHex(5, 8));
-    let playable1 = new CBTestBelongsToPlayerPlayable("units", player1, ["./../images/units/misc/unit1.png"]);
+    let playable1 = new CBTestBelongsToPlayerPlayable("units", game, player1, ["./../images/units/misc/unit1.png"]);
     playable1.addToMap(map.getHex(5, 8));
-    let playable2 = new CBTestBelongsToPlayerPlayable("units", player2, ["./../images/units/misc/unit2.png"]);
+    let playable2 = new CBTestBelongsToPlayerPlayable("units", game, player2, ["./../images/units/misc/unit2.png"]);
     playable2.addToMap(map.getHex(5, 7));
     game.start();
     loadAllImages();
@@ -327,9 +327,9 @@ function create2PiecesTinyGame() {
     var { game, map, arbitrator } = createBasicGame();
     var player = new CBTestPlayer("player1");
     game.addPlayer(player);
-    let playable1 = new CBTestBelongsToPlayerPlayable("units", player,["./../images/units/misc/unit1.png"]);
+    let playable1 = new CBTestBelongsToPlayerPlayable("units", game, player,["./../images/units/misc/unit1.png"]);
     playable1.addToMap(map.getHex(5, 6));
-    let playable2 = new CBTestBelongsToPlayerPlayable("units", player,["./../images/units/misc/unit2.png"]);
+    let playable2 = new CBTestBelongsToPlayerPlayable("units", game, player,["./../images/units/misc/unit2.png"]);
     playable2.addToMap(map.getHex(5, 7));
     repaint(game);
     loadAllImages();
@@ -340,9 +340,9 @@ function createDisplayTinyGame() {
     var { game, map } = createBasicGame();
     let player = new CBTestPlayer("player1");
     game.addPlayer(player);
-    let display0 = new CBTestDisplayPlayable("counters", ["./../images/units/misc/display0.png"]);
+    let display0 = new CBTestDisplayPlayable("counters", game,["./../images/units/misc/display0.png"]);
     display0.setOnGame(game);
-    let display1 = new CBTestDisplayPlayable("counters", ["./../images/units/misc/display1.png"]);
+    let display1 = new CBTestDisplayPlayable("counters", game,["./../images/units/misc/display1.png"]);
     display1.setOnGame(game);
     game.start();
     loadAllImages();
@@ -401,7 +401,7 @@ describe("Game", ()=> {
             var [mapLayer] = getLayers(game.board, "map", "units");
             loadAllImages();
         when:
-            var newMap = new CBMap([{path:"./../images/maps/newmap.png", col:0, row:0}]);
+            var newMap = new WMap([{path:"./../images/maps/newmap.png", col:0, row:0}]);
             game.changeMap(newMap);
             repaint(game);
         then:
@@ -503,15 +503,15 @@ describe("Game", ()=> {
         given:
             var {game, playable} = createTinyGame();
         when:
-            playable.action = new CBAction(game, playable);
-            playable.action.status = CBAction.FINISHED;
+            playable.action = new WAction(game, playable);
+            playable.action.status = WAction.FINISHED;
         then:
             assert(playable.isPlayed()).isTrue();
         when:
-            playable.action = new CBAction(game, playable);
+            playable.action = new WAction(game, playable);
             playable.played = true;
         then:
-            assert(playable.action.status).equalsTo(CBAction.FINISHED);
+            assert(playable.action.status).equalsTo(WAction.FINISHED);
         when:
             delete playable._action;
         then:
@@ -678,7 +678,7 @@ describe("Game", ()=> {
     it("Checks playable selection/deselection regarding actions", () => {
         given:
             var { game, playable1 } = create2PiecesTinyGame();
-            var action = new CBAction(game, playable1);
+            var action = new WAction(game, playable1);
             action.isFinishable = function() { return false;};
         when:
             playable1._select();
@@ -698,7 +698,7 @@ describe("Game", ()=> {
     it("Checks focus on playable prevents other playable selection", () => {
         given:
             var { game, playable1, playable2 } = create2PiecesTinyGame();
-            var action = new CBAction(game, playable1);
+            var action = new WAction(game, playable1);
             game.setFocusedPlayable(playable1);
         when:
             playable1._select();
@@ -715,7 +715,7 @@ describe("Game", ()=> {
         given:
             var {game, playable} = createTinyGame();
         when:
-            var action = new CBAction(game, playable);
+            var action = new WAction(game, playable);
             var actuator1 = new CBTestActuator(action);
             var actuator2 = new CBTestActuator(action);
             game.openActuator(actuator1);
@@ -754,7 +754,7 @@ describe("Game", ()=> {
     it("Checks that clicking on the map re-centers the viewport ", () => {
         given:
             var game = new CBTestGame();
-            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+            var map = new WMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             game.setMap(map);
             game.start();
             var [mapLayer] = getLayers(game.board, "map");
@@ -772,7 +772,7 @@ describe("Game", ()=> {
     it("Checks re-centering ", () => {
         given:
             var game = new CBTestGame();
-            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+            var map = new WMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             game.setMap(map);
             game.start();
             var [mapLayer] = getLayers(game.board, "map");
@@ -798,7 +798,7 @@ describe("Game", ()=> {
         given:
             var { game, playable1, playable2, player } = create2PiecesTinyGame();
             clickOnPiece(game, playable1);
-            var action = new CBAction(game, playable1);
+            var action = new WAction(game, playable1);
             var actuator = new CBTestActuator(action);
             game.openActuator(actuator);
             loadAllImages();
@@ -903,7 +903,7 @@ describe("Game", ()=> {
     it("Checks piece basic appearance and features", () => {
         given:
             var { game } = createBasicGame();
-            let piece = new CBPiece("grounds", ["./../images/units/misc/piece.png"], new Dimension2D(50, 50));
+            let piece = new WPiece("grounds", game,["./../images/units/misc/piece.png"], new Dimension2D(50, 50));
             piece._setOnGame(game);
             piece.location = new Point2D(100, 200);
             game.start();
@@ -953,13 +953,9 @@ describe("Game", ()=> {
             assertNoMoreDirectives(hexLayer);
         when:
             clickOnPiece(game, piece); // checks that tests does not crash
-        when:
-            piece.setAttr("one.two.three", 3);
-        then:
-            assert(piece.useAttr("one.two.three")).equalsTo(3);
     });
 
-    class CBTestMarker extends CBPieceImageArtifact {
+    class CBTestMarker extends WPieceImageArtifact {
         constructor(...args) {
             super(...args);
         }
@@ -976,12 +972,12 @@ describe("Game", ()=> {
             var { game, map } = createBasicGame();
             var player = new CBTestPlayer("player1");
             game.addPlayer(player);
-            let playable = new CBTestBelongsToPlayerPlayable("units", player, ["./../images/units/misc/unit1.png"]);
+            let playable = new CBTestBelongsToPlayerPlayable("units", game, player, ["./../images/units/misc/unit1.png"]);
             let markerImage = DImage.getImage("./../images/markers/misc/markers1.png");
             let marker = new CBTestMarker(playable, "units", [markerImage], new Point2D(0, 0), new Dimension2D(64, 64));
             playable._element.addArtifact(marker);
             var hexId = map.getHex(4, 5);
-            playable.addToMap(hexId, CBStacking.TOP);
+            playable.addToMap(hexId, WStacking.TOP);
         then:
             assert(marker.game).equalsTo(game);
             assert(playable.artifact.onMouseEnter(dummyEvent)).isTrue();
@@ -991,7 +987,7 @@ describe("Game", ()=> {
     it("Checks playable addition and removing on a Hex (not undoable)", () => {
         given:
             var { game, map, player } = createTinyGame();
-            let playable = new CBTestBelongsToPlayerPlayable("grounds", player,["./../images/units/misc/playable.png"], new Dimension2D(50, 50));
+            let playable = new CBTestBelongsToPlayerPlayable("grounds", game, player,["./../images/units/misc/playable.png"], new Dimension2D(50, 50));
             loadAllImages();
             var [hexLayer] = getLayers(game.board, "grounds");
             var hexId = map.getHex(4, 5);
@@ -1017,7 +1013,7 @@ describe("Game", ()=> {
     it("Checks playable addition and removing on a Hex (undoable)", () => {
         given:
             var { game, map, player } = createTinyGame();
-            let playable = new CBTestBelongsToPlayerPlayable("grounds", player,["./../images/units/misc/playable.png"], new Dimension2D(50, 50));
+            let playable = new CBTestBelongsToPlayerPlayable("grounds", game, player,["./../images/units/misc/playable.png"], new Dimension2D(50, 50));
             loadAllImages();
             var [hexLayer] = getLayers(game.board, "grounds");
             var hexId = map.getHex(4, 5);
@@ -1060,12 +1056,12 @@ describe("Game", ()=> {
 
     it("Checks getOneByType method", () => {
         given:
-            var { map, player, playable } = createTinyGame();
+            var { game, map, player, playable } = createTinyGame();
             class PlayableOne extends CBTestBelongsToPlayerPlayable {};
             class PlayableTwo extends CBTestBelongsToPlayerPlayable {};
             class PlayableThree extends CBTestBelongsToPlayerPlayable {};
-            var playable1 = new PlayableOne("grounds", player,["./../images/units/misc/one.png"], new Dimension2D(50, 50));
-            var playable2 = new PlayableTwo("grounds", player,["./../images/units/misc/two.png"], new Dimension2D(50, 50));
+            var playable1 = new PlayableOne("grounds", game, player,["./../images/units/misc/one.png"], new Dimension2D(50, 50));
+            var playable2 = new PlayableTwo("grounds", game, player,["./../images/units/misc/two.png"], new Dimension2D(50, 50));
             var hexId = map.getHex(4, 5);
         when:
             playable1.addToMap(hexId);
@@ -1082,9 +1078,9 @@ describe("Game", ()=> {
             class PlayableOne extends CBTestBelongsToPlayerPlayable {};
             class PlayableTwo extends CBTestBelongsToPlayerPlayable {};
             class PlayableThree extends CBTestBelongsToPlayerPlayable {};
-            var playable1 = new PlayableOne("grounds", player,["./../images/units/misc/one.png"], new Dimension2D(50, 50));
-            var playable2 = new PlayableOne("grounds", player,["./../images/units/misc/two.png"], new Dimension2D(50, 50));
-            var playable3 = new PlayableTwo("grounds", player,["./../images/units/misc/three.png"], new Dimension2D(50, 50));
+            var playable1 = new PlayableOne("grounds", game, player,["./../images/units/misc/one.png"], new Dimension2D(50, 50));
+            var playable2 = new PlayableOne("grounds", game, player,["./../images/units/misc/two.png"], new Dimension2D(50, 50));
+            var playable3 = new PlayableTwo("grounds", game, player,["./../images/units/misc/three.png"], new Dimension2D(50, 50));
             var hexId = map.getHex(4, 5);
         when:
             playable1.addToMap(hexId);
@@ -1100,12 +1096,12 @@ describe("Game", ()=> {
     it("Checks playable addition and removing on a Hex Side (not undoable)", () => {
         given:
             var { game, map, player } = createTinyGame();
-            let playable = new CBTestBelongsToPlayerPlayable("grounds", player,["./../images/units/misc/playable.png"], new Dimension2D(50, 50));
+            let playable = new CBTestBelongsToPlayerPlayable("grounds", game, player,["./../images/units/misc/playable.png"], new Dimension2D(50, 50));
             loadAllImages();
             var [hexLayer] = getLayers(game.board, "grounds");
             var hexId1 = map.getHex(4, 5);
             var hexId2 = map.getHex(4, 6);
-            var hexSideId = new CBHexSideId(hexId1, hexId2);
+            var hexSideId = new WHexSideId(hexId1, hexId2);
         when:
             resetDirectives(hexLayer);
             playable.addToMap(hexSideId);
@@ -1130,12 +1126,12 @@ describe("Game", ()=> {
     it("Checks playable addition and removing on a Hex Side (undoable)", () => {
         given:
             var { game, map, player } = createTinyGame();
-            let playable = new CBTestBelongsToPlayerPlayable("grounds", player,["./../images/units/misc/playable.png"], new Dimension2D(50, 50));
+            let playable = new CBTestBelongsToPlayerPlayable("grounds", game, player,["./../images/units/misc/playable.png"], new Dimension2D(50, 50));
             loadAllImages();
             var [hexLayer] = getLayers(game.board, "grounds");
             var hexId1 = map.getHex(4, 5);
             var hexId2 = map.getHex(4, 6);
-            var hexSideId = new CBHexSideId(hexId1, hexId2);
+            var hexSideId = new WHexSideId(hexId1, hexId2);
         when:
             resetDirectives(hexLayer);
             playable.appendToMap(hexSideId);
@@ -1200,7 +1196,7 @@ describe("Game", ()=> {
             playable1._select();
             game.setFocusedPlayable(playable1);
         when:
-            var action = new CBAction(game, playable1);
+            var action = new WAction(game, playable1);
             action.markAsStarted();
             playable1.launchAction(action);
             action.finalize();
@@ -1255,11 +1251,11 @@ describe("Game", ()=> {
             var call = 0;
             Mechanisms.addListener({
                 _processGlobalEvent(source, event, value) {
-                    if (source instanceof CBAction) call++;
+                    if (source instanceof WAction) call++;
                 }
             });
         when:
-            var action = new CBAction(game, playable);
+            var action = new WAction(game, playable);
             playable.launchAction(action);
         then:
             assert(playable.action).equalsTo(action);
@@ -1331,11 +1327,11 @@ describe("Game", ()=> {
             var call = 0;
             Mechanisms.addListener({
                 _processGlobalEvent(source, event, value) {
-                    if (source instanceof CBAction) call++;
+                    if (source instanceof WAction) call++;
                 }
             });
         when:
-            var action = new CBAction(game, playable);
+            var action = new WAction(game, playable);
             playable.launchAction(action);
         then:
             assert(playable.action).equalsTo(action);
@@ -1374,9 +1370,9 @@ describe("Game", ()=> {
 
     it("Checks activating a playable", () => {
         given:
-            var {game, playable, map} = createTinyGame();
+            var {game, playable} = createTinyGame();
         when:
-            playable.launchAction(new CBAction(game, playable))
+            playable.launchAction(new WAction(game, playable))
             playable.action.markAsStarted();
         then:
             assert(playable.isActivated()).isTrue();
@@ -1388,11 +1384,35 @@ describe("Game", ()=> {
             assert(playable.isPlayed()).isFalse();
     });
 
+    it("Checks playable's attributes manipulation", () => {
+        given:
+            var {game, playable} = createTinyGame();
+        when:
+            playable.setAttr("root.branch.leave", "green");
+        then:
+            assert(playable.getAttr("root.branch.leave")).equalsTo("green");
+        when:
+            playable.setAttr("root.branch.leave", "yellow");
+        then:
+            assert(playable.getAttr("root.branch.leave")).equalsTo("yellow");
+        when:
+            playable.setAttr("root.branch.size", 10);
+        then:
+            assert(playable.attrs).objectEqualsTo({
+                "root": {
+                    "branch": {
+                        "leave": "yellow",
+                        "size": 10
+                    }
+                }
+            });
+    });
+
     it("Checks playing a playable belonging to a player", () => {
         given:
             var {game, player, playable} = createTinyGame();
         when:
-            playable.launchAction(new CBAction(game, playable));
+            playable.launchAction(new WAction(game, playable));
             playable.setPlayed();
             paint(game);
             loadAllImages(); // to load actiondone.png
@@ -1406,7 +1426,7 @@ describe("Game", ()=> {
             assert(playable.isActivated()).isFalse();
             assert(playable.isPlayed()).isFalse();
         when:
-            playable.launchAction(new CBAction(game, playable));
+            playable.launchAction(new WAction(game, playable));
             playable.setPlayed();
         then:
             assert(playable.isActivated()).isTrue();
@@ -1523,7 +1543,7 @@ describe("Game", ()=> {
     it("Checks cleanup", () => {
         given:
             var {game, player, map} = createDisplayTinyGame();
-            let playable1 = new CBTestBelongsToPlayerPlayable("units", player,["./../images/units/misc/unit1.png"]);
+            let playable1 = new CBTestBelongsToPlayerPlayable("units", game, player,["./../images/units/misc/unit1.png"]);
             playable1.addToMap(map.getHex(5, 6));
             var [countersLayer, unitsLayer] = getLayers(game.board, "counters", "units");
         when:
@@ -1564,12 +1584,12 @@ describe("Game", ()=> {
             var [countersLayer] = getLayers(game.board, "counters");
         when:
             resetDirectives(countersLayer);
-            game.counterDisplay.setHorizontal(CBCounterDisplay.LEFT);
-            game.counterDisplay.setVertical(CBCounterDisplay.TOP);
+            game.counterDisplay.setHorizontal(WCounterDisplay.LEFT);
+            game.counterDisplay.setVertical(WCounterDisplay.TOP);
             paint(game);
         then:
-            assert(game.counterDisplay.horizontal).equalsTo(CBCounterDisplay.LEFT);
-            assert(game.counterDisplay.vertical).equalsTo(CBCounterDisplay.TOP);
+            assert(game.counterDisplay.horizontal).equalsTo(WCounterDisplay.LEFT);
+            assert(game.counterDisplay.vertical).equalsTo(WCounterDisplay.TOP);
             assert(getDirectives(countersLayer, 4)).arrayEqualsTo([
                 "save()",
                     "setTransform(0.4888, 0, 0, 0.4888, 61.0948, 61.0948)",
@@ -1584,11 +1604,11 @@ describe("Game", ()=> {
             ]);
         when:
             resetDirectives(countersLayer);
-            game.counterDisplay.setHorizontal(CBCounterDisplay.RIGHT);
+            game.counterDisplay.setHorizontal(WCounterDisplay.RIGHT);
             paint(game);
         then:
-            assert(game.counterDisplay.horizontal).equalsTo(CBCounterDisplay.RIGHT);
-            assert(game.counterDisplay.vertical).equalsTo(CBCounterDisplay.TOP);
+            assert(game.counterDisplay.horizontal).equalsTo(WCounterDisplay.RIGHT);
+            assert(game.counterDisplay.vertical).equalsTo(WCounterDisplay.TOP);
             assert(getDirectives(countersLayer, 4)).arrayEqualsTo([
                 "save()",
                     "setTransform(0.4888, 0, 0, 0.4888, 841.1535, 61.0948)",
@@ -1603,11 +1623,11 @@ describe("Game", ()=> {
             ]);
         when:
             resetDirectives(countersLayer);
-            game.counterDisplay.setVertical(CBCounterDisplay.BOTTOM);
+            game.counterDisplay.setVertical(WCounterDisplay.BOTTOM);
             paint(game);
         then:
-            assert(game.counterDisplay.horizontal).equalsTo(CBCounterDisplay.RIGHT);
-            assert(game.counterDisplay.vertical).equalsTo(CBCounterDisplay.BOTTOM);
+            assert(game.counterDisplay.horizontal).equalsTo(WCounterDisplay.RIGHT);
+            assert(game.counterDisplay.vertical).equalsTo(WCounterDisplay.BOTTOM);
             assert(getDirectives(countersLayer, 4)).arrayEqualsTo([
                 "save()",
                     "setTransform(0.4888, 0, 0, 0.4888, 841.1535, 738.9052)",
@@ -1622,11 +1642,11 @@ describe("Game", ()=> {
             ]);
         when:
             resetDirectives(countersLayer);
-            game.counterDisplay.setHorizontal(CBCounterDisplay.LEFT);
+            game.counterDisplay.setHorizontal(WCounterDisplay.LEFT);
             paint(game);
         then:
-            assert(game.counterDisplay.horizontal).equalsTo(CBCounterDisplay.LEFT);
-            assert(game.counterDisplay.vertical).equalsTo(CBCounterDisplay.BOTTOM);
+            assert(game.counterDisplay.horizontal).equalsTo(WCounterDisplay.LEFT);
+            assert(game.counterDisplay.vertical).equalsTo(WCounterDisplay.BOTTOM);
             assert(getDirectives(countersLayer, 4)).arrayEqualsTo([
                 "save()",
                     "setTransform(0.4888, 0, 0, 0.4888, 61.0948, 738.9052)",
@@ -1650,8 +1670,8 @@ describe("Game", ()=> {
             game.board.recenter(new Point2D(1, 1));
             paint(game);
         then:
-            game.counterDisplay.setHorizontal(CBCounterDisplay.LEFT);
-            game.counterDisplay.setVertical(CBCounterDisplay.TOP);
+            game.counterDisplay.setHorizontal(WCounterDisplay.LEFT);
+            game.counterDisplay.setVertical(WCounterDisplay.TOP);
             assert(getDirectives(countersLayer, 4)).arrayEqualsTo([
                 "save()",
                     "setTransform(0.4888, 0, 0, 0.4888, 61.0948, 738.9052)",
@@ -1666,11 +1686,11 @@ describe("Game", ()=> {
             ]);
         when:
             resetDirectives(countersLayer);
-            game.board.recenter(new Point2D(CBAbstractMap.WIDTH-1, CBAbstractMap.HEIGHT-1));
+            game.board.recenter(new Point2D(WAbstractMap.WIDTH-1, WAbstractMap.HEIGHT-1));
             paint(game);
         then:
-            game.counterDisplay.setHorizontal(CBCounterDisplay.RIGHT);
-            game.counterDisplay.setVertical(CBCounterDisplay.BOTTOM);
+            game.counterDisplay.setHorizontal(WCounterDisplay.RIGHT);
+            game.counterDisplay.setVertical(WCounterDisplay.BOTTOM);
             assert(getDirectives(countersLayer, 4)).arrayEqualsTo([
                 "save()",
                     "setTransform(0.4888, 0, 0, 0.4888, 61.0948, 61.0948)",

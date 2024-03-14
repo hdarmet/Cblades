@@ -2,22 +2,19 @@
 
 import {
     atan2, sumAngle, diffAngle, invertAngle
-} from "../geometry.js";
+} from "../board/geometry.js";
 import {
     AVLTree
-} from "../mechanisms.js";
+} from "../board/mechanisms.js";
 import {
-    CBHexId, CBHexSideId, distanceFromHexToHex
+    WHexId, WHexSideId, distanceFromHexToHex
 } from "./map.js";
-import {
-    CBMoveProfile
-} from "./unit.js";
 
 export function getOptionKey(hexLocation, angle) {
     return hexLocation.location.toString()+"-"+angle;
 }
 
-export class CBAbstractPathFinding {
+export class WAbstractPathFinding {
 
     constructor(start, startAngle, arrivals, costMove, costRotate, minimalCost, maxCost = -1) {
         this._search = this._createSearchTree();
@@ -78,7 +75,7 @@ export class CBAbstractPathFinding {
         console.assert(this._arrivals.length>0);
         let result = new Set();
         for (let arrival of this._arrivals) {
-            if (arrival.hexLocation instanceof CBHexId) {
+            if (arrival.hexLocation instanceof WHexId) {
                 result.add(arrival.hexLocation);
             }
             else {
@@ -287,10 +284,10 @@ export function hexSidePathFindingMixin(clazz) {
         }
 
         _distanceBetweenLocations(hexLocation1, hexLocation2) {
-            if (hexLocation1 instanceof CBHexId) {
+            if (hexLocation1 instanceof WHexId) {
                 return this._distanceBetweenHexAndHexSide(hexLocation2, hexLocation1);
             }
-            else if (hexLocation2 instanceof CBHexId) {
+            else if (hexLocation2 instanceof WHexId) {
                 return this._distanceBetweenHexAndHexSide(hexLocation1, hexLocation2);
             }
             else {
@@ -301,7 +298,7 @@ export function hexSidePathFindingMixin(clazz) {
         getCost(record, from, fromAngle, to, toAngle) {
             let cost = 0;
             if (!from.similar(to)) {
-                if (from.angle !== to.angle) to = new CBHexSideId(to.toHex, to.fromHex);
+                if (from.angle !== to.angle) to = new WHexSideId(to.toHex, to.fromHex);
                 let fcost = from.hasHex(to.fromHex) ? -1 : this._costMove(from.fromHex, to.fromHex);
                 let tcost = from.hasHex(to.toHex) ? -1 : this._costMove(from.toHex, to.toHex);
                 if (fcost === null || tcost === null) return null;
@@ -437,7 +434,7 @@ function createHexSideArrivalsOnHex(hexId, costMove) {
 }
 
 export function createHexArrivals(hexLocation, costMove) {
-    return hexLocation instanceof CBHexId ?
+    return hexLocation instanceof WHexId ?
         createHexArrivalsOnHex(hexLocation, costMove) :
         createHexArrivalsOnHexSide(hexLocation, costMove);
 }
@@ -507,7 +504,7 @@ function createHexSideArrivalsOnHexSide(hexSideId, costMove) {
 }
 
 export function createHexSideArrivals(hexLocation, costMove) {
-    return hexLocation instanceof CBHexId ?
+    return hexLocation instanceof WHexId ?
         createHexSideArrivalsOnHex(hexLocation, costMove) :
         createHexSideArrivalsOnHexSide(hexLocation, costMove);
 }
@@ -542,7 +539,7 @@ export function getImprovingNextMoves({
 
     return getPreferredNextMoves({
         start, startAngle,
-        arrivals: (start instanceof CBHexId) ?
+        arrivals: (start instanceof WHexId) ?
             createArrivalsFromHexes(arrivals) :
             createArrivalsFromHexSides(arrivals),
         costMove, costRotate,
@@ -583,7 +580,7 @@ export function getToBorderPreferredNextMoves({
 
     return getPreferredNextMoves({
         start, startAngle,
-        arrivals: (start instanceof CBHexId) ?
+        arrivals: (start instanceof WHexId) ?
             createHexBorderArrivals(arrivals) :
             createHexSideBorderArrivals(arrivals),
         costMove, costRotate,
@@ -599,10 +596,10 @@ export function getPreferredNextMoves({
      maxCost = -1,
      withAngle = false
  }) {
-    class GetPreferredNextMoveHexPathFinding extends hexPathFindingMixin(backwardMixin(CBAbstractPathFinding)) {}
-    class GetPreferredNextMoveHexSidePathFinding extends hexSidePathFindingMixin(backwardMixin(CBAbstractPathFinding)) {}
+    class GetPreferredNextMoveHexPathFinding extends hexPathFindingMixin(backwardMixin(WAbstractPathFinding)) {}
+    class GetPreferredNextMoveHexSidePathFinding extends hexSidePathFindingMixin(backwardMixin(WAbstractPathFinding)) {}
 
-    let pathFinding = (start instanceof CBHexId) ?
+    let pathFinding = (start instanceof WHexId) ?
         new GetPreferredNextMoveHexPathFinding(
             start, startAngle, arrivals,
             costMove, costRotate, minimalCost, maxCost) :
@@ -633,10 +630,10 @@ export function getPathCost({
     costGetter = record=>record.cost,
     maxCost = -1
 }) {
-    class GetPathCostHexPathFinding extends hexPathFindingMixin(backwardMixin(CBAbstractPathFinding)) {}
-    class GetPathCostHexSidePathFinding extends hexSidePathFindingMixin(backwardMixin(CBAbstractPathFinding)) {}
+    class GetPathCostHexPathFinding extends hexPathFindingMixin(backwardMixin(WAbstractPathFinding)) {}
+    class GetPathCostHexSidePathFinding extends hexSidePathFindingMixin(backwardMixin(WAbstractPathFinding)) {}
 
-    let pathFinding = (start instanceof CBHexId) ?
+    let pathFinding = (start instanceof WHexId) ?
         new GetPathCostHexPathFinding(
             start, startAngle,
             createHexArrivals(arrival, costMove),
@@ -658,8 +655,8 @@ export function getArrivalAreaCosts({
     costGetter = record=>record.cost,
     maxCost = -1
 }) {
-    class GetArrivalAreaCostsHexPathFinding extends hexPathFindingMixin(forwardMixin(CBAbstractPathFinding)) {}
-    class GetArrivalAreaCostsHexSidePathFinding extends hexSidePathFindingMixin(forwardMixin(CBAbstractPathFinding)) {}
+    class GetArrivalAreaCostsHexPathFinding extends hexPathFindingMixin(forwardMixin(WAbstractPathFinding)) {}
+    class GetArrivalAreaCostsHexSidePathFinding extends hexSidePathFindingMixin(forwardMixin(WAbstractPathFinding)) {}
 
     function createArrivalsFromHexes(hexes) {
         let result = [];
@@ -675,7 +672,7 @@ export function getArrivalAreaCosts({
             allArrivals.push(...arrival.hexes);
             allArrivals.push(...arrival.nearHexes.keys());
         }
-        let locationsToReach = stringifyHexLocations(pathFinding.start instanceof CBHexId ?
+        let locationsToReach = stringifyHexLocations(pathFinding.start instanceof WHexId ?
             new Set(allArrivals) :
             getHexSidesFromHexes(allArrivals)
         );
@@ -703,7 +700,7 @@ export function getArrivalAreaCosts({
         return minCost;
     }
 
-    let pathFinding = (start instanceof CBHexId) ?
+    let pathFinding = (start instanceof WHexId) ?
         new GetArrivalAreaCostsHexPathFinding(start, startAngle,
             createArrivalsFromHexes(arrivals),
             costMove, costRotate, minimalCost, maxCost) :
@@ -732,12 +729,12 @@ export function getInRangeMoves({
      costGetter = record=>record.cost,
      maxCost
  }) {
-    class GetPathCostToRangeHexPathFinding extends hexPathFindingMixin(backwardMixin(CBAbstractPathFinding)) {}
-    class GetPathCostToRangeHexSidePathFinding extends hexSidePathFindingMixin(backwardMixin(CBAbstractPathFinding)) {}
+    class GetPathCostToRangeHexPathFinding extends hexPathFindingMixin(backwardMixin(WAbstractPathFinding)) {}
+    class GetPathCostToRangeHexSidePathFinding extends hexSidePathFindingMixin(backwardMixin(WAbstractPathFinding)) {}
 
     function stopWhenStartNeighborhoodIsCovered(pathFinding) {
         let locationsToReach = new Set();
-        let hexLocations = pathFinding.start instanceof CBHexId ?
+        let hexLocations = pathFinding.start instanceof WHexId ?
             new Set(pathFinding._start.nearHexes.keys()) :
             getHexSidesFromHexes(pathFinding._start.nearHexes.keys());
         for (let hexLocation of hexLocations) {
@@ -758,9 +755,9 @@ export function getInRangeMoves({
         return neighborhood;
     }
 
-    let finder = new CBDistanceFinder(start, arrivals, maxCost, range);
-    let allowedOptions = (start instanceof CBHexId) ? finder.findHexes() : finder.findHexSides();
-    let pathFinding = (start instanceof CBHexId) ?
+    let finder = new WDistanceFinder(start, arrivals, maxCost, range);
+    let allowedOptions = (start instanceof WHexId) ? finder.findHexes() : finder.findHexSides();
+    let pathFinding = (start instanceof WHexId) ?
         new GetPathCostToRangeHexPathFinding(
             start, startAngle, allowedOptions,
             costMove, costRotate, minimalCost, maxCost) :
@@ -794,7 +791,7 @@ export function getInRangeMoves({
     return allowedMoves;
 }
 
-export class CBLineOfSight {
+export class WLineOfSight {
 
     constructor(startHex, targetHex) {
         this._path = this._buildPath(startHex, targetHex);
@@ -863,7 +860,7 @@ export class CBLineOfSight {
     }
 }
 
-export class CBDistanceFinder {
+export class WDistanceFinder {
 
     constructor(start, arrivals, distanceFromStart, distanceFromArrival) {
         this._start = start;
@@ -981,7 +978,7 @@ export class CBDistanceFinder {
             let nearHex = record.hex.getNearHex(sumAngle(angle, 90));
             let nearRecord = allRecords.get(nearHex);
             if (nearRecord && nearRecord.angles.has(angle)) {
-                let hexSide = new CBHexSideId(record.hex, nearRecord.hex);
+                let hexSide = new WHexSideId(record.hex, nearRecord.hex);
                 result.push({hexLocation:hexSide, angle});
             }
         }

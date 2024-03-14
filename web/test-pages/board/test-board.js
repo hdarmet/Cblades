@@ -2,16 +2,16 @@
 
 import {
     describe, it, before, assert, executeTimeouts
-} from "../jstest/jtest.js";
+} from "../../jstest/jtest.js";
 import {
     Point2D, Dimension2D, Matrix2D, Area2D
-} from "../jslib/geometry.js";
+} from "../../jslib/board/geometry.js";
 import {
     DAnimator, DImage, DLayer, DTranslateLayer, setDrawPlatform
-} from "../jslib/draw.js";
+} from "../../jslib/board/draw.js";
 import {
     Mechanisms, Memento
-} from "../jslib/mechanisms.js";
+} from "../../jslib/board/mechanisms.js";
 import {
     DArtifactAlphaAnimation,
     DArtifactRotateAnimation,
@@ -27,7 +27,7 @@ import {
     DRectArtifact,
     DComposedImageArtifact,
     DPedestalArtifact, DComposedElement, DScrollBoardAnimation
-} from "../jslib/board.js";
+} from "../../jslib/board/board.js";
 import {
     mockPlatform, getDirectives, resetDirectives, createEvent, loadAllImages, getLayers, assertDirectives
 } from "./mocks.js";

@@ -12,21 +12,21 @@
         CBScenarioEditorGame, CBEditorPlayer
     } from "../jslib/cblades/editor.js";
     import {
-        CBMap
-    } from "../jslib/cblades/map.js";
+        WMap
+    } from "../jslib/wargame/map.js";
     import {
         GameLoader
     } from "../jslib/cblades/loader.js";
     import {
         getParameterByName
-    } from "../jslib/draw.js";
+    } from "../jslib/board/draw.js";
     import {
         CBStakesCounter, CBSmokeCounter, CBFireCounter
     } from "../jslib/cblades/miscellaneous.js";
 
     let gameId = parseInt(getParameterByName("id"));
     let game = new CBScenarioEditorGame(gameId);
-    let map = new CBMap([]);
+    let map = new WMap([]);
     game.setMap(map);
     new GameLoader(game, (name, path)=>new CBEditorPlayer(name, path))
         .loadForEdition(gameId,

@@ -2,13 +2,13 @@
 
 import {
     DImage
-} from "../jslib/draw.js";
+} from "../../jslib/board/draw.js";
 import {
     assert
-} from "../jstest/jtest.js";
+} from "../../jstest/jtest.js";
 import {
     Dimension2D
-} from "../jslib/geometry.js";
+} from "../../jslib/board/geometry.js";
 
 export function round(v) {
     return Math.round(v*10000)/10000;

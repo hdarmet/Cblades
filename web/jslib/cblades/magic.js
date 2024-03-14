@@ -1,21 +1,21 @@
 'use strict'
 
 import {
-    CBHexCounter, CBHexCounterArtifact, CBLevelBuilder, RetractableArtifactMixin, RetractablePieceMixin
-} from "./playable.js";
+    WHexCounter, WHexCounterArtifact, WLevelBuilder, RetractableArtifactMixin, RetractablePieceMixin
+} from "../wargame/playable.js";
 import {
     Dimension2D
-} from "../geometry.js";
+} from "../board/geometry.js";
 import {
     Memento
-} from "../mechanisms.js";
+} from "../board/mechanisms.js";
 import {
     CarriableMixin,
     OptionArtifactMixin,
     OptionMixin
 } from "./unit.js";
 
-class SpellImageArtifact extends OptionArtifactMixin(CBHexCounterArtifact) {
+class SpellImageArtifact extends OptionArtifactMixin(WHexCounterArtifact) {
 
     get spell() {
         return this.piece;
@@ -34,12 +34,12 @@ class SpellImageArtifact extends OptionArtifactMixin(CBHexCounterArtifact) {
     }
 
     get layer() {
-        return this.piece.isOption() ? CBLevelBuilder.ULAYERS.OPTIONS : CBLevelBuilder.ULAYERS.SPELLS;
+        return this.piece.isOption() ? WLevelBuilder.ULAYERS.OPTIONS : WLevelBuilder.ULAYERS.SPELLS;
     }
 
 }
 
-export class CBSpell extends CarriableMixin(RetractablePieceMixin(CBHexCounter)) {
+export class CBSpell extends CarriableMixin(RetractablePieceMixin(WHexCounter)) {
 
     constructor(paths, wizard, spellLevel) {
         super("units", paths, CBSpell.DIMENSION);
@@ -330,7 +330,7 @@ export class CBArcanePentacleSpell extends HexTargetedMixin(CBSpell) {
     }
 
 }
-CBHexCounter.registerTokenType("arcane-pentacle", CBArcanePentacleSpell);
+WHexCounter.registerTokenType("arcane-pentacle", CBArcanePentacleSpell);
 
 export class CBArcaneCircleSpell extends HexTargetedMixin(CBSpell) {
 
@@ -365,7 +365,7 @@ export class CBArcaneCircleSpell extends HexTargetedMixin(CBSpell) {
     }
 
 }
-CBHexCounter.registerTokenType("arcane-circle", CBArcaneCircleSpell);
+WHexCounter.registerTokenType("arcane-circle", CBArcaneCircleSpell);
 
 export class CBMagicArrowSpell extends UnitTargetedMixin(CBSpell) {
 
@@ -417,7 +417,7 @@ export class CBMagicArrowSpell extends UnitTargetedMixin(CBSpell) {
     }
 
 }
-CBHexCounter.registerTokenType("magic-arrow", CBMagicArrowSpell);
+WHexCounter.registerTokenType("magic-arrow", CBMagicArrowSpell);
 
 export class CBArcaneSwordSpell extends UnitTargetedMixin(CBSpell) {
 
@@ -451,7 +451,7 @@ export class CBArcaneSwordSpell extends UnitTargetedMixin(CBSpell) {
         return new CBArcaneSwordSpell(context.get(specs.wizard), specs.level);
     }
 }
-CBHexCounter.registerTokenType("arcane-sword", CBArcaneSwordSpell);
+WHexCounter.registerTokenType("arcane-sword", CBArcaneSwordSpell);
 
 export class CBArcaneShieldSpell extends UnitTargetedMixin(CBSpell) {
 
@@ -486,7 +486,7 @@ export class CBArcaneShieldSpell extends UnitTargetedMixin(CBSpell) {
     }
 
 }
-CBHexCounter.registerTokenType("arcane-shield", CBArcaneShieldSpell);
+WHexCounter.registerTokenType("arcane-shield", CBArcaneShieldSpell);
 
 export class CBProtectionFromMagicSpell extends HexTargetedMixin(CBSpell) {
 
@@ -521,7 +521,7 @@ export class CBProtectionFromMagicSpell extends HexTargetedMixin(CBSpell) {
     }
 
 }
-CBHexCounter.registerTokenType("protection-magic", CBProtectionFromMagicSpell);
+WHexCounter.registerTokenType("protection-magic", CBProtectionFromMagicSpell);
 
 export class CBFirePentacleSpell extends HexTargetedMixin(CBSpell) {
 
@@ -556,7 +556,7 @@ export class CBFirePentacleSpell extends HexTargetedMixin(CBSpell) {
     }
 
 }
-CBHexCounter.registerTokenType("fire-pentacle", CBFirePentacleSpell);
+WHexCounter.registerTokenType("fire-pentacle", CBFirePentacleSpell);
 
 export class CBFireCircleSpell extends HexTargetedMixin(CBSpell) {
 
@@ -591,7 +591,7 @@ export class CBFireCircleSpell extends HexTargetedMixin(CBSpell) {
     }
 
 }
-CBHexCounter.registerTokenType("fire-circle", CBFireCircleSpell);
+WHexCounter.registerTokenType("fire-circle", CBFireCircleSpell);
 
 export class CBFireballSpell extends UnitTargetedMixin(CBSpell) {
 
@@ -643,7 +643,7 @@ export class CBFireballSpell extends UnitTargetedMixin(CBSpell) {
     }
 
 }
-CBHexCounter.registerTokenType("fire-ball", CBFireballSpell);
+WHexCounter.registerTokenType("fire-ball", CBFireballSpell);
 
 export class CBFireswordSpell extends UnitTargetedMixin(CBSpell) {
 
@@ -678,7 +678,7 @@ export class CBFireswordSpell extends UnitTargetedMixin(CBSpell) {
     }
 
 }
-CBHexCounter.registerTokenType("fire-sword", CBFireswordSpell);
+WHexCounter.registerTokenType("fire-sword", CBFireswordSpell);
 
 export class CBBlazeSpell extends HexTargetedMixin(CBSpell) {
 
@@ -713,7 +713,7 @@ export class CBBlazeSpell extends HexTargetedMixin(CBSpell) {
     }
 
 }
-CBHexCounter.registerTokenType("blaze", CBBlazeSpell);
+WHexCounter.registerTokenType("blaze", CBBlazeSpell);
 
 export class CBRainFireSpell extends HexTargetedMixin(CBSpell) {
 
@@ -748,7 +748,7 @@ export class CBRainFireSpell extends HexTargetedMixin(CBSpell) {
     }
 
 }
-CBHexCounter.registerTokenType("rain-fire", CBRainFireSpell);
+WHexCounter.registerTokenType("rain-fire", CBRainFireSpell);
 
 CBSpell.laboratory = new Map([
     ["arcanePentacle1",

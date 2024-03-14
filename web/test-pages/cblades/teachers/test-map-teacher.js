@@ -4,12 +4,12 @@ import {
     assert, before, describe, it
 } from "../../../jstest/jtest.js";
 import {
-    CBHex,
-    CBHexSideId, CBMap
-} from "../../../jslib/cblades/map.js";
+    WHex,
+    WHexSideId, WMap
+} from "../../../jslib/wargame/map.js";
 import {
-    CBGame
-} from "../../../jslib/cblades/playable.js";
+    WGame
+} from "../../../jslib/wargame/playable.js";
 import {
     CBUnitPlayer,
     CBCharacter,
@@ -25,11 +25,11 @@ import {
 } from "../../../jslib/cblades/teachers/map-teacher.js";
 import {
     setDrawPlatform
-} from "../../../jslib/draw.js";
+} from "../../../jslib/board/draw.js";
 import {
     mergeClasses,
     mockPlatform
-} from "../../mocks.js";
+} from "../../board/mocks.js";
 import {
     banner1, banner2
 } from "../game-examples.js";
@@ -43,10 +43,10 @@ describe("Map teacher", ()=> {
     let Arbitrator = mergeClasses(CBMapTeacher);
 
     function createTinyGame() {
-        let game = new CBGame(1);
+        let game = new WGame(1);
         let arbitrator = new Arbitrator();
         game.setArbitrator(arbitrator);
-        let map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+        let map = new WMap([{path:"./../images/maps/map.png", col:0, row:0}]);
         game.setMap(map);
         game.start();
         return {game, arbitrator, map};
@@ -91,19 +91,19 @@ describe("Map teacher", ()=> {
 
         getMovementCostOnHex(hex) {
             switch (hex.type) {
-                case CBHex.HEX_TYPES.OUTDOOR_ROUGH: return {type:CBMoveProfile.COST_TYPE.ADD, value:1.5};
-                case CBHex.HEX_TYPES.OUTDOOR_DIFFICULT: return {type:CBMoveProfile.COST_TYPE.MINIMAL_MOVE};
-                case CBHex.HEX_TYPES.IMPASSABLE: return {type:CBMoveProfile.COST_TYPE.IMPASSABLE};
+                case WHex.HEX_TYPES.OUTDOOR_ROUGH: return {type:CBMoveProfile.COST_TYPE.ADD, value:1.5};
+                case WHex.HEX_TYPES.OUTDOOR_DIFFICULT: return {type:CBMoveProfile.COST_TYPE.MINIMAL_MOVE};
+                case WHex.HEX_TYPES.IMPASSABLE: return {type:CBMoveProfile.COST_TYPE.IMPASSABLE};
             }
             return {type:CBMoveProfile.COST_TYPE.ADD, value:1};
         }
 
         getMovementCostOnHexSide(hexSide) {
             switch (hexSide.type) {
-                case CBHex.HEXSIDE_TYPES.EASY: return {type:CBMoveProfile.COST_TYPE.SET, value:0.5};
-                case CBHex.HEXSIDE_TYPES.DIFFICULT: return {type:CBMoveProfile.COST_TYPE.ADD, value:0.5};
-                case CBHex.HEXSIDE_TYPES.CLIMB: return {type:CBMoveProfile.COST_TYPE.MINIMAL_MOVE};
-                case CBHex.HEXSIDE_TYPES.WALL: return {type:CBMoveProfile.COST_TYPE.IMPASSABLE};
+                case WHex.HEXSIDE_TYPES.EASY: return {type:CBMoveProfile.COST_TYPE.SET, value:0.5};
+                case WHex.HEXSIDE_TYPES.DIFFICULT: return {type:CBMoveProfile.COST_TYPE.ADD, value:0.5};
+                case WHex.HEXSIDE_TYPES.CLIMB: return {type:CBMoveProfile.COST_TYPE.MINIMAL_MOVE};
+                case WHex.HEXSIDE_TYPES.WALL: return {type:CBMoveProfile.COST_TYPE.IMPASSABLE};
             }
             return {type:CBMoveProfile.COST_TYPE.ADD, value:0};
         }
@@ -123,7 +123,7 @@ describe("Map teacher", ()=> {
     }
 
     function create2Players4UnitsTinyGame() {
-        let game = new CBGame(1);
+        let game = new WGame(1);
         let arbitrator = new Arbitrator();
         game.setArbitrator(arbitrator);
         let player1 = new CBUnitPlayer("player1", "/players/player1.png");
@@ -132,7 +132,7 @@ describe("Map teacher", ()=> {
         let player2 = new CBUnitPlayer("player2", "/players/player2.png");
         game.addPlayer(player2);
         let wing2 = new CBWing(player2, banner2);
-        let map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+        let map = new WMap([{path:"./../images/maps/map.png", col:0, row:0}]);
         game.setMap(map);
         let unitType1 = new CBTestUnitType("unit1", ["./../images/units/misc/unit1.png", "./../images/units/misc/unit1b.png"])
         let unit11 = new CBTroop(game, unitType1, wing1);
@@ -155,14 +155,14 @@ describe("Map teacher", ()=> {
     }
 
     function create2PlayersTinyFormationGame() {
-        let game = new CBGame(1);
+        let game = new WGame(1);
         let arbitrator = new Arbitrator();
         game.setArbitrator(arbitrator);
         let player1 = new CBUnitPlayer("player1", "/players/player1.png");
         game.addPlayer(player1);
         let player2 = new CBUnitPlayer("player2", "/players/player2.png");
         game.addPlayer(player2);
-        let map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+        let map = new WMap([{path:"./../images/maps/map.png", col:0, row:0}]);
         game.setMap(map);
         let wing1 = new CBWing(player1, banner1);
         let unitType1 = new CBTestUnitType("unit1", ["./../images/units/misc/unit1.png", "./../images/units/misc/unit1b.png"]);
@@ -176,7 +176,7 @@ describe("Map teacher", ()=> {
             ["./../)images/units/misc/formation2.png", "./../images/units/misc/formation2b.png"]);
         let formation2 = new CBFormation(game, unitType2, wing2);
         formation2.angle = 90;
-        formation2.addToMap(new CBHexSideId(map.getHex(6, 8), map.getHex(6, 7)));
+        formation2.addToMap(new WHexSideId(map.getHex(6, 8), map.getHex(6, 7)));
         game.start();
         return {game, arbitrator, map, unit1, unit2, formation2, wing1, wing2, player1, player2};
     }
@@ -333,7 +333,7 @@ describe("Map teacher", ()=> {
     });
 
     function create2Players1Formation2TroopsTinyGame() {
-        let game = new CBGame(1);
+        let game = new WGame(1);
         let arbitrator = new Arbitrator();
         game.setArbitrator(arbitrator);
         let player1 = new CBUnitPlayer("player1", "/players/player1.png");
@@ -342,7 +342,7 @@ describe("Map teacher", ()=> {
         let player2 = new CBUnitPlayer("player2", "/players/player2.png");
         game.addPlayer(player2);
         let wing2 = new CBWing(player2, banner2);
-        let map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+        let map = new WMap([{path:"./../images/maps/map.png", col:0, row:0}]);
         game.setMap(map);
         let unitType1 = new CBTestUnitType("unit1",
             ["./../images/units/misc/unit1.png", "./../images/units/misc/unit1b.png"],
@@ -352,7 +352,7 @@ describe("Map teacher", ()=> {
                 "./../images/units/misc/formation3.png", "./../images/units/misc/formation3b.png"
             ])
         let formation1 = new CBFormation(game, unitType1, wing1);
-        formation1.addToMap(new CBHexSideId(map.getHex(5, 8), map.getHex(5, 7)));
+        formation1.addToMap(new WHexSideId(map.getHex(5, 8), map.getHex(5, 7)));
         formation1.angle = 90;
         let leaderType1 = new CBTestUnitType("leader1", ["./../images/units/misc/leader1.png", "./../images/units/misc/leader1b.png"])
         let leader11 = new CBCharacter(game, leaderType1, wing1);
@@ -373,7 +373,7 @@ describe("Map teacher", ()=> {
         given:
             var {arbitrator, formation1, map} = create2Players1Formation2TroopsTinyGame();
         when:
-            formation1.move(new CBHexSideId(map.getHex(3, 4), map.getHex(3, 5)));
+            formation1.move(new WHexSideId(map.getHex(3, 4), map.getHex(3, 5)));
             var zones = arbitrator.getUnitAdjacentZone(formation1);
         then:
             assertInZone(zones, 0, 3, 3);
@@ -390,7 +390,7 @@ describe("Map teacher", ()=> {
         given:
             var {arbitrator, formation1, map} = create2Players1Formation2TroopsTinyGame();
         when:
-            formation1.move(new CBHexSideId(map.getHex(3, 4), map.getHex(3, 5)));
+            formation1.move(new WHexSideId(map.getHex(3, 4), map.getHex(3, 5)));
             var zones = arbitrator.getUnitForwardZone(formation1);
         then:
             assertNotInZone(zones, 0);
@@ -407,7 +407,7 @@ describe("Map teacher", ()=> {
         given:
             var {arbitrator, formation1, map} = create2Players1Formation2TroopsTinyGame();
         when:
-            formation1.move(new CBHexSideId(map.getHex(3, 4), map.getHex(3, 5)));
+            formation1.move(new WHexSideId(map.getHex(3, 4), map.getHex(3, 5)));
             var zones = arbitrator.getUnitBackwardZone(formation1);
         then:
             assertNotInZone(zones, 0, 3, 3);
@@ -426,11 +426,11 @@ describe("Map teacher", ()=> {
         then:
             assert(arbitrator.getTerrainCrossCost(unit12, 60)).objectEqualsTo({type:CBMoveProfile.COST_TYPE.ADD, value:0});
         when:
-            unit12.hexLocation.toward(60).type = CBHex.HEXSIDE_TYPES.CLIMB;
+            unit12.hexLocation.toward(60).type = WHex.HEXSIDE_TYPES.CLIMB;
         then:
             assert(arbitrator.getTerrainCrossCost(unit12, 60)).objectEqualsTo({type:CBMoveProfile.COST_TYPE.MINIMAL_MOVE});
         when:
-            unit12.hexLocation.toward(60).type = CBHex.HEXSIDE_TYPES.WALL;
+            unit12.hexLocation.toward(60).type = WHex.HEXSIDE_TYPES.WALL;
         then:
             assert(arbitrator.getTerrainCrossCost(unit12, 60)).objectEqualsTo({type:CBMoveProfile.COST_TYPE.IMPASSABLE});
     });
@@ -441,15 +441,15 @@ describe("Map teacher", ()=> {
         then:
             assert(arbitrator.getTerrainMoveCost(unit12, 60)).objectEqualsTo({type:CBMoveProfile.COST_TYPE.ADD, value:1});
         when:
-            unit12.hexLocation.toward(60).type = CBHex.HEXSIDE_TYPES.EASY;
+            unit12.hexLocation.toward(60).type = WHex.HEXSIDE_TYPES.EASY;
         then:
             assert(arbitrator.getTerrainMoveCost(unit12, 60)).objectEqualsTo({type:CBMoveProfile.COST_TYPE.SET, value:0.5});
         when:
-            unit12.hexLocation.toward(60).type = CBHex.HEXSIDE_TYPES.CLIMB;
+            unit12.hexLocation.toward(60).type = WHex.HEXSIDE_TYPES.CLIMB;
         then:
             assert(arbitrator.getTerrainMoveCost(unit12, 60)).objectEqualsTo({type:CBMoveProfile.COST_TYPE.MINIMAL_MOVE});
         when:
-            unit12.hexLocation.toward(60).type = CBHex.HEXSIDE_TYPES.WALL;
+            unit12.hexLocation.toward(60).type = WHex.HEXSIDE_TYPES.WALL;
         then:
             assert(arbitrator.getTerrainMoveCost(unit12, 60)).objectEqualsTo({type:CBMoveProfile.COST_TYPE.IMPASSABLE});
     });
@@ -467,11 +467,11 @@ describe("Map teacher", ()=> {
         then:
             assert(arbitrator.getFormationTerrainMoveCost(formation1, 60)).objectEqualsTo({type:CBMoveProfile.COST_TYPE.ADD, value:1});
         when:
-            formation1.hexLocation.fromHex.getNearHex(60).type = CBHex.HEX_TYPES.OUTDOOR_DIFFICULT;
+            formation1.hexLocation.fromHex.getNearHex(60).type = WHex.HEX_TYPES.OUTDOOR_DIFFICULT;
         then:
             assert(arbitrator.getFormationTerrainMoveCost(formation1, 60)).objectEqualsTo({type:CBMoveProfile.COST_TYPE.MINIMAL_MOVE});
         when:
-            formation1.hexLocation.fromHex.getNearHex(60).type = CBHex.HEX_TYPES.IMPASSABLE;
+            formation1.hexLocation.fromHex.getNearHex(60).type = WHex.HEX_TYPES.IMPASSABLE;
         then:
             assert(arbitrator.getFormationTerrainMoveCost(formation1, 60)).objectEqualsTo({type:CBMoveProfile.COST_TYPE.IMPASSABLE});
     });
@@ -493,21 +493,21 @@ describe("Map teacher", ()=> {
     it("Checks if a hex is clear", () => {
         given:
             var {arbitrator, map} = createTinyGame();
-            map.getHex(3, 0).type = CBHex.HEX_TYPES.OUTDOOR_CLEAR;
-            map.getHex(3, 1).type = CBHex.HEX_TYPES.OUTDOOR_ROUGH;
-            map.getHex(3, 2).type = CBHex.HEX_TYPES.OUTDOOR_DIFFICULT;
-            map.getHex(3, 3).type = CBHex.HEX_TYPES.OUTDOOR_CLEAR_FLAMMABLE;
-            map.getHex(3, 4).type = CBHex.HEX_TYPES.OUTDOOR_ROUGH_FLAMMABLE;
-            map.getHex(3, 5).type = CBHex.HEX_TYPES.OUTDOOR_DIFFICULT_FLAMMABLE;
-            map.getHex(3, 6).type = CBHex.HEX_TYPES.WATER;
-            map.getHex(3, 7).type = CBHex.HEX_TYPES.LAVA;
-            map.getHex(3, 8).type = CBHex.HEX_TYPES.IMPASSABLE;
-            map.getHex(4, 1).type = CBHex.HEX_TYPES.CAVE_CLEAR;
-            map.getHex(4, 2).type = CBHex.HEX_TYPES.CAVE_ROUGH;
-            map.getHex(4, 3).type = CBHex.HEX_TYPES.CAVE_DIFFICULT;
-            map.getHex(4, 4).type = CBHex.HEX_TYPES.CAVE_CLEAR_FLAMMABLE;
-            map.getHex(4, 5).type = CBHex.HEX_TYPES.CAVE_ROUGH_FLAMMABLE;
-            map.getHex(4, 6).type = CBHex.HEX_TYPES.CAVE_DIFFICULT_FLAMMABLE;
+            map.getHex(3, 0).type = WHex.HEX_TYPES.OUTDOOR_CLEAR;
+            map.getHex(3, 1).type = WHex.HEX_TYPES.OUTDOOR_ROUGH;
+            map.getHex(3, 2).type = WHex.HEX_TYPES.OUTDOOR_DIFFICULT;
+            map.getHex(3, 3).type = WHex.HEX_TYPES.OUTDOOR_CLEAR_FLAMMABLE;
+            map.getHex(3, 4).type = WHex.HEX_TYPES.OUTDOOR_ROUGH_FLAMMABLE;
+            map.getHex(3, 5).type = WHex.HEX_TYPES.OUTDOOR_DIFFICULT_FLAMMABLE;
+            map.getHex(3, 6).type = WHex.HEX_TYPES.WATER;
+            map.getHex(3, 7).type = WHex.HEX_TYPES.LAVA;
+            map.getHex(3, 8).type = WHex.HEX_TYPES.IMPASSABLE;
+            map.getHex(4, 1).type = WHex.HEX_TYPES.CAVE_CLEAR;
+            map.getHex(4, 2).type = WHex.HEX_TYPES.CAVE_ROUGH;
+            map.getHex(4, 3).type = WHex.HEX_TYPES.CAVE_DIFFICULT;
+            map.getHex(4, 4).type = WHex.HEX_TYPES.CAVE_CLEAR_FLAMMABLE;
+            map.getHex(4, 5).type = WHex.HEX_TYPES.CAVE_ROUGH_FLAMMABLE;
+            map.getHex(4, 6).type = WHex.HEX_TYPES.CAVE_DIFFICULT_FLAMMABLE;
         then:
             assert(arbitrator.isClearGround(map.getHex(3, 0))).isTrue();
             assert(arbitrator.isClearGround(map.getHex(3, 1))).isFalse();
@@ -529,21 +529,21 @@ describe("Map teacher", ()=> {
     it("Checks if a hex is rough", () => {
         given:
             var {arbitrator, map} = createTinyGame();
-            map.getHex(3, 0).type = CBHex.HEX_TYPES.OUTDOOR_CLEAR;
-            map.getHex(3, 1).type = CBHex.HEX_TYPES.OUTDOOR_ROUGH;
-            map.getHex(3, 2).type = CBHex.HEX_TYPES.OUTDOOR_DIFFICULT;
-            map.getHex(3, 3).type = CBHex.HEX_TYPES.OUTDOOR_CLEAR_FLAMMABLE;
-            map.getHex(3, 4).type = CBHex.HEX_TYPES.OUTDOOR_ROUGH_FLAMMABLE;
-            map.getHex(3, 5).type = CBHex.HEX_TYPES.OUTDOOR_DIFFICULT_FLAMMABLE;
-            map.getHex(3, 6).type = CBHex.HEX_TYPES.WATER;
-            map.getHex(3, 7).type = CBHex.HEX_TYPES.LAVA;
-            map.getHex(3, 8).type = CBHex.HEX_TYPES.IMPASSABLE;
-            map.getHex(4, 1).type = CBHex.HEX_TYPES.CAVE_CLEAR;
-            map.getHex(4, 2).type = CBHex.HEX_TYPES.CAVE_ROUGH;
-            map.getHex(4, 3).type = CBHex.HEX_TYPES.CAVE_DIFFICULT;
-            map.getHex(4, 4).type = CBHex.HEX_TYPES.CAVE_CLEAR_FLAMMABLE;
-            map.getHex(4, 5).type = CBHex.HEX_TYPES.CAVE_ROUGH_FLAMMABLE;
-            map.getHex(4, 6).type = CBHex.HEX_TYPES.CAVE_DIFFICULT_FLAMMABLE;
+            map.getHex(3, 0).type = WHex.HEX_TYPES.OUTDOOR_CLEAR;
+            map.getHex(3, 1).type = WHex.HEX_TYPES.OUTDOOR_ROUGH;
+            map.getHex(3, 2).type = WHex.HEX_TYPES.OUTDOOR_DIFFICULT;
+            map.getHex(3, 3).type = WHex.HEX_TYPES.OUTDOOR_CLEAR_FLAMMABLE;
+            map.getHex(3, 4).type = WHex.HEX_TYPES.OUTDOOR_ROUGH_FLAMMABLE;
+            map.getHex(3, 5).type = WHex.HEX_TYPES.OUTDOOR_DIFFICULT_FLAMMABLE;
+            map.getHex(3, 6).type = WHex.HEX_TYPES.WATER;
+            map.getHex(3, 7).type = WHex.HEX_TYPES.LAVA;
+            map.getHex(3, 8).type = WHex.HEX_TYPES.IMPASSABLE;
+            map.getHex(4, 1).type = WHex.HEX_TYPES.CAVE_CLEAR;
+            map.getHex(4, 2).type = WHex.HEX_TYPES.CAVE_ROUGH;
+            map.getHex(4, 3).type = WHex.HEX_TYPES.CAVE_DIFFICULT;
+            map.getHex(4, 4).type = WHex.HEX_TYPES.CAVE_CLEAR_FLAMMABLE;
+            map.getHex(4, 5).type = WHex.HEX_TYPES.CAVE_ROUGH_FLAMMABLE;
+            map.getHex(4, 6).type = WHex.HEX_TYPES.CAVE_DIFFICULT_FLAMMABLE;
         then:
             assert(arbitrator.isRoughGround(map.getHex(3, 0))).isFalse();
             assert(arbitrator.isRoughGround(map.getHex(3, 1))).isTrue();
@@ -565,21 +565,21 @@ describe("Map teacher", ()=> {
     it("Checks if a hex is difficult", () => {
         given:
             var {arbitrator, map} = createTinyGame();
-            map.getHex(3, 0).type = CBHex.HEX_TYPES.OUTDOOR_CLEAR;
-            map.getHex(3, 1).type = CBHex.HEX_TYPES.OUTDOOR_ROUGH;
-            map.getHex(3, 2).type = CBHex.HEX_TYPES.OUTDOOR_DIFFICULT;
-            map.getHex(3, 3).type = CBHex.HEX_TYPES.OUTDOOR_CLEAR_FLAMMABLE;
-            map.getHex(3, 4).type = CBHex.HEX_TYPES.OUTDOOR_ROUGH_FLAMMABLE;
-            map.getHex(3, 5).type = CBHex.HEX_TYPES.OUTDOOR_DIFFICULT_FLAMMABLE;
-            map.getHex(3, 6).type = CBHex.HEX_TYPES.WATER;
-            map.getHex(3, 7).type = CBHex.HEX_TYPES.LAVA;
-            map.getHex(3, 8).type = CBHex.HEX_TYPES.IMPASSABLE;
-            map.getHex(4, 1).type = CBHex.HEX_TYPES.CAVE_CLEAR;
-            map.getHex(4, 2).type = CBHex.HEX_TYPES.CAVE_ROUGH;
-            map.getHex(4, 3).type = CBHex.HEX_TYPES.CAVE_DIFFICULT;
-            map.getHex(4, 4).type = CBHex.HEX_TYPES.CAVE_CLEAR_FLAMMABLE;
-            map.getHex(4, 5).type = CBHex.HEX_TYPES.CAVE_ROUGH_FLAMMABLE;
-            map.getHex(4, 6).type = CBHex.HEX_TYPES.CAVE_DIFFICULT_FLAMMABLE;
+            map.getHex(3, 0).type = WHex.HEX_TYPES.OUTDOOR_CLEAR;
+            map.getHex(3, 1).type = WHex.HEX_TYPES.OUTDOOR_ROUGH;
+            map.getHex(3, 2).type = WHex.HEX_TYPES.OUTDOOR_DIFFICULT;
+            map.getHex(3, 3).type = WHex.HEX_TYPES.OUTDOOR_CLEAR_FLAMMABLE;
+            map.getHex(3, 4).type = WHex.HEX_TYPES.OUTDOOR_ROUGH_FLAMMABLE;
+            map.getHex(3, 5).type = WHex.HEX_TYPES.OUTDOOR_DIFFICULT_FLAMMABLE;
+            map.getHex(3, 6).type = WHex.HEX_TYPES.WATER;
+            map.getHex(3, 7).type = WHex.HEX_TYPES.LAVA;
+            map.getHex(3, 8).type = WHex.HEX_TYPES.IMPASSABLE;
+            map.getHex(4, 1).type = WHex.HEX_TYPES.CAVE_CLEAR;
+            map.getHex(4, 2).type = WHex.HEX_TYPES.CAVE_ROUGH;
+            map.getHex(4, 3).type = WHex.HEX_TYPES.CAVE_DIFFICULT;
+            map.getHex(4, 4).type = WHex.HEX_TYPES.CAVE_CLEAR_FLAMMABLE;
+            map.getHex(4, 5).type = WHex.HEX_TYPES.CAVE_ROUGH_FLAMMABLE;
+            map.getHex(4, 6).type = WHex.HEX_TYPES.CAVE_DIFFICULT_FLAMMABLE;
         then:
             assert(arbitrator.isDifficultGround(map.getHex(3, 0))).isFalse();
             assert(arbitrator.isDifficultGround(map.getHex(3, 1))).isFalse();
@@ -601,11 +601,11 @@ describe("Map teacher", ()=> {
     it("Checks if a hex side is clear", () => {
         given:
             var {arbitrator, map} = createTinyGame();
-            map.getHex(3, 0).toward(60).type = CBHex.HEXSIDE_TYPES.NORMAL;
-            map.getHex(3, 1).toward(60).type = CBHex.HEXSIDE_TYPES.EASY;
-            map.getHex(3, 2).toward(60).type = CBHex.HEXSIDE_TYPES.DIFFICULT;
-            map.getHex(3, 3).toward(60).type = CBHex.HEXSIDE_TYPES.CLIMB;
-            map.getHex(3, 4).toward(60).type = CBHex.HEXSIDE_TYPES.WALL;
+            map.getHex(3, 0).toward(60).type = WHex.HEXSIDE_TYPES.NORMAL;
+            map.getHex(3, 1).toward(60).type = WHex.HEXSIDE_TYPES.EASY;
+            map.getHex(3, 2).toward(60).type = WHex.HEXSIDE_TYPES.DIFFICULT;
+            map.getHex(3, 3).toward(60).type = WHex.HEXSIDE_TYPES.CLIMB;
+            map.getHex(3, 4).toward(60).type = WHex.HEXSIDE_TYPES.WALL;
         then:
             assert(arbitrator.isClearHexSide(map.getHex(3, 0).toward(60))).isTrue();
             assert(arbitrator.isClearHexSide(map.getHex(3, 1).toward(60))).isTrue();
@@ -617,11 +617,11 @@ describe("Map teacher", ()=> {
     it("Checks if a hex side is difficult", () => {
         given:
             var {arbitrator, map} = createTinyGame();
-            map.getHex(3, 0).toward(60).type = CBHex.HEXSIDE_TYPES.NORMAL;
-            map.getHex(3, 1).toward(60).type = CBHex.HEXSIDE_TYPES.EASY;
-            map.getHex(3, 2).toward(60).type = CBHex.HEXSIDE_TYPES.DIFFICULT;
-            map.getHex(3, 3).toward(60).type = CBHex.HEXSIDE_TYPES.CLIMB;
-            map.getHex(3, 4).toward(60).type = CBHex.HEXSIDE_TYPES.WALL;
+            map.getHex(3, 0).toward(60).type = WHex.HEXSIDE_TYPES.NORMAL;
+            map.getHex(3, 1).toward(60).type = WHex.HEXSIDE_TYPES.EASY;
+            map.getHex(3, 2).toward(60).type = WHex.HEXSIDE_TYPES.DIFFICULT;
+            map.getHex(3, 3).toward(60).type = WHex.HEXSIDE_TYPES.CLIMB;
+            map.getHex(3, 4).toward(60).type = WHex.HEXSIDE_TYPES.WALL;
         then:
             assert(arbitrator.isDifficultHexSide(map.getHex(3, 0).toward(60))).isFalse();
             assert(arbitrator.isDifficultHexSide(map.getHex(3, 1).toward(60))).isFalse();
@@ -633,11 +633,11 @@ describe("Map teacher", ()=> {
     it("Checks if a hex side is impassable", () => {
         given:
             var {arbitrator, map} = createTinyGame();
-            map.getHex(3, 0).toward(60).type = CBHex.HEXSIDE_TYPES.NORMAL;
-            map.getHex(3, 1).toward(60).type = CBHex.HEXSIDE_TYPES.EASY;
-            map.getHex(3, 2).toward(60).type = CBHex.HEXSIDE_TYPES.DIFFICULT;
-            map.getHex(3, 3).toward(60).type = CBHex.HEXSIDE_TYPES.CLIMB;
-            map.getHex(3, 4).toward(60).type = CBHex.HEXSIDE_TYPES.WALL;
+            map.getHex(3, 0).toward(60).type = WHex.HEXSIDE_TYPES.NORMAL;
+            map.getHex(3, 1).toward(60).type = WHex.HEXSIDE_TYPES.EASY;
+            map.getHex(3, 2).toward(60).type = WHex.HEXSIDE_TYPES.DIFFICULT;
+            map.getHex(3, 3).toward(60).type = WHex.HEXSIDE_TYPES.CLIMB;
+            map.getHex(3, 4).toward(60).type = WHex.HEXSIDE_TYPES.WALL;
         then:
             assert(arbitrator.isImpassableHexSide(map.getHex(3, 0).toward(60))).isFalse();
             assert(arbitrator.isImpassableHexSide(map.getHex(3, 1).toward(60))).isFalse();

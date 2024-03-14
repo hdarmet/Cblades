@@ -2,7 +2,7 @@
 
 import {
     describe, it, before, assert, executeTimeouts
-} from "../jstest/jtest.js";
+} from "../../jstest/jtest.js";
 import {
     DDraw,
     DImage,
@@ -14,19 +14,19 @@ import {
     DAnimator,
     DLayer,
     DTranslateLayer, measureText, saveContext, restoreContext, resetContext, sendGet, sendPost, getParameterByName
-} from "../jslib/draw.js";
+} from "../../jslib/board/draw.js";
 import {
     Point2D, Matrix2D, Dimension2D
-} from "../jslib/geometry.js";
+} from "../../jslib/board/geometry.js";
 import {
     mockPlatform, getContextDirectives, resetContextDirectives, assertDirectives, ResponsePromise, MockPromise
 } from "./mocks.js";
 import {
     Mechanisms
-} from "../jslib/mechanisms.js";
+} from "../../jslib/board/mechanisms.js";
 import {
     requester
-} from "../jslib/request.js";
+} from "../../jslib/board/request.js";
 
 describe("Drawing fundamentals", ()=> {
 
@@ -1233,6 +1233,14 @@ describe("Drawing fundamentals", ()=> {
                 "draw on count 2 for tick 4",
                 "finalize"]);
             assert(DAnimator.isActive()).isFalse();
+    });
+
+    it("Checks a simple animation", () => {
+        when:
+            var animation = new DAnimation();
+        then:
+            assert(animation._draw(1, 1)).isFalse();
+            animation._finalize();  // Checks that _finalize exists and is callable.
     });
 
     it("Checks merge animations", () => {

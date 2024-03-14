@@ -7,38 +7,38 @@ import {
 import {
     DAnimation,
     DImage, setDrawPlatform
-} from "../../jslib/draw.js";
+} from "../../jslib/board/draw.js";
 import {
     mockPlatform
-} from "../mocks.js";
+} from "../board/mocks.js";
 import {
     Mechanisms, Memento
-} from "../../jslib/mechanisms.js";
+} from "../../jslib/board/mechanisms.js";
 import {
-    CBAnimation,
-    CBNextTurnSequenceElement,
-    CBSequence, CBSequenceElement
-} from "../../jslib/cblades/sequences.js";
+    WAnimation,
+    WNextTurnSequenceElement,
+    WSequence, WSequenceElement
+} from "../../jslib/wargame/sequences.js";
 import {
-    CBBasicPlayer,
-    CBGame
-} from "../../jslib/cblades/playable.js";
+    WPlayer,
+    WGame
+} from "../../jslib/wargame/playable.js";
 import {
-    CBMap
-} from "../../jslib/cblades/map.js";
+    WMap
+} from "../../jslib/wargame/map.js";
 import {
     executeAllAnimations
-} from "./interactive-tools.js";
+} from "../cblades/interactive-tools.js";
 
 export function createTinyGame() {
-    let game = new CBGame("Game");
-    var map = new CBMap([{path: "./../images/maps/map.png", col: 0, row: 0}]);
+    let game = new WGame("Game");
+    var map = new WMap([{path: "./../images/maps/map.png", col: 0, row: 0}]);
     game.setMap(map);
     game.start();
     return {game, map};
 }
 
-export class CBTestSequenceElement extends CBSequenceElement {
+export class CBTestSequenceElement extends WSequenceElement {
 
     constructor({id, game, data, type="test"}) {
         super({id, type, game});
@@ -82,9 +82,9 @@ export class CBTestSequenceElement extends CBSequenceElement {
     }
 
 }
-CBSequence.register("test", CBTestSequenceElement);
+WSequence.register("test", CBTestSequenceElement);
 
-export class CBTestAnimation extends CBAnimation {
+export class CBTestAnimation extends WAnimation {
 
     constructor({game, startTick, duration}) {
         super({game, startTick, duration});
@@ -110,54 +110,57 @@ describe("Sequences", ()=> {
     it("Checks sequence overall behavior (not undoable)", () => {
         given:
             var {game} = createTinyGame();
-            CBSequence.setCount(game, 0);
+            WSequence.setCount(game, 0);
         when:
-            var element1 = new CBTestSequenceElement({game, data:"d1"});
-            var element2 = new CBTestSequenceElement({game, data:"d2"});
-            CBSequence.addElement(game, element1);
-            CBSequence.addElement(game, element2);
-            var elements = CBSequence.getElements(game);
+            var element1 = new CBTestSequenceElement({game, data:"d1", type:"test1"});
+            var element2 = new CBTestSequenceElement({game, data:"d2", type:"test2"});
+            WSequence.addElement(game, element1);
+            WSequence.addElement(game, element2);
+            var elements = WSequence.getElements(game);
         then:
             assert(elements).arrayEqualsTo([element1, element2]);
+            assert(WSequence.getSequenceElement(elements, "test1")).equalsTo(element1);
+            assert(WSequence.getSequenceElement(elements, "test2")).equalsTo(element2);
+            assert(WSequence.getSequenceElement(elements, "inconnu")).isNotDefined();
         when:
-            CBSequence.getSequence(game).commit();
+            WSequence.getSequence(game).commit();
         then:
-            assert(CBSequence.getSequence(game).validated).arrayEqualsTo([
+            assert(WSequence.getSequence(game).validated).arrayEqualsTo([
                 element1, element2
             ]);
-            assert(CBSequence.getCount(game)).equalsTo(1);
-            assert(CBSequence.getValidatedCount(game)).equalsTo(0);
+            assert(WSequence.getCount(game)).equalsTo(1);
+            assert(WSequence.getValidatedCount(game)).equalsTo(0);
         when:
-            CBSequence.getSequence(game).acknowledge();
+            WSequence.getSequence(game).acknowledge();
         then:
-            assert(CBSequence.getSequence(game).validated).isNotDefined();
-            assert(CBSequence.getValidatedCount(game)).isNotDefined();
+            assert(WSequence.getSequence(game).validated.length).equalsTo(0);
+            assert(WSequence.getValidatedCount(game)).isNotDefined();
     });
 
     it("Checks sequence undo/redo behavior", () => {
         given:
             var {game} = createTinyGame();
-            CBSequence.setCount(game, 0);
+            WSequence.setCount(game, 0);
         when:
             var element1 = new CBTestSequenceElement({game, data:"d1"});
             var element2 = new CBTestSequenceElement({game, data:"d2"});
-            CBSequence.addElement(game, element1);
+            WSequence.addElement(game, element1);
             Memento.open()
-            CBSequence.appendElement(game, element2);
+            WSequence.appendElement(game, element2);
         then:
-            assert(CBSequence.getSequence(game).elements).arrayEqualsTo([
+            assert(WSequence.getSequence(game).elements).arrayEqualsTo([
                 element1, element2
             ]);
         when:
             Memento.undo();
         then:
-            assert(CBSequence.getSequence(game).elements).arrayEqualsTo([
+            assert(WSequence.getSequence(game).elements).arrayEqualsTo([
                 element1
             ]);
         when:
             Memento.redo();
         then:
-            assert(CBSequence.getSequence(game).elements).arrayEqualsTo([
+            assert(WSequence.getSequence(game).elements).arrayEqualsTo([
                 element1, element2
             ]);
     });
@@ -165,14 +168,14 @@ describe("Sequences", ()=> {
     it("Checks replay behavior", () => {
         given:
             var {game} = createTinyGame();
-            CBSequence.setCount(game, 0);
+            WSequence.setCount(game, 0);
         when:
             var element1 = new CBTestSequenceElement({game, data:"d1"});
             var element2 = new CBTestSequenceElement({game, data:"d2"});
-            CBSequence.addElement(game, element1);
-            CBSequence.addElement(game, element2);
+            WSequence.addElement(game, element1);
+            WSequence.addElement(game, element2);
             var finishReplay = false;
-            CBSequence.getSequence(game).replay(0, ()=>{ finishReplay = true; });
+            WSequence.getSequence(game).replay(0, ()=>{ finishReplay = true; });
             executeTimeouts();
         then:
             assert(element1._animation.factor).equalsTo(0);
@@ -191,12 +194,12 @@ describe("Sequences", ()=> {
     it("Checks sequence toSpecs", () => {
         given:
             var {game} = createTinyGame();
-            CBSequence.setCount(game, 0);
+            WSequence.setCount(game, 0);
             var element = new CBTestSequenceElement({game, data:"d1"});
-            CBSequence.addElement(game, element);
-            CBSequence.getSequence(game).commit();
+            WSequence.addElement(game, element);
+            WSequence.getSequence(game).commit();
         when:
-            var specs = CBSequence.getSequence(game).toSpecs();
+            var specs = WSequence.getSequence(game).toSpecs();
         then:
             assert(specs).objectEqualsTo({
                 "version":0,
@@ -209,7 +212,7 @@ describe("Sequences", ()=> {
 
     it("Checks sequence fromSpecs", () => {
         given:
-            var game = new CBGame("Game");
+            var game = new WGame("Game");
             var specs = {
                 "version":0,
                 "game":"Game", "count":0,
@@ -217,8 +220,8 @@ describe("Sequences", ()=> {
                     "version":0,"type":"test","content":{"data":"d1"}}
             ]};
         when:
-            CBSequence.setCount(game, 0);
-            var sequence = CBSequence.getSequence(game);
+            WSequence.setCount(game, 0);
+            var sequence = WSequence.getSequence(game);
             var context = new Map();
             context.game = game;
             sequence.fromSpecs(specs, context);
@@ -229,8 +232,8 @@ describe("Sequences", ()=> {
 
     it("Checks sequence fromSpecs", () => {
         then:
-            assert(CBSequence.getLauncher("test")).isDefined();
-            assert(CBSequence.getLauncher("next-turn")).isNotDefined();
+            assert(WSequence.getLauncher("test")).isDefined();
+            assert(WSequence.getLauncher("next-turn")).isNotDefined();
     });
             /**
     it("Checks unit state segment elements", () => {
@@ -585,24 +588,24 @@ describe("Sequences", ()=> {
     it("Checks next turn segment elements", () => {
         given:
             var {game} = createTinyGame();
-            let player1 = new CBBasicPlayer("player1", "p1.png");
+            let player1 = new WPlayer("player1", "p1.png");
             game.addPlayer(player1);
-            let player2 = new CBBasicPlayer("player2", "p2.png");
+            let player2 = new WPlayer("player2", "p2.png");
             game.addPlayer(player2);
-            CBSequence.setCount(game, 0);
+            WSequence.setCount(game, 0);
             var turnAnimation= false;
             game._endOfTurnCommand = {
                 animation() {turnAnimation = true;}
             }
         when:
-            CBSequence.appendElement(
-                game, new CBNextTurnSequenceElement(game)
+            WSequence.appendElement(
+                game, new WNextTurnSequenceElement(game)
             );
         then:
-            var element = CBSequence.getElements(game)[0];
+            var element = WSequence.getElements(game)[0];
             assert(element.equalsTo({
                 type: "next-turn",
-                game: new CBGame(2)
+                game: new WGame(2)
             })).isFalse();
             assert(element.equalsTo({
                 type: "next-turn",
@@ -624,7 +627,7 @@ describe("Sequences", ()=> {
         given:
             var {game} = createTinyGame();
         when:
-            var element = new CBNextTurnSequenceElement({game});
+            var element = new WNextTurnSequenceElement({game});
             var model = {
                 type: "next-turn",
                 game: game
@@ -632,7 +635,7 @@ describe("Sequences", ()=> {
         then:
             assert(element.equalsTo(model)).isTrue();
             assert(element.equalsTo({...model, type:"Other"})).isFalse();
-            assert(element.equalsTo({...model, game:new CBGame(2)})).isFalse();
+            assert(element.equalsTo({...model, game:new WGame(2)})).isFalse();
     });
 
 });

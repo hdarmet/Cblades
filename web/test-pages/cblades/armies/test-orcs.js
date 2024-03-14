@@ -2,18 +2,18 @@
 
 import {
     DImage, setDrawPlatform
-} from "../../../jslib/draw.js";
+} from "../../../jslib/board/draw.js";
 
 import {
     Mechanisms, Memento
-} from "../../../jslib/mechanisms.js";
+} from "../../../jslib/board/mechanisms.js";
 import {
     assert,
     before, describe, it
 } from "../../../jstest/jtest.js";
 import {
     mockPlatform
-} from "../../mocks.js";
+} from "../../board/mocks.js";
 import {
     GoblinLeader, GoblinSkirmisher, GoblinWolfRider, WizardLeader
 } from "../../../jslib/cblades/armies/orcs.js";

@@ -6,11 +6,11 @@ import {
 } from "../unit.js";
 import {
     diffAngle, invertAngle, sumAngle
-} from "../../geometry.js";
+} from "../../board/geometry.js";
 import {
-    CBHexId,
-    CBHexSideId, distanceFromHexLocationToHexLocation
-} from "../map.js";
+    WHexId,
+    WHexSideId, distanceFromHexLocationToHexLocation
+} from "../../wargame/map.js";
 import {
     getArrivalAreaCosts,
     getPathCost,
@@ -19,7 +19,7 @@ import {
     collectHexOptions,
     collectHexSideOptions,
     getHexSidesFromHexes, getToBorderPreferredNextMoves
-} from "../pathfinding.js";
+} from "../../wargame/pathfinding.js";
 
 export class CBMovementTeacher {
 
@@ -267,7 +267,7 @@ export class CBMovementTeacher {
         console.assert(cost.type===CBMoveProfile.COST_TYPE.ADD);
         let canGetTired = this.canGetTired(unit);
         let nearHexLocation = !unit.formationNature && angle%60 ?
-            new CBHexSideId(hexes[angle-30].hex, hexes[sumAngle(angle, 30)].hex) :
+            new WHexSideId(hexes[angle-30].hex, hexes[sumAngle(angle, 30)].hex) :
             hexes[angle].hex;
         if (unit.movementPoints>=cost.value) {
             return { hex:nearHexLocation, type:CBMovement.NORMAL, cost};
@@ -743,7 +743,7 @@ export class CBMovementTeacher {
                 costGetter
             });
 
-            let options = unit.hexLocation instanceof CBHexId ?
+            let options = unit.hexLocation instanceof WHexId ?
                 collectHexOptions(unit.hexLocation) :
                 collectHexSideOptions(unit.hexLocation, unit.angle);
             let hexLocations = [];

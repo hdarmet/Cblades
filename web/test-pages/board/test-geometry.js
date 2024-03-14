@@ -2,7 +2,7 @@
 
 import {
     describe, it, assert
-} from "../jstest/jtest.js";
+} from "../../jstest/jtest.js";
 import {
     Point2D,
     Dimension2D,
@@ -16,7 +16,7 @@ import {
     moyAngle,
     canonizeAngle,
     invertAngle, isAngleBetween
-} from "../jslib/geometry.js";
+} from "../../jslib/board/geometry.js";
 
 describe("Geometry", ()=> {
 

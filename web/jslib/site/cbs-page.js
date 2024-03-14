@@ -27,7 +27,7 @@ import {
 } from "../vitamin/vpage.js";
 import {
     sendGet
-} from "../draw.js";
+} from "../board/draw.js";
 
 export class CBSContact extends VList {
     constructor({address, phone, email, writeToUs}) {

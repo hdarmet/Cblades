@@ -5,7 +5,7 @@ import {
 } from "../weather.js";
 import {
     sumAngle
-} from "../../geometry.js";
+} from "../../board/geometry.js";
 
 export class CBMiscellaneousTeacher {
 

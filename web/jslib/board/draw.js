@@ -1203,12 +1203,6 @@ export class DAnimation {
     _finalize() {
     }
 
-    start() {
-        if (!this._canceled) {
-            this._start();
-        }
-    }
-
     init() {
         if (!this._canceled) {
             this._init();
@@ -1226,11 +1220,6 @@ export class DAnimation {
     cancel() {
         this.finalize();
         this._canceled = true;
-    }
-
-    setInitAction(action) {
-        this._initAction = action;
-        return this;
     }
 
     setFinalAction(action) {

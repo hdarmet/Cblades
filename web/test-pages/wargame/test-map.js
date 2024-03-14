@@ -5,31 +5,31 @@ import {
 } from "../../jstest/jtest.js";
 import {
     DImage, setDrawPlatform
-} from "../../jslib/draw.js";
+} from "../../jslib/board/draw.js";
 import {
     createEvent, getDirectives, getLayers, loadAllImages, mockPlatform
-} from "../mocks.js";
+} from "../board/mocks.js";
 import {
     Mechanisms, Memento
-} from "../../jslib/mechanisms.js";
+} from "../../jslib/board/mechanisms.js";
 import {
-    CBMap,
-    CBHexSideId,
-    CBHexVertexId,
-    CBHex,
-    CBHexId,
+    WMap,
+    WHexSideId,
+    WHexVertexId,
+    WHex,
+    WHexId,
     distanceFromHexToHex,
     distanceFromHexLocationToHexLocation,
-    MapImageArtifact,
-    CBBoard,
-    CBHexLocation
-} from "../../jslib/cblades/map.js";
+    WMapImageArtifact,
+    WBoard,
+    WHexLocation
+} from "../../jslib/wargame/map.js";
 import {
     DBoard, DSimpleLevel
-} from "../../jslib/board.js";
+} from "../../jslib/board/board.js";
 import {
     Dimension2D
-} from "../../jslib/geometry.js";
+} from "../../jslib/board/geometry.js";
 
 class CBTestGame {
     constructor() {
@@ -77,11 +77,11 @@ describe("Map", ()=> {
 
     it("Checks distance methods", () => {
         given:
-            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+            var map = new WMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             var hexId1 = map.getHex(3, 4);
             var hexId2 = map.getHex(5, 7);
             var hexId3 = map.getHex(8, 4);
-            var hexSide = new CBHexSideId(hexId2, hexId2.getNearHex(60));
+            var hexSide = new WHexSideId(hexId2, hexId2.getNearHex(60));
         then:
             assert(distanceFromHexToHex(hexId1, hexId2)).equalsTo(4);
             assert(distanceFromHexToHex(hexId2, hexId1)).equalsTo(4);
@@ -92,17 +92,17 @@ describe("Map", ()=> {
 
     it("Checks map general features", () => {
         given:
-            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+            var map = new WMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             var game = new CBTestGame();
             var hexId = map.getHex(3, 4);
-            var hexSideId = new CBHexSideId(map.getHex(3, 4), map.getHex(3, 5));
+            var hexSideId = new WHexSideId(map.getHex(3, 4), map.getHex(3, 5));
         when:
             game.setMap(map);
         then:
             assert(map.game).equalsTo(game);
             assert(hexId.game).equalsTo(game);
             assert(hexSideId.game).equalsTo(game);
-            assert(map.artifact).is(MapImageArtifact);
+            assert(map.artifact).is(WMapImageArtifact);
         when:
             var mouseEvent = createEvent("click", {offsetX:500, offsetY:410});
             mockPlatform.dispatchEvent(game.root, "click", mouseEvent);
@@ -112,7 +112,7 @@ describe("Map", ()=> {
 
     it("Checks board general features", () => {
         given:
-            var board = new CBBoard(
+            var board = new WBoard(
                 "board1", "./../images/maps/map.png", "./../images/maps/map-icon.png"
             );
             var game = new CBTestGame();
@@ -120,7 +120,7 @@ describe("Map", ()=> {
             game.setMap(board);
         then:
             assert(board.game).equalsTo(game);
-            assert(board.artifact).is(MapImageArtifact);
+            assert(board.artifact).is(WMapImageArtifact);
             assert(board.name).equalsTo("board1");
             assert(board.path).equalsTo("./../images/maps/map.png");
             assert(board.icon).equalsTo("./../images/maps/map-icon.png");
@@ -134,7 +134,7 @@ describe("Map", ()=> {
                 {path:"./../images/maps/map3.png", col:1, row:0},
                 {path:"./../images/maps/map4.png", col:1, row:1, invert:true}
             ];
-            var map = new CBMap(mapBoards);
+            var map = new WMap(mapBoards);
             var game = new CBTestGame();
         when:
             game.setMap(map);
@@ -175,7 +175,7 @@ describe("Map", ()=> {
 
     it("Checks map borders", () => {
         given:
-            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+            var map = new WMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             var game = new CBTestGame();
         when:
             game.setMap(map);
@@ -250,7 +250,7 @@ describe("Map", ()=> {
 
     it("Checks hexIds general features", () => {
         given:
-            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+            var map = new WMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             var hexId = map.getHex(3, 4);
         then:
             assert(hexId.hexes).arrayEqualsTo([hexId]);
@@ -263,7 +263,7 @@ describe("Map", ()=> {
             assert(hexId.similar(map.getHex(4, 3))).isFalse();
             assert(hexId.toString()).equalsTo("Hex(3, 4)");
             assert(hexId.equalsTo(hexId)).isTrue();
-            assert(hexId.equalsTo(new CBHexId(map, 3, 4))).isTrue();
+            assert(hexId.equalsTo(new WHexId(map, 3, 4))).isTrue();
             assert(hexId.equalsTo(map.getHex(4, 3))).isFalse();
             assert(hexId.equalsTo(null)).isFalse();
             assert(hexId.onMap).isTrue();
@@ -277,9 +277,9 @@ describe("Map", ()=> {
                 [map.getHex(2, 4), 240], [map.getHex(2, 3), 300]
             ]);
             assert(hexId.toSpecs()).objectEqualsTo({col: 3, row: 4});
-            assert(CBHexId.fromSpecs(map,{col: 3, row: 4})).equalsTo(hexId);
-            assert(CBHexLocation.toSpecs(hexId)).objectEqualsTo({col: 3, row: 4});
-            assert(CBHexLocation.fromSpecs(map,{col: 3, row: 4})).equalsTo(hexId);
+            assert(WHexId.fromSpecs(map,{col: 3, row: 4})).equalsTo(hexId);
+            assert(WHexLocation.toSpecs(hexId)).objectEqualsTo({col: 3, row: 4});
+            assert(WHexLocation.fromSpecs(map,{col: 3, row: 4})).equalsTo(hexId);
             assert(stringifyArray(hexId.borders)).arrayEqualsTo([
                 'point(-568.3333, -984.375)', 'point(-454.6667, -984.375)',
                 'point(-397.8333, -885.9375)', 'point(-454.6667, -787.5)',
@@ -289,7 +289,7 @@ describe("Map", ()=> {
 
     it("Checks hexIds on odd columns", () => {
         given:
-            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+            var map = new WMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             var hexId = map.getHex(3, 4);
         then:
             assert(hexId.location.toString()).equalsTo("point(-511.5, -885.9375)");
@@ -348,7 +348,7 @@ describe("Map", ()=> {
 
     it("Checks hexIds on even columns", () => {
         given:
-            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+            var map = new WMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             var hexId = map.getHex(4, 3);
         then:
             assert(hexId.location.toString()).equalsTo("point(-341, -984.375)");
@@ -402,7 +402,7 @@ describe("Map", ()=> {
 
     it("Checks when hexes are NOT near", () => {
         given:
-            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+            var map = new WMap([{path:"./../images/maps/map.png", col:0, row:0}]);
         when:
             var hexId = map.getHex(4, 3);
         then:
@@ -427,11 +427,11 @@ describe("Map", ()=> {
 
     it("Checks hexSideIds", () => {
         given:
-            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+            var map = new WMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             var hexId1 = map.getHex(4, 3);
             var hexId2 = hexId1.getNearHex(60);
             var hexId3 = hexId1.getNearHex(120);
-            var hexSide = new CBHexSideId(hexId1, hexId2);
+            var hexSide = new WHexSideId(hexId1, hexId2);
         then:
             assert(hexSide.hexes).arrayEqualsTo([hexId1, hexId2]);
             assert(hexSide.fromHex).equalsTo(hexId1);
@@ -444,18 +444,18 @@ describe("Map", ()=> {
             assert(hexSide.angle).equalsTo(60);
             assert(hexSide.col).equalsTo(4.5);
             assert(hexSide.row).equalsTo(3);
-            assert(CBHexSideId.equals(null, null)).isTrue();
-            assert(CBHexSideId.equals(null, hexSide)).isFalse();
-            assert(CBHexSideId.equals(hexSide, null)).isFalse();
-            assert(hexSide.similar(new CBHexSideId(hexId1, hexId2))).isTrue();
-            assert(CBHexSideId.equals(hexSide, new CBHexSideId(hexId1, hexId2))).isTrue();
-            assert(hexSide.similar(new CBHexSideId(hexId2, hexId1))).isTrue();
-            assert(CBHexSideId.equals(hexSide, new CBHexSideId(hexId2, hexId1))).isFalse();
-            assert(hexSide.similar(new CBHexSideId(hexId3, hexId1))).isFalse();
-            assert(CBHexSideId.equals(hexSide, new CBHexSideId(hexId3, hexId1))).isFalse();
+            assert(WHexSideId.equals(null, null)).isTrue();
+            assert(WHexSideId.equals(null, hexSide)).isFalse();
+            assert(WHexSideId.equals(hexSide, null)).isFalse();
+            assert(hexSide.similar(new WHexSideId(hexId1, hexId2))).isTrue();
+            assert(WHexSideId.equals(hexSide, new WHexSideId(hexId1, hexId2))).isTrue();
+            assert(hexSide.similar(new WHexSideId(hexId2, hexId1))).isTrue();
+            assert(WHexSideId.equals(hexSide, new WHexSideId(hexId2, hexId1))).isFalse();
+            assert(hexSide.similar(new WHexSideId(hexId3, hexId1))).isFalse();
+            assert(WHexSideId.equals(hexSide, new WHexSideId(hexId3, hexId1))).isFalse();
             assert(hexSide.equalsTo(hexSide)).isTrue();
-            assert(hexSide.equalsTo(new CBHexSideId(hexId1, hexId2))).isTrue();
-            assert(hexSide.equalsTo(new CBHexSideId(hexId2, hexId1))).isFalse();
+            assert(hexSide.equalsTo(new WHexSideId(hexId1, hexId2))).isTrue();
+            assert(hexSide.equalsTo(new WHexSideId(hexId2, hexId1))).isFalse();
             assert(hexSide.equalsTo(null)).isFalse();
             assert(hexSide.location.toString()).equalsTo("point(-255.75, -1033.5937)");
             assert(hexSide.isNearHex(map.getHex(7, 3))).isFalse();
@@ -477,9 +477,9 @@ describe("Map", ()=> {
                 'point(-170.5, -1082.8125)', 'point(-227.3333, -984.375)'
             ]);
             assert(hexSide.toSpecs()).objectEqualsTo({col: 4, row: 3, angle: 60});
-            assert(CBHexSideId.fromSpecs(map,{col: 4, row: 3, angle: 60})).equalsTo(hexSide);
-            assert(CBHexLocation.toSpecs(hexSide)).objectEqualsTo({col: 4, row: 3, angle: 60});
-            assert(CBHexLocation.fromSpecs(map,{col: 4, row: 3, angle: 60})).equalsTo(hexSide);
+            assert(WHexSideId.fromSpecs(map,{col: 4, row: 3, angle: 60})).equalsTo(hexSide);
+            assert(WHexLocation.toSpecs(hexSide)).objectEqualsTo({col: 4, row: 3, angle: 60});
+            assert(WHexLocation.fromSpecs(map,{col: 4, row: 3, angle: 60})).equalsTo(hexSide);
         when:
             var hexSide11 = hexId1.toward(60);
             var hexId4 = map.getHex(-1, 4);
@@ -491,14 +491,14 @@ describe("Map", ()=> {
 
     it("Checks hexSideIds face hexes on even column", () => {
         given:
-            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+            var map = new WMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             var hexId1 = map.getHex(4, 3);
             var hexId2 = hexId1.getNearHex(60);
             var hexId3 = hexId1.getNearHex(120);
             var hexId3 = hexId1.getNearHex(180);
-            var hexSide1 = new CBHexSideId(hexId1, hexId2);
-            var hexSide2 = new CBHexSideId(hexId1, hexId2);
-            var hexSide3 = new CBHexSideId(hexId1, hexId2);
+            var hexSide1 = new WHexSideId(hexId1, hexId2);
+            var hexSide2 = new WHexSideId(hexId1, hexId2);
+            var hexSide3 = new WHexSideId(hexId1, hexId2);
         then:
             assert(hexSide1.getFaceHex(330).toString()).equalsTo("Hex(4, 2)");
             assert(hexSide1.getFaceHex(150).toString()).equalsTo("Hex(5, 4)");
@@ -510,14 +510,14 @@ describe("Map", ()=> {
 
     it("Checks hexSideIds face hexes on odd column", () => {
         given:
-            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+            var map = new WMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             var hexId1 = map.getHex(3, 3);
             var hexId2 = hexId1.getNearHex(60);
             var hexId3 = hexId1.getNearHex(120);
             var hexId3 = hexId1.getNearHex(180);
-            var hexSide1 = new CBHexSideId(hexId1, hexId2);
-            var hexSide2 = new CBHexSideId(hexId1, hexId2);
-            var hexSide3 = new CBHexSideId(hexId1, hexId2);
+            var hexSide1 = new WHexSideId(hexId1, hexId2);
+            var hexSide2 = new WHexSideId(hexId1, hexId2);
+            var hexSide3 = new WHexSideId(hexId1, hexId2);
         then:
             assert(hexSide1.getFaceHex(330).toString()).equalsTo("Hex(3, 2)");
             assert(hexSide1.getFaceHex(150).toString()).equalsTo("Hex(4, 3)");
@@ -529,7 +529,7 @@ describe("Map", ()=> {
 
     it("Checks hexId near hexSides", () => {
         given:
-            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+            var map = new WMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             var hexId = map.getHex(3, 3);
         then:
             assert(hexId.getNearHexSide(90).fromHex.toString()).equalsTo("Hex(4, 3)");
@@ -538,12 +538,12 @@ describe("Map", ()=> {
 
     it("Checks hexVertexIds", () => {
         given:
-            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+            var map = new WMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             var hexId1 = map.getHex(4, 3);
             var hexId2 = hexId1.getNearHex(60);
             var hexId3 = hexId1.getNearHex(120);
             var hexId4 = hexId1.getNearHex(300);
-            var hexVertex = new CBHexVertexId(hexId1, hexId2, hexId3);
+            var hexVertex = new WHexVertexId(hexId1, hexId2, hexId3);
         then:
             assert(hexVertex.map).equalsTo(map);
             assert(hexVertex.hexes).arrayEqualsTo([hexId1, hexId2, hexId3]);
@@ -551,15 +551,15 @@ describe("Map", ()=> {
             assert(hexVertex.secondHex).equalsTo(hexId2);
             assert(hexVertex.thirdHex).equalsTo(hexId3);
             assert(hexVertex.fromHex).equalsTo(hexId1);
-            assert(hexVertex.toHexSide.similar(new CBHexSideId(hexId2, hexId3))).isTrue();
+            assert(hexVertex.toHexSide.similar(new WHexSideId(hexId2, hexId3))).isTrue();
             assert(hexVertex.angle).equalsTo(90);
-            assert(hexVertex.similar(new CBHexVertexId(hexId1, hexId2, hexId3))).isTrue();
-            assert(hexVertex.similar(new CBHexVertexId(hexId3, hexId2, hexId1))).isTrue();
-            assert(hexVertex.similar(new CBHexVertexId(hexId4, hexId1, hexId2))).isFalse();
+            assert(hexVertex.similar(new WHexVertexId(hexId1, hexId2, hexId3))).isTrue();
+            assert(hexVertex.similar(new WHexVertexId(hexId3, hexId2, hexId1))).isTrue();
+            assert(hexVertex.similar(new WHexVertexId(hexId4, hexId1, hexId2))).isFalse();
             assert(hexVertex.location.toString()).equalsTo("point(-227.3333, -984.375)");
             assert(hexVertex.equalsTo(hexVertex)).isTrue();
-            assert(hexVertex.equalsTo(new CBHexVertexId(hexId1, hexId2, hexId3))).isTrue();
-            assert(hexVertex.equalsTo(new CBHexSideId(hexId2, hexId1, hexId3))).isFalse();
+            assert(hexVertex.equalsTo(new WHexVertexId(hexId1, hexId2, hexId3))).isTrue();
+            assert(hexVertex.equalsTo(new WHexSideId(hexId2, hexId1, hexId3))).isFalse();
             assert(hexVertex.equalsTo(null)).isFalse();
             assert(hexId1.getNearHexVertex(90).similar(hexVertex));
             assert(hexVertex.nearHexes).mapContentEqualsTo([
@@ -571,9 +571,9 @@ describe("Map", ()=> {
             ]);
             var vertexSpecs = {col: 4, row: 3, angle: 90};
             assert(hexVertex.toSpecs()).objectEqualsTo(vertexSpecs);
-            assert(CBHexVertexId.fromSpecs(map, vertexSpecs)).equalsTo(hexVertex);
-            assert(CBHexLocation.toSpecs(hexVertex)).objectEqualsTo(vertexSpecs);
-            assert(CBHexLocation.fromSpecs(map,vertexSpecs)).equalsTo(hexVertex);
+            assert(WHexVertexId.fromSpecs(map, vertexSpecs)).equalsTo(hexVertex);
+            assert(WHexLocation.toSpecs(hexVertex)).objectEqualsTo(vertexSpecs);
+            assert(WHexLocation.fromSpecs(map,vertexSpecs)).equalsTo(hexVertex);
         when:
             var hexVertex2 = map.getHex(-1, 4).getNearHexVertex(90);
         then:
@@ -583,7 +583,7 @@ describe("Map", ()=> {
 
     it("Checks hexId collection", () => {
         given:
-            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+            var map = new WMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             var hexes = map.hexes;
         then:
             assert(hexes.length).equalsTo(215);
@@ -607,7 +607,7 @@ describe("Map", ()=> {
 
     it("Checks hexsideId collection", () => {
         given:
-            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+            var map = new WMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             var hexSides = map.hexSides;
         then:
             assert(hexSides.length).equalsTo(586);
@@ -635,28 +635,28 @@ describe("Map", ()=> {
 
     it("Checks hex type management", () => {
         given:
-            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+            var map = new WMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             var hexId = map.getHex(4, 3);
             Memento.activate();
         then:
-            assert(hexId.type).equalsTo(CBHex.HEX_TYPES.OUTDOOR_CLEAR);
+            assert(hexId.type).equalsTo(WHex.HEX_TYPES.OUTDOOR_CLEAR);
         when:
-            hexId.type = CBHex.HEX_TYPES.OUTDOOR_DIFFICULT;
+            hexId.type = WHex.HEX_TYPES.OUTDOOR_DIFFICULT;
         then:
-            assert(hexId.type).equalsTo(CBHex.HEX_TYPES.OUTDOOR_DIFFICULT);
+            assert(hexId.type).equalsTo(WHex.HEX_TYPES.OUTDOOR_DIFFICULT);
         when:
-            hexId.changeType(CBHex.HEX_TYPES.OUTDOOR_ROUGH);
+            hexId.changeType(WHex.HEX_TYPES.OUTDOOR_ROUGH);
         then:
-            assert(hexId.type).equalsTo(CBHex.HEX_TYPES.OUTDOOR_ROUGH);
+            assert(hexId.type).equalsTo(WHex.HEX_TYPES.OUTDOOR_ROUGH);
         when:
             Memento.undo();
         then:
-            assert(hexId.type).equalsTo(CBHex.HEX_TYPES.OUTDOOR_DIFFICULT);
+            assert(hexId.type).equalsTo(WHex.HEX_TYPES.OUTDOOR_DIFFICULT);
     });
 
     it("Checks hex height management", () => {
         given:
-            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+            var map = new WMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             var hexId = map.getHex(4, 3);
             Memento.activate();
         then:
@@ -677,58 +677,58 @@ describe("Map", ()=> {
 
     it("Checks hexside type management", () => {
         given:
-            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+            var map = new WMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             var hexId = map.getHex(4, 3);
             Memento.activate();
         then:
-            assert(hexId.toward(0).type).equalsTo(CBHex.HEXSIDE_TYPES.NORMAL);
-            assert(hexId.toward(60).type).equalsTo(CBHex.HEXSIDE_TYPES.NORMAL);
-            assert(hexId.toward(120).type).equalsTo(CBHex.HEXSIDE_TYPES.NORMAL);
-            assert(hexId.toward(180).type).equalsTo(CBHex.HEXSIDE_TYPES.NORMAL);
-            assert(hexId.toward(240).type).equalsTo(CBHex.HEXSIDE_TYPES.NORMAL);
-            assert(hexId.toward(300).type).equalsTo(CBHex.HEXSIDE_TYPES.NORMAL);
+            assert(hexId.toward(0).type).equalsTo(WHex.HEXSIDE_TYPES.NORMAL);
+            assert(hexId.toward(60).type).equalsTo(WHex.HEXSIDE_TYPES.NORMAL);
+            assert(hexId.toward(120).type).equalsTo(WHex.HEXSIDE_TYPES.NORMAL);
+            assert(hexId.toward(180).type).equalsTo(WHex.HEXSIDE_TYPES.NORMAL);
+            assert(hexId.toward(240).type).equalsTo(WHex.HEXSIDE_TYPES.NORMAL);
+            assert(hexId.toward(300).type).equalsTo(WHex.HEXSIDE_TYPES.NORMAL);
         when:
-            hexId.toward(0).type = CBHex.HEXSIDE_TYPES.CLIMB;
-            hexId.toward(60).type = CBHex.HEXSIDE_TYPES.DIFFICULT;
-            hexId.toward(120).type = CBHex.HEXSIDE_TYPES.EASY;
-            hexId.toward(180).type = CBHex.HEXSIDE_TYPES.WALL;
-            hexId.toward(240).type = CBHex.HEXSIDE_TYPES.DIFFICULT;
-            hexId.toward(300).type = CBHex.HEXSIDE_TYPES.EASY;
+            hexId.toward(0).type = WHex.HEXSIDE_TYPES.CLIMB;
+            hexId.toward(60).type = WHex.HEXSIDE_TYPES.DIFFICULT;
+            hexId.toward(120).type = WHex.HEXSIDE_TYPES.EASY;
+            hexId.toward(180).type = WHex.HEXSIDE_TYPES.WALL;
+            hexId.toward(240).type = WHex.HEXSIDE_TYPES.DIFFICULT;
+            hexId.toward(300).type = WHex.HEXSIDE_TYPES.EASY;
         then:
-            assert(hexId.toward(0).type).equalsTo(CBHex.HEXSIDE_TYPES.CLIMB);
-            assert(hexId.toward(60).type).equalsTo(CBHex.HEXSIDE_TYPES.DIFFICULT);
-            assert(hexId.toward(120).type).equalsTo(CBHex.HEXSIDE_TYPES.EASY);
-            assert(hexId.toward(180).type).equalsTo(CBHex.HEXSIDE_TYPES.WALL);
-            assert(hexId.toward(240).type).equalsTo(CBHex.HEXSIDE_TYPES.DIFFICULT);
-            assert(hexId.toward(300).type).equalsTo(CBHex.HEXSIDE_TYPES.EASY);
+            assert(hexId.toward(0).type).equalsTo(WHex.HEXSIDE_TYPES.CLIMB);
+            assert(hexId.toward(60).type).equalsTo(WHex.HEXSIDE_TYPES.DIFFICULT);
+            assert(hexId.toward(120).type).equalsTo(WHex.HEXSIDE_TYPES.EASY);
+            assert(hexId.toward(180).type).equalsTo(WHex.HEXSIDE_TYPES.WALL);
+            assert(hexId.toward(240).type).equalsTo(WHex.HEXSIDE_TYPES.DIFFICULT);
+            assert(hexId.toward(300).type).equalsTo(WHex.HEXSIDE_TYPES.EASY);
         when:
-            hexId.toward(0).changeType(CBHex.HEXSIDE_TYPES.DIFFICULT);
-            hexId.toward(60).changeType(CBHex.HEXSIDE_TYPES.EASY);
-            hexId.toward(120).changeType(CBHex.HEXSIDE_TYPES.WALL);
-            hexId.toward(180).changeType(CBHex.HEXSIDE_TYPES.DIFFICULT);
-            hexId.toward(240).changeType(CBHex.HEXSIDE_TYPES.EASY);
-            hexId.toward(300).changeType(CBHex.HEXSIDE_TYPES.WALL);
+            hexId.toward(0).changeType(WHex.HEXSIDE_TYPES.DIFFICULT);
+            hexId.toward(60).changeType(WHex.HEXSIDE_TYPES.EASY);
+            hexId.toward(120).changeType(WHex.HEXSIDE_TYPES.WALL);
+            hexId.toward(180).changeType(WHex.HEXSIDE_TYPES.DIFFICULT);
+            hexId.toward(240).changeType(WHex.HEXSIDE_TYPES.EASY);
+            hexId.toward(300).changeType(WHex.HEXSIDE_TYPES.WALL);
         then:
-            assert(hexId.toward(0).type).equalsTo(CBHex.HEXSIDE_TYPES.DIFFICULT);
-            assert(hexId.toward(60).type).equalsTo(CBHex.HEXSIDE_TYPES.EASY);
-            assert(hexId.toward(120).type).equalsTo(CBHex.HEXSIDE_TYPES.WALL);
-            assert(hexId.toward(180).type).equalsTo(CBHex.HEXSIDE_TYPES.DIFFICULT);
-            assert(hexId.toward(240).type).equalsTo(CBHex.HEXSIDE_TYPES.EASY);
-            assert(hexId.toward(300).type).equalsTo(CBHex.HEXSIDE_TYPES.WALL);
+            assert(hexId.toward(0).type).equalsTo(WHex.HEXSIDE_TYPES.DIFFICULT);
+            assert(hexId.toward(60).type).equalsTo(WHex.HEXSIDE_TYPES.EASY);
+            assert(hexId.toward(120).type).equalsTo(WHex.HEXSIDE_TYPES.WALL);
+            assert(hexId.toward(180).type).equalsTo(WHex.HEXSIDE_TYPES.DIFFICULT);
+            assert(hexId.toward(240).type).equalsTo(WHex.HEXSIDE_TYPES.EASY);
+            assert(hexId.toward(300).type).equalsTo(WHex.HEXSIDE_TYPES.WALL);
         when:
             Memento.undo();
         then:
-            assert(hexId.toward(0).type).equalsTo(CBHex.HEXSIDE_TYPES.CLIMB);
-            assert(hexId.toward(60).type).equalsTo(CBHex.HEXSIDE_TYPES.DIFFICULT);
-            assert(hexId.toward(120).type).equalsTo(CBHex.HEXSIDE_TYPES.EASY);
-            assert(hexId.toward(180).type).equalsTo(CBHex.HEXSIDE_TYPES.WALL);
-            assert(hexId.toward(240).type).equalsTo(CBHex.HEXSIDE_TYPES.DIFFICULT);
-            assert(hexId.toward(300).type).equalsTo(CBHex.HEXSIDE_TYPES.EASY);
+            assert(hexId.toward(0).type).equalsTo(WHex.HEXSIDE_TYPES.CLIMB);
+            assert(hexId.toward(60).type).equalsTo(WHex.HEXSIDE_TYPES.DIFFICULT);
+            assert(hexId.toward(120).type).equalsTo(WHex.HEXSIDE_TYPES.EASY);
+            assert(hexId.toward(180).type).equalsTo(WHex.HEXSIDE_TYPES.WALL);
+            assert(hexId.toward(240).type).equalsTo(WHex.HEXSIDE_TYPES.DIFFICULT);
+            assert(hexId.toward(300).type).equalsTo(WHex.HEXSIDE_TYPES.EASY);
     });
 
     it("Checks counter addition and removing on a Hex", () => {
         given:
-            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+            var map = new WMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             var counter = new CBTestUnit();
             var otherCounter = new CBTestUnit();
             var hexId = map.getHex(4, 5);
@@ -736,6 +736,8 @@ describe("Map", ()=> {
             hexId._pushPlayable(counter);
         then:
             assert(hexId.playables).arrayEqualsTo([counter]);
+            assert(hexId.hasPlayable(counter)).isTrue();
+            assert(hexId.hasPlayable(otherCounter)).isFalse();
         when:
             hexId._unshiftPlayable(otherCounter);
         then:
@@ -775,17 +777,19 @@ describe("Map", ()=> {
 
     it("Checks counter addition and removing on a Hex Side", () => {
         given:
-            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+            var map = new WMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             let counter = new CBTestUnit();
             let otherCounter = new CBTestUnit();
             var hexId1 = map.getHex(4, 5);
             var hexId2 = map.getHex(4, 6);
-            var hexSideId = new CBHexSideId(hexId1, hexId2);
+            var hexSideId = new WHexSideId(hexId1, hexId2);
         when:
             hexSideId._pushPlayable(counter);
         then:
             assert(hexId1.playables).arrayEqualsTo([counter]);
             assert(hexId2.playables).arrayEqualsTo([counter]);
+            assert(hexSideId.hasPlayable(counter)).isTrue();
+            assert(hexSideId.hasPlayable(otherCounter)).isFalse();
         when:
             hexSideId._unshiftPlayable(otherCounter);
         then:
@@ -833,19 +837,21 @@ describe("Map", ()=> {
 
     it("Checks counter addition and removing on a Hex Vertex", () => {
         given:
-            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+            var map = new WMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             let counter = new CBTestUnit();
             let otherCounter = new CBTestUnit();
             var hexId1 = map.getHex(4, 5);
             var hexId2 = map.getHex(4, 6);
             var hexId3 = hexId1.getNearHex(120);
-            var hexVertexId = new CBHexVertexId(hexId1, hexId2, hexId3);
+            var hexVertexId = new WHexVertexId(hexId1, hexId2, hexId3);
         when:
             hexVertexId._pushPlayable(counter);
         then:
             assert(hexId1.playables).arrayEqualsTo([counter]);
             assert(hexId2.playables).arrayEqualsTo([counter]);
             assert(hexId3.playables).arrayEqualsTo([counter]);
+            assert(hexVertexId.hasPlayable(counter)).isTrue();
+            assert(hexVertexId.hasPlayable(otherCounter)).isFalse();
         when:
             hexVertexId._unshiftPlayable(otherCounter);
         then:
@@ -901,7 +907,7 @@ describe("Map", ()=> {
 
     it("Checks playable sorting on Hex when counters are put on top", () => {
         given:
-            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+            var map = new WMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             var spell = new CBTestPlayable();
             spell.spellNature = true;
             var blaze = new CBTestPlayable();
@@ -922,7 +928,7 @@ describe("Map", ()=> {
 
     it("Checks playable sorting on Hex when counters are inserted on bottom", () => {
         given:
-            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+            var map = new WMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             var spell = new CBTestPlayable();
             spell.spellNature = true;
             var blaze = new CBTestPlayable();
@@ -943,7 +949,7 @@ describe("Map", ()=> {
 
     it("Checks unit backward stacking", () => {
         given:
-            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+            var map = new WMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             var hexId = map.getHex(8, 8);
             var unit1 = new CBTestUnit();
             var unit2 = new CBTestUnit();
@@ -973,7 +979,7 @@ describe("Map", ()=> {
 
     it("Checks unit forward stacking", () => {
         given:
-            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+            var map = new WMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             var hexId = map.getHex(8, 8);
             var unit1 = new CBTestUnit();
             var unit2 = new CBTestUnit();
@@ -1003,7 +1009,7 @@ describe("Map", ()=> {
 
     it("Checks units and playables collection", () => {
         given:
-            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+            var map = new WMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             var hexId = map.getHex(8, 8);
             var unit1 = new CBTestUnit();
             var unit2 = new CBTestUnit();
@@ -1020,10 +1026,10 @@ describe("Map", ()=> {
 
     it("Checks units and playables collection on Hex Side", () => {
         given:
-            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+            var map = new WMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             var hexId1 = map.getHex(8, 8);
             var hexId2 = map.getHex(8, 9);
-            var hexSideId = new CBHexSideId(hexId1, hexId2);
+            var hexSideId = new WHexSideId(hexId1, hexId2);
             var unit1 = new CBTestUnit();
             var unit2 = new CBTestUnit();
             var playable1 = new CBTestPlayable();
@@ -1039,11 +1045,11 @@ describe("Map", ()=> {
 
     it("Checks units and playables collection on Hex Vertex", () => {
         given:
-            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+            var map = new WMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             var hexId1 = map.getHex(8, 8);
             var hexId2 = map.getHex(8, 9);
             var hexId3 = hexId1.getNearHex(120);
-            var hexVertexId = new CBHexVertexId(hexId1, hexId2, hexId3);
+            var hexVertexId = new WHexVertexId(hexId1, hexId2, hexId3);
             var unit1 = new CBTestUnit();
             var unit2 = new CBTestUnit();
             var playable1 = new CBTestPlayable();
@@ -1059,7 +1065,7 @@ describe("Map", ()=> {
 
     it("Checks Hex and Map cleaning", () => {
         given:
-            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+            var map = new WMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             var counter = new CBTestUnit();
             var hexId = map.getHex(4, 5);
         when:
@@ -1082,7 +1088,7 @@ describe("Map", ()=> {
                 ]
             };
         when:
-            var map = new CBMap([
+            var map = new WMap([
                 {path:"./../images/maps/map1.png", col:0, row:0},
                 {path:"./../images/maps/map2.png", col:0, row:1, invert:true}
             ]);
@@ -1097,7 +1103,7 @@ describe("Map", ()=> {
             assert(map.toSpecs(context)).objectEqualsTo(specs);
             assert(context.get(map)).objectEqualsTo(specs);
         given:
-            var newMap = CBMap.fromSpecs(specs, context);
+            var newMap = WMap.fromSpecs(specs, context);
         then:
             assert(newMap.toSpecs(context)).objectEqualsTo(specs);
     });

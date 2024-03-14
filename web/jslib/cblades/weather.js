@@ -2,10 +2,10 @@
 
 import {
     Mechanisms, Memento
-} from "../mechanisms.js";
+} from "../board/mechanisms.js";
 import {
-    CBAbstractGame
-} from "./game.js";
+    WAbstractGame
+} from "../wargame/game.js";
 
 export let CBWeather = {
     HOT : 0,
@@ -101,7 +101,7 @@ export function WeatherMixin(gameClass) {
         changeWeather(weather) {
             Memento.register(this);
             this._weatherSettings._weather = weather;
-            Mechanisms.fire(this, CBAbstractGame.SETTINGS_EVENT, {weather});
+            Mechanisms.fire(this, WAbstractGame.SETTINGS_EVENT, {weather});
         }
 
         get fog() {
@@ -115,7 +115,7 @@ export function WeatherMixin(gameClass) {
         changeFog(fog) {
             Memento.register(this);
             this._weatherSettings._fog = fog;
-            Mechanisms.fire(this, CBAbstractGame.SETTINGS_EVENT, {fog});
+            Mechanisms.fire(this, WAbstractGame.SETTINGS_EVENT, {fog});
         }
 
         get windDirection() {
@@ -131,7 +131,7 @@ export function WeatherMixin(gameClass) {
             console.assert(windDirection%60===0);
             Memento.register(this);
             this._weatherSettings._windDirection = windDirection;
-            Mechanisms.fire(this, CBAbstractGame.SETTINGS_EVENT, {windDirection});
+            Mechanisms.fire(this, WAbstractGame.SETTINGS_EVENT, {windDirection});
         }
 
         toSpecs(context) {

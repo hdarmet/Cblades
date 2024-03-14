@@ -5,13 +5,13 @@ import {
 } from "../../jstest/jtest.js";
 import {
     DImage, setDrawPlatform
-} from "../../jslib/draw.js";
+} from "../../jslib/board/draw.js";
 import {
     mockPlatform
-} from "../mocks.js";
+} from "../board/mocks.js";
 import {
     Mechanisms, Memento
-} from "../../jslib/mechanisms.js";
+} from "../../jslib/board/mechanisms.js";
 import {
     CBArcaneCircleSpell,
     CBArcanePentacleSpell, CBArcaneShieldSpell, CBArcaneSwordSpell,
@@ -27,8 +27,8 @@ import {
     createTinyGameWithLeader
 } from "./game-examples.js";
 import {
-    CBLevelBuilder
-} from "../../jslib/cblades/playable.js";
+    WLevelBuilder
+} from "../../jslib/wargame/playable.js";
 
 describe("Magic", ()=> {
 
@@ -88,7 +88,7 @@ describe("Magic", ()=> {
             assert(spell.artifact.game).equalsTo(game);
             assert(spell.artifact.unit).equalsTo(wizard);
             assert(spell.artifact.slot).equalsTo(0);
-            assert(spell.artifact.layer).equalsTo(CBLevelBuilder.ULAYERS.SPELLS);
+            assert(spell.artifact.layer).equalsTo(WLevelBuilder.ULAYERS.SPELLS);
             assert(spell.getNextCinematic().cinematic).equalsTo(CBSpell.CINEMATIC.APPLY);
             assert(spell.hexLocation).equalsTo(wizard.hexLocation);
             assert(spell.hexLocation.playables.indexOf(spell)).equalsTo(-1);
@@ -244,7 +244,7 @@ describe("Magic", ()=> {
             assert(spell.isOption()).isTrue();
         when:
             spell.discard(unit);
-            assert(spell.artifact.layer).equalsTo(CBLevelBuilder.ULAYERS.OPTIONS);
+            assert(spell.artifact.layer).equalsTo(WLevelBuilder.ULAYERS.OPTIONS);
         then:
             assert(wizard.carried.indexOf(spell)).equalsTo(-1);
             assert(unit.hexLocation.playables.indexOf(spell)).equalsTo(-1);

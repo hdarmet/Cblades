@@ -2,34 +2,34 @@
 
 import {
     Mechanisms, Memento
-} from "../mechanisms.js";
+} from "../board/mechanisms.js";
 import {
-    CBHexLocation
+    WHexLocation
 } from "./map.js";
 import {
     DAbstractInsert,
     DInsert,
     DMask, DMultiStatePushButton, DPushButton
-} from "../widget.js";
+} from "../board/widget.js";
 import {
     DImageArtifact, DMultiImagesArtifact, DSimpleLevel, DStackedLevel, DStaticLevel
-} from "../board.js";
+} from "../board/board.js";
 import {
-    CBAbstractGame,
-    CBAbstractPlayer,
-    CBAction,
-    CBActuator,
-    CBPiece,
-    CBPieceImageArtifact,
+    WAbstractGame,
+    WAbstractPlayer,
+    WAction,
+    WActuator,
+    WPiece,
+    WPieceImageArtifact,
     HexLocatableMixin,
     PlayableMixin
 } from "./game.js";
 import {
     inside, Matrix2D, Point2D
-} from "../geometry.js";
+} from "../board/geometry.js";
 import {
     DTranslateLayer, getDrawPlatform
-} from "../draw.js";
+} from "../board/draw.js";
 
 export function SelectableArtifactMixin(clazz) {
 
@@ -318,19 +318,19 @@ export function NeighborActuatorMixin(clazz) {
 
 }
 
-export class CBHexCounterArtifact extends RetractableArtifactMixin(CBPieceImageArtifact) {
+export class WHexCounterArtifact extends RetractableArtifactMixin(WPieceImageArtifact) {
 
     get layer() {
-        return CBLevelBuilder.GLAYERS.COUNTERS;
+        return WLevelBuilder.GLAYERS.COUNTERS;
     }
 
 }
 
 let hexCounterCreators = new Map();
-export class CBHexCounter extends RetractablePieceMixin(HexLocatableMixin(PlayableMixin(CBPiece))) {
+export class WHexCounter extends RetractablePieceMixin(HexLocatableMixin(PlayableMixin(WPiece))) {
 
     createArtifact(levelName, images, position, dimension) {
-        return new CBHexCounterArtifact(this, levelName, images, position, dimension);
+        return new WHexCounterArtifact(this, levelName, images, position, dimension);
     }
 
     get counterNature() {
@@ -353,7 +353,7 @@ export class CBHexCounter extends RetractablePieceMixin(HexLocatableMixin(Playab
 
 }
 
-Object.defineProperty(CBHexLocation.prototype, "counters", {
+Object.defineProperty(WHexLocation.prototype, "counters", {
     get: function() {
         return this.playables.filter(playable=>playable.counterNature);
     }
@@ -372,12 +372,12 @@ export function VisibilityMixin(clazz) {
         /**
          * processes the game event that indicates that the visibility level has changed.
          * @param source source of the event (not used here)
-         * @param event event (if not CBGame.VISIBILITY_EVENT, the event is ignored by this method)
+         * @param event event (if not WGame.VISIBILITY_EVENT, the event is ignored by this method)
          * @param value new level of visibility.
          * @private
          */
         _processGlobalEvent(source, event, value) {
-            if (event === CBGame.VISIBILITY_EVENT) {
+            if (event === WGame.VISIBILITY_EVENT) {
                 this.setVisibility(value);
             }
         }
@@ -421,7 +421,7 @@ export function VisibilityMixin(clazz) {
 }
 VisibilityMixin.VISIBILITY_LEVEL = 2;
 
-export class CBAbstractInsert extends VisibilityMixin(DAbstractInsert) {
+export class WAbstractInsert extends VisibilityMixin(DAbstractInsert) {
 
     open(board, location) {
         this._registerForVisibility(board.game.visibility);
@@ -434,7 +434,7 @@ export class CBAbstractInsert extends VisibilityMixin(DAbstractInsert) {
     }
 }
 
-export class CBInsert extends VisibilityMixin(DInsert) {
+export class WInsert extends VisibilityMixin(DInsert) {
 
     open(board, location) {
         this._registerForVisibility(board.game.visibility);
@@ -447,7 +447,7 @@ export class CBInsert extends VisibilityMixin(DInsert) {
     }
 }
 
-export class CBMask extends VisibilityMixin(DMask) {
+export class WMask extends VisibilityMixin(DMask) {
 
     open(board, location) {
         this._registerForVisibility(board.game.visibility);
@@ -461,7 +461,7 @@ export class CBMask extends VisibilityMixin(DMask) {
 
 }
 
-export let CBMoveMode = {
+export let WMoveMode = {
     NO_CONSTRAINT: 0,
     ATTACK: 1,
     FIRE: 2,
@@ -543,7 +543,7 @@ export function ActivableArtifactMixin(clazz) {
 
 }
 
-export function CBActuatorTriggerMixin(clazz) {
+export function WActuatorTriggerMixin(clazz) {
 
     return class extends ActivableArtifactMixin(clazz) {
 
@@ -564,15 +564,15 @@ export function CBActuatorTriggerMixin(clazz) {
     }
 }
 
-export class CBActuatorImageTrigger extends CBActuatorTriggerMixin(DImageArtifact) {
+export class WActuatorImageTrigger extends WActuatorTriggerMixin(DImageArtifact) {
 
 }
 
-export class CBActuatorMultiImagesTrigger extends CBActuatorTriggerMixin(DMultiImagesArtifact) {
+export class WActuatorMultiImagesTrigger extends WActuatorTriggerMixin(DMultiImagesArtifact) {
 
 }
 
-export class CBPlayableActuatorTrigger extends CBActuatorImageTrigger {
+export class WPlayableActuatorTrigger extends WActuatorImageTrigger {
 
     constructor(actuator, playable, ...args) {
         super(actuator, ...args);
@@ -605,7 +605,7 @@ export class CBPlayableActuatorTrigger extends CBActuatorImageTrigger {
 
 }
 
-export class CBActionActuator extends VisibilityMixin(CBActuator) {
+export class WActionActuator extends VisibilityMixin(WActuator) {
 
     constructor(action) {
         super();
@@ -639,7 +639,7 @@ export class CBActionActuator extends VisibilityMixin(CBActuator) {
     }
 }
 
-export class CBLevelBuilder {
+export class WLevelBuilder {
 
     buildLevels() {
 
@@ -658,8 +658,8 @@ export class CBLevelBuilder {
 
         function getPlayableArtifactLayer(artifact, [countersLayer, markersLayer, actuatorsLayer]) {
             switch (artifact.layer) {
-                case CBLevelBuilder.GLAYERS.COUNTERS: return countersLayer;
-                case CBLevelBuilder.GLAYERS.MARKERS: return markersLayer;
+                case WLevelBuilder.GLAYERS.COUNTERS: return countersLayer;
+                case WLevelBuilder.GLAYERS.MARKERS: return markersLayer;
             }
         }
 
@@ -684,14 +684,14 @@ export class CBLevelBuilder {
 
         function getUnitArtifactLayer(artifact, [spellsLayer, formationsLayer, fmarkersLayer, foptionsLayer, unitsLayer, markersLayer, optionsLayer, actuatorsLayer]) {
             switch (artifact.layer) {
-                case CBLevelBuilder.ULAYERS.SPELLS: return spellsLayer;
-                case CBLevelBuilder.ULAYERS.FORMATIONS: return formationsLayer;
-                case CBLevelBuilder.ULAYERS.FMARKERS: return fmarkersLayer;
-                case CBLevelBuilder.ULAYERS.FOPTIONS: return foptionsLayer;
-                case CBLevelBuilder.ULAYERS.UNITS: return unitsLayer;
-                case CBLevelBuilder.ULAYERS.MARKERS: return markersLayer;
-                case CBLevelBuilder.ULAYERS.OPTIONS: return optionsLayer;
-                case CBLevelBuilder.ULAYERS.ACTUATORS: return actuatorsLayer;
+                case WLevelBuilder.ULAYERS.SPELLS: return spellsLayer;
+                case WLevelBuilder.ULAYERS.FORMATIONS: return formationsLayer;
+                case WLevelBuilder.ULAYERS.FMARKERS: return fmarkersLayer;
+                case WLevelBuilder.ULAYERS.FOPTIONS: return foptionsLayer;
+                case WLevelBuilder.ULAYERS.UNITS: return unitsLayer;
+                case WLevelBuilder.ULAYERS.MARKERS: return markersLayer;
+                case WLevelBuilder.ULAYERS.OPTIONS: return optionsLayer;
+                case WLevelBuilder.ULAYERS.ACTUATORS: return actuatorsLayer;
             }
         }
 
@@ -754,7 +754,7 @@ export function RetractableGameMixin(gameClass) {
  * Player in a classical game (a game with turns). The game is able to give hand to its players. The players react to
  * turns lifecycle events.
  */
-export class CBBasicPlayer extends CBAbstractPlayer {
+export class WPlayer extends WAbstractPlayer {
 
     /**
      * Requests the player to finish the turns. Note that in a derived class, the player may refuse to finish the turn.
@@ -806,7 +806,7 @@ export function StandardGameMixin(clazz) {
             if (context.tokenCount===undefined) context.tokenCount=0;
             if (!pieceSpec.name) {
                 pieceSpec.name = "t"+context.tokenCount++;
-                let piece = CBHexCounter.fromSpecs(pieceSpec, context);
+                let piece = WHexCounter.fromSpecs(pieceSpec, context);
                 piece._hexLocation = hexLocation;
                 context.pieceMap.set(pieceSpec.name, piece)
             }
@@ -814,11 +814,11 @@ export function StandardGameMixin(clazz) {
 
     }
 }
-export class CBGame extends StandardGameMixin(RetractableGameMixin(CBAbstractGame)) {
+export class WGame extends StandardGameMixin(RetractableGameMixin(WAbstractGame)) {
 
     constructor(id) {
-        super(id, new CBLevelBuilder().buildLevels());
-        this._visibility = CBGame.FULL_VISIBILITY;
+        super(id, new WLevelBuilder().buildLevels());
+        this._visibility = WGame.FULL_VISIBILITY;
     }
 
     start() {
@@ -849,10 +849,10 @@ export class CBGame extends StandardGameMixin(RetractableGameMixin(CBAbstractGam
                 this.currentPlayer.finishTurn(animation);
             }).setTurnAnimation(true);
         this._endOfTurnCommand._processGlobalEvent = (source, event)=>{
-            if (event === CBAbstractGame.STARTED_EVENT ||
-                event === CBGame.TURN_EVENT ||
-                event === CBGame.LOADED_EVENT ||
-                event === CBAction.PROGRESSION_EVENT ||
+            if (event === WAbstractGame.STARTED_EVENT ||
+                event === WGame.TURN_EVENT ||
+                event === WGame.LOADED_EVENT ||
+                event === WAction.PROGRESSION_EVENT ||
                 event === PlayableMixin.DESTROYED_EVENT) {
                 this._endOfTurnCommand.active = this.turnIsFinishable();
             }
@@ -917,7 +917,7 @@ export class CBGame extends StandardGameMixin(RetractableGameMixin(CBAbstractGam
             ["./../images/commands/insert0.png", "./../images/commands/insert1.png", "./../images/commands/insert2.png"],
             new Point2D(-480, -60), (state, animation)=>{
                 this._visibility = (state+1)%3;
-                Mechanisms.fire(this, CBGame.VISIBILITY_EVENT, this._visibility>=1);
+                Mechanisms.fire(this, WGame.VISIBILITY_EVENT, this._visibility>=1);
                 animation();
             })
             .setState(this._visibility)
@@ -950,7 +950,7 @@ export class CBGame extends StandardGameMixin(RetractableGameMixin(CBAbstractGam
 
     validate() {
         Memento.clear();
-        Mechanisms.fire(this, CBGame.VALIDATION_EVENT);
+        Mechanisms.fire(this, WGame.VALIDATION_EVENT);
     }
 
     nextTurn(animation) {
@@ -961,7 +961,7 @@ export class CBGame extends StandardGameMixin(RetractableGameMixin(CBAbstractGam
         this._currentPlayer = this._players[(indexPlayer + 1) % this._players.length];
         this._currentPlayer.beginTurn();
         this.validate();
-        Mechanisms.fire(this, CBGame.TURN_EVENT);
+        Mechanisms.fire(this, WGame.TURN_EVENT);
     }
 
     static START_EVENT = "game-start";

@@ -2398,11 +2398,12 @@ export class DArtifactAnimation extends DAnimation {
         this.play(startTick+1);
     }
 
-    _init() {
+    init() {
         if (this._artifact._animation) {
             this._artifact._animation.cancel();
         }
         this._artifact._animation = this;
+        super.init();
     }
 
     _finalize() {

@@ -2,16 +2,16 @@
 
 import {
     Dimension2D, Point2D
-} from "../../geometry.js";
+} from "../../board/geometry.js";
 import {
     DDice6, DIconMenuItem, DMask, DResult, DScene
-} from "../../widget.js";
+} from "../../board/widget.js";
 import {
-    CBAction
-} from "../game.js";
+    WAction
+} from "../../wargame/game.js";
 import {
-    CBInsert
-} from "../playable.js";
+    WInsert
+} from "../../wargame/playable.js";
 import {
     CBActionMenu,
     CBInteractivePlayer,
@@ -24,8 +24,8 @@ import {
     CBCharge, CBUnitSceneAnimation, CBStateSequenceElement
 } from "../unit.js";
 import {
-    CBSequence
-} from "../sequences.js";
+    WSequence
+} from "../../wargame/sequences.js";
 import {
     SequenceLoader
 } from "../loader.js";
@@ -55,7 +55,7 @@ export function unregisterInteractiveRecover() {
     CBActionMenu.menuBuilders.remove(createRecoverMenuItems);
 }
 
-export class InteractiveRestingAction extends CBAction {
+export class InteractiveRestingAction extends WAction {
 
     constructor(game, unit) {
         super(game, unit);
@@ -117,10 +117,10 @@ export class InteractiveRestingAction extends CBAction {
         let scene = this.createScene(
             result=>{
                 this._processRestResult(result);
-                CBSequence.appendElement(this.game, new CBRestSequenceElement({
+                WSequence.appendElement(this.game, new CBRestSequenceElement({
                     game: this.game, unit: this.unit, dice: scene.dice.result
                 }));
-                new SequenceLoader().save(this.game, CBSequence.getSequence(this.game));
+                new SequenceLoader().save(this.game, WSequence.getSequence(this.game));
                 this.game.validate();
             }
         );
@@ -144,9 +144,9 @@ export class InteractiveRestingAction extends CBAction {
     }
 
 }
-CBAction.register("InteractiveRestingAction", InteractiveRestingAction);
+WAction.register("InteractiveRestingAction", InteractiveRestingAction);
 
-export class InteractiveReplenishMunitionsAction extends CBAction {
+export class InteractiveReplenishMunitionsAction extends WAction {
 
     constructor(game, unit) {
         super(game, unit);
@@ -195,10 +195,10 @@ export class InteractiveReplenishMunitionsAction extends CBAction {
         let scene = this.createScene(
             result=>{
                 this._processReplenishMunitionsResult(result);
-                CBSequence.appendElement(this.game, new CBRefillSequenceElement({
+                WSequence.appendElement(this.game, new CBRefillSequenceElement({
                     game: this.game, unit: this.unit, dice: scene.dice.result
                 }));
-                new SequenceLoader().save(this.game, CBSequence.getSequence(this.game));
+                new SequenceLoader().save(this.game, WSequence.getSequence(this.game));
                 this.game.validate();
             }
         );
@@ -219,9 +219,9 @@ export class InteractiveReplenishMunitionsAction extends CBAction {
     }
 
 }
-CBAction.register("InteractiveReplenishMunitionsAction", InteractiveReplenishMunitionsAction);
+WAction.register("InteractiveReplenishMunitionsAction", InteractiveReplenishMunitionsAction);
 
-export class InteractiveReorganizeAction extends CBAction {
+export class InteractiveReorganizeAction extends WAction {
 
     constructor(game, unit) {
         super(game, unit);
@@ -275,10 +275,10 @@ export class InteractiveReorganizeAction extends CBAction {
         let scene = this.createScene(
             result=>{
                 this._processReorganizeResult(result);
-                CBSequence.appendElement(this.game, new CBReorganizeSequenceElement({
+                WSequence.appendElement(this.game, new CBReorganizeSequenceElement({
                     game: this.game, unit: this.unit, dice: scene.dice.result
                 }));
-                new SequenceLoader().save(this.game, CBSequence.getSequence(this.game));
+                new SequenceLoader().save(this.game, WSequence.getSequence(this.game));
                 this.game.validate();
             }
         );
@@ -299,9 +299,9 @@ export class InteractiveReorganizeAction extends CBAction {
     }
 
 }
-CBAction.register("InteractiveReorganizeAction", InteractiveReorganizeAction);
+WAction.register("InteractiveReorganizeAction", InteractiveReorganizeAction);
 
-export class InteractiveRallyAction extends CBAction {
+export class InteractiveRallyAction extends WAction {
 
     constructor(game, unit) {
         super(game, unit);
@@ -354,10 +354,10 @@ export class InteractiveRallyAction extends CBAction {
         let scene = this.createScene(
             result=>{
                 this._processRallyResult(result);
-                CBSequence.appendElement(this.game, new CBRallySequenceElement({
+                WSequence.appendElement(this.game, new CBRallySequenceElement({
                     game: this.game, unit: this.unit, dice: scene.dice.result
                 }));
-                new SequenceLoader().save(this.game, CBSequence.getSequence(this.game));
+                new SequenceLoader().save(this.game, WSequence.getSequence(this.game));
                 this.game.validate();
             }
         );
@@ -379,7 +379,7 @@ export class InteractiveRallyAction extends CBAction {
     }
 
 }
-CBAction.register("InteractiveRallyAction", InteractiveRallyAction);
+WAction.register("InteractiveRallyAction", InteractiveRallyAction);
 
 function createRecoverMenuItems(unit, actions) {
     return [
@@ -406,7 +406,7 @@ function createRecoverMenuItems(unit, actions) {
     ];
 }
 
-export class CBRestInsert extends CBInsert {
+export class CBRestInsert extends WInsert {
 
     constructor() {
         super( "./../images/inserts/rest-insert.png", CBRestInsert.DIMENSION);
@@ -415,7 +415,7 @@ export class CBRestInsert extends CBInsert {
 }
 CBRestInsert.DIMENSION = new Dimension2D(444, 195);
 
-export class CBCheckRestInsert extends CBInsert {
+export class CBCheckRestInsert extends WInsert {
 
     constructor() {
         super( "./../images/inserts/check-rest-insert.png", CBCheckRestInsert.DIMENSION);
@@ -424,7 +424,7 @@ export class CBCheckRestInsert extends CBInsert {
 }
 CBCheckRestInsert.DIMENSION = new Dimension2D(444, 451);
 
-export class CBReplenishMunitionsInsert extends CBInsert {
+export class CBReplenishMunitionsInsert extends WInsert {
 
     constructor() {
         super( "./../images/inserts/check-replenish-munitions-insert.png", CBReplenishMunitionsInsert.DIMENSION);
@@ -433,7 +433,7 @@ export class CBReplenishMunitionsInsert extends CBInsert {
 }
 CBReplenishMunitionsInsert.DIMENSION = new Dimension2D(444, 383);
 
-export class CBReorganizeInsert extends CBInsert {
+export class CBReorganizeInsert extends WInsert {
 
     constructor() {
         super( "./../images/inserts/reorganize-insert.png", CBReorganizeInsert.DIMENSION);
@@ -442,7 +442,7 @@ export class CBReorganizeInsert extends CBInsert {
 }
 CBReorganizeInsert.DIMENSION = new Dimension2D(444, 263);
 
-export class CBCheckReorganizeInsert extends CBInsert {
+export class CBCheckReorganizeInsert extends WInsert {
 
     constructor() {
         super( "./../images/inserts/check-reorganize-insert.png", CBCheckReorganizeInsert.DIMENSION);
@@ -451,7 +451,7 @@ export class CBCheckReorganizeInsert extends CBInsert {
 }
 CBCheckReorganizeInsert.DIMENSION = new Dimension2D(444, 245);
 
-export class CBRallyInsert extends CBInsert {
+export class CBRallyInsert extends WInsert {
 
     constructor() {
         super( "./../images/inserts/rally-insert.png", CBRallyInsert.DIMENSION);
@@ -460,7 +460,7 @@ export class CBRallyInsert extends CBInsert {
 }
 CBRallyInsert.DIMENSION = new Dimension2D(444, 279);
 
-export class CBCheckRallyInsert extends CBInsert {
+export class CBCheckRallyInsert extends WInsert {
 
     constructor() {
         super( "./../images/inserts/check-rally-insert.png", CBCheckRallyInsert.DIMENSION);
@@ -486,7 +486,7 @@ export class CBRestSequenceElement extends WithDiceRoll(CBStateSequenceElement) 
     }
 
 }
-CBSequence.register("rest", CBRestSequenceElement);
+WSequence.register("rest", CBRestSequenceElement);
 
 export class CBRefillSequenceElement extends WithDiceRoll(CBStateSequenceElement) {
 
@@ -504,7 +504,7 @@ export class CBRefillSequenceElement extends WithDiceRoll(CBStateSequenceElement
     }
 
 }
-CBSequence.register("refill", CBRefillSequenceElement);
+WSequence.register("refill", CBRefillSequenceElement);
 
 export class CBRallySequenceElement extends WithDiceRoll(CBStateSequenceElement) {
 
@@ -522,7 +522,7 @@ export class CBRallySequenceElement extends WithDiceRoll(CBStateSequenceElement)
     }
 
 }
-CBSequence.register("rally", CBRallySequenceElement);
+WSequence.register("rally", CBRallySequenceElement);
 
 export class CBReorganizeSequenceElement extends WithDiceRoll(CBStateSequenceElement) {
 
@@ -540,6 +540,6 @@ export class CBReorganizeSequenceElement extends WithDiceRoll(CBStateSequenceEle
     }
 
 }
-CBSequence.register("reorganize", CBReorganizeSequenceElement);
+WSequence.register("reorganize", CBReorganizeSequenceElement);
 
 

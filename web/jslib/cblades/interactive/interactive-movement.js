@@ -4,24 +4,24 @@ import {
     Area2D,
     canonizeAngle,
     Dimension2D, invertAngle, Point2D, sumAngle
-} from "../../geometry.js";
+} from "../../board/geometry.js";
 import {
     DDice6, DIconMenuItem, DInsertFrame, DMask, DResult, DScene
-} from "../../widget.js";
+} from "../../board/widget.js";
 import {
     Mechanisms,
     Memento
-} from "../../mechanisms.js";
+} from "../../board/mechanisms.js";
 import {
-    CBHexSideId
-} from "../map.js";
+    WHexSideId
+} from "../../wargame/map.js";
 import {
-    CBAction, CBStacking
-} from "../game.js";
+    WAction, WStacking
+} from "../../wargame/game.js";
 import {
-    CBActionActuator, CBActuatorImageTrigger, CBActuatorTriggerMixin, CBMask, CBInsert,
-    CBMoveMode, CBAbstractInsert, CBGame
-} from "../playable.js";
+    WActionActuator, WActuatorImageTrigger, WActuatorTriggerMixin, WMask, WInsert,
+    WMoveMode, WAbstractInsert, WGame
+} from "../../wargame/playable.js";
 import {
     CBCharge,
     CBMovement, CBMoveProfile, CBStateSequenceElement,
@@ -29,19 +29,19 @@ import {
 } from "../unit.js";
 import {
     DImage
-} from "../../draw.js";
+} from "../../board/draw.js";
 import {
     CBActionMenu, CBCheckEngagementInsert, CBInteractivePlayer, CBMoralInsert, WithDiceRoll
 } from "./interactive-player.js";
 import {
     DImageArtifact
-} from "../../board.js";
+} from "../../board/board.js";
 import {
     stringifyHexLocations
-} from "../pathfinding.js";
+} from "../../wargame/pathfinding.js";
 import {
-    CBSequence
-} from "../sequences.js";
+    WSequence
+} from "../../wargame/sequences.js";
 import {
     SequenceLoader
 } from "../loader.js";
@@ -72,7 +72,7 @@ export function unregisterInteractiveMovement() {
     CBActionMenu.menuBuilders.remove(createMovementMenuItems);
 }
 
-export class InteractiveAbstractMovementAction extends CBAction {
+export class InteractiveAbstractMovementAction extends WAction {
 
     constructor(game, unit) {
         super(game, unit);
@@ -269,7 +269,7 @@ export class InteractiveAbstractMovementAction extends CBAction {
         this._movementCost += cost;
         if (this.isFinishable() && !this._isFinishable) {
             this._isFinishable = true;
-            Mechanisms.fire(this, CBAction.PROGRESSION_EVENT, CBAction.FINISHABLE);
+            Mechanisms.fire(this, WAction.PROGRESSION_EVENT, WAction.FINISHABLE);
         }
     }
 
@@ -282,7 +282,7 @@ export class InteractiveAbstractMovementAction extends CBAction {
         this.unit.rotate(angle, cost);
         let played = !this._continueAfterRotation();
         this._markUnitActivationAfterMovement(played);
-        CBSequence.appendElement(this.game, new CBRotateSequenceElement({game:this.game, unit: this.unit, angle}));
+        WSequence.appendElement(this.game, new CBRotateSequenceElement({game:this.game, unit: this.unit, angle}));
     }
 
     _checkIfANonRoutedCrossedUnitLoseCohesion(crossedUnits, processing, cancellable) {
@@ -324,10 +324,10 @@ export class InteractiveAbstractMovementAction extends CBAction {
         this.game.closeActuators();
         cost = this._updateTirednessForMovement(cost, start);
         this._checkActionProgession(cost.value);
-        this.unit.move(hexLocation, cost, CBStacking.BOTTOM);
+        this.unit.move(hexLocation, cost, WStacking.BOTTOM);
         this._continueAfterMove();
-        CBSequence.appendElement(this.game, new CBMoveSequenceElement({
-            game:this.game, unit: this.unit, hexLocation, stacking: CBStacking.BOTTOM
+        WSequence.appendElement(this.game, new CBMoveSequenceElement({
+            game:this.game, unit: this.unit, hexLocation, stacking: WStacking.BOTTOM
         }));
     }
 
@@ -335,14 +335,14 @@ export class InteractiveAbstractMovementAction extends CBAction {
         this.game.closeActuators();
         cost = this._updateTirednessForMovement(cost, start);
         this._checkActionProgession(cost.value);
-        this.unit.turn(angle, cost, CBStacking.BOTTOM);
+        this.unit.turn(angle, cost, WStacking.BOTTOM);
         this._continueAfterMove();
-        CBSequence.appendElement(this.game, new CBTurnSequenceElement({
+        WSequence.appendElement(this.game, new CBTurnSequenceElement({
             game:this.game,
             unit: this.unit,
             angle: this.unit.angle,
             hexLocation: this.unit.hexLocation,
-            stacking: CBStacking.BOTTOM
+            stacking: WStacking.BOTTOM
         }));
     }
 
@@ -697,29 +697,29 @@ export class InteractiveMovementAction extends InteractiveAbstractMovementAction
     }
 
     _prepareMovementConstraints() {
-        if (this._moveMode === CBMoveMode.NO_CONSTRAINT) {
+        if (this._moveMode === WMoveMode.NO_CONSTRAINT) {
             this._constraint = new MovementConstraint(this);
         }
-        else if (this._moveMode === CBMoveMode.ATTACK) {
+        else if (this._moveMode === WMoveMode.ATTACK) {
             if (this.game.arbitrator.isAllowedToFireAttack(this.unit)) {
                 Memento.register(this);
-                this._moveMode = CBMoveMode.FIRE;
+                this._moveMode = WMoveMode.FIRE;
                 this._constraint = new FireMovementConstraint(this);
             }
             else {
                 this._constraint = new AttackMovementConstraint(this);
             }
         }
-        else if (this._moveMode === CBMoveMode.FIRE) {
+        else if (this._moveMode === WMoveMode.FIRE) {
             this._constraint = new FireMovementConstraint(this);
         }
-        else if (this._moveMode === CBMoveMode.DEFEND) {
+        else if (this._moveMode === WMoveMode.DEFEND) {
             this._constraint = new DefenseMovementConstraint(this);
         }
-        else if (this._moveMode === CBMoveMode.REGROUP) {
+        else if (this._moveMode === WMoveMode.REGROUP) {
             this._constraint = new RegroupMovementConstraint(this);
         }
-        else if (this._moveMode === CBMoveMode.RETREAT) {
+        else if (this._moveMode === WMoveMode.RETREAT) {
             this._constraint = new RetreatMovementConstraint(this);
         }
     }
@@ -751,7 +751,7 @@ export class InteractiveMovementAction extends InteractiveAbstractMovementAction
         else {
             if (this.unit.charge !== CBCharge.NONE) {
                 this.unit.setCharging(CBCharge.NONE);
-                CBSequence.appendElement(this.game, new CBStateSequenceElement({game:this.game, unit: this.unit}));
+                WSequence.appendElement(this.game, new CBStateSequenceElement({game:this.game, unit: this.unit}));
             }
         }
     }
@@ -760,18 +760,18 @@ export class InteractiveMovementAction extends InteractiveAbstractMovementAction
         let friends = this.game.arbitrator.getTroopsStackedWith(this.unit);
         if (friends.length && friends[0].angle !== this.unit.angle) {
             this.unit.reorient(friends[0].angle);
-            CBSequence.appendElement(this.game, new CBReorientSequenceElement({
+            WSequence.appendElement(this.game, new CBReorientSequenceElement({
                 game:this.game, unit: this.unit, angle: friends[0].angle
             }));
             if (this.unit.troopNature && !this.unit.isRouted()) {
                 this.unit.addOneCohesionLevel();
-                CBSequence.appendElement(this.game, new CBStateSequenceElement({game:this.game, unit: this.unit}));
+                WSequence.appendElement(this.game, new CBStateSequenceElement({game:this.game, unit: this.unit}));
             }
         }
         else for (let playable of this.unit.hexLocation.playables) {
             if (playable.characterNature && playable !== this.unit && playable.angle !== this.unit.angle) {
                 playable.reorient(this.unit.angle);
-                CBSequence.appendElement(this.game, new CBReorientSequenceElement({
+                WSequence.appendElement(this.game, new CBReorientSequenceElement({
                     game:this.game, unit: this.playable, angle: this.unit.angle
                 }));
             }
@@ -807,7 +807,7 @@ export class InteractiveMovementAction extends InteractiveAbstractMovementAction
 
     showRules(point) {
         let scene = new DScene();
-        let mask = new CBMask("#000000", 0.3);
+        let mask = new WMask("#000000", 0.3);
         let close = ()=>{
             this.game.closePopup();
         }
@@ -845,7 +845,7 @@ export class InteractiveMovementAction extends InteractiveAbstractMovementAction
     }
 
 }
-CBAction.register("InteractiveMovementAction", InteractiveMovementAction);
+WAction.register("InteractiveMovementAction", InteractiveMovementAction);
 
 export class CBAttackerEngagementChecking {
 
@@ -893,12 +893,12 @@ export class CBAttackerEngagementChecking {
             success=>{
                 if (!success) {
                     this.unit.addOneCohesionLevel();
-                    CBSequence.appendElement(this.game, new CBStateSequenceElement({unit: this.unit}));
+                    WSequence.appendElement(this.game, new CBStateSequenceElement({unit: this.unit}));
                 }
-                CBSequence.appendElement(this.game, new CBAttackerEngagementSequenceElement({
+                WSequence.appendElement(this.game, new CBAttackerEngagementSequenceElement({
                     game: this.game, unit: this.unit, dice: scene.dice.result
                 }));
-                new SequenceLoader().save(this.game, CBSequence.getSequence(this.game));
+                new SequenceLoader().save(this.game, WSequence.getSequence(this.game));
                 this.game.validate();
             },
             ()=>{
@@ -966,10 +966,10 @@ export class CBLoseCohesionForCrossingChecking {
                 if (!success) {
                     this.unit.addOneCohesionLevel();
                 }
-                CBSequence.appendElement(this.game, new CBCrossingSequenceElement({
+                WSequence.appendElement(this.game, new CBCrossingSequenceElement({
                     game: this.game, unit: this.unit, dice: scene.dice.result
                 }));
-                new SequenceLoader().save(this.game, CBSequence.getSequence(this.game));
+                new SequenceLoader().save(this.game, WSequence.getSequence(this.game));
                 this.game.validate();
             },
             ()=>{
@@ -1040,10 +1040,10 @@ export class CBDisengagementChecking {
                 if (!success) {
                     this.unit.addOneCohesionLevel();
                 }
-                CBSequence.appendElement(this.game, new CBDisengagementSequenceElement({
+                WSequence.appendElement(this.game, new CBDisengagementSequenceElement({
                     game: this.game, unit: this.unit, dice: scene.dice.result
                 }));
-                new SequenceLoader().save(this.game, CBSequence.getSequence(this.game));
+                new SequenceLoader().save(this.game, WSequence.getSequence(this.game));
                 this.game.validate();
             },
             ()=>{
@@ -1128,7 +1128,7 @@ export class CBConfrontChecking {
         let result = this.game.arbitrator.processConfrontEngagementResult(this.unit, diceResult);
         if (!result.success) {
             this.unit.addOneCohesionLevel();
-            CBSequence.appendElement(this.game, new CBStateSequenceElement({game:this.game, unit: this.unit}));
+            WSequence.appendElement(this.game, new CBStateSequenceElement({game:this.game, unit: this.unit}));
         }
         return result;
     }
@@ -1146,14 +1146,14 @@ export class InteractiveRoutAction extends InteractiveAbstractMovementAction {
     play() {
         if (this.unit.charge !== CBCharge.NONE) {
             this.unit.setCharging(CBCharge.NONE);
-            CBSequence.appendElement(this.game, new CBStateSequenceElement({game:this.game, unit: this.unit}));
+            WSequence.appendElement(this.game, new CBStateSequenceElement({game:this.game, unit: this.unit}));
         }
         super.play();
     }
 
     showRules(point) {
         let scene = new DScene();
-        let mask = new CBMask("#000000", 0.3);
+        let mask = new WMask("#000000", 0.3);
         let close = ()=>{
             this.game.closePopup();
         }
@@ -1214,7 +1214,7 @@ export class InteractiveRoutAction extends InteractiveAbstractMovementAction {
         this._markUnitActivationAfterMovement(played);
     }
 }
-CBAction.register("InteractiveRoutAction", InteractiveRoutAction);
+WAction.register("InteractiveRoutAction", InteractiveRoutAction);
 
 export class InteractiveMoveBackAction extends InteractiveAbstractMovementAction {
 
@@ -1226,7 +1226,7 @@ export class InteractiveMoveBackAction extends InteractiveAbstractMovementAction
     play() {
         if (this.unit.charge !== CBCharge.NONE) {
             this.unit.setCharging(CBCharge.NONE);
-            CBSequence.appendElement(this.game, new CBStateSequenceElement({game:this.game, unit: this.unit}));
+            WSequence.appendElement(this.game, new CBStateSequenceElement({game:this.game, unit: this.unit}));
         }
         super.play();
     }
@@ -1242,10 +1242,10 @@ export class InteractiveMoveBackAction extends InteractiveAbstractMovementAction
         this.game.closeActuators();
         cost = this._updateTirednessForMovement(cost, start);
         this._checkActionProgession(cost.value);
-        this.unit.move(hexLocation, cost, CBStacking.TOP);
+        this.unit.move(hexLocation, cost, WStacking.TOP);
         this._continueAfterMove();
-        CBSequence.appendElement(this.game, new CBMoveSequenceElement({
-            game:this.game, unit: this.unit, hexLocation, stacking: CBStacking.TOP
+        WSequence.appendElement(this.game, new CBMoveSequenceElement({
+            game:this.game, unit: this.unit, hexLocation, stacking: WStacking.TOP
         }));
     }
 
@@ -1303,7 +1303,7 @@ export class InteractiveMoveBackAction extends InteractiveAbstractMovementAction
     }
 
 }
-CBAction.register("InteractiveMoveBackAction", InteractiveMoveBackAction);
+WAction.register("InteractiveMoveBackAction", InteractiveMoveBackAction);
 
 export class InteractiveConfrontAction extends InteractiveAbstractMovementAction {
 
@@ -1314,7 +1314,7 @@ export class InteractiveConfrontAction extends InteractiveAbstractMovementAction
     play() {
         if (this.unit.charge !== CBCharge.NONE) {
             this.unit.setCharging(CBCharge.NONE);
-            CBSequence.appendElement(this.game, new CBStateSequenceElement({game:this.game, unit: this.unit}));
+            WSequence.appendElement(this.game, new CBStateSequenceElement({game:this.game, unit: this.unit}));
         }
         super.play();
     }
@@ -1365,7 +1365,7 @@ export class InteractiveConfrontAction extends InteractiveAbstractMovementAction
     }
 
 }
-CBAction.register("InteractiveConfrontAction", InteractiveConfrontAction);
+WAction.register("InteractiveConfrontAction", InteractiveConfrontAction);
 
 function createMovementMenuItems(unit, actions) {
     return [
@@ -1392,7 +1392,7 @@ function createMovementMenuItems(unit, actions) {
     ];
 }
 
-class HelpTrigger extends CBActuatorTriggerMixin(DImageArtifact) {
+class HelpTrigger extends WActuatorTriggerMixin(DImageArtifact) {
 
     constructor(actuator, canGetTired) {
         let normalImage = DImage.getImage("./../images/actuators/standard-movement-points.png");
@@ -1422,7 +1422,7 @@ class HelpTrigger extends CBActuatorTriggerMixin(DImageArtifact) {
 }
 HelpTrigger.DIMENSION = new Dimension2D(55, 55);
 
-export class CBMovementHelpActuator extends CBActionActuator {
+export class CBMovementHelpActuator extends WActionActuator {
 
     constructor(action, canGetTired) {
         super(action);
@@ -1440,11 +1440,11 @@ export class CBMovementHelpActuator extends CBActionActuator {
 
     setVisibility(level) {
         super.setVisibility(level);
-        this._trigger.setVisibility && this._trigger.setVisibility(level === CBGame.FULL_VISIBILITY ? 1 : 0);
+        this._trigger.setVisibility && this._trigger.setVisibility(level === WGame.FULL_VISIBILITY ? 1 : 0);
     }
 }
 
-class RotateTrigger extends CBActuatorImageTrigger {
+class RotateTrigger extends WActuatorImageTrigger {
 
     constructor(actuator, type, angle, location) {
         let normalImage = DImage.getImage("./../images/actuators/toward.png");
@@ -1458,7 +1458,7 @@ class RotateTrigger extends CBActuatorImageTrigger {
 }
 RotateTrigger.DIMENSION = new Dimension2D(60, 80);
 
-class RotateCostTrigger extends CBActuatorTriggerMixin(DImageArtifact) {
+class RotateCostTrigger extends WActuatorTriggerMixin(DImageArtifact) {
 
     constructor(actuator, cost, type, angle, location) {
         let normalImage = DImage.getImage("./../images/actuators/standard-move-cost.png");
@@ -1487,7 +1487,7 @@ class RotateCostTrigger extends CBActuatorTriggerMixin(DImageArtifact) {
 }
 RotateCostTrigger.DIMENSION = new Dimension2D(55, 55);
 
-export class CBRotationActuator extends CBActionActuator {
+export class CBRotationActuator extends WActionActuator {
 
     constructor(action, directions, first) {
         super(action);
@@ -1522,13 +1522,13 @@ export class CBRotationActuator extends CBActionActuator {
     setVisibility(level) {
         super.setVisibility(level);
         for (let artifact of this.triggers) {
-            artifact.setVisibility && artifact.setVisibility(level===CBGame.FULL_VISIBILITY ? 1:0);
+            artifact.setVisibility && artifact.setVisibility(level===WGame.FULL_VISIBILITY ? 1:0);
         }
     }
 
 }
 
-class MoveTrigger extends CBActuatorImageTrigger {
+class MoveTrigger extends WActuatorImageTrigger {
 
     constructor(actuator, type, angle, location) {
         let normalImage = DImage.getImage("./../images/actuators/standard-move.png");
@@ -1543,7 +1543,7 @@ class MoveTrigger extends CBActuatorImageTrigger {
 }
 MoveTrigger.DIMENSION = new Dimension2D(80, 130);
 
-class MoveCostTrigger extends CBActuatorTriggerMixin(DImageArtifact) {
+class MoveCostTrigger extends WActuatorTriggerMixin(DImageArtifact) {
 
     constructor(actuator, cost, type, angle, location) {
         let normalImage = DImage.getImage("./../images/actuators/standard-move-cost.png");
@@ -1572,7 +1572,7 @@ class MoveCostTrigger extends CBActuatorTriggerMixin(DImageArtifact) {
 }
 MoveCostTrigger.DIMENSION = new Dimension2D(70, 70);
 
-export class CBMoveActuator extends CBActionActuator {
+export class CBMoveActuator extends WActionActuator {
 
     constructor(action, directions, first) {
         super(action);
@@ -1606,12 +1606,12 @@ export class CBMoveActuator extends CBActionActuator {
     setVisibility(level) {
         super.setVisibility(level);
         for (let artifact of this.triggers) {
-            artifact.setVisibility && artifact.setVisibility(level===CBGame.FULL_VISIBILITY ? 1:0);
+            artifact.setVisibility && artifact.setVisibility(level===WGame.FULL_VISIBILITY ? 1:0);
         }
     }
 }
 
-class MoveFormationTrigger extends CBActuatorImageTrigger {
+class MoveFormationTrigger extends WActuatorImageTrigger {
 
     constructor(actuator, type, hex, angle) {
         let normalImage = DImage.getImage("./../images/actuators/standard-move.png");
@@ -1630,7 +1630,7 @@ class MoveFormationTrigger extends CBActuatorImageTrigger {
 }
 MoveFormationTrigger.DIMENSION = new Dimension2D(80, 130);
 
-class MoveFormationCostTrigger extends CBActuatorTriggerMixin(DImageArtifact) {
+class MoveFormationCostTrigger extends WActuatorTriggerMixin(DImageArtifact) {
 
     constructor(actuator, cost, type, hex, angle) {
         let normalImage = DImage.getImage("./../images/actuators/standard-move-cost.png");
@@ -1663,7 +1663,7 @@ class MoveFormationCostTrigger extends CBActuatorTriggerMixin(DImageArtifact) {
 }
 MoveFormationCostTrigger.DIMENSION = new Dimension2D(70, 70);
 
-class TurnFormationTrigger extends CBActuatorImageTrigger {
+class TurnFormationTrigger extends WActuatorImageTrigger {
 
     constructor(actuator, type, hex, angle) {
         let normalImage = DImage.getImage("./../images/actuators/standard-turn.png");
@@ -1682,7 +1682,7 @@ class TurnFormationTrigger extends CBActuatorImageTrigger {
 }
 TurnFormationTrigger.DIMENSION = new Dimension2D(80, 96);
 
-class TurnFormationCostTrigger extends CBActuatorTriggerMixin(DImageArtifact) {
+class TurnFormationCostTrigger extends WActuatorTriggerMixin(DImageArtifact) {
 
     constructor(actuator, cost, type, hex, angle) {
         let normalImage = DImage.getImage("./../images/actuators/standard-turn-cost.png");
@@ -1715,7 +1715,7 @@ class TurnFormationCostTrigger extends CBActuatorTriggerMixin(DImageArtifact) {
 }
 TurnFormationCostTrigger.DIMENSION = new Dimension2D(70, 70);
 
-export class CBFormationMoveActuator extends CBActionActuator {
+export class CBFormationMoveActuator extends WActionActuator {
 
     constructor(action, moveDirections, turnDirections, first) {
 
@@ -1766,7 +1766,7 @@ export class CBFormationMoveActuator extends CBActionActuator {
     setVisibility(level) {
         super.setVisibility(level);
         for (let artifact of this.triggers) {
-            artifact.setVisibility && artifact.setVisibility(level===CBGame.FULL_VISIBILITY ? 1:0);
+            artifact.setVisibility && artifact.setVisibility(level===WGame.FULL_VISIBILITY ? 1:0);
         }
     }
 
@@ -1778,7 +1778,7 @@ export class CBFormationMoveActuator extends CBActionActuator {
         else {
             let hex1 = this.playable.hexLocation.fromHex.getNearHex(trigger.angle);
             let hex2 = this.playable.hexLocation.toHex.getNearHex(trigger.angle);
-            this.action.moveFormation(new CBHexSideId(hex1, hex2), trigger.angle);
+            this.action.moveFormation(new WHexSideId(hex1, hex2), trigger.angle);
         }
     }
 
@@ -1806,7 +1806,7 @@ export class CBCheckConfrontEngagementInsert extends CBCheckEngagementInsert {
 }
 CBCheckConfrontEngagementInsert.DIMENSION = new Dimension2D(444, 763);
 
-export class CBCheckDisengagementInsert extends CBInsert {
+export class CBCheckDisengagementInsert extends WInsert {
 
     constructor() {
         super("./../images/inserts/disengagement-insert.png", CBCheckDisengagementInsert.DIMENSION);
@@ -1815,7 +1815,7 @@ export class CBCheckDisengagementInsert extends CBInsert {
 }
 CBCheckDisengagementInsert.DIMENSION = new Dimension2D(444, 797);
 
-export class CBMovementTableInsert extends CBAbstractInsert {
+export class CBMovementTableInsert extends WAbstractInsert {
 
     constructor() {
         super("./../images/inserts/movement-table-insert.png", CBMovementTableInsert.DIMENSION, CBMovementTableInsert.PAGE_DIMENSION);
@@ -1841,7 +1841,7 @@ CBMovementTableInsert.MARGIN = new Dimension2D(67, 256);
 CBMovementTableInsert.DIMENSION = new Dimension2D(900, 366);
 CBMovementTableInsert.PAGE_DIMENSION = new Dimension2D(1041, 366);
 
-export class CBMovementInsert extends CBInsert {
+export class CBMovementInsert extends WInsert {
 
     constructor() {
         super("./../images/inserts/movement-insert.png", CBMovementInsert.DIMENSION, CBMovementInsert.PAGE_DIMENSION);
@@ -1851,7 +1851,7 @@ export class CBMovementInsert extends CBInsert {
 CBMovementInsert.DIMENSION = new Dimension2D(444, 400);
 CBMovementInsert.PAGE_DIMENSION = new Dimension2D(444, 2470);
 
-export class CBRoutInsert extends CBInsert {
+export class CBRoutInsert extends WInsert {
 
     constructor() {
         super("./../images/inserts/rout-insert.png", CBRoutInsert.DIMENSION, CBRoutInsert.PAGE_DIMENSION);
@@ -1861,7 +1861,7 @@ export class CBRoutInsert extends CBInsert {
 CBRoutInsert.DIMENSION = new Dimension2D(444, 400);
 CBRoutInsert.PAGE_DIMENSION = new Dimension2D(444, 1433);
 
-export class CBMoveBackInsert extends CBInsert {
+export class CBMoveBackInsert extends WInsert {
 
     constructor() {
         super("./../images/inserts/move-back-insert.png", CBMoveBackInsert.DIMENSION, CBMoveBackInsert.PAGE_DIMENSION);
@@ -1871,7 +1871,7 @@ export class CBMoveBackInsert extends CBInsert {
 CBMoveBackInsert.DIMENSION = new Dimension2D(444, 400);
 CBMoveBackInsert.PAGE_DIMENSION = new Dimension2D(444, 678);
 
-export class CBToFaceInsert extends CBInsert {
+export class CBToFaceInsert extends WInsert {
 
     constructor() {
         super("./../images/inserts/to-face-insert.png", CBToFaceInsert.DIMENSION);
@@ -1880,7 +1880,7 @@ export class CBToFaceInsert extends CBInsert {
 }
 CBToFaceInsert.DIMENSION = new Dimension2D(444, 298);
 
-export class CBCrossCheckCohesionInsert extends CBInsert {
+export class CBCrossCheckCohesionInsert extends WInsert {
 
     constructor(condition) {
         super("./../images/inserts/check-cross-insert.png", CBCrossCheckCohesionInsert.DIMENSION);
@@ -1907,7 +1907,7 @@ export class CBMoveSequenceElement extends HexLocated(CBStateSequenceElement) {
     }
 
 }
-CBSequence.register("move", CBMoveSequenceElement);
+WSequence.register("move", CBMoveSequenceElement);
 
 export function Oriented(clazz) {
 
@@ -1961,7 +1961,7 @@ export class CBRotateSequenceElement extends Oriented(CBStateSequenceElement) {
     }
 
 }
-CBSequence.register("rotate", CBRotateSequenceElement);
+WSequence.register("rotate", CBRotateSequenceElement);
 
 export class CBReorientSequenceElement extends Oriented(CBStateSequenceElement) {
 
@@ -1978,7 +1978,7 @@ export class CBReorientSequenceElement extends Oriented(CBStateSequenceElement) 
     }
 
 }
-CBSequence.register("reorient", CBReorientSequenceElement);
+WSequence.register("reorient", CBReorientSequenceElement);
 
 export class CBTurnSequenceElement extends Oriented(HexLocated(CBStateSequenceElement)) {
 
@@ -2001,7 +2001,7 @@ export class CBTurnSequenceElement extends Oriented(HexLocated(CBStateSequenceEl
     }
 
 }
-CBSequence.register("turn", CBTurnSequenceElement);
+WSequence.register("turn", CBTurnSequenceElement);
 
 export class CBDisengagementSequenceElement extends WithDiceRoll(CBStateSequenceElement) {
 
@@ -2019,7 +2019,7 @@ export class CBDisengagementSequenceElement extends WithDiceRoll(CBStateSequence
     }
 
 }
-CBSequence.register("disengagement", CBDisengagementSequenceElement);
+WSequence.register("disengagement", CBDisengagementSequenceElement);
 
 export class CBAttackerEngagementSequenceElement extends WithDiceRoll(CBStateSequenceElement) {
 
@@ -2037,7 +2037,7 @@ export class CBAttackerEngagementSequenceElement extends WithDiceRoll(CBStateSeq
     }
 
 }
-CBSequence.register("attacker-engagement", CBAttackerEngagementSequenceElement);
+WSequence.register("attacker-engagement", CBAttackerEngagementSequenceElement);
 
 export class CBCrossingSequenceElement extends WithDiceRoll(CBStateSequenceElement) {
 
@@ -2055,5 +2055,5 @@ export class CBCrossingSequenceElement extends WithDiceRoll(CBStateSequenceEleme
     }
 
 }
-CBSequence.register("crossing", CBCrossingSequenceElement);
+WSequence.register("crossing", CBCrossingSequenceElement);
 

@@ -5,26 +5,26 @@ import {
 } from "../../jstest/jtest.js";
 import {
     DImage, setDrawPlatform
-} from "../../jslib/draw.js";
+} from "../../jslib/board/draw.js";
 import {
     assertClearDirectives, assertDirectives,
     assertNoMoreDirectives,
     getDirectives, getLayers, loadAllImages, mockPlatform, resetDirectives
-} from "../mocks.js";
+} from "../board/mocks.js";
 import {
     Mechanisms, Memento
-} from "../../jslib/mechanisms.js";
+} from "../../jslib/board/mechanisms.js";
 import {
-    CBMap, CBHexSideId
-} from "../../jslib/cblades/map.js";
+    WMap, WHexSideId
+} from "../../jslib/wargame/map.js";
 import {
-    CBAction, CBPieceImageArtifact, CBPiece, CBStacking
-} from "../../jslib/cblades/game.js";
+    WAction, WPieceImageArtifact, WPiece, WStacking
+} from "../../jslib/wargame/game.js";
 import {
-    CBActionActuator,
-    CBGame, RetractableActuatorMixin,
-    CBHexCounter, CBLevelBuilder
-} from "../../jslib/cblades/playable.js";
+    WActionActuator,
+    WGame, RetractableActuatorMixin,
+    WHexCounter, WLevelBuilder
+} from "../../jslib/wargame/playable.js";
 import {
     CBUnitPlayer,
     CBTroop,
@@ -51,7 +51,7 @@ import {
 } from "../../jslib/cblades/unit.js";
 import {
     Dimension2D, Point2D
-} from "../../jslib/geometry.js";
+} from "../../jslib/board/geometry.js";
 import {
     clickOnPiece,
     clickOnTrigger, repaint,
@@ -80,8 +80,8 @@ describe("Unit", ()=> {
     let dummyEvent = {offsetX:0, offsetY:0};
 
     function prepareTinyGame() {
-        var game = new CBGame(1);
-        var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+        var game = new WGame(1);
+        var map = new WMap([{path:"./../images/maps/map.png", col:0, row:0}]);
         game.setMap(map);
         return {game, map};
     }
@@ -169,7 +169,7 @@ describe("Unit", ()=> {
         let formation = new CBFormation(game, unitType, wing);
         formation.angle = 90;
         formation.lossSteps = 4;
-        formation.addToMap(new CBHexSideId(map.getHex(5, 8), map.getHex(5, 7)));
+        formation.addToMap(new WHexSideId(map.getHex(5, 8), map.getHex(5, 7)));
         game.start();
         loadAllImages();
         return {game, player, formation, wing, map};
@@ -193,10 +193,10 @@ describe("Unit", ()=> {
         return {game, map, unit1, unit2, wing, player};
     }
 
-    class CBTestCarriable extends CarriableMixin(CBHexCounter) {
+    class CBTestCarriable extends CarriableMixin(WHexCounter) {
 
         constructor(unit, paths) {
-            super("units", paths, new Dimension2D(142, 142));
+            super("units", unit.game, paths, new Dimension2D(142, 142));
             Object.defineProperty(this.artifact, "slot", {
                 get: function () {
                     return unit.slot;
@@ -204,7 +204,7 @@ describe("Unit", ()=> {
             });
             Object.defineProperty(this.artifact, "layer", {
                 get: function () {
-                    return CBLevelBuilder.ULAYERS.SPELLS;
+                    return WLevelBuilder.ULAYERS.SPELLS;
                 }
             });
         }
@@ -234,7 +234,7 @@ describe("Unit", ()=> {
     class CBTestActuatorTrigger extends CBUnitActuatorTrigger {
     }
 
-    class CBTestUnitActuator extends RetractableActuatorMixin(CBActionActuator) {
+    class CBTestUnitActuator extends RetractableActuatorMixin(WActionActuator) {
 
         constructor(action, unit) {
             super(action);
@@ -288,7 +288,7 @@ describe("Unit", ()=> {
             var {game, unit1, unit2} = create2UnitsTinyGame();
             var [actuatorsLayer] = getLayers(game.board, "actuators-0");
         when:
-            var action = new CBAction(game, unit1);
+            var action = new WAction(game, unit1);
             var actuator = new CBTestUnitActuator(action, unit2);
             game.openActuator(actuator);
             repaint(game);
@@ -317,7 +317,7 @@ describe("Unit", ()=> {
             unit.addToMap(hexId);
             var [spellsLayer] = getLayers(game.board, "spells-0");
         when:
-            var playable1 = new CBTestCarriable(unit,["./../images/units/misc/playable1.png"]);
+            var playable1 = new CBTestCarriable(unit, ["./../images/units/misc/playable1.png"]);
             unit.addCarried(playable1);
             repaint(game);
             loadAllImages();
@@ -350,7 +350,7 @@ describe("Unit", ()=> {
             assert(getDirectives(spellsLayer, 4)).arrayEqualsTo([
             ]);
         when:
-            unit.addToMap(hexId, CBStacking.TOP);
+            unit.addToMap(hexId, WStacking.TOP);
             repaint(game);
         then:
             assertClearDirectives(spellsLayer);
@@ -362,11 +362,11 @@ describe("Unit", ()=> {
         given:
             var { game, map, unit } = createTinyGame();
             let hexId = map.getHex(5, 8);
-            unit.move(hexId, CBStacking.TOP);
+            unit.move(hexId, WStacking.TOP);
             let nextHexId = hexId.getNearHex(0);
             var [spellsLayer] = getLayers(game.board, "spells-0");
         when:
-            var playable1 = new CBTestCarriable(unit,["./../images/units/misc/playable1.png"]);
+            var playable1 = new CBTestCarriable(unit, ["./../images/units/misc/playable1.png"]);
             unit.carry(playable1);
             repaint(game);
             loadAllImages();
@@ -377,7 +377,7 @@ describe("Unit", ()=> {
             assertNoMoreDirectives(spellsLayer);
         when:
             unit.rotate(60);
-            unit.move(nextHexId, CBStacking.TOP);
+            unit.move(nextHexId, WStacking.TOP);
             repaint(game);
         then:
             assertClearDirectives(spellsLayer);
@@ -401,7 +401,7 @@ describe("Unit", ()=> {
             assert(getDirectives(spellsLayer, 4)).arrayEqualsTo([
             ]);
         when:
-            unit.appendToMap(hexId, CBStacking.TOP);
+            unit.appendToMap(hexId, WStacking.TOP);
             repaint(game);
         then:
             assertClearDirectives(spellsLayer);
@@ -424,7 +424,7 @@ describe("Unit", ()=> {
             assertNoMoreDirectives(spellsLayer);
     });
 
-    class CBTestOptionArtifact extends OptionArtifactMixin(CBPieceImageArtifact) {
+    class CBTestOptionArtifact extends OptionArtifactMixin(WPieceImageArtifact) {
          constructor(...args) {
              super(...args);
          }
@@ -434,10 +434,10 @@ describe("Unit", ()=> {
          }
     }
 
-    class CBTestOption extends OptionMixin(CarriableMixin(CBHexCounter)) {
+    class CBTestOption extends OptionMixin(CarriableMixin(WHexCounter)) {
 
         constructor(unit, paths) {
-            super("units", paths, new Dimension2D(142, 142));
+            super("units", unit.game, paths, new Dimension2D(142, 142));
             this._unit = unit;
         }
 
@@ -687,7 +687,7 @@ describe("Unit", ()=> {
             var unit = new CBTroop(game, unitType1, wing);
             unit.addToMap(map.getHex(5, 8));
             var formation = new CBFormation(game, unitType1, wing);
-            formation.addToMap(new CBHexSideId(map.getHex(5, 8), map.getHex(5, 9)));
+            formation.addToMap(new WHexSideId(map.getHex(5, 8), map.getHex(5, 9)));
             formation.angle = 90;
         then:
             assert(unit.wing).equalsTo(wing);
@@ -741,8 +741,8 @@ describe("Unit", ()=> {
 
     it("Checks unit naming by wings", () => {
         given:
-            var game = new CBGame(1);
-            var { wing, unit, map, unitType } = createTinyGame();
+            //var game = new CBGame(1);
+            var { game, wing, unit, map, unitType } = createTinyGame();
         then:
             assert(unit.name).equalsTo("banner-0");
         when:
@@ -887,7 +887,7 @@ describe("Unit", ()=> {
             assert(hexId.units).arrayEqualsTo([unit]);
         when:
             var hexId2 = map.getHex(6, 8);
-            unit.retreat(hexId2, CBStacking.BOTTOM);
+            unit.retreat(hexId2, WStacking.BOTTOM);
         then:
             assert(unit.movementPoints).equalsTo(2);
             assert(unit.extendedMovementPoints).equalsTo(3);
@@ -1135,7 +1135,7 @@ describe("Unit", ()=> {
             var {game, unit} = createTinyGame();
             var [markersLayer] = getLayers(game.board, "markers-0");
         when:
-            unit.launchAction(new CBAction(game, unit));
+            unit.launchAction(new WAction(game, unit));
             unit.setPlayed();
             repaint(game);
         then:
@@ -1184,7 +1184,7 @@ describe("Unit", ()=> {
             unit.receivesOrder(true);
             repaint(game);
         when:
-            unit.launchAction(new CBAction(game, unit));
+            unit.launchAction(new WAction(game, unit));
             unit.setPlayed();
             repaint(game);
         then:
@@ -1199,7 +1199,7 @@ describe("Unit", ()=> {
             var [markersLayer] = getLayers(game.board, "markers-0");
             player.canPlay = function() { return true; };
             player.launchPlayableAction = function(unit, point) {
-                unit.launchAction(new CBAction(game, unit));
+                unit.launchAction(new WAction(game, unit));
             }
         when:
             player.changeSelection(unit1, dummyEvent);
@@ -1373,7 +1373,10 @@ describe("Unit", ()=> {
                         unit.fixRemainingLossSteps(stepCounts);
                         return unit;
                     }
-                    return { fromHex:[_createUnit.call(this, 2)], toHex:[_createUnit.call(this, 1)] };
+                    return {
+                        fromHex:[_createUnit.call(this, game,2)],
+                        toHex:[_createUnit.call(this, game1)]
+                    };
                 }
             });
             var [unitsLayer, formationsLayer] = getLayers(game.board, "units-0", "formations-0");
@@ -1859,7 +1862,7 @@ describe("Unit", ()=> {
 
     it("Checks wizardry", () => {
 
-        class TestSpell extends CBPiece {
+        class TestSpell extends WPiece {
             constructor(wizard) {
                 super("units", ["./../images/magic/red/redspell.png"], new Dimension2D(142, 142));
                 this.wizard = wizard;
@@ -1955,7 +1958,7 @@ describe("Unit", ()=> {
         ]);
         let formation = new CBFormation(game, unitType, wing);
         formation.angle = 150;
-        let formationLocation = new CBHexSideId(map.getHex(5, 8), map.getHex(6, 7))
+        let formationLocation = new WHexSideId(map.getHex(5, 8), map.getHex(6, 7))
         formation.addToMap(formationLocation);
         game.start();
         loadAllImages();
@@ -1999,7 +2002,7 @@ describe("Unit", ()=> {
             var fHexId2 = map.getHex(6, 7);
             var sHexId1 = map.getHex(7, 8);
             var sHexId2 = map.getHex(8, 7);
-            formation.hexLocation = new CBHexSideId(sHexId1, sHexId2);
+            formation.hexLocation = new WHexSideId(sHexId1, sHexId2);
             repaint(game);
         then:
             assertClearDirectives(formationsLayer);
@@ -2013,7 +2016,7 @@ describe("Unit", ()=> {
             resetDirectives(formationsLayer);
             var mHexId1 = map.getHex(7, 9);
             var mHexId2 = map.getHex(8, 8);
-            formation.move(new CBHexSideId(mHexId1, mHexId2), 0);
+            formation.move(new WHexSideId(mHexId1, mHexId2), 0);
             repaint(game);
         then:
             assertClearDirectives(formationsLayer);
@@ -2042,7 +2045,7 @@ describe("Unit", ()=> {
             assert(sHexId1.units).arrayEqualsTo([]);
             assert(sHexId2.units).arrayEqualsTo([]);
         when:
-            formation.move(new CBHexSideId(mHexId1, mHexId2), 0);
+            formation.move(new WHexSideId(mHexId1, mHexId2), 0);
             repaint(game);
         then:
             assertClearDirectives(formationsLayer);
@@ -2060,7 +2063,7 @@ describe("Unit", ()=> {
             var [formationsLayer] = getLayers(game.board, "formations-0");
             var sHexId1 = map.getHex(7, 8);
             var sHexId2 = map.getHex(7, 9);
-            formation.hexLocation = new CBHexSideId(sHexId1, sHexId2);
+            formation.hexLocation = new WHexSideId(sHexId1, sHexId2);
             formation.angle = 90;
             repaint(game);
         when:

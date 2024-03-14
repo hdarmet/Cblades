@@ -2,16 +2,16 @@
 
 import {
     atan2, Point2D, Dimension2D, moyAngle, sumAngle
-} from "../geometry.js";
+} from "../board/geometry.js";
 import {
     DImage
-} from "../draw.js";
+} from "../board/draw.js";
 import {
     Memento
-} from "../mechanisms.js";
+} from "../board/mechanisms.js";
 import {
     DElement, DImageArtifact
-} from "../board.js";
+} from "../board/board.js";
 
 export function distanceFromHexToHex(start, arrival) {
     let dcol = arrival.col-start.col;
@@ -38,7 +38,7 @@ export function distanceFromHexLocationToHexLocation(start, arrival) {
     return result;
 }
 
-export class CBHexLocation {
+export class WHexLocation {
 
     get game() {
         return this.map.game;
@@ -59,7 +59,7 @@ export class CBHexLocation {
     }
 
     static fromSpecs(map, spec) {
-        return CBHexId.fromSpecs(map, spec) || CBHexSideId.fromSpecs(map, spec) || CBHexVertexId.fromSpecs(map, spec);
+        return WHexId.fromSpecs(map, spec) || WHexSideId.fromSpecs(map, spec) || WHexVertexId.fromSpecs(map, spec);
     }
 
     static toSpecs(hexLocation) {
@@ -67,7 +67,7 @@ export class CBHexLocation {
     }
 }
 
-export class CBHexId extends CBHexLocation{
+export class WHexId extends WHexLocation{
 
     constructor(map, col, row) {
         super();
@@ -164,13 +164,13 @@ export class CBHexId extends CBHexLocation{
     getNearHexSide(angle) {
         let hex1 = this._map.findNearHex(this, sumAngle(angle, 30));
         let hex2 = this._map.findNearHex(this, sumAngle(angle, -30));
-        return new CBHexSideId(hex1, hex2);
+        return new WHexSideId(hex1, hex2);
     }
 
     getNearHexVertex(angle) {
         let hex1 = this._map.findNearHex(this, sumAngle(angle, 30));
         let hex2 = this._map.findNearHex(this, sumAngle(angle, -30));
-        return new CBHexVertexId(this, hex1, hex2);
+        return new WHexVertexId(this, hex1, hex2);
     }
 
     _pushPlayable(playable) {
@@ -212,13 +212,13 @@ export class CBHexId extends CBHexLocation{
 
     toward(angle) {
         if (!(angle%60)) {
-            return new CBHexSideId(
+            return new WHexSideId(
                 this,
                 this.getNearHex(angle)
             );
         }
         else {
-            return new CBHexVertexId(
+            return new WHexVertexId(
                 this,
                 this.getNearHex(sumAngle(angle, -30)),
                 this.getNearHex(sumAngle(angle, 30))
@@ -227,7 +227,7 @@ export class CBHexId extends CBHexLocation{
     }
 
     to(hex) {
-        return new CBHexSideId(this, hex);
+        return new WHexSideId(this, hex);
     }
 
     toSpecs() {
@@ -239,7 +239,7 @@ export class CBHexId extends CBHexLocation{
     }
 }
 
-export class CBHexSideId extends CBHexLocation {
+export class WHexSideId extends WHexLocation {
 
     constructor(hexId1, hexId2) {
         super();
@@ -397,7 +397,7 @@ export class CBHexSideId extends CBHexLocation {
     }
 
     moveTo(angle) {
-        return new CBHexSideId(this.fromHex.getNearHex(angle), this.toHex.getNearHex(angle));
+        return new WHexSideId(this.fromHex.getNearHex(angle), this.toHex.getNearHex(angle));
     }
 
     turnTo(angle) {
@@ -407,7 +407,7 @@ export class CBHexSideId extends CBHexLocation {
         let pivot = (angle===fhAngle1 || angle===fhAngle2) ? this._toHex : this._fromHex;
         let hex = (angle===fhAngle1 || angle===fhAngle2) ? this._fromHex : this._toHex;
         let newHex = hex.getNearHex(angle);
-        return new CBHexSideId(pivot, newHex);
+        return new WHexSideId(pivot, newHex);
     }
 
     turnMove(angle) {
@@ -416,7 +416,7 @@ export class CBHexSideId extends CBHexLocation {
         let fhAngle2 = sumAngle(hsAngle, -60);
         let hex = (angle===fhAngle1 || angle===fhAngle2) ? this._fromHex : this._toHex;
         let newHex = hex.getNearHex(angle);
-        return new CBHexSideId(hex, newHex);
+        return new WHexSideId(hex, newHex);
     }
 
     toString() {
@@ -434,7 +434,7 @@ export class CBHexSideId extends CBHexLocation {
     }
 }
 
-export class CBHexVertexId extends CBHexLocation {
+export class WHexVertexId extends WHexLocation {
 
     constructor(hexId1, hexId2, hexId3) {
         super();
@@ -473,7 +473,7 @@ export class CBHexVertexId extends CBHexLocation {
     }
 
     get toHexSide() {
-        return new CBHexSideId(this._hexId2, this._hexId3);
+        return new WHexSideId(this._hexId2, this._hexId3);
     }
 
     get location() {
@@ -564,18 +564,18 @@ export class CBHexVertexId extends CBHexLocation {
     }
 }
 
-export class CBHex {
+export class WHex {
 
     constructor(map, col, row) {
         console.assert(!isNaN(col+row));
-        this._id = new CBHexId(map, col, row);
+        this._id = new WHexId(map, col, row);
         this._playables = [];
         this._hexType = {
-            type: CBHex.HEX_TYPES.OUTDOOR_CLEAR,
+            type: WHex.HEX_TYPES.OUTDOOR_CLEAR,
             height: 0,
-            side120 : CBHex.HEXSIDE_TYPES.NORMAL,
-            side180 : CBHex.HEXSIDE_TYPES.NORMAL,
-            side240 : CBHex.HEXSIDE_TYPES.NORMAL
+            side120 : WHex.HEXSIDE_TYPES.NORMAL,
+            side180 : WHex.HEXSIDE_TYPES.NORMAL,
+            side240 : WHex.HEXSIDE_TYPES.NORMAL
         };
 
     }
@@ -688,13 +688,13 @@ export class CBHex {
     _pushPlayable(playable) {
         console.assert(this._playables.indexOf(playable)<0);
         this._playables.push(playable);
-        this._playables.sort(CBHex.comparePlayable);
+        this._playables.sort(WHex.comparePlayable);
     }
 
     _unshiftPlayable(playable) {
         console.assert(this._playables.indexOf(playable)<0);
         this._playables.unshift(playable);
-        this._playables.sort(CBHex.comparePlayable);
+        this._playables.sort(WHex.comparePlayable);
     }
 
     _removePlayable(playable) {
@@ -722,7 +722,7 @@ export class CBHex {
     }
 
 }
-CBHex.HEX_TYPES = {
+WHex.HEX_TYPES = {
     OUTDOOR_CLEAR : 0,
     OUTDOOR_ROUGH : 1,
     OUTDOOR_DIFFICULT : 2,
@@ -739,7 +739,7 @@ CBHex.HEX_TYPES = {
     CAVE_ROUGH_FLAMMABLE : 13,
     CAVE_DIFFICULT_FLAMMABLE : 14,
 };
-CBHex.HEXSIDE_TYPES = {
+WHex.HEXSIDE_TYPES = {
     NORMAL : 0,
     EASY : 1,
     DIFFICULT : 2,
@@ -747,7 +747,7 @@ CBHex.HEXSIDE_TYPES = {
     WALL : 4
 };
 
-export class MapImageArtifact extends DImageArtifact {
+export class WMapImageArtifact extends DImageArtifact {
 
     constructor(map, ...args) {
         super(...args);
@@ -760,17 +760,17 @@ export class MapImageArtifact extends DImageArtifact {
     }
 }
 
-export class CBAbstractMap {
+export class WAbstractMap {
 
     constructor(boardCols, boardRows, imageSpecs) {
         this._boardCols = boardCols;
         this._boardRows = boardRows;
         let imageArtifacts = [];
         for (let imageSpec of imageSpecs) {
-            let imageArtifact = new MapImageArtifact(this, "map",
+            let imageArtifact = new WMapImageArtifact(this, "map",
                 imageSpec.image,
                 imageSpec.location,
-                CBAbstractMap.DIMENSION);
+                WAbstractMap.DIMENSION);
             imageArtifact.pangle = imageSpec.angle;
             imageArtifacts.push(imageArtifact);
         }
@@ -790,11 +790,11 @@ export class CBAbstractMap {
     }
 
     get width() {
-        return CBAbstractMap.WIDTH*this._boardCols;
+        return WAbstractMap.WIDTH*this._boardCols;
     }
 
     get height() {
-        return CBAbstractMap.HEIGHT*this._boardRows;
+        return WAbstractMap.HEIGHT*this._boardRows;
     }
 
     get dimension() {
@@ -802,11 +802,11 @@ export class CBAbstractMap {
     }
 
     get colCount() {
-        return CBAbstractMap.COL_COUNT*this._boardCols;
+        return WAbstractMap.COL_COUNT*this._boardCols;
     }
 
     get rowCount() {
-        return CBAbstractMap.ROW_COUNT*this._boardRows;
+        return WAbstractMap.ROW_COUNT*this._boardRows;
     }
 
     findPosition(hexId) {
@@ -870,15 +870,15 @@ export class CBAbstractMap {
         for (let hex of hexes) {
             let nextHex = hex.getNearHex(120);
             if (this.onMap(nextHex)) {
-                hexSides.push(new CBHexSideId(hex, nextHex));
+                hexSides.push(new WHexSideId(hex, nextHex));
             }
             nextHex = hex.getNearHex(180);
             if (this.onMap(nextHex)) {
-                hexSides.push(new CBHexSideId(hex, nextHex));
+                hexSides.push(new WHexSideId(hex, nextHex));
             }
             nextHex = hex.getNearHex(240);
             if (this.onMap(nextHex)) {
-                hexSides.push(new CBHexSideId(hex, nextHex));
+                hexSides.push(new WHexSideId(hex, nextHex));
             }
         }
         return hexSides;
@@ -892,7 +892,7 @@ export class CBAbstractMap {
         }
         let hexSpec = column[row];
         if (!hexSpec) {
-            hexSpec = new CBHex(this, col, row);
+            hexSpec = new WHex(this, col, row);
             column[row] = hexSpec;
         }
         return hexSpec;
@@ -1108,12 +1108,12 @@ export class CBAbstractMap {
 
     static WIDTH = 2046;
     static HEIGHT = 3150;
-    static DIMENSION = new Dimension2D(CBAbstractMap.WIDTH, CBAbstractMap.HEIGHT);
+    static DIMENSION = new Dimension2D(WAbstractMap.WIDTH, WAbstractMap.HEIGHT);
     static COL_COUNT = 12;
     static ROW_COUNT = 16;
 }
 
-export class CBBoard extends CBAbstractMap {
+export class WBoard extends WAbstractMap {
 
     constructor(name, path, icon) {
         super(1, 1, [{
@@ -1140,7 +1140,7 @@ export class CBBoard extends CBAbstractMap {
 
 }
 
-export class CBMap extends CBAbstractMap {
+export class WMap extends WAbstractMap {
 
     constructor(mapBoards) {
         let imageSpecs = [];
@@ -1154,8 +1154,8 @@ export class CBMap extends CBAbstractMap {
             imageSpecs.push({
                 image: DImage.getImage(mapBoard.path),
                 location: new Point2D(
-                    (mapBoard.col-(boardCols-1)/2)*CBAbstractMap.WIDTH,
-                    (mapBoard.row-(boardRows-1)/2)*CBAbstractMap.HEIGHT
+                    (mapBoard.col-(boardCols-1)/2)*WAbstractMap.WIDTH,
+                    (mapBoard.row-(boardRows-1)/2)*WAbstractMap.HEIGHT
                 ),
                 angle : mapBoard.invert ? 180 : 0
             });
@@ -1206,7 +1206,7 @@ export class CBMap extends CBAbstractMap {
                 configuration.push(board);
             }
         }
-        let map = new CBMap(configuration);
+        let map = new WMap(configuration);
         map._oid = specs.id;
         map._oversion = specs.version;
         context.map = map;

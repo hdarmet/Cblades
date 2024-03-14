@@ -4,15 +4,15 @@ import {
     assert, before, describe, it
 } from "../../../jstest/jtest.js";
 import {
-    CBHex,
-    CBHexSideId, CBMap
-} from "../../../jslib/cblades/map.js";
+    WHex,
+    WHexSideId, WMap
+} from "../../../jslib/wargame/map.js";
 import {
-    CBStacking
-} from "../../../jslib/cblades/game.js";
+    WStacking
+} from "../../../jslib/wargame/game.js";
 import {
-    CBGame
-} from "../../../jslib/cblades/playable.js";
+    WGame
+} from "../../../jslib/wargame/playable.js";
 import {
     CBUnitPlayer,
     CBCharge,
@@ -27,11 +27,11 @@ import {
 } from "../../../jslib/cblades/teachers/map-teacher.js";
 import {
     setDrawPlatform
-} from "../../../jslib/draw.js";
+} from "../../../jslib/board/draw.js";
 import {
     mergeClasses,
     mockPlatform
-} from "../../mocks.js";
+} from "../../board/mocks.js";
 import {
     CBUnitManagementTeacher
 } from "../../../jslib/cblades/teachers/units-teacher.js";
@@ -84,8 +84,8 @@ describe("Combat teacher", ()=> {
     }
 
     function createTinyGame() {
-        let game = new CBGame(1);
-        var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+        let game = new WGame(1);
+        var map = new WMap([{path:"./../images/maps/map.png", col:0, row:0}]);
         let arbitrator = new Arbitrator();
         game.setArbitrator(arbitrator);
         let player1 = new CBUnitPlayer("player1", "/players/player1.png");
@@ -306,7 +306,7 @@ describe("Combat teacher", ()=> {
     it("Checks formation allowed retreat", () => {
         given:
             var {arbitrator, map, formation1, unit21} = create2Players1Formation2TroopsTinyGame();
-            formation1.move(new CBHexSideId(map.getHex(3, 4), map.getHex(3, 5)));
+            formation1.move(new WHexSideId(map.getHex(3, 4), map.getHex(3, 5)));
             unit21.move(map.getHex(4, 3));
         when:
             var { retreatDirections, rotateDirections } = arbitrator.getFormationRetreatZones(formation1, unit21);
@@ -316,16 +316,16 @@ describe("Combat teacher", ()=> {
             assertNotInZone(retreatDirections, 90); // not used
             assertNotInZone(retreatDirections, 120); // adjacent to attacker
             assertNotInZone(retreatDirections, 180); // side
-            assertInRetreatZone(retreatDirections, 240, 2, 5, CBStacking.TOP);
+            assertInRetreatZone(retreatDirections, 240, 2, 5, WStacking.TOP);
             assertNotInZone(retreatDirections, 270); // not used
-            assertInRetreatZone(retreatDirections, 300, 2, 3, CBStacking.TOP);
+            assertInRetreatZone(retreatDirections, 300, 2, 3, WStacking.TOP);
 
             assertNotInZone(rotateDirections, 0); // side
             assertNotInZone(rotateDirections, 60); // occupied by a foe
             assertNotInZone(rotateDirections, 90); // not used
             assertNotInZone(rotateDirections, 120); // adjacent to attacker
             assertNotInZone(rotateDirections, 180); // side
-            assertInRetreatZone(rotateDirections, 240, 2, 4, CBStacking.TOP);
+            assertInRetreatZone(rotateDirections, 240, 2, 4, WStacking.TOP);
             assertNotInZone(rotateDirections, 270); // not used
             assertNotInZone(rotateDirections, 300); // adjacent to attacker
         given:
@@ -338,9 +338,9 @@ describe("Combat teacher", ()=> {
             assertNotInZone(retreatDirections, 90); // not used
             assertNotInZone(retreatDirections, 120); // adjacent to attacker
             assertNotInZone(retreatDirections, 180); // side
-            assertInRetreatZone(retreatDirections, 240, 2, 5, CBStacking.TOP);
+            assertInRetreatZone(retreatDirections, 240, 2, 5, WStacking.TOP);
             assertNotInZone(retreatDirections, 270); // not used
-            assertInRetreatZone(retreatDirections, 300, 2, 3, CBStacking.TOP);
+            assertInRetreatZone(retreatDirections, 300, 2, 3, WStacking.TOP);
 
             assertNotInZone(rotateDirections, 0); // side
             assertNotInZone(rotateDirections, 60); // occupied by a foe
@@ -349,7 +349,7 @@ describe("Combat teacher", ()=> {
             assertNotInZone(rotateDirections, 180); // side
             assertNotInZone(rotateDirections, 240); // adjacent to attacker
             assertNotInZone(rotateDirections, 270); // not used
-            assertInRetreatZone(rotateDirections, 300, 2, 4, CBStacking.TOP);
+            assertInRetreatZone(rotateDirections, 300, 2, 4, WStacking.TOP);
     });
 
     it("Checks if a character is allowed to attack by duel", () => {
@@ -436,21 +436,21 @@ describe("Combat teacher", ()=> {
     it("Checks if a hex is clear for shock", () => {
         given:
             var {arbitrator, map} = createTinyGame();
-            map.getHex(3, 0).type = CBHex.HEX_TYPES.OUTDOOR_CLEAR;
-            map.getHex(3, 1).type = CBHex.HEX_TYPES.OUTDOOR_ROUGH;
-            map.getHex(3, 2).type = CBHex.HEX_TYPES.OUTDOOR_DIFFICULT;
-            map.getHex(3, 3).type = CBHex.HEX_TYPES.OUTDOOR_CLEAR_FLAMMABLE;
-            map.getHex(3, 4).type = CBHex.HEX_TYPES.OUTDOOR_ROUGH_FLAMMABLE;
-            map.getHex(3, 5).type = CBHex.HEX_TYPES.OUTDOOR_DIFFICULT_FLAMMABLE;
-            map.getHex(3, 6).type = CBHex.HEX_TYPES.WATER;
-            map.getHex(3, 7).type = CBHex.HEX_TYPES.LAVA;
-            map.getHex(3, 8).type = CBHex.HEX_TYPES.IMPASSABLE;
-            map.getHex(4, 1).type = CBHex.HEX_TYPES.CAVE_CLEAR;
-            map.getHex(4, 2).type = CBHex.HEX_TYPES.CAVE_ROUGH;
-            map.getHex(4, 3).type = CBHex.HEX_TYPES.CAVE_DIFFICULT;
-            map.getHex(4, 4).type = CBHex.HEX_TYPES.CAVE_CLEAR_FLAMMABLE;
-            map.getHex(4, 5).type = CBHex.HEX_TYPES.CAVE_ROUGH_FLAMMABLE;
-            map.getHex(4, 6).type = CBHex.HEX_TYPES.CAVE_DIFFICULT_FLAMMABLE;
+            map.getHex(3, 0).type = WHex.HEX_TYPES.OUTDOOR_CLEAR;
+            map.getHex(3, 1).type = WHex.HEX_TYPES.OUTDOOR_ROUGH;
+            map.getHex(3, 2).type = WHex.HEX_TYPES.OUTDOOR_DIFFICULT;
+            map.getHex(3, 3).type = WHex.HEX_TYPES.OUTDOOR_CLEAR_FLAMMABLE;
+            map.getHex(3, 4).type = WHex.HEX_TYPES.OUTDOOR_ROUGH_FLAMMABLE;
+            map.getHex(3, 5).type = WHex.HEX_TYPES.OUTDOOR_DIFFICULT_FLAMMABLE;
+            map.getHex(3, 6).type = WHex.HEX_TYPES.WATER;
+            map.getHex(3, 7).type = WHex.HEX_TYPES.LAVA;
+            map.getHex(3, 8).type = WHex.HEX_TYPES.IMPASSABLE;
+            map.getHex(4, 1).type = WHex.HEX_TYPES.CAVE_CLEAR;
+            map.getHex(4, 2).type = WHex.HEX_TYPES.CAVE_ROUGH;
+            map.getHex(4, 3).type = WHex.HEX_TYPES.CAVE_DIFFICULT;
+            map.getHex(4, 4).type = WHex.HEX_TYPES.CAVE_CLEAR_FLAMMABLE;
+            map.getHex(4, 5).type = WHex.HEX_TYPES.CAVE_ROUGH_FLAMMABLE;
+            map.getHex(4, 6).type = WHex.HEX_TYPES.CAVE_DIFFICULT_FLAMMABLE;
         then:
             assert(arbitrator.isClearGroundForShock(map.getHex(3, 0))).isTrue();
             assert(arbitrator.isClearGroundForShock(map.getHex(3, 1))).isFalse();
@@ -472,21 +472,21 @@ describe("Combat teacher", ()=> {
     it("Checks if a hex is rough for shock", () => {
         given:
             var {arbitrator, map} = createTinyGame();
-            map.getHex(3, 0).type = CBHex.HEX_TYPES.OUTDOOR_CLEAR;
-            map.getHex(3, 1).type = CBHex.HEX_TYPES.OUTDOOR_ROUGH;
-            map.getHex(3, 2).type = CBHex.HEX_TYPES.OUTDOOR_DIFFICULT;
-            map.getHex(3, 3).type = CBHex.HEX_TYPES.OUTDOOR_CLEAR_FLAMMABLE;
-            map.getHex(3, 4).type = CBHex.HEX_TYPES.OUTDOOR_ROUGH_FLAMMABLE;
-            map.getHex(3, 5).type = CBHex.HEX_TYPES.OUTDOOR_DIFFICULT_FLAMMABLE;
-            map.getHex(3, 6).type = CBHex.HEX_TYPES.WATER;
-            map.getHex(3, 7).type = CBHex.HEX_TYPES.LAVA;
-            map.getHex(3, 8).type = CBHex.HEX_TYPES.IMPASSABLE;
-            map.getHex(4, 1).type = CBHex.HEX_TYPES.CAVE_CLEAR;
-            map.getHex(4, 2).type = CBHex.HEX_TYPES.CAVE_ROUGH;
-            map.getHex(4, 3).type = CBHex.HEX_TYPES.CAVE_DIFFICULT;
-            map.getHex(4, 4).type = CBHex.HEX_TYPES.CAVE_CLEAR_FLAMMABLE;
-            map.getHex(4, 5).type = CBHex.HEX_TYPES.CAVE_ROUGH_FLAMMABLE;
-            map.getHex(4, 6).type = CBHex.HEX_TYPES.CAVE_DIFFICULT_FLAMMABLE;
+            map.getHex(3, 0).type = WHex.HEX_TYPES.OUTDOOR_CLEAR;
+            map.getHex(3, 1).type = WHex.HEX_TYPES.OUTDOOR_ROUGH;
+            map.getHex(3, 2).type = WHex.HEX_TYPES.OUTDOOR_DIFFICULT;
+            map.getHex(3, 3).type = WHex.HEX_TYPES.OUTDOOR_CLEAR_FLAMMABLE;
+            map.getHex(3, 4).type = WHex.HEX_TYPES.OUTDOOR_ROUGH_FLAMMABLE;
+            map.getHex(3, 5).type = WHex.HEX_TYPES.OUTDOOR_DIFFICULT_FLAMMABLE;
+            map.getHex(3, 6).type = WHex.HEX_TYPES.WATER;
+            map.getHex(3, 7).type = WHex.HEX_TYPES.LAVA;
+            map.getHex(3, 8).type = WHex.HEX_TYPES.IMPASSABLE;
+            map.getHex(4, 1).type = WHex.HEX_TYPES.CAVE_CLEAR;
+            map.getHex(4, 2).type = WHex.HEX_TYPES.CAVE_ROUGH;
+            map.getHex(4, 3).type = WHex.HEX_TYPES.CAVE_DIFFICULT;
+            map.getHex(4, 4).type = WHex.HEX_TYPES.CAVE_CLEAR_FLAMMABLE;
+            map.getHex(4, 5).type = WHex.HEX_TYPES.CAVE_ROUGH_FLAMMABLE;
+            map.getHex(4, 6).type = WHex.HEX_TYPES.CAVE_DIFFICULT_FLAMMABLE;
         then:
             assert(arbitrator.isRoughGroundForShock(map.getHex(3, 0))).isFalse();
             assert(arbitrator.isRoughGroundForShock(map.getHex(3, 1))).isTrue();
@@ -508,21 +508,21 @@ describe("Combat teacher", ()=> {
     it("Checks if a hex is difficult for shock", () => {
         given:
             var {arbitrator, map} = createTinyGame();
-            map.getHex(3, 0).type = CBHex.HEX_TYPES.OUTDOOR_CLEAR;
-            map.getHex(3, 1).type = CBHex.HEX_TYPES.OUTDOOR_ROUGH;
-            map.getHex(3, 2).type = CBHex.HEX_TYPES.OUTDOOR_DIFFICULT;
-            map.getHex(3, 3).type = CBHex.HEX_TYPES.OUTDOOR_CLEAR_FLAMMABLE;
-            map.getHex(3, 4).type = CBHex.HEX_TYPES.OUTDOOR_ROUGH_FLAMMABLE;
-            map.getHex(3, 5).type = CBHex.HEX_TYPES.OUTDOOR_DIFFICULT_FLAMMABLE;
-            map.getHex(3, 6).type = CBHex.HEX_TYPES.WATER;
-            map.getHex(3, 7).type = CBHex.HEX_TYPES.LAVA;
-            map.getHex(3, 8).type = CBHex.HEX_TYPES.IMPASSABLE;
-            map.getHex(4, 1).type = CBHex.HEX_TYPES.CAVE_CLEAR;
-            map.getHex(4, 2).type = CBHex.HEX_TYPES.CAVE_ROUGH;
-            map.getHex(4, 3).type = CBHex.HEX_TYPES.CAVE_DIFFICULT;
-            map.getHex(4, 4).type = CBHex.HEX_TYPES.CAVE_CLEAR_FLAMMABLE;
-            map.getHex(4, 5).type = CBHex.HEX_TYPES.CAVE_ROUGH_FLAMMABLE;
-            map.getHex(4, 6).type = CBHex.HEX_TYPES.CAVE_DIFFICULT_FLAMMABLE;
+            map.getHex(3, 0).type = WHex.HEX_TYPES.OUTDOOR_CLEAR;
+            map.getHex(3, 1).type = WHex.HEX_TYPES.OUTDOOR_ROUGH;
+            map.getHex(3, 2).type = WHex.HEX_TYPES.OUTDOOR_DIFFICULT;
+            map.getHex(3, 3).type = WHex.HEX_TYPES.OUTDOOR_CLEAR_FLAMMABLE;
+            map.getHex(3, 4).type = WHex.HEX_TYPES.OUTDOOR_ROUGH_FLAMMABLE;
+            map.getHex(3, 5).type = WHex.HEX_TYPES.OUTDOOR_DIFFICULT_FLAMMABLE;
+            map.getHex(3, 6).type = WHex.HEX_TYPES.WATER;
+            map.getHex(3, 7).type = WHex.HEX_TYPES.LAVA;
+            map.getHex(3, 8).type = WHex.HEX_TYPES.IMPASSABLE;
+            map.getHex(4, 1).type = WHex.HEX_TYPES.CAVE_CLEAR;
+            map.getHex(4, 2).type = WHex.HEX_TYPES.CAVE_ROUGH;
+            map.getHex(4, 3).type = WHex.HEX_TYPES.CAVE_DIFFICULT;
+            map.getHex(4, 4).type = WHex.HEX_TYPES.CAVE_CLEAR_FLAMMABLE;
+            map.getHex(4, 5).type = WHex.HEX_TYPES.CAVE_ROUGH_FLAMMABLE;
+            map.getHex(4, 6).type = WHex.HEX_TYPES.CAVE_DIFFICULT_FLAMMABLE;
         then:
             assert(arbitrator.isDifficultGroundForShock(map.getHex(3, 0))).isFalse();
             assert(arbitrator.isDifficultGroundForShock(map.getHex(3, 1))).isFalse();
@@ -544,11 +544,11 @@ describe("Combat teacher", ()=> {
     it("Checks if a hex side is clear for shock", () => {
         given:
             var {arbitrator, map} = createTinyGame();
-            map.getHex(3, 0).toward(60).type = CBHex.HEXSIDE_TYPES.NORMAL;
-            map.getHex(3, 1).toward(60).type = CBHex.HEXSIDE_TYPES.EASY;
-            map.getHex(3, 2).toward(60).type = CBHex.HEXSIDE_TYPES.DIFFICULT;
-            map.getHex(3, 3).toward(60).type = CBHex.HEXSIDE_TYPES.CLIMB;
-            map.getHex(3, 4).toward(60).type = CBHex.HEXSIDE_TYPES.WALL;
+            map.getHex(3, 0).toward(60).type = WHex.HEXSIDE_TYPES.NORMAL;
+            map.getHex(3, 1).toward(60).type = WHex.HEXSIDE_TYPES.EASY;
+            map.getHex(3, 2).toward(60).type = WHex.HEXSIDE_TYPES.DIFFICULT;
+            map.getHex(3, 3).toward(60).type = WHex.HEXSIDE_TYPES.CLIMB;
+            map.getHex(3, 4).toward(60).type = WHex.HEXSIDE_TYPES.WALL;
         then:
             assert(arbitrator.isClearHexSideForShock(map.getHex(3, 0).toward(60))).isTrue();
             assert(arbitrator.isClearHexSideForShock(map.getHex(3, 1).toward(60))).isTrue();
@@ -560,11 +560,11 @@ describe("Combat teacher", ()=> {
     it("Checks if a hex side is difficult for shock", () => {
         given:
             var {arbitrator, map} = createTinyGame();
-            map.getHex(3, 0).toward(60).type = CBHex.HEXSIDE_TYPES.NORMAL;
-            map.getHex(3, 1).toward(60).type = CBHex.HEXSIDE_TYPES.EASY;
-            map.getHex(3, 2).toward(60).type = CBHex.HEXSIDE_TYPES.DIFFICULT;
-            map.getHex(3, 3).toward(60).type = CBHex.HEXSIDE_TYPES.CLIMB;
-            map.getHex(3, 4).toward(60).type = CBHex.HEXSIDE_TYPES.WALL;
+            map.getHex(3, 0).toward(60).type = WHex.HEXSIDE_TYPES.NORMAL;
+            map.getHex(3, 1).toward(60).type = WHex.HEXSIDE_TYPES.EASY;
+            map.getHex(3, 2).toward(60).type = WHex.HEXSIDE_TYPES.DIFFICULT;
+            map.getHex(3, 3).toward(60).type = WHex.HEXSIDE_TYPES.CLIMB;
+            map.getHex(3, 4).toward(60).type = WHex.HEXSIDE_TYPES.WALL;
         then:
             assert(arbitrator.isDifficultHexSide(map.getHex(3, 0).toward(60))).isFalse();
             assert(arbitrator.isDifficultHexSide(map.getHex(3, 1).toward(60))).isFalse();
@@ -579,11 +579,11 @@ describe("Combat teacher", ()=> {
         then:
             assert(arbitrator.isChargeAllowed(map.getHex(3, 1), map.getHex(3, 2))).isTrue();
         when:
-            map.getHex(3, 2).type = CBHex.HEX_TYPES.OUTDOOR_ROUGH;
+            map.getHex(3, 2).type = WHex.HEX_TYPES.OUTDOOR_ROUGH;
         then:
             assert(arbitrator.isChargeAllowed(map.getHex(3, 1), map.getHex(3, 2))).isFalse();
         when:
-            map.getHex(4, 1).toward(180).type = CBHex.HEXSIDE_TYPES.DIFFICULT;
+            map.getHex(4, 1).toward(180).type = WHex.HEXSIDE_TYPES.DIFFICULT;
         then:
             assert(arbitrator.isChargeAllowed(map.getHex(4, 1), map.getHex(4, 2))).isFalse();
     });
@@ -648,11 +648,11 @@ describe("Combat teacher", ()=> {
             leader21.angle = 180;
             unit12.setTiredness(CBTiredness.TIRED);
             unit12.hexLocation.height = 1;
-            unit12.hexLocation.type = CBHex.HEX_TYPES.OUTDOOR_ROUGH;
+            unit12.hexLocation.type = WHex.HEX_TYPES.OUTDOOR_ROUGH;
             unit11.hexLocation = unit12.hexLocation;
             leader21.setTiredness(CBTiredness.EXHAUSTED);
             leader21.disrupt();
-            leader21.hexLocation.type = CBHex.HEX_TYPES.OUTDOOR_DIFFICULT;
+            leader21.hexLocation.type = WHex.HEX_TYPES.OUTDOOR_DIFFICULT;
         when:
             var advantage = arbitrator.getShockAttackAdvantage(leader21, leader21.hexLocation, unit12, unit12.hexLocation, true);
         then:
@@ -681,16 +681,16 @@ describe("Combat teacher", ()=> {
             var {arbitrator, unit11, unit12, unit21, unit22} = create2Players4UnitsTinyGame();
             unit21.hexLocation = unit12.hexLocation.getNearHex(0);
             unit22.hexLocation = unit21.hexLocation;
-            unit22.hexLocation.type = CBHex.HEX_TYPES.OUTDOOR_DIFFICULT;
+            unit22.hexLocation.type = WHex.HEX_TYPES.OUTDOOR_DIFFICULT;
             unit21.angle = 90;
             unit22.angle = 90;
             unit12.setTiredness(CBTiredness.TIRED);
             unit12.hexLocation.height = 1;
-            unit12.hexLocation.type = CBHex.HEX_TYPES.OUTDOOR_ROUGH;
+            unit12.hexLocation.type = WHex.HEX_TYPES.OUTDOOR_ROUGH;
             unit11.hexLocation = unit12.hexLocation;
             unit21.setTiredness(CBTiredness.EXHAUSTED);
             unit21.rout();
-            unit12.hexLocation.toward(0).type = CBHex.HEXSIDE_TYPES.DIFFICULT;
+            unit12.hexLocation.toward(0).type = WHex.HEXSIDE_TYPES.DIFFICULT;
         when:
             var advantage = arbitrator.getShockAttackAdvantage(unit12, unit12.hexLocation, unit21, unit21.hexLocation, true);
         then:
@@ -820,13 +820,13 @@ describe("Combat teacher", ()=> {
             unit12.setTiredness(CBTiredness.EXHAUSTED);
             unit12.disrupt();
             unit12.setCharging(CBCharge.CHARGING);
-            unit12.hexLocation.type = CBHex.HEX_TYPES.OUTDOOR_ROUGH;
+            unit12.hexLocation.type = WHex.HEX_TYPES.OUTDOOR_ROUGH;
             unit12.hexLocation.height = 1;
             unit12.setMunitions(CBMunitions.SCARCE);
             unit11.hexLocation = unit12.hexLocation;
             leader21.setTiredness(CBTiredness.EXHAUSTED);
             leader21.disrupt();
-            leader21.hexLocation.type = CBHex.HEX_TYPES.OUTDOOR_DIFFICULT;
+            leader21.hexLocation.type = WHex.HEX_TYPES.OUTDOOR_DIFFICULT;
         when:
             var advantage = arbitrator.getFireAttackAdvantage(unit12, unit12.hexLocation, leader21, leader21.hexLocation, true);
         then:
@@ -860,9 +860,9 @@ describe("Combat teacher", ()=> {
             unit12.setTiredness(CBTiredness.EXHAUSTED);
             unit12.rout();
             unit12.angle = 90;
-            unit12.hexLocation.toward(0).type = CBHex.HEXSIDE_TYPES.DIFFICULT;
+            unit12.hexLocation.toward(0).type = WHex.HEXSIDE_TYPES.DIFFICULT;
             unit12.hexLocation.height = 1;
-            unit12.hexLocation.type = CBHex.HEX_TYPES.OUTDOOR_ROUGH;
+            unit12.hexLocation.type = WHex.HEX_TYPES.OUTDOOR_ROUGH;
             unit11.hexLocation = unit12.hexLocation;
             leader21.setTiredness(CBTiredness.EXHAUSTED);
             leader21.disrupt();
@@ -912,7 +912,7 @@ describe("Combat teacher", ()=> {
             ]);
         then:
             assertNotInZone(allowedAdvances, 300); // Not in allowed advance zones
-            assertInAdvanceZone(allowedAdvances, 0, 5, 6, CBStacking.BOTTOM);
+            assertInAdvanceZone(allowedAdvances, 0, 5, 6, WStacking.BOTTOM);
             assertNotInZone(allowedAdvances, 60); // occupied by foe
             assertNotInZone(allowedAdvances, 120); // not in forward zone
             assertNotInZone(allowedAdvances, 180); // not in forward zone and not in allowed advance zones

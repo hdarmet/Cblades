@@ -2,13 +2,13 @@
 
 import {
     Memento
-} from "../mechanisms.js";
+} from "../board/mechanisms.js";
 import {
     ADELAY,
     DAnimation
-} from "../draw.js";
+} from "../board/draw.js";
 
-export class CBSequence {
+export class WSequence {
 
     static appendElement(game, sequence) {
         console.assert(game._sequence);
@@ -27,7 +27,7 @@ export class CBSequence {
 
     static setCount(game, count) {
         if (!game._sequence) {
-            game._sequence = new CBSequence(game, count);
+            game._sequence = new WSequence(game, count);
         }
         game._sequence.count;
     }
@@ -48,15 +48,15 @@ export class CBSequence {
 
     static _constructors = new Map();
     static register(label, seqConstructor) {
-        CBSequence._constructors.set(label, seqConstructor);
+        WSequence._constructors.set(label, seqConstructor);
     }
 
     static getLauncher(label) {
-        return (CBSequence._constructors.get(label)).launch;
+        return (WSequence._constructors.get(label)).launch;
     }
 
     static createElement(id, label) {
-        return new (CBSequence._constructors.get(label))({id});
+        return new (WSequence._constructors.get(label))({id});
     }
 
     constructor(game, count=0) {
@@ -161,7 +161,7 @@ export class CBSequence {
         //consoleLog(JSON.stringify(specList));
         this.count = sequenceSpecs.count;
         for (let elementSpec of sequenceSpecs.elements) {
-            let element = CBSequence.createElement(elementSpec.id, elementSpec.type);
+            let element = WSequence.createElement(elementSpec.id, elementSpec.type);
             element.fromSpecs(elementSpec, context);
             this.addElement(element);
         }
@@ -176,7 +176,7 @@ export class CBSequence {
 
 }
 
-export class CBSequenceElement {
+export class WSequenceElement {
 
     constructor({id, type, game}) {
         this.id = id;
@@ -218,7 +218,7 @@ export class CBSequenceElement {
 
 }
 
-export class CBAnimation extends DAnimation {
+export class WAnimation extends DAnimation {
 
     constructor({game, startTick, duration}) {
         super();
@@ -246,14 +246,14 @@ export class CBAnimation extends DAnimation {
 
 }
 
-export class CBNextTurnSequenceElement extends CBSequenceElement {
+export class WNextTurnSequenceElement extends WSequenceElement {
 
     constructor({id, game}) {
         super({id, type: "next-turn", game});
     }
 
     apply(startTick) {
-        return new CBNextTurnAnimation({game: this.game, startTick, duration: this.delay});
+        return new WNextTurnAnimation({game: this.game, startTick, duration: this.delay});
     }
 
     get delay() { return 500; }
@@ -271,9 +271,9 @@ export class CBNextTurnSequenceElement extends CBSequenceElement {
     }
 
 }
-CBSequence.register("next-turn", CBNextTurnSequenceElement);
+WSequence.register("next-turn", WNextTurnSequenceElement);
 
-export class CBNextTurnAnimation extends DAnimation {
+export class WNextTurnAnimation extends DAnimation {
 
     constructor({game, startTick, duration}) {
         super();

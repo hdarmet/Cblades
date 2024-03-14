@@ -5,29 +5,29 @@ import {
 } from "../../jstest/jtest.js";
 import {
     DImage, setDrawPlatform
-} from "../../jslib/draw.js";
+} from "../../jslib/board/draw.js";
 import {
     mockPlatform
-} from "../mocks.js";
+} from "../board/mocks.js";
 import {
     Mechanisms, Memento
-} from "../../jslib/mechanisms.js";
+} from "../../jslib/board/mechanisms.js";
 import {
-    CBMap,
-    CBHexSideId
-} from "../../jslib/cblades/map.js";
+    WMap,
+    WHexSideId
+} from "../../jslib/wargame/map.js";
 import {
     DBoard, DSimpleLevel
-} from "../../jslib/board.js";
+} from "../../jslib/board/board.js";
 import {
     atan2,
     diffAngle,
     Dimension2D, invertAngle, sumAngle
-} from "../../jslib/geometry.js";
+} from "../../jslib/board/geometry.js";
 import {
     backwardMixin,
-    CBAbstractPathFinding,
-    CBLineOfSight,
+    WAbstractPathFinding,
+    WLineOfSight,
     forwardMixin,
     getArrivalAreaCosts,
     getPreferredNextMoves,
@@ -41,7 +41,7 @@ import {
     createHexArrivals,
     createHexSideArrivals,
     getImprovingNextMoves, getToBorderPreferredNextMoves,
-} from "../../jslib/cblades/pathfinding.js";
+} from "../../jslib/wargame/pathfinding.js";
 
 function createArrivalsFromHexes(start, hexes) {
     let result = [];
@@ -127,13 +127,13 @@ describe("Pathfinding", ()=> {
 
     it("Checks forward hex path finding", () => {
         given:
-            var map = new CBMap([{path: "./../images/maps/map.png", col: 0, row: 0}]);
+            var map = new WMap([{path: "./../images/maps/map.png", col: 0, row: 0}]);
             var game = new CBTestGame();
         when:
             game.setMap(map);
             var expensiveHexes = new Set([map.getHex(10, 1)]);
             let start = map.getHex(10, 2);
-            var pathfinding = new (hexPathFindingMixin(forwardMixin(CBAbstractPathFinding)))(start, 120,
+            var pathfinding = new (hexPathFindingMixin(forwardMixin(WAbstractPathFinding)))(start, 120,
                 createArrivalsFromHexes(start,[map.getHex(9, -1), map.getHex(10, 0), map.getHex(11, -1)]),
                 (fromHex, toHex) => expensiveHexes.has(toHex) ? 1.5 : 1,
                 (fromHex, fromAngle, toAngle) => 0.5, 1
@@ -151,13 +151,13 @@ describe("Pathfinding", ()=> {
 
     it("Checks forward hex path finding when a maximum cost is set", () => {
         given:
-            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+            var map = new WMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             var game = new CBTestGame();
         when:
             game.setMap(map);
             var expensiveHexes = new Set([map.getHex(10,1)]);
             let start = map.getHex(10, 2);
-            var pathfinding = new (hexPathFindingMixin(forwardMixin(CBAbstractPathFinding)))(start, 120,
+            var pathfinding = new (hexPathFindingMixin(forwardMixin(WAbstractPathFinding)))(start, 120,
                 createArrivalsFromHexes(start,[map.getHex(9, -1), map.getHex(10, 0), map.getHex(11, -1)]),
                 (fromHex, toHex)=>expensiveHexes.has(toHex)?1.5:1,
                 (fromHex, fromAngle, toAngle)=>0.5,
@@ -176,13 +176,13 @@ describe("Pathfinding", ()=> {
 
     it("Checks forward hex path finding when some hexes are forbidden", () => {
         given:
-            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+            var map = new WMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             var game = new CBTestGame();
             when:
                 game.setMap(map);
             var forbiddenHexes = new Set([map.getHex(10,1)]);
             let start = map.getHex(10, 2);
-            var pathfinding = new (hexPathFindingMixin(forwardMixin(CBAbstractPathFinding)))(start, 120,
+            var pathfinding = new (hexPathFindingMixin(forwardMixin(WAbstractPathFinding)))(start, 120,
                 createArrivalsFromHexes(start,[map.getHex(9, -1), map.getHex(10, 0), map.getHex(11, -1)]),
                 (fromHex, toHex)=>forbiddenHexes.has(toHex)?null:1,
                 (fromHex, fromAngle, toAngle)=>diffAngle(fromAngle, toAngle)>90?null:0.5, 1
@@ -198,13 +198,13 @@ describe("Pathfinding", ()=> {
 
     it("Checks backward hex path finding", () => {
         given:
-            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+            var map = new WMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             var game = new CBTestGame();
         when:
             game.setMap(map);
             var expensiveHexes = new Set([map.getHex(9,0), map.getHex(10,1), map.getHex(11,0)]);
             let start = map.getHex(10, 2);
-            var pathfinding = new (hexPathFindingMixin(backwardMixin(CBAbstractPathFinding)))(start, 120,
+            var pathfinding = new (hexPathFindingMixin(backwardMixin(WAbstractPathFinding)))(start, 120,
                 createArrivalsFromHexes(start, [map.getHex(9, -1), map.getHex(10, 0), map.getHex(11, -1)]),
                     (fromHex, toHex)=>expensiveHexes.has(toHex)?2:1,
                     (fromHex, fromAngle, toAngle)=>0.5, 1
@@ -218,13 +218,13 @@ describe("Pathfinding", ()=> {
 
     it("Checks backward hex path finding when a maximum cost is set", () => {
         given:
-            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+            var map = new WMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             var game = new CBTestGame();
         when:
             game.setMap(map);
             var expensiveHexes = new Set([map.getHex(9,0), map.getHex(10,1), map.getHex(11,0)]);
             let start = map.getHex(10, 2);
-            var pathfinding = new (hexPathFindingMixin(backwardMixin(CBAbstractPathFinding)))(start, 120,
+            var pathfinding = new (hexPathFindingMixin(backwardMixin(WAbstractPathFinding)))(start, 120,
                 createArrivalsFromHexes(start, [map.getHex(9, -1), map.getHex(10, 0), map.getHex(11, -1)]),
                 (fromHex, toHex)=>expensiveHexes.has(toHex)?2:1,
                 (fromHex, fromAngle, toAngle)=>0.5,
@@ -248,13 +248,13 @@ describe("Pathfinding", ()=> {
 
     it("Checks backward hex path finding when some hexes are forbidden", () => {
         given:
-            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+            var map = new WMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             var game = new CBTestGame();
         when:
             game.setMap(map);
             var forbiddenHexes = new Set([map.getHex(9,0), map.getHex(10,1), map.getHex(11,0)]);
             let start = map.getHex(10, 2);
-            var pathfinding = new (hexPathFindingMixin(backwardMixin(CBAbstractPathFinding)))(start, 120,
+            var pathfinding = new (hexPathFindingMixin(backwardMixin(WAbstractPathFinding)))(start, 120,
                 createArrivalsFromHexes(start, [map.getHex(9, -1), map.getHex(10, 0), map.getHex(11, -1)]),
                 (fromHex, toHex)=>forbiddenHexes.has(toHex)?null:1,
                 (fromHex, fromAngle, toAngle)=>diffAngle(fromAngle, toAngle)>90?null:0.5, 1
@@ -276,7 +276,7 @@ describe("Pathfinding", ()=> {
 
     it("Checks arrivals definition for a hex path, to target a hex", () => {
         given:
-            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+            var map = new WMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             var game = new CBTestGame();
         when:
             game.setMap(map);
@@ -323,12 +323,12 @@ describe("Pathfinding", ()=> {
 
     it("Checks arrivals definition for a hex path, to target a hex side", () => {
         given:
-            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+            var map = new WMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             var game = new CBTestGame();
         when:
             game.setMap(map);
             var arrivals = arrivalsStringifier(createHexArrivals(
-                new CBHexSideId(map.getHex(3, 4), map.getHex(3, 3)), (from, to)=>1));
+                new WHexSideId(map.getHex(3, 4), map.getHex(3, 3)), (from, to)=>1));
         then:
             assert(arrivals).unorderedArrayEqualsTo([
                 'hexLocation:Hex(4, 4), angle:240',
@@ -379,7 +379,7 @@ describe("Pathfinding", ()=> {
 
     it("Checks arrivals definition for a hex side path, to target a hex", () => {
         given:
-            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+            var map = new WMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             var game = new CBTestGame();
         when:
             game.setMap(map);
@@ -414,12 +414,12 @@ describe("Pathfinding", ()=> {
 
     it("Checks arrivals definition for a hex side path, to target a hex side", () => {
         given:
-            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+            var map = new WMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             var game = new CBTestGame();
         when:
             game.setMap(map);
             var arrivals = arrivalsStringifier(createHexSideArrivals(
-                new CBHexSideId(map.getHex(3, 4), map.getHex(3, 3)),
+                new WHexSideId(map.getHex(3, 4), map.getHex(3, 3)),
                 (from, to)=>1));
         then:
             assert(arrivals).unorderedArrayEqualsTo([
@@ -459,7 +459,7 @@ describe("Pathfinding", ()=> {
 
     it("Checks best hex next moves", () => {
         given:
-            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+            var map = new WMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             var game = new CBTestGame();
         when:
             game.setMap(map);
@@ -488,7 +488,7 @@ describe("Pathfinding", ()=> {
 
     it("Checks best hex next moves when there is no solution because of max distance exceeded", () => {
         given:
-            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+            var map = new WMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             var game = new CBTestGame();
         when:
             game.setMap(map);
@@ -512,7 +512,7 @@ describe("Pathfinding", ()=> {
 
     it("Checks hex next moves to reach a target", () => {
         given:
-            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+            var map = new WMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             var game = new CBTestGame();
         when:
             game.setMap(map);
@@ -536,7 +536,7 @@ describe("Pathfinding", ()=> {
 
     it("Checks hex next moves to border a target", () => {
         given:
-            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+            var map = new WMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             var game = new CBTestGame();
         when:
             game.setMap(map);
@@ -561,7 +561,7 @@ describe("Pathfinding", ()=> {
 
     it("Checks hex path cost moves when the target is a hex", () => {
         given:
-            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+            var map = new WMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             var game = new CBTestGame();
             when:
                 game.setMap(map);
@@ -581,7 +581,7 @@ describe("Pathfinding", ()=> {
 
     it("Checks hex path cost moves when the target is a hex side", () => {
         given:
-            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+            var map = new WMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             var game = new CBTestGame();
         when:
             game.setMap(map);
@@ -589,7 +589,7 @@ describe("Pathfinding", ()=> {
             let config = {
                 start: map.getHex(10, 3),
                 startAngle: 120,
-                arrival: new CBHexSideId(map.getHex(10,1), map.getHex(10,0)),
+                arrival: new WHexSideId(map.getHex(10,1), map.getHex(10,0)),
                 costMove: (fromHex, toHex)=>expensiveHexes.has(toHex)?2:1,
                 costRotate: (fromHex, fromAngle, toAngle)=>Math.abs(diffAngle(fromAngle, toAngle))<=60?0:0.5,
                 minimalCost: 1
@@ -601,7 +601,7 @@ describe("Pathfinding", ()=> {
 
     it("Checks hex path cost when there is no solution because of max distance exceeded", () => {
         given:
-            var map = new CBMap([{path: "./../images/maps/map.png", col: 0, row: 0}]);
+            var map = new WMap([{path: "./../images/maps/map.png", col: 0, row: 0}]);
             var game = new CBTestGame();
         when:
             game.setMap(map);
@@ -622,7 +622,7 @@ describe("Pathfinding", ()=> {
 
     it("Checks hex path cost when there is no solution", () => {
         given:
-            var map = new CBMap([{path: "./../images/maps/map.png", col: 0, row: 0}]);
+            var map = new WMap([{path: "./../images/maps/map.png", col: 0, row: 0}]);
             var game = new CBTestGame();
         when:
             game.setMap(map);
@@ -645,7 +645,7 @@ describe("Pathfinding", ()=> {
     });
 
     function checkHexSideRecord(pathfinding, map, fcol, frow, tcol, trow, cost, angle, distance) {
-        let record = pathfinding.getRecord(new CBHexSideId(map.getHex(fcol, frow), map.getHex(tcol, trow)), angle);
+        let record = pathfinding.getRecord(new WHexSideId(map.getHex(fcol, frow), map.getHex(tcol, trow)), angle);
         assert(record).isDefined();
         assert(record.cost).equalsTo(cost);
         assert(record.angle).equalsTo(angle);
@@ -662,12 +662,12 @@ describe("Pathfinding", ()=> {
 
     it("Checks computing the distance from two locations", () => {
         given:
-            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+            var map = new WMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             var game = new CBTestGame();
         when:
             game.setMap(map);
-            let start = new CBHexSideId(map.getHex(9, 4), map.getHex(10, 4));
-            var pathfinding = new (hexSidePathFindingMixin(forwardMixin(CBAbstractPathFinding)))(
+            let start = new WHexSideId(map.getHex(9, 4), map.getHex(10, 4));
+            var pathfinding = new (hexSidePathFindingMixin(forwardMixin(WAbstractPathFinding)))(
                 start, 210,
                 createArrivalsHexSidesFromHexes(start, [
                     map.getHex(9, 1), map.getHex(10, 1), map.getHex(11, 1)
@@ -678,27 +678,27 @@ describe("Pathfinding", ()=> {
         then:
             assert(pathfinding._distanceBetweenLocations(
                 map.getHex(1, 1),
-                new CBHexSideId(map.getHex(3, 4), map.getHex(3, 5)))
+                new WHexSideId(map.getHex(3, 4), map.getHex(3, 5)))
             ).equalsTo(4);
             assert(pathfinding._distanceBetweenLocations(
-                new CBHexSideId(map.getHex(3, 4), map.getHex(3, 5)),
+                new WHexSideId(map.getHex(3, 4), map.getHex(3, 5)),
                 map.getHex(1, 1))
             ).equalsTo(4);
             assert(pathfinding._distanceBetweenLocations(
-                new CBHexSideId(map.getHex(3, 4), map.getHex(3, 5)),
-                new CBHexSideId(map.getHex(1, 1), map.getHex(1, 2))),
+                new WHexSideId(map.getHex(3, 4), map.getHex(3, 5)),
+                new WHexSideId(map.getHex(1, 1), map.getHex(1, 2))),
             ).equalsTo(4);
     });
 
     it("Checks hexside forward path finding", () => {
         given:
-            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+            var map = new WMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             var game = new CBTestGame();
         when:
             game.setMap(map);
             var expensiveHexes = new Set([map.getHex(10,2)]);
-            let start = new CBHexSideId(map.getHex(9, 4), map.getHex(10, 4));
-            var pathfinding = new (hexSidePathFindingMixin(forwardMixin(CBAbstractPathFinding)))(
+            let start = new WHexSideId(map.getHex(9, 4), map.getHex(10, 4));
+            var pathfinding = new (hexSidePathFindingMixin(forwardMixin(WAbstractPathFinding)))(
                 start, 210,
                 createArrivalsHexSidesFromHexes(start, [
                     map.getHex(9, 1), map.getHex(10, 1), map.getHex(11, 1)
@@ -715,13 +715,13 @@ describe("Pathfinding", ()=> {
 
     it("Checks hexside backward path finding", () => {
         given:
-            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+            var map = new WMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             var game = new CBTestGame();
         when:
             game.setMap(map);
             var expensiveHexes = new Set(); //new Set([map.getHex(10,2)]);
-            let start = new CBHexSideId(map.getHex(10, 3), map.getHex(10, 4));
-            var pathfinding = new (hexSidePathFindingMixin(backwardMixin(CBAbstractPathFinding)))(
+            let start = new WHexSideId(map.getHex(10, 3), map.getHex(10, 4));
+            var pathfinding = new (hexSidePathFindingMixin(backwardMixin(WAbstractPathFinding)))(
                 start, 90,
                 createArrivalsHexSidesFromHexes(start, [
                     map.getHex(9, 1),
@@ -740,17 +740,17 @@ describe("Pathfinding", ()=> {
 
     it("Checks best hexside next moves", () => {
         given:
-            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+            var map = new WMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             var game = new CBTestGame();
         when:
             game.setMap(map);
             var expensiveHexes = new Set([]);
             var nextMoves = getPreferredNextMoves({
-                start: new CBHexSideId(map.getHex(10, 2), map.getHex(10, 3)),
+                start: new WHexSideId(map.getHex(10, 2), map.getHex(10, 3)),
                 startAngle: 90,
                 arrivals: [
-                    {hexLocation: new CBHexSideId(map.getHex(9, 1), map.getHex(10, 1)), angle:30},
-                    {hexLocation: new CBHexSideId(map.getHex(10, 1), map.getHex(11, 1)), angle:330}
+                    {hexLocation: new WHexSideId(map.getHex(9, 1), map.getHex(10, 1)), angle:30},
+                    {hexLocation: new WHexSideId(map.getHex(10, 1), map.getHex(11, 1)), angle:330}
                 ],
                 costMove: (fromHex, toHex)=>expensiveHexes.has(toHex)?1.5:1,
                 costRotate: (fromHex, fromAngle, toAngle)=>1,
@@ -759,15 +759,15 @@ describe("Pathfinding", ()=> {
             });
         then:
             assert(nextMoves).unorderedArrayEqualsTo([
-                new CBHexSideId(map.getHex(10, 2), map.getHex(11, 3))
+                new WHexSideId(map.getHex(10, 2), map.getHex(11, 3))
             ]);
         when:
             nextMoves = getPreferredNextMoves({
-                start: new CBHexSideId(map.getHex(10, 2), map.getHex(10, 3)),
+                start: new WHexSideId(map.getHex(10, 2), map.getHex(10, 3)),
                 startAngle: 90,
                 arrivals: [
-                    {hexLocation: new CBHexSideId(map.getHex(9, 1), map.getHex(10, 1)), angle:30},
-                    {hexLocation: new CBHexSideId(map.getHex(10, 1), map.getHex(11, 1)), angle:330}
+                    {hexLocation: new WHexSideId(map.getHex(9, 1), map.getHex(10, 1)), angle:30},
+                    {hexLocation: new WHexSideId(map.getHex(10, 1), map.getHex(11, 1)), angle:330}
                 ],
                 costMove: (fromHex, toHex) => expensiveHexes.has(toHex) ? 1.5 : 1,
                 costRotate: (fromHex, fromAngle, toAngle) => 1,
@@ -776,24 +776,24 @@ describe("Pathfinding", ()=> {
             });
         then:
             assert(nextMoves).unorderedArrayEqualsTo([
-                new CBHexSideId(map.getHex(10, 2), map.getHex(11, 3)),
-                new CBHexSideId(map.getHex(10, 2), map.getHex(9, 3))
+                new WHexSideId(map.getHex(10, 2), map.getHex(11, 3)),
+                new WHexSideId(map.getHex(10, 2), map.getHex(9, 3))
             ]);
     });
 
     it("Checks best hexside next moves when there is no solution because of max distance exceeded", () => {
         given:
-            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+            var map = new WMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             var game = new CBTestGame();
         when:
             game.setMap(map);
             var expensiveHexes = new Set([]);
             let config = {
-                start: new CBHexSideId(map.getHex(10, 2), map.getHex(10, 3)),
+                start: new WHexSideId(map.getHex(10, 2), map.getHex(10, 3)),
                 startAngle: 90,
                 arrivals: [
-                    {hexLocation: new CBHexSideId(map.getHex(9, 1), map.getHex(10, 1)), angle:30},
-                    {hexLocation: new CBHexSideId(map.getHex(10, 1), map.getHex(11, 1)), angle:330}
+                    {hexLocation: new WHexSideId(map.getHex(9, 1), map.getHex(10, 1)), angle:30},
+                    {hexLocation: new WHexSideId(map.getHex(10, 1), map.getHex(11, 1)), angle:330}
                 ],
                 costMove: (fromHex, toHex)=>expensiveHexes.has(toHex)?1.5:1,
                 costRotate: (fromHex, fromAngle, toAngle)=>1,
@@ -807,16 +807,16 @@ describe("Pathfinding", ()=> {
 
     it("Checks hex side next moves to reach a target", () => {
         given:
-            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+            var map = new WMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             var game = new CBTestGame();
         when:
             game.setMap(map);
             let config = {
-                start:new CBHexSideId(map.getHex(9, 5), map.getHex(9, 6)),
+                start:new WHexSideId(map.getHex(9, 5), map.getHex(9, 6)),
                 startAngle:90,
                 arrivals:[
-                    new CBHexSideId(map.getHex(9, 2), map.getHex(10, 2)),
-                    new CBHexSideId(map.getHex(10, 2), map.getHex(11, 2))
+                    new WHexSideId(map.getHex(9, 2), map.getHex(10, 2)),
+                    new WHexSideId(map.getHex(10, 2), map.getHex(11, 2))
                 ],
                 costMove:(fromHex, toHex)=>1,
                 costRotate:(fromHex, fromAngle, toAngle)=>Math.abs(diffAngle(fromAngle, toAngle))<=60?0:0.5,
@@ -831,16 +831,16 @@ describe("Pathfinding", ()=> {
 
     it("Checks hex side next moves to border a target", () => {
         given:
-            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+            var map = new WMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             var game = new CBTestGame();
         when:
             game.setMap(map);
             let config = {
-                start:new CBHexSideId(map.getHex(9, 5), map.getHex(9, 6)),
+                start:new WHexSideId(map.getHex(9, 5), map.getHex(9, 6)),
                 startAngle:90,
                 arrivals:[
-                    new CBHexSideId(map.getHex(9, 2), map.getHex(10, 2)),
-                    new CBHexSideId(map.getHex(10, 2), map.getHex(11, 2))
+                    new WHexSideId(map.getHex(9, 2), map.getHex(10, 2)),
+                    new WHexSideId(map.getHex(10, 2), map.getHex(11, 2))
                 ],
                 costCross:(fromHex, toHex)=>1,
                 costMove:(fromHex, toHex)=>1,
@@ -858,13 +858,13 @@ describe("Pathfinding", ()=> {
 
     it("Checks hexside path cost when the target is an hex", () => {
         given:
-            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+            var map = new WMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             var game = new CBTestGame();
         when:
             game.setMap(map);
             var expensiveHexes = new Set([map.getHex(9,1), map.getHex(10,1), map.getHex(11,1)]);
             let config = {
-                start: new CBHexSideId(map.getHex(10, 2), map.getHex(10, 3)),
+                start: new WHexSideId(map.getHex(10, 2), map.getHex(10, 3)),
                 startAngle: 90,
                 arrival: map.getHex(10, 0),
                 costMove: (fromHex, toHex)=>expensiveHexes.has(toHex)?1.5:1,
@@ -878,15 +878,15 @@ describe("Pathfinding", ()=> {
 
     it("Checks hexside path cost when the target is an hex side", () => {
         given:
-            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+            var map = new WMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             var game = new CBTestGame();
         when:
             game.setMap(map);
             var expensiveHexes = new Set([map.getHex(9,1), map.getHex(10,1), map.getHex(11,1)]);
             let config = {
-                start: new CBHexSideId(map.getHex(10, 3), map.getHex(10, 4)),
+                start: new WHexSideId(map.getHex(10, 3), map.getHex(10, 4)),
                 startAngle: 90,
-                arrival: new CBHexSideId(map.getHex(10, 0), map.getHex(10, 1)),
+                arrival: new WHexSideId(map.getHex(10, 0), map.getHex(10, 1)),
                 costMove: (fromHex, toHex)=>expensiveHexes.has(toHex)?1.5:1,
                 costRotate: (fromHex, fromAngle, toAngle)=>1,
                 minimalCost: 1
@@ -898,13 +898,13 @@ describe("Pathfinding", ()=> {
 
     it("Checks hexside path cost when some hexes are forbidden", () => {
         given:
-            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+            var map = new WMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             var game = new CBTestGame();
         when:
             game.setMap(map);
             var forbiddenHexes = new Set([map.getHex(7,3), map.getHex(8,3), map.getHex(9,3)]);
             let config = {
-                start: new CBHexSideId(map.getHex(8, 5), map.getHex(8, 4)),
+                start: new WHexSideId(map.getHex(8, 5), map.getHex(8, 4)),
                 startAngle: 90,
                 arrival: map.getHex(8, 2),
                 costMove: (fromHex, toHex)=>forbiddenHexes.has(toHex)?null:1,
@@ -918,13 +918,13 @@ describe("Pathfinding", ()=> {
 
     it("Checks hexside path cost when there is no solution because of max distance exceeded", () => {
         given:
-            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+            var map = new WMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             var game = new CBTestGame();
         when:
             game.setMap(map);
             var expensiveHexes = new Set([map.getHex(9,0), map.getHex(10,1), map.getHex(11,0)]);
             let config = {
-                start: new CBHexSideId(map.getHex(10, 2), map.getHex(10, 3)),
+                start: new WHexSideId(map.getHex(10, 2), map.getHex(10, 3)),
                 startAngle: 90,
                 arrival: map.getHex(10, 0),
                 costMove: (fromHex, toHex)=>expensiveHexes.has(toHex)?1.5:1,
@@ -939,7 +939,7 @@ describe("Pathfinding", ()=> {
 
     it("Checks hex area cost", () => {
         given:
-            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+            var map = new WMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             var game = new CBTestGame();
         when:
             game.setMap(map);
@@ -968,13 +968,13 @@ describe("Pathfinding", ()=> {
 
     it("Checks hexside area cost", () => {
         given:
-            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+            var map = new WMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             var game = new CBTestGame();
         when:
             game.setMap(map);
             var expensiveHexes = new Set([map.getHex(9,1), map.getHex(10,1), map.getHex(11,1)]);
             let config = {
-                start: new CBHexSideId(map.getHex(10, 2), map.getHex(10, 3)),
+                start: new WHexSideId(map.getHex(10, 2), map.getHex(10, 3)),
                 startAngle: 90,
                 arrivals: [map.getHex(9, 0), map.getHex(10, 0), map.getHex(11, 0)],
                 costMove: (fromHex, toHex)=>expensiveHexes.has(toHex)?1.5:1,
@@ -1003,7 +1003,7 @@ describe("Pathfinding", ()=> {
 
     it("Checks in range cost for an hex", () => {
         given:
-            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+            var map = new WMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             var game = new CBTestGame();
         when:
             game.setMap(map);
@@ -1028,7 +1028,7 @@ describe("Pathfinding", ()=> {
 
     it("Checks hexside in range cost", () => {
         given:
-            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+            var map = new WMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             var game = new CBTestGame();
         when:
             game.setMap(map);
@@ -1045,14 +1045,14 @@ describe("Pathfinding", ()=> {
             var inRangeMoves = getInRangeMoves(config);
         then:
             assert([...new Set(inRangeMoves.values())]).unorderedArrayEqualsTo([
-                new CBHexSideId(map.getHex(11, 2), map.getHex(12, 2)),
-                new CBHexSideId(map.getHex(10, 2), map.getHex(11, 2))
+                new WHexSideId(map.getHex(11, 2), map.getHex(12, 2)),
+                new WHexSideId(map.getHex(10, 2), map.getHex(11, 2))
             ]);
     });
 
     it("Checks in range moves for an hex when the max cost is not enough to move one hex", () => {
         given:
-            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+            var map = new WMap([{path:"./../images/maps/map.png", col:0, row:0}]);
         var game = new CBTestGame();
         when:
             game.setMap(map);
@@ -1078,7 +1078,7 @@ describe("Pathfinding", ()=> {
 
     it("Checks in range moves for an hex when the max cost is big enough to move around the target hex", () => {
         given:
-            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+            var map = new WMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             var game = new CBTestGame();
         when:
             game.setMap(map);
@@ -1107,7 +1107,7 @@ describe("Pathfinding", ()=> {
 
     it("Checks in range moves for an hex when the range is big enough to encompass the target hex", () => {
         given:
-            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+            var map = new WMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             var game = new CBTestGame();
         when:
             game.setMap(map);
@@ -1135,11 +1135,11 @@ describe("Pathfinding", ()=> {
 
     it("Checks line of sight along a string a aligned hexes", () => {
         given:
-            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+            var map = new WMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             var game = new CBTestGame();
         when:
             game.setMap(map);
-            var lineOfSight = new CBLineOfSight(map.getHex(4, 5), map.getHex(6, 4));
+            var lineOfSight = new WLineOfSight(map.getHex(4, 5), map.getHex(6, 4));
         then:
             assert(lineOfSight.getPath()).arrayEqualsTo([
                 [map.getHex(4, 5)],
@@ -1150,11 +1150,11 @@ describe("Pathfinding", ()=> {
 
     it("Checks line of sight along a vertex", () => {
         given:
-            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+            var map = new WMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             var game = new CBTestGame();
         when:
             game.setMap(map);
-            var lineOfSight = new CBLineOfSight(map.getHex(4, 5), map.getHex(5, 4));
+            var lineOfSight = new WLineOfSight(map.getHex(4, 5), map.getHex(5, 4));
         then:
             assert(lineOfSight.getPath()).arrayEqualsTo([
                 [map.getHex(4, 5)],
@@ -1165,11 +1165,11 @@ describe("Pathfinding", ()=> {
 
     it("Checks line of sight along a random path", () => {
         given:
-            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+            var map = new WMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             var game = new CBTestGame();
         when:
             game.setMap(map);
-            var lineOfSight = new CBLineOfSight(map.getHex(4, 5), map.getHex(6, 3));
+            var lineOfSight = new WLineOfSight(map.getHex(4, 5), map.getHex(6, 3));
         then:
             assert(lineOfSight.getPath()).arrayEqualsTo([
                 [map.getHex(4, 5)],
@@ -1181,11 +1181,11 @@ describe("Pathfinding", ()=> {
 
     it("Checks line of sight along a random path", () => {
         given:
-            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+            var map = new WMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             var game = new CBTestGame();
         when:
             game.setMap(map);
-            var lineOfSight = new CBLineOfSight(map.getHex(4, 5), map.getHex(3, 0));
+            var lineOfSight = new WLineOfSight(map.getHex(4, 5), map.getHex(3, 0));
         then:
             assert(lineOfSight.getPath()).arrayEqualsTo([
                 [map.getHex(4, 5)],

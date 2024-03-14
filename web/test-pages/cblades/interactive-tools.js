@@ -2,19 +2,19 @@
 
 import {
     createEvent, round, mockPlatform, resetAllDirectives, loadAllImages
-} from "../mocks.js";
+} from "../board/mocks.js";
 import {
     DAnimator, getDrawPlatform
-} from "../../jslib/draw.js";
+} from "../../jslib/board/draw.js";
 import {
     executeTimeouts
 } from "../../jstest/jtest.js";
 import {
     DDice6, DMessage, DResult, DSwipe
-} from "../../jslib/widget.js";
+} from "../../jslib/board/widget.js";
 import {
     Point2D
-} from "../../jslib/geometry.js";
+} from "../../jslib/board/geometry.js";
 
 export function paint(game) {
     game.board.paint();

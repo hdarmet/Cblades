@@ -2,46 +2,46 @@
 
 import {
     Point2D, Dimension2D, diffAngle, sumAngle
-} from "../geometry.js";
+} from "../board/geometry.js";
 import {
     DImage
-} from "../draw.js";
+} from "../board/draw.js";
 import {
     Mechanisms,
     Memento
-} from "../mechanisms.js";
+} from "../board/mechanisms.js";
 import {
-    CBPieceImageArtifact,
-    CBStacking,
+    WPieceImageArtifact,
+    WStacking,
     HexLocatableMixin,
     BelongsToPlayerMixin,
     PlayableMixin,
-    CBPiece,
-    CBAction
-} from "./game.js";
+    WPiece,
+    WAction
+} from "../wargame/game.js";
 import {
     RetractableArtifactMixin,
     ActivableArtifactMixin,
     RetractablePieceMixin,
     SelectableArtifactMixin,
-    CBLevelBuilder,
-    CBGame,
-    CBPlayableActuatorTrigger, CBBasicPlayer
-} from "./playable.js";
+    WLevelBuilder,
+    WGame,
+    WPlayableActuatorTrigger, WPlayer
+} from "../wargame/playable.js";
 import {
-    CBHexLocation
-} from "./map.js";
+    WHexLocation
+} from "../wargame/map.js";
 import {
-    CBAnimation,
-    CBSequence, CBSequenceElement
-} from "./sequences.js";
+    WAnimation,
+    WSequence, WSequenceElement
+} from "../wargame/sequences.js";
 
-CBAction.types = new Map();
-CBAction.register = function(label, actionType) {
-    CBAction.types.set(label, actionType);
+WAction.types = new Map();
+WAction.register = function(label, actionType) {
+    WAction.types.set(label, actionType);
 }
-CBAction.createAction = function(label, game, unit, mode) {
-    return new (CBAction.types.get(label))(game, unit, mode);
+WAction.createAction = function(label, game, unit, mode) {
+    return new (WAction.types.get(label))(game, unit, mode);
 }
 
 export let CBMovement = {
@@ -90,7 +90,7 @@ export let CBOrderInstruction = {
     RETREAT: 3
 }
 
-export class CBUnitPlayer extends CBBasicPlayer {
+export class CBUnitPlayer extends WPlayer {
 
     _init() {
         super._init();
@@ -130,7 +130,7 @@ export class CBUnitPlayer extends CBBasicPlayer {
 
 }
 
-export class CBUnitActuatorTrigger extends CBPlayableActuatorTrigger {
+export class CBUnitActuatorTrigger extends WPlayableActuatorTrigger {
 
     constructor(actuator, unit, ...args) {
         super(actuator, unit, ...args);
@@ -145,7 +145,7 @@ export class CBUnitActuatorTrigger extends CBPlayableActuatorTrigger {
     }
 
     get layer() {
-        return CBLevelBuilder.ULAYERS.ACTUATORS;
+        return WLevelBuilder.ULAYERS.ACTUATORS;
     }
 
 }
@@ -694,7 +694,7 @@ export function OptionArtifactMixin(clazz) {
         }
 
         get layer() {
-            return this.unit.formationNature ? CBLevelBuilder.ULAYERS.FOPTIONS : CBLevelBuilder.ULAYERS.OPTIONS;
+            return this.unit.formationNature ? WLevelBuilder.ULAYERS.FOPTIONS : WLevelBuilder.ULAYERS.OPTIONS;
         }
 
     }
@@ -767,7 +767,7 @@ export function CarriableMixin(clazz) {
             Memento.register(this);
             this._deletePlayable(this._hexLocation);
             this._hexLocation = hexLocation;
-            this._appendPlayable(hexLocation, CBStacking.TOP);
+            this._appendPlayable(hexLocation, WStacking.TOP);
             this._element.move(hexLocation.location);
         }
 
@@ -780,7 +780,7 @@ export function CarriableMixin(clazz) {
 
 }
 
-export class CBMarkerArtifact extends RetractableArtifactMixin(CBPieceImageArtifact) {
+export class CBMarkerArtifact extends RetractableArtifactMixin(WPieceImageArtifact) {
 
     constructor(unit, images, position, dimension= CBMarkerArtifact.MARKER_DIMENSION) {
         super(unit, "units", images, position, dimension);
@@ -795,7 +795,7 @@ export class CBMarkerArtifact extends RetractableArtifactMixin(CBPieceImageArtif
     }
 
     get layer() {
-        return this.unit.formationNature ? CBLevelBuilder.ULAYERS.FMARKERS : CBLevelBuilder.ULAYERS.MARKERS;
+        return this.unit.formationNature ? WLevelBuilder.ULAYERS.FMARKERS : WLevelBuilder.ULAYERS.MARKERS;
     }
 }
 CBMarkerArtifact.MARKER_DIMENSION = new Dimension2D(64, 64);
@@ -826,7 +826,7 @@ export class CBActivableMarkerArtifact extends ActivableArtifactMixin(CBMarkerAr
 
 }
 
-export class UnitImageArtifact extends RetractableArtifactMixin(SelectableArtifactMixin(CBPieceImageArtifact)) {
+export class UnitImageArtifact extends RetractableArtifactMixin(SelectableArtifactMixin(WPieceImageArtifact)) {
 
     constructor(unit, ...args) {
         super(unit, ...args);
@@ -845,12 +845,12 @@ export class UnitImageArtifact extends RetractableArtifactMixin(SelectableArtifa
     }
 
     get layer() {
-        return CBLevelBuilder.ULAYERS.UNITS;
+        return WLevelBuilder.ULAYERS.UNITS;
     }
 
 }
 
-export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPlayerMixin(PlayableMixin(CBPiece)))) {
+export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPlayerMixin(PlayableMixin(WPiece)))) {
 
     constructor(game, type, paths, wing, dimension=CBUnit.DIMENSION) {
         super("units", game, paths, dimension);
@@ -1015,7 +1015,7 @@ export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
 
     finish() {
         super.finish();
-        CBSequence.appendElement(this.game, new CBStateSequenceElement({game: this.game, unit: this}));
+        WSequence.appendElement(this.game, new CBStateSequenceElement({game: this.game, unit: this}));
     }
 
     addToMap(hexId, stacking) {
@@ -1320,7 +1320,7 @@ export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
         Memento.register(this);
         this._hexLocation._deletePlayable(this);
         this._hexLocation = hexLocation;
-        stacking===CBStacking.BOTTOM ? hexLocation._appendPlayableOnBottom(this) : hexLocation._appendPlayableOnTop(this);
+        stacking===WStacking.BOTTOM ? hexLocation._appendPlayableOnBottom(this) : hexLocation._appendPlayableOnTop(this);
         this._element.move(hexLocation.location);
         for (let carried of this._carried) {
             carried._move(hexLocation);
@@ -1339,7 +1339,7 @@ export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
         }
     }
 
-    move(hexLocation, cost=null, stacking = CBStacking.TOP) {
+    move(hexLocation, cost=null, stacking = WStacking.TOP) {
         this._move(hexLocation, stacking);
         if (cost!=null) {
             this._updateMovementPoints(cost);
@@ -1355,7 +1355,7 @@ export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
     }
 
     advance(hexLocation) {
-        this._changeLocation(hexLocation, CBStacking.BOTTOM);
+        this._changeLocation(hexLocation, WStacking.BOTTOM);
     }
 
     _rotate(angle) {
@@ -1671,9 +1671,9 @@ export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
 
     setAction(actionSpec) {
         if (actionSpec.actionType) {
-            let action = CBAction.createAction(actionSpec.actionType, this.game, this, actionSpec.actionMode);
+            let action = WAction.createAction(actionSpec.actionType, this.game, this, actionSpec.actionMode);
             this.launchAction(action);
-            action.status = CBAction.STARTED;
+            action.status = WAction.STARTED;
             this._game.selectedPlayable = this;
         }
         else if (actionSpec.routNeighbors) {
@@ -1851,17 +1851,17 @@ export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
 
 }
 
-Object.defineProperty(CBHexLocation.prototype, "units", {
+Object.defineProperty(WHexLocation.prototype, "units", {
     get: function() {
         return this.playables.filter(playable=>playable.unitNature);
     }
 });
-Object.defineProperty(CBHexLocation.prototype, "empty", {
+Object.defineProperty(WHexLocation.prototype, "empty", {
     get: function() {
         return this.units.length===0;
     }
 });
-Object.defineProperty(CBGame.prototype, "units", {
+Object.defineProperty(WGame.prototype, "units", {
     get: function() {
         let units = [];
         if (this._playables) {
@@ -1875,7 +1875,7 @@ Object.defineProperty(CBGame.prototype, "units", {
     }
 });
 
-CBGame.prototype.getUnit = function(name) {
+WGame.prototype.getUnit = function(name) {
     let unit = this._playables.filter(unit=>unit.name === name);
     return unit.length>0 ? unit[0] : null;
 }
@@ -1912,7 +1912,7 @@ export class FormationImageArtifact extends UnitImageArtifact {
     }
 
     get layer() {
-        return CBLevelBuilder.ULAYERS.FORMATIONS;
+        return WLevelBuilder.ULAYERS.FORMATIONS;
     }
 
 }
@@ -1984,7 +1984,7 @@ export class CBFormation extends CBUnit {
         return sumAngle(this.angle, delta);
     }
 
-    turn(angle, cost=null, stacking = CBStacking.TOP) {
+    turn(angle, cost=null, stacking = WStacking.TOP) {
         this.move(this.hexLocation.turnTo(angle), cost, stacking);
         this.reorient(this.getTurnOrientation(angle));
     }
@@ -2005,10 +2005,10 @@ export class CBFormation extends CBUnit {
         this.deleteFromMap();
         this.move(null, 0);
         for (let replacement of replacementOnFromHex) {
-            replacement.appendToMap(hexLocation.fromHex, CBStacking.TOP);
+            replacement.appendToMap(hexLocation.fromHex, WStacking.TOP);
         }
         for (let replacement of replacementOnToHex) {
-            replacement.appendToMap(hexLocation.toHex, CBStacking.TOP);
+            replacement.appendToMap(hexLocation.toHex, WStacking.TOP);
         }
     }
 
@@ -2190,7 +2190,7 @@ export function setUnitToContext(context, spec, unit) {
     loadUnitsToContext(context).units.set(spec, unit);
 }
 
-export class CBUnitAnimation extends CBAnimation {
+export class CBUnitAnimation extends WAnimation {
 
     constructor({unit, state, ...params}) {
         super({game: unit.game, ...params});
@@ -2223,7 +2223,7 @@ export class CBUnitAnimation extends CBAnimation {
 
 export let CBUnitSceneAnimation = SceneAnimation(CBUnitAnimation);
 
-export class CBStateSequenceElement extends CBSequenceElement {
+export class CBStateSequenceElement extends WSequenceElement {
 
     constructor({id, unit, game, type="state"}) {
         super({id, type, game});
@@ -2389,17 +2389,17 @@ export class CBStateSequenceElement extends CBSequenceElement {
     }
 
 }
-CBSequence.register("state", CBStateSequenceElement);
+WSequence.register("state", CBStateSequenceElement);
 
 export function getStackingCode(stacking) {
-    if (stacking===CBStacking.TOP) return "T";
+    if (stacking===WStacking.TOP) return "T";
     else return "B";
 }
 
 export function getStacking(code) {
     switch (code) {
-        case "T": return CBStacking.TOP;
-        case "B": return CBStacking.BOTTOM;
+        case "T": return WStacking.TOP;
+        case "B": return WStacking.BOTTOM;
     }
 }
 
@@ -2430,7 +2430,7 @@ export function HexLocated(clazz) {
         _toSpecs(spec, context) {
             super._toSpecs(spec, context);
             if (this.hexLocation) {
-                spec.hexLocation = CBHexLocation.toSpecs(this.hexLocation);
+                spec.hexLocation = WHexLocation.toSpecs(this.hexLocation);
             }
             spec.stacking = getStackingCode(this.stacking);
         }
@@ -2438,7 +2438,7 @@ export function HexLocated(clazz) {
         _fromSpecs(spec, context) {
             super._fromSpecs(spec, context);
             if (spec.hexLocation) {
-                this.hexLocation = CBHexLocation.fromSpecs(context.game.map, spec.hexLocation);
+                this.hexLocation = WHexLocation.fromSpecs(context.game.map, spec.hexLocation);
             }
             this.stacking = getStacking(spec.stacking);
         }
@@ -2501,7 +2501,7 @@ export class CBDisplaceAnimation extends CBUnitAnimation {
 
 }
 
-export let CBSceneAnimation = SceneAnimation(CBAnimation);
+export let CBSceneAnimation = SceneAnimation(WAnimation);
 
 export function SceneAnimation(clazz) {
 

@@ -2,27 +2,27 @@
 
 import {
     Point2D, Dimension2D, Matrix2D
-} from "../geometry.js";
+} from "../board/geometry.js";
 import {
     DImage
-} from "../draw.js";
+} from "../board/draw.js";
 import {
     Mechanisms, Memento
-} from "../mechanisms.js";
+} from "../board/mechanisms.js";
 import {
     DBoard, DElement, DMultiImagesArtifact
-} from "../board.js";
+} from "../board/board.js";
 import {
-    CBHexLocation,
-    CBMap
+    WHexLocation,
+    WMap
 } from "./map.js";
 
-export let CBStacking = {
+export let WStacking = {
     BOTTOM: 0,
     TOP: 1
 }
 
-export class CBAbstractArbitrator {
+export class WAbstractArbitrator {
 
     get game() {
         return this._game;
@@ -34,7 +34,7 @@ export class CBAbstractArbitrator {
 
 }
 
-export class CBAbstractPlayer {
+export class WAbstractPlayer {
 
     constructor(name, path) {
         this._identity = {
@@ -181,12 +181,12 @@ export class CBAbstractPlayer {
 
 }
 
-export class CBAction {
+export class WAction {
 
     constructor(game, playable) {
         this._playable = playable;
         this._game = game;
-        this._status = CBAction.INITIATED;
+        this._status = WAction.INITIATED;
     }
 
     _memento() {
@@ -200,11 +200,11 @@ export class CBAction {
     }
 
     isStarted() {
-        return this._status >= CBAction.STARTED;
+        return this._status >= WAction.STARTED;
     }
 
     isCancelled() {
-        return this._status === CBAction.CANCELLED;
+        return this._status === WAction.CANCELLED;
     }
 
     isPlayed() {
@@ -212,11 +212,11 @@ export class CBAction {
     }
 
     isFinished() {
-        return this._status >= CBAction.FINISHED;
+        return this._status >= WAction.FINISHED;
     }
 
     isFinalized() {
-        return this._status >= CBAction.FINALIZED;
+        return this._status >= WAction.FINALIZED;
     }
 
     isFinishable() {
@@ -232,48 +232,48 @@ export class CBAction {
     }
 
     markAsStarted() {
-        console.assert(this._status <= CBAction.STARTED);
-        if (this._status === CBAction.INITIATED) {
+        console.assert(this._status <= WAction.STARTED);
+        if (this._status === WAction.INITIATED) {
             Memento.register(this);
-            this._status = CBAction.STARTED;
-            Mechanisms.fire(this, CBAction.PROGRESSION_EVENT, CBAction.STARTED);
+            this._status = WAction.STARTED;
+            Mechanisms.fire(this, WAction.PROGRESSION_EVENT, WAction.STARTED);
         }
     }
 
     markAsFinished() {
-        if (this._status < CBAction.FINISHED) {
+        if (this._status < WAction.FINISHED) {
             Memento.register(this);
-            this._status = CBAction.FINISHED;
+            this._status = WAction.FINISHED;
             this.playable.finish();
             if (this.playable === this.game.focusedPlayable) {
                 this.game.setFocusedPlayable(null);
             }
-            Mechanisms.fire(this, CBAction.PROGRESSION_EVENT, CBAction.FINISHED);
+            Mechanisms.fire(this, WAction.PROGRESSION_EVENT, WAction.FINISHED);
         }
     }
 
     cancel(action) {
-        console.assert(this._status === CBAction.INITIATED);
+        console.assert(this._status === WAction.INITIATED);
         Memento.register(this);
-        this._status = CBAction.CANCELLED;
+        this._status = WAction.CANCELLED;
         this._game.closeWidgets();
         this.playable.removeAction();
         action && action();
-        Mechanisms.fire(this, CBAction.PROGRESSION_EVENT, CBAction.CANCELLED);
+        Mechanisms.fire(this, WAction.PROGRESSION_EVENT, WAction.CANCELLED);
     }
 
     finalize(action) {
-        console.assert(this._status >= CBAction.STARTED);
-        if (this._status < CBAction.FINALIZED) {
+        console.assert(this._status >= WAction.STARTED);
+        if (this._status < WAction.FINALIZED) {
             Memento.register(this);
-            this._status = CBAction.FINALIZED;
+            this._status = WAction.FINALIZED;
             this._game.closeWidgets();
             action && action();
             this.playable.finish();
             if (this.playable === this.game.focusedPlayable) {
                 this.game.setFocusedPlayable(null);
             }
-            Mechanisms.fire(this, CBAction.PROGRESSION_EVENT, CBAction.FINALIZED);
+            Mechanisms.fire(this, WAction.PROGRESSION_EVENT, WAction.FINALIZED);
         }
     }
 
@@ -305,7 +305,7 @@ export class CBAction {
  * actuator to react accordingly.
  * <p> At a given time, only ONE actuator may be present on the board.
  */
-export class CBActuator {
+export class WActuator {
 
     constructor() {
         this._closeAllowed = true;
@@ -359,7 +359,7 @@ export class CBActuator {
 
 }
 
-export class CBCounterDisplay {
+export class WCounterDisplay {
 
     constructor(game) {
         this._game = game;
@@ -369,8 +369,8 @@ export class CBCounterDisplay {
 
     _init() {
         this._counters = [];
-        this._vertical = CBCounterDisplay.TOP;
-        this._horizontal = CBCounterDisplay.LEFT;
+        this._vertical = WCounterDisplay.TOP;
+        this._horizontal = WCounterDisplay.LEFT;
     }
 
     clean() {
@@ -399,16 +399,16 @@ export class CBCounterDisplay {
         else if (event===DBoard.BORDER_EVENT) {
             switch(value) {
                 case DBoard.BORDER.LEFT:
-                    this.horizontal = CBCounterDisplay.RIGHT;
+                    this.horizontal = WCounterDisplay.RIGHT;
                     break;
                 case DBoard.BORDER.RIGHT:
-                    this.horizontal = CBCounterDisplay.LEFT;
+                    this.horizontal = WCounterDisplay.LEFT;
                     break;
                 case DBoard.BORDER.TOP:
-                    this.vertical = CBCounterDisplay.BOTTOM;
+                    this.vertical = WCounterDisplay.BOTTOM;
                     break;
                 case DBoard.BORDER.BOTTOM:
-                    this.vertical = CBCounterDisplay.TOP;
+                    this.vertical = WCounterDisplay.TOP;
                     break;
             }
         }
@@ -489,12 +489,12 @@ export class CBCounterDisplay {
         let leftBottomPoint = level.getFinalPoint();
         let index = 0;
         for (let counter of this._counters) {
-            let x = this._horizontal === CBCounterDisplay.LEFT ?
-                CBCounterDisplay.MARGIN * index + CBCounterDisplay.XMARGIN :
-                leftBottomPoint.x -CBCounterDisplay.MARGIN * (this._counters.length -index -1) -CBCounterDisplay.YMARGIN ;
-            let y = this._vertical === CBCounterDisplay.TOP ?
-                CBCounterDisplay.YMARGIN :
-                leftBottomPoint.y -CBCounterDisplay.YMARGIN;
+            let x = this._horizontal === WCounterDisplay.LEFT ?
+                WCounterDisplay.MARGIN * index + WCounterDisplay.XMARGIN :
+                leftBottomPoint.x -WCounterDisplay.MARGIN * (this._counters.length -index -1) -WCounterDisplay.YMARGIN ;
+            let y = this._vertical === WCounterDisplay.TOP ?
+                WCounterDisplay.YMARGIN :
+                leftBottomPoint.y -WCounterDisplay.YMARGIN;
             setLocation(counter, new Point2D(x, y));
             index += 1;
         }
@@ -517,14 +517,14 @@ export class CBCounterDisplay {
     static BOTTOM = 1;
 }
 
-export class CBAbstractGame {
+export class WAbstractGame {
 
     constructor(id, levels) {
         this._init();
         this._id = id;
         this._levels = levels;
         this._players = [];
-        this._counterDisplay = new CBCounterDisplay(this);
+        this._counterDisplay = new WCounterDisplay(this);
         Mechanisms.addListener(this);
     }
 
@@ -876,7 +876,7 @@ export class CBAbstractGame {
 
     start() {
         Memento.activate();
-        Mechanisms.fire(this, CBAbstractGame.STARTED_EVENT);
+        Mechanisms.fire(this, WAbstractGame.STARTED_EVENT);
         this._board.paint();
         return this;
     }
@@ -958,11 +958,11 @@ export class CBAbstractGame {
         context.game = this;
         this._oversion = specs.version || 0;
         this.currentTurn = specs.currentTurn;
-        let map = CBMap.fromSpecs(specs.map, context);
+        let map = WMap.fromSpecs(specs.map, context);
         this.map ? this.changeMap(map) : this.setMap(map);
         context.pieceMap = new Map();
         for (let playerSpecs of specs.players) {
-            CBAbstractPlayer.fromSpecs(this, playerSpecs, context);
+            WAbstractPlayer.fromSpecs(this, playerSpecs, context);
         }
         this.currentPlayer = this.players[specs.currentPlayerIndex];
         this._showPieces(specs, context)
@@ -1018,7 +1018,7 @@ export class CBAbstractGame {
     static POPUP_MARGIN = 10;
 }
 
-export class CBPieceImageArtifact extends DMultiImagesArtifact {
+export class WPieceImageArtifact extends DMultiImagesArtifact {
 
     constructor(piece, ...args) {
         super(...args); // levelName, image, position, dimension, pangle=0
@@ -1053,7 +1053,7 @@ export class CBPieceImageArtifact extends DMultiImagesArtifact {
 
 }
 
-export class CBPiece {
+export class WPiece {
 
     constructor(levelName, game, paths, dimension) {
         console.assert(game);
@@ -1068,7 +1068,7 @@ export class CBPiece {
     }
 
     createArtifact(levelName, images, position, dimension) {
-        return new CBPieceImageArtifact(this, levelName, images, position, dimension);
+        return new WPieceImageArtifact(this, levelName, images, position, dimension);
     }
 
     _memento() {
@@ -1244,7 +1244,7 @@ export function HexLocatableMixin(clazz) {
         _addPlayable(hexLocation, stacking) {
             console.assert(stacking !== undefined);
             this.game._registerPlayable(this);
-            stacking===CBStacking.BOTTOM ? hexLocation._unshiftPlayable(this) : hexLocation._pushPlayable(this);
+            stacking===WStacking.BOTTOM ? hexLocation._unshiftPlayable(this) : hexLocation._pushPlayable(this);
         }
 
         _removePlayable(hexLocation) {
@@ -1256,7 +1256,7 @@ export function HexLocatableMixin(clazz) {
         _appendPlayable(hexLocation, stacking) {
             console.assert(stacking !== undefined);
             this.game._appendPlayable(this);
-            stacking===CBStacking.BOTTOM ? hexLocation._appendPlayableOnBottom(this) : hexLocation._appendPlayableOnTop(this);
+            stacking===WStacking.BOTTOM ? hexLocation._appendPlayableOnBottom(this) : hexLocation._appendPlayableOnTop(this);
         }
 
         _deletePlayable(hexLocation) {
@@ -1265,7 +1265,7 @@ export function HexLocatableMixin(clazz) {
             hexLocation._deletePlayable(this);
         }
 
-        addToMap(hexLocation, stacking = CBStacking.TOP) {
+        addToMap(hexLocation, stacking = WStacking.TOP) {
             this._hexLocation = hexLocation;
             this._addPlayable(hexLocation, stacking);
             this._setOnGame(hexLocation.map.game);
@@ -1279,7 +1279,7 @@ export function HexLocatableMixin(clazz) {
             delete this._hexLocation;
         }
 
-        appendToMap(hexLocation, stacking = CBStacking.TOP) {
+        appendToMap(hexLocation, stacking = WStacking.TOP) {
             Memento.register(this);
             this._hexLocation = hexLocation;
             this._appendPlayable(hexLocation, stacking);
@@ -1304,7 +1304,7 @@ export function HexLocatableMixin(clazz) {
                 this.removeFromMap();
             }
             if (hexLocation) {
-                this.addToMap(hexLocation, CBStacking.TOP);
+                this.addToMap(hexLocation, WStacking.TOP);
             }
         }
 
@@ -1322,7 +1322,7 @@ export function HexLocatableMixin(clazz) {
 
         fromSpecs(pieceSpec, context) {
             super.fromSpecs(pieceSpec, context);
-            this._hexLocation = CBHexLocation.fromSpecs(context.map, {
+            this._hexLocation = WHexLocation.fromSpecs(context.map, {
                 col: pieceSpec.positionCol,
                 row: pieceSpec.positionRow,
                 angle: pieceSpec.positionAngle
@@ -1410,7 +1410,7 @@ export function PlayableMixin(clazz) {
         setPlayed() {
             Memento.register(this);
             if (!this.action) {
-                this.launchAction(new CBAction(this.game, this));
+                this.launchAction(new WAction(this.game, this));
             }
             this.action.markAsFinished();
         }
@@ -1418,9 +1418,9 @@ export function PlayableMixin(clazz) {
         set played(played) {
             if (played) {
                 if (!this._action) {
-                    this._action = new CBAction(this.game, this);
+                    this._action = new WAction(this.game, this);
                 }
-                this._action.status = CBAction.FINISHED;
+                this._action.status = WAction.FINISHED;
             }
             else {
                 delete this._action;
@@ -1464,7 +1464,7 @@ export function PlayableMixin(clazz) {
             return this._attrs;
         }
 
-        useAttr(path) {
+        getAttr(path) {
             let attrs = this.attrs;
             let names = path.split(".");
             for (let index=0; index<names.length-1; index++) {
@@ -1472,9 +1472,7 @@ export function PlayableMixin(clazz) {
                 attrs = attrs[names[index]];
             }
             if (!attrs) return null;
-            let value = attrs[names[names.length-1]];
-            attrs[names[names.length-1]] = undefined;
-            return value;
+            return attrs[names[names.length-1]];
         }
         setAttr(path, value) {
             !this._attrs && (this._attrs={});

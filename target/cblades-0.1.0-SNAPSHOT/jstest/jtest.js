@@ -678,4 +678,3 @@ export function result() {
 export function executeTimeouts(delay = -1) {
     _testSuite._executeTimeouts(delay);
 }
-

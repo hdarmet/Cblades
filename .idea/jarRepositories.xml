@@ -2,9 +2,19 @@
 <project version="4">
   <component name="RemoteRepositoriesConfiguration">
     <remote-repository>
+      <option name="id" value="PrivateExchangeRepository" />
+      <option name="name" value="Private Customer Exchange Repository" />
+      <option name="url" value="https://maven.eu1.anypoint.mulesoft.com/api/v3/maven" />
+    </remote-repository>
+    <remote-repository>
       <option name="id" value="central" />
       <option name="name" value="Central Repository" />
       <option name="url" value="https://repo.maven.apache.org/maven2" />
+    </remote-repository>
+    <remote-repository>
+      <option name="id" value="anypoint-exchange-v3" />
+      <option name="name" value="Anypoint Exchange V3" />
+      <option name="url" value="https://maven.eu1.anypoint.mulesoft.com/api/v3/maven" />
     </remote-repository>
     <remote-repository>
       <option name="id" value="central" />
@@ -15,6 +25,16 @@
       <option name="id" value="jboss.community" />
       <option name="name" value="JBoss Community repository" />
       <option name="url" value="https://repository.jboss.org/nexus/content/repositories/public/" />
+    </remote-repository>
+    <remote-repository>
+      <option name="id" value="mulesoft-releases" />
+      <option name="name" value="MuleSoft Releases Repository" />
+      <option name="url" value="https://repository.mulesoft.org/releases/" />
+    </remote-repository>
+    <remote-repository>
+      <option name="id" value="MuleRepository" />
+      <option name="name" value="MuleRepository" />
+      <option name="url" value="https://repository.mulesoft.org/artifactory-ee/content/repositories/releases-ee/" />
     </remote-repository>
   </component>
 </project>

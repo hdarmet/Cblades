@@ -2,12 +2,12 @@
 
 import {
     assert, describe, it, before
-} from "../jstest/jtest.js";
+} from "../../jstest/jtest.js";
 import {
     AVLTree,
     Mechanisms,
     Memento
-} from "../jslib/mechanisms.js";
+} from "../../jslib/board/mechanisms.js";
 
 describe("Mechansism", ()=> {
 

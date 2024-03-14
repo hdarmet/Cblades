@@ -9,11 +9,11 @@
 <script type="module">
 
     import {
-        CBMap, CBHexSideId
-    } from "../jslib/cblades/map.js";
+        WMap, WHexSideId
+    } from "../jslib/wargame/map.js";
     import {
-        CBGame
-    } from "../jslib/cblades/playable.js";
+        WGame
+    } from "../jslib/wargame/playable.js";
     import {
         WeatherMixin
     } from "../jslib/cblades/weather.js";
@@ -83,8 +83,8 @@
     registerInteractiveMagic();
     registerInteractiveMiscellaneous();
 
-    let game = new (BurningMixin(WeatherMixin(CBGame)))(1);
-    let map = new CBMap([
+    let game = new (BurningMixin(WeatherMixin(WGame)))(1);
+    let map = new WMap([
         {path:"./../images/maps/map-5.png", col:0, row:0, invert:true},
         {path:"./../images/maps/map-4.png", col:1, row:0}
     ]);

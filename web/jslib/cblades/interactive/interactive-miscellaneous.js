@@ -4,14 +4,14 @@ import {
     DDice6,
     DIconMenu,
     DIconMenuItem, DMask, DResult, DScene, DSwipe
-} from "../../widget.js";
+} from "../../board/widget.js";
 import {
-    CBAction, CBStacking, PlayableMixin, CBAbstractGame
-} from "../game.js";
+    WAction, WStacking, PlayableMixin, WAbstractGame
+} from "../../wargame/game.js";
 import {
-    CBActionActuator, CBPlayableActuatorTrigger,
-    RetractableActuatorMixin, CBInsert
-} from "../playable.js";
+    WActionActuator, WPlayableActuatorTrigger,
+    RetractableActuatorMixin, WInsert
+} from "../../wargame/playable.js";
 import {
     CBActionMenu,
     CBInteractivePlayer,
@@ -27,25 +27,25 @@ import {
 } from "../unit.js";
 import {
     Dimension2D, Point2D
-} from "../../geometry.js";
+} from "../../board/geometry.js";
 import {
     CBBurningCounter, CBFireCounter, CBSmokeCounter, CBStakesCounter
 } from "../miscellaneous.js";
 import {
     Mechanisms
-} from "../../mechanisms.js";
+} from "../../board/mechanisms.js";
 import {
     DImage, getDrawPlatform
-} from "../../draw.js";
+} from "../../board/draw.js";
 import {
-    CBSequence, CBSequenceElement
-} from "../sequences.js";
+    WSequence, WSequenceElement
+} from "../../wargame/sequences.js";
 import {
     SequenceLoader
 } from "../loader.js";
 import {
-    CBHexLocation
-} from "../map.js";
+    WHexLocation
+} from "../../wargame/map.js";
 
 export function registerInteractiveMiscellaneous() {
     CBInteractivePlayer.prototype.mergeUnits = function(unit) {
@@ -56,8 +56,8 @@ export function registerInteractiveMiscellaneous() {
         let popup = new CBMiscellaneousActionsMenu(this.game, unit, allowedActions);
         let offset = unit.viewportLocation;
         this.game.openPopup(popup, new Point2D(
-            offset.x - popup.dimension.w/2 + CBAbstractGame.POPUP_MARGIN,
-            offset.y - popup.dimension.h/2 + CBAbstractGame.POPUP_MARGIN)
+            offset.x - popup.dimension.w/2 + WAbstractGame.POPUP_MARGIN,
+            offset.y - popup.dimension.h/2 + WAbstractGame.POPUP_MARGIN)
         );
     }
     CBInteractivePlayer.prototype.tryToSetFire = function(unit) {
@@ -105,7 +105,7 @@ export function unregisterInteractiveMiscellaneous() {
     CBActionMenu.menuBuilders.remove(createMiscellaneousMenuItems);
 }
 
-export class InteractiveMergeUnitAction extends CBAction {
+export class InteractiveMergeUnitAction extends WAction {
 
     constructor(game, unit) {
         super(game, unit);
@@ -120,7 +120,7 @@ export class InteractiveMergeUnitAction extends CBAction {
         this.unit.setCharging(CBCharge.NONE);
         let {replacement, replaced} = this.game.arbitrator.mergedUnit(this.unit);
         let hexLocation = this.unit.hexLocation;
-        replacement.appendToMap(hexLocation, CBStacking.TOP);
+        replacement.appendToMap(hexLocation, WStacking.TOP);
         replacement.rotate(this.unit.angle);
         replacement.setPlayed();
         for (let replacedUnit of replaced) {
@@ -130,7 +130,7 @@ export class InteractiveMergeUnitAction extends CBAction {
     }
 
 }
-CBAction.register("InteractiveMergeUnitAction", InteractiveMergeUnitAction);
+WAction.register("InteractiveMergeUnitAction", InteractiveMergeUnitAction);
 
 function createStartFireCounter(game, hexLocation) {
     let fireStart = new CBFireCounter(game);
@@ -169,7 +169,7 @@ function playFireOption(game, option) {
     }
 }
 
-export class InteractiveSetFireAction extends CBAction {
+export class InteractiveSetFireAction extends WAction {
 
     constructor(game, unit) {
         super(game, unit);
@@ -227,11 +227,11 @@ export class InteractiveSetFireAction extends CBAction {
         let scene = this.createScene(
             result=>{
                 let fireStart = this._processSetFireResult(result);
-                CBSequence.appendElement(this.game, new CBSetFireSequenceElement({
+                WSequence.appendElement(this.game, new CBSetFireSequenceElement({
                     game: this.game, unit: this.unit, dice: scene.dice.result,
                     token: fireStart
                 }));
-                new SequenceLoader().save(this.game, CBSequence.getSequence(this.game));
+                new SequenceLoader().save(this.game, WSequence.getSequence(this.game));
                 this.game.validate();
             }
         );
@@ -257,9 +257,9 @@ export class InteractiveSetFireAction extends CBAction {
     }
 
 }
-CBAction.register("InteractiveSetFireAction", InteractiveSetFireAction);
+WAction.register("InteractiveSetFireAction", InteractiveSetFireAction);
 
-export class InteractiveExtinguishFireAction extends CBAction {
+export class InteractiveExtinguishFireAction extends WAction {
 
     constructor(game, unit) {
         super(game, unit);
@@ -317,10 +317,10 @@ export class InteractiveExtinguishFireAction extends CBAction {
         let scene = this.createScene(
             result=>{
                 let token = this._processExtinguishFireResult(result);
-                CBSequence.appendElement(this.game, new CBExtinguishFireSequenceElement({
+                WSequence.appendElement(this.game, new CBExtinguishFireSequenceElement({
                     game: this.game, unit: this.unit, dice: scene.dice.result, token
                 }));
-                new SequenceLoader().save(this.game, CBSequence.getSequence(this.game));
+                new SequenceLoader().save(this.game, WSequence.getSequence(this.game));
                 this.game.validate();
             }
         );
@@ -346,9 +346,9 @@ export class InteractiveExtinguishFireAction extends CBAction {
     }
 
 }
-CBAction.register("InteractiveExtinguishFireAction", InteractiveExtinguishFireAction);
+WAction.register("InteractiveExtinguishFireAction", InteractiveExtinguishFireAction);
 
-export class InteractiveSetStakesAction extends CBAction {
+export class InteractiveSetStakesAction extends WAction {
 
     constructor(game, unit) {
         super(game, unit);
@@ -402,10 +402,10 @@ export class InteractiveSetStakesAction extends CBAction {
         let scene = this.createScene(
             result=>{
                 let token = this._processSetStakesResult(result);
-                CBSequence.appendElement(this.game, new CBSetStakesSequenceElement({
+                WSequence.appendElement(this.game, new CBSetStakesSequenceElement({
                     game: this.game, unit: this.unit, dice: scene.dice.result, token
                 }));
-                new SequenceLoader().save(this.game, CBSequence.getSequence(this.game));
+                new SequenceLoader().save(this.game, WSequence.getSequence(this.game));
                 this.game.validate();
             }
         );
@@ -433,9 +433,9 @@ export class InteractiveSetStakesAction extends CBAction {
     }
 
 }
-CBAction.register("InteractiveSetStakesAction", InteractiveSetStakesAction);
+WAction.register("InteractiveSetStakesAction", InteractiveSetStakesAction);
 
-export class InteractiveRemoveStakesAction extends CBAction {
+export class InteractiveRemoveStakesAction extends WAction {
 
     constructor(game, unit) {
         super(game, unit);
@@ -489,10 +489,10 @@ export class InteractiveRemoveStakesAction extends CBAction {
         let scene = this.createScene(
             result=>{
                 let token = this._processRemoveStakesResult(result);
-                CBSequence.appendElement(this.game, new CBRemoveStakesSequenceElement({
+                WSequence.appendElement(this.game, new CBRemoveStakesSequenceElement({
                     game: this.game, unit: this.unit, dice: scene.dice.result, token
                 }));
-                new SequenceLoader().save(this.game, CBSequence.getSequence(this.game));
+                new SequenceLoader().save(this.game, WSequence.getSequence(this.game));
                 this.game.validate();
             }
         );
@@ -521,9 +521,9 @@ export class InteractiveRemoveStakesAction extends CBAction {
     }
 
 }
-CBAction.register("InteractiveRemoveStakesAction", InteractiveRemoveStakesAction);
+WAction.register("InteractiveRemoveStakesAction", InteractiveRemoveStakesAction);
 
-export class InteractivePlayWeatherAction extends CBAction {
+export class InteractivePlayWeatherAction extends WAction {
 
     constructor(game, counter) {
         super(game, counter);
@@ -582,9 +582,9 @@ export class InteractivePlayWeatherAction extends CBAction {
     }
 
 }
-CBAction.register("InteractivePlayWeatherAction", InteractivePlayWeatherAction);
+WAction.register("InteractivePlayWeatherAction", InteractivePlayWeatherAction);
 
-export class InteractivePlayFogAction extends CBAction {
+export class InteractivePlayFogAction extends WAction {
 
     constructor(game, counter) {
         super(game, counter);
@@ -643,9 +643,9 @@ export class InteractivePlayFogAction extends CBAction {
     }
 
 }
-CBAction.register("InteractivePlayFogAction", InteractivePlayFogAction);
+WAction.register("InteractivePlayFogAction", InteractivePlayFogAction);
 
-export class InteractivePlayWindDirectionAction extends CBAction {
+export class InteractivePlayWindDirectionAction extends WAction {
 
     constructor(game, counter) {
         super(game, counter);
@@ -705,9 +705,9 @@ export class InteractivePlayWindDirectionAction extends CBAction {
     }
 
 }
-CBAction.register("InteractivePlayWindDirectionAction", InteractivePlayWindDirectionAction);
+WAction.register("InteractivePlayWindDirectionAction", InteractivePlayWindDirectionAction);
 
-export class InteractivePlayTirednessAction extends CBAction {
+export class InteractivePlayTirednessAction extends WAction {
 
     constructor(game, counter) {
         super(game, counter);
@@ -763,9 +763,9 @@ export class InteractivePlayTirednessAction extends CBAction {
     }
 
 }
-CBAction.register("InteractivePlayTirednessAction", InteractivePlayTirednessAction);
+WAction.register("InteractivePlayTirednessAction", InteractivePlayTirednessAction);
 
-export class InteractivePlayMoralAction extends CBAction {
+export class InteractivePlayMoralAction extends WAction {
 
     constructor(game, counter) {
         super(game, counter);
@@ -821,9 +821,9 @@ export class InteractivePlayMoralAction extends CBAction {
     }
 
 }
-CBAction.register("InteractivePlayMoralAction", InteractivePlayMoralAction);
+WAction.register("InteractivePlayMoralAction", InteractivePlayMoralAction);
 
-export class InteractivePlaySmokeAndFireAction extends CBAction {
+export class InteractivePlaySmokeAndFireAction extends WAction {
 
     constructor(game, counter, location=counter?counter.viewportLocation:null) {
         super(game, counter);
@@ -878,10 +878,10 @@ export class InteractivePlaySmokeAndFireAction extends CBAction {
                     PlayableMixin.getAllByType(this.game, CBFireCounter),
                 );
                 this._processPlayFireResult(this.game, result);
-                CBSequence.appendElement(this.game, new CBPlaySmokeAndFireSequenceElement({
+                WSequence.appendElement(this.game, new CBPlaySmokeAndFireSequenceElement({
                     game: this.game, dice: scene.dice.result, location: this._location, options: this._options
                 }));
-                new SequenceLoader().save(this.game, CBSequence.getSequence(this.game));
+                new SequenceLoader().save(this.game, WSequence.getSequence(this.game));
                 this.game.validate();
             }
         );
@@ -1071,9 +1071,9 @@ export class InteractivePlaySmokeAndFireAction extends CBAction {
     }
 
 }
-CBAction.register("InteractivePlaySmokeAndFireAction", InteractivePlaySmokeAndFireAction);
+WAction.register("InteractivePlaySmokeAndFireAction", InteractivePlaySmokeAndFireAction);
 
-class PlayFireTrigger extends CBPlayableActuatorTrigger {
+class PlayFireTrigger extends WPlayableActuatorTrigger {
 
     constructor(actuator, option, location) {
         let image = DImage.getImage("./../images/actuators/isburning.png");
@@ -1092,7 +1092,7 @@ class PlayFireTrigger extends CBPlayableActuatorTrigger {
     static DIMENSION = new Dimension2D(128, 128);
 }
 
-class RevealedPlayFireTrigger extends CBPlayableActuatorTrigger {
+class RevealedPlayFireTrigger extends WPlayableActuatorTrigger {
 
     constructor(actuator, isFire, option, location) {
         let image = isFire ?
@@ -1113,7 +1113,7 @@ class RevealedPlayFireTrigger extends CBPlayableActuatorTrigger {
     static DIMENSION = new Dimension2D(142, 142);
 }
 
-export class CBPlayFireActuator extends RetractableActuatorMixin(CBActionActuator) {
+export class CBPlayFireActuator extends RetractableActuatorMixin(WActionActuator) {
 
     constructor(action, options) {
         super(action);
@@ -1202,7 +1202,7 @@ export class CBMiscellaneousActionsMenu extends DIconMenu {
 
 }
 
-export class CBMiscActionsInsert extends CBInsert {
+export class CBMiscActionsInsert extends WInsert {
 
     constructor() {
         super("./../images/inserts/misc-actions-insert.png", CBMiscActionsInsert.DIMENSION);
@@ -1211,7 +1211,7 @@ export class CBMiscActionsInsert extends CBInsert {
     static DIMENSION = new Dimension2D(444, 641);
 }
 
-export class CBSetFireInsert extends CBInsert {
+export class CBSetFireInsert extends WInsert {
 
     constructor() {
         super("./../images/inserts/set-fire-insert.png", CBSetFireInsert.DIMENSION);
@@ -1220,7 +1220,7 @@ export class CBSetFireInsert extends CBInsert {
     static DIMENSION = new Dimension2D(444, 385);
 }
 
-export class CBExtinguishFireInsert extends CBInsert {
+export class CBExtinguishFireInsert extends WInsert {
 
     constructor() {
         super("./../images/inserts/extinguish-fire-insert.png", CBExtinguishFireInsert.DIMENSION);
@@ -1229,7 +1229,7 @@ export class CBExtinguishFireInsert extends CBInsert {
     static DIMENSION = new Dimension2D(444, 397);
 }
 
-export class CBSetStakesInsert extends CBInsert {
+export class CBSetStakesInsert extends WInsert {
 
     constructor() {
         super("./../images/inserts/set-stakes-insert.png", CBSetStakesInsert.DIMENSION);
@@ -1238,7 +1238,7 @@ export class CBSetStakesInsert extends CBInsert {
     static DIMENSION = new Dimension2D(444, 334);
 }
 
-export class CBRemoveStakesInsert extends CBInsert {
+export class CBRemoveStakesInsert extends WInsert {
 
     constructor() {
         super("./../images/inserts/remove-stakes-insert.png", CBRemoveStakesInsert.DIMENSION);
@@ -1247,7 +1247,7 @@ export class CBRemoveStakesInsert extends CBInsert {
     static DIMENSION = new Dimension2D(444, 306);
 }
 
-export class CBPlayWeatherInsert extends CBInsert {
+export class CBPlayWeatherInsert extends WInsert {
 
     constructor() {
         super("./../images/inserts/meteo-insert.png", CBPlayWeatherInsert.DIMENSION, CBPlayWeatherInsert.PAGE_DIMENSION);
@@ -1257,7 +1257,7 @@ export class CBPlayWeatherInsert extends CBInsert {
     static PAGE_DIMENSION = new Dimension2D(444, 1124);
 }
 
-export class CBPlayFogInsert extends CBInsert {
+export class CBPlayFogInsert extends WInsert {
 
     constructor() {
         super("./../images/inserts/fog-insert.png", CBPlayFogInsert.DIMENSION, CBPlayFogInsert.PAGE_DIMENSION);
@@ -1267,7 +1267,7 @@ export class CBPlayFogInsert extends CBInsert {
     static PAGE_DIMENSION = new Dimension2D(444, 686);
 }
 
-export class CBPlayWindDirectionInsert extends CBInsert {
+export class CBPlayWindDirectionInsert extends WInsert {
 
     constructor() {
         super("./../images/inserts/wind-direction-insert.png", CBPlayWindDirectionInsert.DIMENSION);
@@ -1276,7 +1276,7 @@ export class CBPlayWindDirectionInsert extends CBInsert {
     static DIMENSION = new Dimension2D(444, 177);
 }
 
-export class CBPlayTirednessInsert extends CBInsert {
+export class CBPlayTirednessInsert extends WInsert {
 
     constructor() {
         super("./../images/inserts/wing-rest-insert.png", CBPlayTirednessInsert.DIMENSION);
@@ -1285,7 +1285,7 @@ export class CBPlayTirednessInsert extends CBInsert {
     static DIMENSION = new Dimension2D(444, 118);
 }
 
-export class CBPlayMoralInsert extends CBInsert {
+export class CBPlayMoralInsert extends WInsert {
 
     constructor() {
         super("./../images/inserts/wing-moral-insert.png", CBPlayMoralInsert.DIMENSION);
@@ -1294,7 +1294,7 @@ export class CBPlayMoralInsert extends CBInsert {
     static DIMENSION = new Dimension2D(444, 119);
 }
 
-export class CBPlayFireInsert extends CBInsert {
+export class CBPlayFireInsert extends WInsert {
 
     constructor() {
         super("./../images/inserts/fire-insert.png", CBPlayFireInsert.DIMENSION, CBPlayFireInsert.PAGE_DIMENSION);
@@ -1304,7 +1304,7 @@ export class CBPlayFireInsert extends CBInsert {
     static PAGE_DIMENSION = new Dimension2D(444, 1074);
 }
 
-export class CBPlaySmokeInsert extends CBInsert {
+export class CBPlaySmokeInsert extends WInsert {
 
     constructor() {
         super("./../images/inserts/smoke-insert.png", CBPlaySmokeInsert.DIMENSION);
@@ -1337,7 +1337,7 @@ export class CBSetFireSequenceElement extends WithDiceRoll(CBStateSequenceElemen
     }
 
 }
-CBSequence.register("set-fire", CBSetFireSequenceElement);
+WSequence.register("set-fire", CBSetFireSequenceElement);
 
 export class CBExtinguishFireSequenceElement extends WithDiceRoll(CBStateSequenceElement) {
 
@@ -1363,7 +1363,7 @@ export class CBExtinguishFireSequenceElement extends WithDiceRoll(CBStateSequenc
     }
 
 }
-CBSequence.register("extinguish-fire", CBExtinguishFireSequenceElement);
+WSequence.register("extinguish-fire", CBExtinguishFireSequenceElement);
 
 export class CBSetStakesSequenceElement extends WithDiceRoll(CBStateSequenceElement) {
 
@@ -1389,7 +1389,7 @@ export class CBSetStakesSequenceElement extends WithDiceRoll(CBStateSequenceElem
     }
 
 }
-CBSequence.register("set-stakes", CBSetStakesSequenceElement);
+WSequence.register("set-stakes", CBSetStakesSequenceElement);
 
 export class CBRemoveStakesSequenceElement extends WithDiceRoll(CBStateSequenceElement) {
 
@@ -1415,9 +1415,9 @@ export class CBRemoveStakesSequenceElement extends WithDiceRoll(CBStateSequenceE
     }
 
 }
-CBSequence.register("remove-stakes", CBRemoveStakesSequenceElement);
+WSequence.register("remove-stakes", CBRemoveStakesSequenceElement);
 
-export class CBPlaySmokeAndFireSequenceElement extends WithDiceRoll(CBSequenceElement) {
+export class CBPlaySmokeAndFireSequenceElement extends WithDiceRoll(WSequenceElement) {
 
     constructor({id, game, location, dice, options}) {
         super({id, type:"fire-and-smoke", game, dice});
@@ -1443,7 +1443,7 @@ export class CBPlaySmokeAndFireSequenceElement extends WithDiceRoll(CBSequenceEl
             this.options.push({
                 fireCounter: PlayableMixin.getOneByType(this.game.map.getHex(
                     option.fireCounter.positionCol, option.fireCounter.positionRow), CBFireCounter),
-                hexLocation: CBHexLocation.fromSpecs(this.game.map, option.hexLocation),
+                hexLocation: WHexLocation.fromSpecs(this.game.map, option.hexLocation),
                 isFirstFire: option.isFirstFire,
                 isSecondFire: option.isSecondFire
             });
@@ -1466,4 +1466,4 @@ export class CBPlaySmokeAndFireSequenceElement extends WithDiceRoll(CBSequenceEl
 
 
 }
-CBSequence.register("fire-and-smoke", CBPlaySmokeAndFireSequenceElement);
+WSequence.register("fire-and-smoke", CBPlaySmokeAndFireSequenceElement);

@@ -4,14 +4,14 @@ import {
     assert, before, describe, it
 } from "../../../jstest/jtest.js";
 import {
-    CBHexSideId, CBMap
-} from "../../../jslib/cblades/map.js";
+    WHexSideId, WMap
+} from "../../../jslib/wargame/map.js";
 import {
-    CBAction
-} from "../../../jslib/cblades/game.js";
+    WAction
+} from "../../../jslib/wargame/game.js";
 import {
-    CBGame
-} from "../../../jslib/cblades/playable.js";
+    WGame
+} from "../../../jslib/wargame/playable.js";
 import {
     CBUnitPlayer,
     CBCharacter, CBCohesion,
@@ -28,12 +28,12 @@ import {
 } from "../../../jslib/cblades/teachers/map-teacher.js";
 import {
     setDrawPlatform
-} from "../../../jslib/draw.js";
+} from "../../../jslib/board/draw.js";
 import {
     loadAllImages,
     mergeClasses,
     mockPlatform
-} from "../../mocks.js";
+} from "../../board/mocks.js";
 import {
     CBUnitManagementTeacher
 } from "../../../jslib/cblades/teachers/units-teacher.js";
@@ -65,7 +65,7 @@ describe("Command teacher", ()=> {
     }
 
     function create2Players4UnitsTinyGame() {
-        let game = new CBGame(1);
+        let game = new WGame(1);
         let arbitrator = new Arbitrator();
         game.setArbitrator(arbitrator);
         let player1 = new CBUnitPlayer("player1", "/players/player1.png");
@@ -74,7 +74,7 @@ describe("Command teacher", ()=> {
         let player2 = new CBUnitPlayer("player2", "/players/player2.png");
         game.addPlayer(player2);
         let wing2 = new CBWing(player2, banner2);
-        let map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+        let map = new WMap([{path:"./../images/maps/map.png", col:0, row:0}]);
         game.setMap(map);
         let unitType1 = new CBTestUnitType("unit1", ["./../images/units/misc/unit1.png", "./../images/units/misc/unit1b.png"])
         let unit11 = new CBTroop(game, unitType1, wing1);
@@ -209,7 +209,7 @@ describe("Command teacher", ()=> {
             assert(units).unorderedArrayEqualsTo([{unit:unit12, cost:2, detail:{base:1, disrupted:1}}]);
         when:
             unit11.receivesOrder(false)
-            unit12.launchAction(new CBAction(game, unit12));
+            unit12.launchAction(new WAction(game, unit12));
             unit12.action.markAsStarted();
             units = arbitrator.getUnitsThatMayReceiveOrders(leader11, 5);
         then:
@@ -333,12 +333,12 @@ describe("Command teacher", ()=> {
     });
 
     function createTinyFormationAndTroopsForTheSamePlayerGame() {
-        let game = new CBGame(1);
+        let game = new WGame(1);
         let arbitrator = new Arbitrator();
         game.setArbitrator(arbitrator);
         let player = new CBUnitPlayer("player", "/players/player.png");
         game.addPlayer(player);
-        let map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+        let map = new WMap([{path:"./../images/maps/map.png", col:0, row:0}]);
         game.setMap(map);
         let wing = new CBWing(player, banner);
         let unitType1 = new CBTestUnitType("unit1", [
@@ -361,7 +361,7 @@ describe("Command teacher", ()=> {
         unit3.addToMap(map.getHex(5, 4));
         let formation = new CBFormation(game, unitType1, wing);
         formation.angle = 90;
-        formation.addToMap(new CBHexSideId(map.getHex(6, 8), map.getHex(6, 7)));
+        formation.addToMap(new WHexSideId(map.getHex(6, 8), map.getHex(6, 7)));
         game.start();
         loadAllImages();
         return {game, arbitrator, map, unit1, unit2, unit3, formation, wing, player};
@@ -664,7 +664,7 @@ describe("Command teacher", ()=> {
             assert(arbitrator.isAllowedToCreateFormation(unit1)).isFalse();
         when:
             unit3.move(null, 0);
-            formation.move(new CBHexSideId(map.getHex(3, 5), map.getHex(3, 6)), 0);
+            formation.move(new WHexSideId(map.getHex(3, 5), map.getHex(3, 6)), 0);
             formation.receivesOrder(true);
         then:
             assert(arbitrator.isAllowedToCreateFormation(unit1)).isFalse();

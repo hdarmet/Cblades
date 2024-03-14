@@ -1,18 +1,18 @@
 'use strict'
 
 import {
-    CBHex, CBHexSideId,
+    WHex, WHexSideId,
     distanceFromHexToHex
-} from "../map.js";
+} from "../../wargame/map.js";
 import {
-    CBStacking
-} from "../game.js";
+    WStacking
+} from "../../wargame/game.js";
 import {
     CBEngageSideMode
 } from "../unit.js";
 import {
-    CBLineOfSight
-} from "../pathfinding.js";
+    WLineOfSight
+} from "../../wargame/pathfinding.js";
 
 export class CBCombatTeacher {
 
@@ -79,9 +79,9 @@ export class CBCombatTeacher {
         if (!unit.isRouted() && !unit.isCharging()) {
             let forbiddenZones = this.getRetreatForbiddenZone(attacker);
             let zones = this.getUnitBackwardZone(unit);
-            processZones.call(this, result, zones, CBStacking.TOP, forbiddenZones);
+            processZones.call(this, result, zones, WStacking.TOP, forbiddenZones);
             zones = this.getUnitForwardZone(unit);
-            processZones.call(this, result, zones, CBStacking.BOTTOM, forbiddenZones);
+            processZones.call(this, result, zones, WStacking.BOTTOM, forbiddenZones);
         }
         return result;
     }
@@ -95,7 +95,7 @@ export class CBCombatTeacher {
             let zone = zones[angle];
             if (allowesZones.has(zone.hex) && zone.hex.empty) {
                 result[angle] = zone;
-                zone.stacking = CBStacking.BOTTOM;
+                zone.stacking = WStacking.BOTTOM;
             }
         }
         return result;
@@ -135,9 +135,9 @@ export class CBCombatTeacher {
         let retreatDirections = [];
         let rotateDirections = [];
         let zones = this.getUnitForwardZone(unit);
-        processZones.call(this, zones, retreatDirections, rotateDirections, forbiddenZones, CBStacking.BOTTOM);
+        processZones.call(this, zones, retreatDirections, rotateDirections, forbiddenZones, WStacking.BOTTOM);
         zones = this.getUnitBackwardZone(unit)
-        processZones.call(this, zones, retreatDirections, rotateDirections, forbiddenZones, CBStacking.TOP);
+        processZones.call(this, zones, retreatDirections, rotateDirections, forbiddenZones, WStacking.TOP);
         return { retreatDirections, rotateDirections }
     }
 
@@ -237,8 +237,8 @@ export class CBCombatTeacher {
 
     isDifficultGroundForShock(hexId) {
         return this.isDifficultGround(hexId) ||
-            hexId.type === CBHex.HEX_TYPES.LAVA ||
-            hexId.type === CBHex.HEX_TYPES.WATER;
+            hexId.type === WHex.HEX_TYPES.LAVA ||
+            hexId.type === WHex.HEX_TYPES.WATER;
     }
 
     isDifficultHexSideForShock(hexSideId) {
@@ -251,7 +251,7 @@ export class CBCombatTeacher {
 
     isChargeAllowed(attackerHex, defenderHex) {
         if (!this.isClearGroundForShock(defenderHex)) return false;
-        if (!this.isClearHexSideForShock(new CBHexSideId(attackerHex, defenderHex))) return false;
+        if (!this.isClearHexSideForShock(new WHexSideId(attackerHex, defenderHex))) return false;
         return true;
     }
 
@@ -348,7 +348,7 @@ export class CBCombatTeacher {
             record.defenderOnDifficultGround = -2;
             advantage -= 2;
         }
-        if (this.isDifficultHexSideForShock(new CBHexSideId(attackerHex, defenderHex))) {
+        if (this.isDifficultHexSideForShock(new WHexSideId(attackerHex, defenderHex))) {
             record.difficultHexSide = -1;
             advantage -= 1;
         }
@@ -557,10 +557,10 @@ export class CBCombatTeacher {
     }
 
     _isLastHexSideHindered(firerHex, targetHex) {
-        let path = new CBLineOfSight(firerHex, targetHex).getPath();
+        let path = new WLineOfSight(firerHex, targetHex).getPath();
         let lastSides = path[path.length-2];
         for (let lastHex of lastSides) {
-            if (this.isDifficultHexSideForFire(new CBHexSideId(lastHex, targetHex))) {
+            if (this.isDifficultHexSideForFire(new WHexSideId(lastHex, targetHex))) {
                 return true;
             }
         }

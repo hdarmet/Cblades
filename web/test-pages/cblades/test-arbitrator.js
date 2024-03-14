@@ -6,23 +6,23 @@ import {
 import {
     DAnimator,
     DImage, setDrawPlatform
-} from "../../jslib/draw.js";
+} from "../../jslib/board/draw.js";
 import {
     loadAllImages,
     mockPlatform
-} from "../mocks.js";
+} from "../board/mocks.js";
 import {
     Mechanisms, Memento
-} from "../../jslib/mechanisms.js";
+} from "../../jslib/board/mechanisms.js";
 import {
-    CBHexSideId, CBMap
-} from "../../jslib/cblades/map.js";
+    WHexSideId, WMap
+} from "../../jslib/wargame/map.js";
 import {
-    CBPiece
-} from "../../jslib/cblades/game.js";
+    WPiece
+} from "../../jslib/wargame/game.js";
 import {
-    CBGame, CBMoveMode
-} from "../../jslib/cblades/playable.js";
+    WGame, WMoveMode
+} from "../../jslib/wargame/playable.js";
 import {
     CBCharacter, CBCharge, CBCommandProfile, CBFormation, CBMunitions, CBMagicProfile, CBMoralProfile,
     CBMoveProfile, CBOrderInstruction,
@@ -36,7 +36,7 @@ import {
 } from "../../jslib/cblades/arbitrator.js";
 import {
     Dimension2D, invertAngle
-} from "../../jslib/geometry.js";
+} from "../../jslib/board/geometry.js";
 import {
     banner1, banner2
 } from "./game-examples.js";
@@ -89,8 +89,8 @@ describe("Arbitrator", ()=> {
     }
 
     function createTinyGame() {
-        let game = new CBGame(1);
-        let map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+        let game = new WGame(1);
+        let map = new WMap([{path:"./../images/maps/map.png", col:0, row:0}]);
         game.setMap(map);
         let arbitrator = new CBArbitrator();
         game.setArbitrator(arbitrator);
@@ -130,8 +130,8 @@ describe("Arbitrator", ()=> {
     }
 
     function createTinyFormationGame() {
-        let game = new CBGame(1);
-        let map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+        let game = new WGame(1);
+        let map = new WMap([{path:"./../images/maps/map.png", col:0, row:0}]);
         game.setMap(map);
         let arbitrator = new CBArbitrator();
         game.setArbitrator(arbitrator);
@@ -147,7 +147,7 @@ describe("Arbitrator", ()=> {
                 "./../images/units/misc/unit1L1.png", "./../images/units/misc/unit1L1b.png"
             ])
         let formation11 = new CBFormation(game, unitType1, wing1);
-        formation11.addToMap(new CBHexSideId(map.getHex(5, 8), map.getHex(6, 8)));
+        formation11.addToMap(new WHexSideId(map.getHex(5, 8), map.getHex(6, 8)));
         formation11.angle = 30;
         let unit11 = new CBTroop(game, unitType1, wing1);
         unit11.addToMap(map.getHex(5, 10));
@@ -182,7 +182,7 @@ describe("Arbitrator", ()=> {
         return {game, arbitrator, map, player1, wing1, wing2, formation11, unit11, unit12, leader11, player2, unit21, unit22, leader21};
     }
 
-    class TestSpell extends CBPiece {
+    class TestSpell extends WPiece {
         constructor(wizard) {
             super("units", ["./../images/magic/red/redspell.png"], new Dimension2D(142, 142));
             this.wizard = wizard;
@@ -263,7 +263,7 @@ describe("Arbitrator", ()=> {
         then:
             assertActions(allowedActions,{
                 moveForward: true,
-                moveMode: CBMoveMode.ATTACK
+                moveMode: WMoveMode.ATTACK
             });
         when:
             unit12.receivesOrder(true);
@@ -271,7 +271,7 @@ describe("Arbitrator", ()=> {
         then:
             assertActions(allowedActions, {
                 moveForward: true,
-                moveMode: CBMoveMode.NO_CONSTRAINT,
+                moveMode: WMoveMode.NO_CONSTRAINT,
                 moveBack: true,
                 escape: true,
                 miscActions: true,
@@ -296,7 +296,7 @@ describe("Arbitrator", ()=> {
         then:
             assertActions(allowedActions,{
                 moveForward: true,
-                moveMode: CBMoveMode.NO_CONSTRAINT,
+                moveMode: WMoveMode.NO_CONSTRAINT,
                 moveBack: true,
                 escape: true,
                 miscActions: true,
@@ -343,7 +343,7 @@ describe("Arbitrator", ()=> {
         then:
             assertActions(allowedActions,{
                 moveForward: true,
-                moveMode: CBMoveMode.REGROUP,
+                moveMode: WMoveMode.REGROUP,
                 moveBack: true,
                 escape: true
             });
@@ -373,7 +373,7 @@ describe("Arbitrator", ()=> {
         then:
             assertActions(allowedActions,{
                 moveForward: true,
-                moveMode: CBMoveMode.RETREAT,
+                moveMode: WMoveMode.RETREAT,
                 moveBack: true,
                 escape: true
             });
@@ -403,7 +403,7 @@ describe("Arbitrator", ()=> {
         then:
             assertActions(allowedActions,{
                 moveForward: true,
-                moveMode: CBMoveMode.ATTACK,
+                moveMode: WMoveMode.ATTACK,
             });
         when:
             moveToEngage(unit21, unit12, 0);
@@ -425,7 +425,7 @@ describe("Arbitrator", ()=> {
         then:
             assertActions(allowedActions,{
                 moveForward: true,
-                moveMode: CBMoveMode.ATTACK,
+                moveMode: WMoveMode.ATTACK,
                 reorganize: true,
                 noAction: true
             });
@@ -451,7 +451,7 @@ describe("Arbitrator", ()=> {
         then:
             assertActions(allowedActions,{
                 moveForward: true,
-                moveMode: CBMoveMode.ATTACK,
+                moveMode: WMoveMode.ATTACK,
                 rest: true
             });
         when:
@@ -460,7 +460,7 @@ describe("Arbitrator", ()=> {
         then:
             assertActions(allowedActions,{
                 moveForward: true,
-                moveMode: CBMoveMode.FIRE,
+                moveMode: WMoveMode.FIRE,
                 fireAttack: true,
                 rest: true
             });
@@ -488,7 +488,7 @@ describe("Arbitrator", ()=> {
         then:
             assertActions(allowedActions,{
                 moveForward: true,
-                moveMode: CBMoveMode.REGROUP,
+                moveMode: WMoveMode.REGROUP,
                 moveBack: true,
                 escape: true,
                 miscActions: true,
@@ -506,7 +506,7 @@ describe("Arbitrator", ()=> {
         then:
             assertActions(allowedActions,{
                 moveForward: true,
-                moveMode: CBMoveMode.REGROUP,
+                moveMode: WMoveMode.REGROUP,
                 moveBack: true,
                 escape: true,
                 miscActions: true,
@@ -529,7 +529,7 @@ describe("Arbitrator", ()=> {
             assertActions(allowedActions,{
                 moveForward: true,
                 miscActions: true,
-                moveMode: CBMoveMode.REGROUP,
+                moveMode: WMoveMode.REGROUP,
                 moveBack: true,
                 breakFormation: true,
                 leaveFormation: true,
@@ -540,7 +540,7 @@ describe("Arbitrator", ()=> {
         then:
             assertActions(allowedActions,{
                 moveForward: true,
-                moveMode: CBMoveMode.REGROUP,
+                moveMode: WMoveMode.REGROUP,
                 moveBack: true,
                 escape: true,
                 miscActions: true,
@@ -553,7 +553,7 @@ describe("Arbitrator", ()=> {
         then:
             assertActions(allowedActions,{
                 moveForward: true,
-                moveMode: CBMoveMode.REGROUP,
+                moveMode: WMoveMode.REGROUP,
                 moveBack: true,
                 breakFormation: true,
                 joinFormation: true,
@@ -578,7 +578,7 @@ describe("Arbitrator", ()=> {
         then:
             assertActions(allowedActions,{
                 moveForward: true,
-                moveMode: CBMoveMode.REGROUP,
+                moveMode: WMoveMode.REGROUP,
                 moveBack: true,
                 escape: true,
                 miscActions: true,
@@ -598,7 +598,7 @@ describe("Arbitrator", ()=> {
         then:
             assertActions(allowedActions, {
                 moveForward: true,
-                moveMode: CBMoveMode.DEFEND,
+                moveMode: WMoveMode.DEFEND,
                 moveBack: true,
                 escape: true,
                 fireAttack: true,
@@ -631,7 +631,7 @@ describe("Arbitrator", ()=> {
         then:
             assertActions(allowedActions, {
                 moveForward: true,
-                moveMode: CBMoveMode.NO_CONSTRAINT,
+                moveMode: WMoveMode.NO_CONSTRAINT,
                 moveBack: true,
                 escape: true,
                 reorganize: true,
@@ -646,7 +646,7 @@ describe("Arbitrator", ()=> {
         then:
             assertActions(allowedActions, {
                 moveForward: true,
-                moveMode: CBMoveMode.NO_CONSTRAINT,
+                moveMode: WMoveMode.NO_CONSTRAINT,
                 moveBack: true,
                 escape: true,
                 miscActions: true,
@@ -686,7 +686,7 @@ describe("Arbitrator", ()=> {
         then:
             assertActions(allowedActions,{
                 moveForward: true,
-                moveMode: CBMoveMode.NO_CONSTRAINT,
+                moveMode: WMoveMode.NO_CONSTRAINT,
                 moveBack: true,
                 breakFormation: true,
                 leaveFormation: true,
@@ -698,7 +698,7 @@ describe("Arbitrator", ()=> {
         then:
             assertActions(allowedActions,{
                 moveForward: true,
-                moveMode: CBMoveMode.NO_CONSTRAINT,
+                moveMode: WMoveMode.NO_CONSTRAINT,
                 moveBack: true,
                 escape: true,
                 miscActions: true,
@@ -711,7 +711,7 @@ describe("Arbitrator", ()=> {
         then:
             assertActions(allowedActions,{
                 moveForward: true,
-                moveMode: CBMoveMode.NO_CONSTRAINT,
+                moveMode: WMoveMode.NO_CONSTRAINT,
                 moveBack: true,
                 breakFormation: true,
                 joinFormation: true,
@@ -738,7 +738,7 @@ describe("Arbitrator", ()=> {
         then:
             assertActions(allowedActions,{
                 moveForward: true,
-                moveMode: CBMoveMode.NO_CONSTRAINT,
+                moveMode: WMoveMode.NO_CONSTRAINT,
                 moveBack: true,
                 escape: true,
                 miscActions: true,
@@ -758,7 +758,7 @@ describe("Arbitrator", ()=> {
         then:
             assertActions(allowedActions,{
                 moveForward: true,
-                moveMode: CBMoveMode.NO_CONSTRAINT,
+                moveMode: WMoveMode.NO_CONSTRAINT,
                 moveBack: true,
                 escape: true,
                 reload: true,
@@ -775,7 +775,7 @@ describe("Arbitrator", ()=> {
         then:
             assertActions(allowedActions,{
                 moveForward: true,
-                moveMode: CBMoveMode.NO_CONSTRAINT,
+                moveMode: WMoveMode.NO_CONSTRAINT,
                 moveBack: true,
                 escape: true,
                 reload: true,
@@ -842,7 +842,7 @@ describe("Arbitrator", ()=> {
         then:
             assertActions(allowedActions,{
                 moveForward: true,
-                moveMode: CBMoveMode.NO_CONSTRAINT,
+                moveMode: WMoveMode.NO_CONSTRAINT,
                 moveBack: true,
                 escape: true,
                 takeCommand: true,
@@ -857,7 +857,7 @@ describe("Arbitrator", ()=> {
         then:
             assertActions(allowedActions,{
                 moveForward: true,
-                moveMode: CBMoveMode.NO_CONSTRAINT,
+                moveMode: WMoveMode.NO_CONSTRAINT,
                 moveBack: true,
                 escape: true,
                 leaveCommand: true,

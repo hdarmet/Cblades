@@ -7,14 +7,14 @@ import {
 import {
     DAnimator,
     DImage, setDrawPlatform
-} from "../../../jslib/draw.js";
+} from "../../../jslib/board/draw.js";
 import {
     assertDirectives, assertNoMoreDirectives, getLayers, loadAllImages,
     mockPlatform, resetDirectives, skipDirectives
-} from "../../mocks.js";
+} from "../../board/mocks.js";
 import {
     Mechanisms, Memento
-} from "../../../jslib/mechanisms.js";
+} from "../../../jslib/board/mechanisms.js";
 import {
     repaint,
     paint,
@@ -32,12 +32,12 @@ import {
     unregisterInteractiveRecover
 } from "../../../jslib/cblades/interactive/interactive-recover.js";
 import {
-    CBSequence
-} from "../../../jslib/cblades/sequences.js";
+    WSequence
+} from "../../../jslib/wargame/sequences.js";
 
 describe("Interactive Recover", ()=> {
 
-    var appendElement = CBSequence.appendElement;
+    var appendElement = WSequence.appendElement;
 
     before(() => {
         registerInteractiveRecover();
@@ -46,16 +46,16 @@ describe("Interactive Recover", ()=> {
         Mechanisms.reset();
         DAnimator.clear();
         Memento.clear();
-        CBSequence.awaitedElements = [];
-        CBSequence.appendElement = function(game, element) {
-            let awaited = CBSequence.awaitedElements.pop();
+        WSequence.awaitedElements = [];
+        WSequence.appendElement = function(game, element) {
+            let awaited = WSequence.awaitedElements.pop();
             assert(element).equalsTo(awaited);
         }
     });
 
     after(() => {
         unregisterInteractiveRecover();
-        CBSequence.appendElement = appendElement;
+        WSequence.appendElement = appendElement;
     });
 
     it("Checks that the unit menu contains menu items for recovering", () => {

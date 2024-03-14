@@ -1,9 +1,9 @@
 import {
-    CBAbstractArbitrator
-} from "./game.js";
+    WAbstractArbitrator
+} from "../wargame/game.js";
 import {
-    CBMoveMode
-} from "./playable.js";
+    WMoveMode
+} from "../wargame/playable.js";
 import {
     CBMapTeacher
 } from "./teachers/map-teacher.js";
@@ -32,7 +32,7 @@ import {
     CBOrderInstruction
 } from "./unit.js";
 
-export class CBArbitrator extends CBAbstractArbitrator{
+export class CBArbitrator extends WAbstractArbitrator{
 
     getAllowedActions(unit) {
         let allowedActions = {};
@@ -81,7 +81,7 @@ export class CBArbitrator extends CBAbstractArbitrator{
             else {
                 if (this.isAllowedToMove(unit)) {
                     allowedActions.moveForward = true;
-                    allowedActions.moveMode = CBMoveMode.ATTACK;
+                    allowedActions.moveMode = WMoveMode.ATTACK;
                 }
                 return allowedActions.moveForward && !unit.characterNature && !unit.hasReceivedOrder();
             }
@@ -116,7 +116,7 @@ export class CBArbitrator extends CBAbstractArbitrator{
             else if (this.getNearestFoesThatCanJoinAndEngage(unit).foes.length>0) {
                 if (this.isAllowedToMove(unit)) {
                     allowedActions.moveForward = true;
-                    allowedActions.moveMode =CBMoveMode.REGROUP;
+                    allowedActions.moveMode =WMoveMode.REGROUP;
                 }
                 if (this.isAllowedToMoveBack(unit)) allowedActions.moveBack = true;
                 if (this.isAllowedToRout(unit)) allowedActions.escape = true;
@@ -143,7 +143,7 @@ export class CBArbitrator extends CBAbstractArbitrator{
             else {
                 if (this.isAllowedToMove(unit)) {
                     allowedActions.moveForward = true;
-                    allowedActions.moveMode =CBMoveMode.RETREAT;
+                    allowedActions.moveMode =WMoveMode.RETREAT;
                 }
                 if (this.isAllowedToMoveBack(unit)) allowedActions.moveBack = true;
                 if (this.isAllowedToRout(unit)) allowedActions.escape = true;
@@ -177,7 +177,7 @@ export class CBArbitrator extends CBAbstractArbitrator{
         if (unit.wing.orderInstruction === CBOrderInstruction.REGROUP) {
             if (this.isAllowedToMove(unit)) {
                 allowedActions.moveForward = true;
-                allowedActions.moveMode =CBMoveMode.REGROUP;
+                allowedActions.moveMode =WMoveMode.REGROUP;
             }
             if (this.isAllowedToMoveBack(unit)) allowedActions.moveBack = true;
             if (this.isAllowedToRout(unit)) allowedActions.escape = true;
@@ -210,7 +210,7 @@ export class CBArbitrator extends CBAbstractArbitrator{
             else {
                 if (this.isAllowedToMove(unit)) {
                     allowedActions.moveForward = true;
-                    allowedActions.moveMode = CBMoveMode.DEFEND;
+                    allowedActions.moveMode = WMoveMode.DEFEND;
                 }
                 if (this.isAllowedToMoveBack(unit)) allowedActions.moveBack = true;
                 if (this.isAllowedToRout(unit)) allowedActions.escape = true;
@@ -237,13 +237,13 @@ export class CBArbitrator extends CBAbstractArbitrator{
                     allowedActions.fireAttack = true;
                     if (this.isAllowedToMove(unit)) {
                         allowedActions.moveForward = true;
-                        allowedActions.moveMode = CBMoveMode.FIRE;
+                        allowedActions.moveMode = WMoveMode.FIRE;
                     }
                     return true;
                 }
                 else if (this.isAllowedToMove(unit)) {
                     allowedActions.moveForward = true;
-                    allowedActions.moveMode = CBMoveMode.ATTACK;
+                    allowedActions.moveMode = WMoveMode.ATTACK;
                     return true;
                 }
             }
@@ -262,7 +262,7 @@ export class CBArbitrator extends CBAbstractArbitrator{
         else {
             if (this.isAllowedToMove(unit)) {
                 allowedActions.moveForward = true;
-                allowedActions.moveMode = CBMoveMode.NO_CONSTRAINT;
+                allowedActions.moveMode = WMoveMode.NO_CONSTRAINT;
             }
             if (this.isAllowedToMoveBack(unit)) allowedActions.moveBack = true;
             if (this.isAllowedToRout(unit)) allowedActions.escape = true;
@@ -292,7 +292,7 @@ export class CBArbitrator extends CBAbstractArbitrator{
         else {
             if (this.isAllowedToMove(unit)) {
                 allowedActions.moveForward = true;
-                allowedActions.moveMode = CBMoveMode.NO_CONSTRAINT;
+                allowedActions.moveMode = WMoveMode.NO_CONSTRAINT;
             }
             if (this.isAllowedToMoveBack(unit)) allowedActions.moveBack = true;
             if (this.isAllowedToRout(unit)) allowedActions.escape = true;

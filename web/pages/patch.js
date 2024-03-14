@@ -1,6 +1,6 @@
 import {
     getDrawPlatform
-} from "../jslib/draw.js";
+} from "../jslib/board/draw.js";
 
 let responses = [];
 

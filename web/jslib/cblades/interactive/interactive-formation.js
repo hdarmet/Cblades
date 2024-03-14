@@ -2,26 +2,26 @@
 
 import {
     DIconMenuItem
-} from "../../widget.js";
+} from "../../board/widget.js";
 import {
     CBActionMenu, CBInteractivePlayer
 } from "./interactive-player.js";
 import {
-    CBHexLocation,
-    CBHexSideId
-} from "../map.js";
+    WHexLocation,
+    WHexSideId
+} from "../../wargame/map.js";
 import {
-    CBAction, CBStacking
-} from "../game.js";
+    WAction, WStacking
+} from "../../wargame/game.js";
 import {
-    CBActionActuator, CBActuatorImageTrigger
-} from "../playable.js";
+    WActionActuator, WActuatorImageTrigger
+} from "../../wargame/playable.js";
 import {
     Dimension2D, Point2D, sumAngle
-} from "../../geometry.js";
+} from "../../board/geometry.js";
 import {
     DImage
-} from "../../draw.js";
+} from "../../board/draw.js";
 import {
     CBCharge,
     CBStateSequenceElement,
@@ -33,8 +33,8 @@ import {
     setUnitToContext
 } from "../unit.js";
 import {
-    CBSequence, CBSequenceElement
-} from "../sequences.js";
+    WSequence, WSequenceElement
+} from "../../wargame/sequences.js";
 
 export function registerInteractiveFormation() {
     CBInteractivePlayer.prototype.createFormation = function (unit) {
@@ -61,7 +61,7 @@ export function unregisterInteractiveFormation() {
     CBActionMenu.menuBuilders.remove(createFormationMenuItems);
 }
 
-export class InteractiveBreakFormationAction extends CBAction {
+export class InteractiveBreakFormationAction extends WAction {
 
     constructor(game, unit) {
         super(game, unit);
@@ -76,7 +76,7 @@ export class InteractiveBreakFormationAction extends CBAction {
         this.game.closeActuators();
         let {fromHex, toHex} = this.game.arbitrator.getTroopsAfterFormationBreak(this.unit);
         this.unit.breakFormation(fromHex, toHex);
-        CBSequence.appendElement(this.game, new CBBreakFormationSequenceElement({
+        WSequence.appendElement(this.game, new CBBreakFormationSequenceElement({
             game: this.game, formation: this.unit, troops: [...fromHex, ...toHex]
         }));
         for (let replacement of fromHex) {
@@ -89,9 +89,9 @@ export class InteractiveBreakFormationAction extends CBAction {
     }
 
 }
-CBAction.register("InteractiveBreakFormationAction", InteractiveBreakFormationAction);
+WAction.register("InteractiveBreakFormationAction", InteractiveBreakFormationAction);
 
-export class InteractiveCreateFormationAction extends CBAction {
+export class InteractiveCreateFormationAction extends WAction {
 
     constructor(game, unit) {
         super(game, unit);
@@ -119,13 +119,13 @@ export class InteractiveCreateFormationAction extends CBAction {
         this.game.closeActuators();
         let {replacement, replaced} = this.game.arbitrator.createFormation(this.unit, hexId);
         let hexLocation = this.unit.hexLocation;
-        replacement.appendToMap(new CBHexSideId(hexLocation, hexId), CBStacking.TOP);
+        replacement.appendToMap(new WHexSideId(hexLocation, hexId), WStacking.TOP);
         replacement.rotate(replaced[0].angle);
         for (let troop of replaced) {
             troop.deleteFromMap();
             troop.move(null, 0);
         }
-        CBSequence.appendElement(this.game, new CBCreateFormationSequenceElement({
+        WSequence.appendElement(this.game, new CBCreateFormationSequenceElement({
             game: this.game, formation: replacement, troops: [...replaced]
         }));
         replacement.setPlayed();
@@ -137,9 +137,9 @@ export class InteractiveCreateFormationAction extends CBAction {
     }
 
 }
-CBAction.register("InteractiveCreateFormationAction", InteractiveCreateFormationAction);
+WAction.register("InteractiveCreateFormationAction", InteractiveCreateFormationAction);
 
-export class InteractiveReleaseTroopsAction extends CBAction {
+export class InteractiveReleaseTroopsAction extends WAction {
 
     constructor(game, unit) {
         super(game, unit);
@@ -168,7 +168,7 @@ export class InteractiveReleaseTroopsAction extends CBAction {
         let {stepCount, troop} = this.game.arbitrator.releaseTroop(this.unit, hexId, steps);
         troop.appendToMap(hexId, stacking);
         troop.angle = this.unit.angle;
-        CBSequence.appendElement(this.game, new CBLeaveFormationSequenceElement({
+        WSequence.appendElement(this.game, new CBLeaveFormationSequenceElement({
             game: this.game, formation: this.unit, troop, stacking
         }));
         troop.setPlayed();
@@ -187,9 +187,9 @@ export class InteractiveReleaseTroopsAction extends CBAction {
     }
 
 }
-CBAction.register("InteractiveReleaseTroopsAction", InteractiveReleaseTroopsAction);
+WAction.register("InteractiveReleaseTroopsAction", InteractiveReleaseTroopsAction);
 
-export class InteractiveIncludeTroopsAction extends CBAction {
+export class InteractiveIncludeTroopsAction extends WAction {
 
     constructor(game, unit, event) {
         super(game, unit);
@@ -211,25 +211,25 @@ export class InteractiveIncludeTroopsAction extends CBAction {
             removedUnit.deleteFromMap();
         }
         this.unit.setPlayed();
-        CBSequence.appendElement(this.game, new CBJoinFormationSequenceElement({
+        WSequence.appendElement(this.game, new CBJoinFormationSequenceElement({
             game: this.game, formation: this.unit, troops: removed
         }));
         this.markAsFinished();
     }
 
 }
-CBAction.register("InteractiveIncludeTroopsAction", InteractiveIncludeTroopsAction);
+WAction.register("InteractiveIncludeTroopsAction", InteractiveIncludeTroopsAction);
 
-export class CBCreateFormationActuator extends CBActionActuator {
+export class CBCreateFormationActuator extends WActionActuator {
 
     constructor(action, joinableHexes) {
         super(action);
         let image = DImage.getImage("./../images/actuators/formation.png");
         let imageArtifacts = [];
         for (let hex of joinableHexes) {
-            let creation = new CBActuatorImageTrigger(this, "actuators", image,
+            let creation = new WActuatorImageTrigger(this, "actuators", image,
                 new Point2D(0, 0), new Dimension2D(80, 170));
-            creation.position = Point2D.position(this.playable.location, new CBHexSideId(action.unit.hexLocation, hex).location, 1);
+            creation.position = Point2D.position(this.playable.location, new WHexSideId(action.unit.hexLocation, hex).location, 1);
             creation.hex = hex;
             creation.pangle = sumAngle(action.unit.angle, 90);
             imageArtifacts.push(creation);
@@ -247,12 +247,12 @@ export class CBCreateFormationActuator extends CBActionActuator {
 
 }
 
-export class CBReleaseTroopActuator extends CBActionActuator {
+export class CBReleaseTroopActuator extends WActionActuator {
 
     constructor(action, hexes, stepCount) {
 
         function _createTrigger(image, hex, angle, factor, stepCount, stacking) {
-            let trigger = new CBActuatorImageTrigger(this, "actuators", image,
+            let trigger = new WActuatorImageTrigger(this, "actuators", image,
                 new Point2D(0, 0), new Dimension2D(64, 60));
             let startLocation = Point2D.position(this.playable.location, hex.location, factor);
             let targetPosition = Point2D.position(hex.location, hex.getNearHexSide(angle).location, 0.5);
@@ -269,11 +269,11 @@ export class CBReleaseTroopActuator extends CBActionActuator {
         let twoStepsImage = DImage.getImage("./../images/actuators/quit-full.png");
         let imageArtifacts = [];
         for (let hex of hexes) {
-            imageArtifacts.push(_createTrigger.call(this, oneStepImage, hex, action.unit.angle, 0.6, 1, CBStacking.TOP));
-            imageArtifacts.push(_createTrigger.call(this, oneStepImage, hex, sumAngle(action.unit.angle, 180), 0.6, 1, CBStacking.BOTTOM));
+            imageArtifacts.push(_createTrigger.call(this, oneStepImage, hex, action.unit.angle, 0.6, 1, WStacking.TOP));
+            imageArtifacts.push(_createTrigger.call(this, oneStepImage, hex, sumAngle(action.unit.angle, 180), 0.6, 1, WStacking.BOTTOM));
             if (stepCount>1) {
-                imageArtifacts.push(_createTrigger.call(this, twoStepsImage, hex, action.unit.angle, 1.2, 2, CBStacking.TOP));
-                imageArtifacts.push(_createTrigger.call(this, twoStepsImage, hex, sumAngle(action.unit.angle, 180), 1.2, 2, CBStacking.BOTTOM));
+                imageArtifacts.push(_createTrigger.call(this, twoStepsImage, hex, action.unit.angle, 1.2, 2, WStacking.TOP));
+                imageArtifacts.push(_createTrigger.call(this, twoStepsImage, hex, sumAngle(action.unit.angle, 180), 1.2, 2, WStacking.BOTTOM));
             }
         }
         this.initElement(imageArtifacts);
@@ -350,7 +350,7 @@ export class CBLeaveFormationSequenceElement extends CBStateSequenceElement {
         setUnitToContext(context, spec.troop.unit.name, unit);
         this.unitRecord = {
             unit,
-            hexLocation: CBHexLocation.fromSpecs(this.unit.game.map, {
+            hexLocation: WHexLocation.fromSpecs(this.unit.game.map, {
                 col: spec.troop.unit.positionCol,
                 row: spec.troop.unit.positionRow,
                 angle: spec.troop.unit.positionAngle
@@ -359,7 +359,7 @@ export class CBLeaveFormationSequenceElement extends CBStateSequenceElement {
         };
     }
 }
-CBSequence.register("leave", CBLeaveFormationSequenceElement);
+WSequence.register("leave", CBLeaveFormationSequenceElement);
 
 export class CBJoinFormationSequenceElement extends CBStateSequenceElement {
 
@@ -387,9 +387,9 @@ export class CBJoinFormationSequenceElement extends CBStateSequenceElement {
         this.joinedUnits = spec.troops.map(name=>getUnitFromContext(context, name));
     }
 }
-CBSequence.register("join", CBJoinFormationSequenceElement);
+WSequence.register("join", CBJoinFormationSequenceElement);
 
-export class CBCreateFormationSequenceElement extends CBSequenceElement {
+export class CBCreateFormationSequenceElement extends WSequenceElement {
 
     constructor({id, game, formation, troops}) {
         super({id, type: "create", game, unit: formation});
@@ -451,7 +451,7 @@ export class CBCreateFormationSequenceElement extends CBSequenceElement {
         let unit = CBUnit.fromSpecs(this.troops[0].wing, spec.formation.unit);
         this.unitRecord = {
             unit,
-            hexLocation: CBHexLocation.fromSpecs(this.troops[0].game.map, {
+            hexLocation: WHexLocation.fromSpecs(this.troops[0].game.map, {
                 col: spec.formation.hexLocation.col,
                 row: spec.formation.hexLocation.row,
                 angle: spec.formation.hexLocation.angle
@@ -460,9 +460,9 @@ export class CBCreateFormationSequenceElement extends CBSequenceElement {
     }
 
 }
-CBSequence.register("create", CBCreateFormationSequenceElement);
+WSequence.register("create", CBCreateFormationSequenceElement);
 
-export class CBBreakFormationSequenceElement extends CBSequenceElement {
+export class CBBreakFormationSequenceElement extends WSequenceElement {
 
     constructor({id, game, formation, troops}) {
         super({id, type: "break", game, unit: formation});
@@ -527,7 +527,7 @@ export class CBBreakFormationSequenceElement extends CBSequenceElement {
             setUnitToContext(context, troopSpec.unit.name, unit);
             this.unitRecords.push({
                 unit,
-                hexLocation: CBHexLocation.fromSpecs(this.unit.game.map, {
+                hexLocation: WHexLocation.fromSpecs(this.unit.game.map, {
                     col: troopSpec.unit.positionCol,
                     row: troopSpec.unit.positionRow,
                     angle: troopSpec.unit.positionAngle
@@ -536,7 +536,7 @@ export class CBBreakFormationSequenceElement extends CBSequenceElement {
         }
     }
 }
-CBSequence.register("break", CBBreakFormationSequenceElement);
+WSequence.register("break", CBBreakFormationSequenceElement);
 
 export class CBAppearAnimation extends CBUnitAnimation {
 
@@ -606,7 +606,7 @@ export class CBAppearAnimation extends CBUnitAnimation {
     _addAppear() {
         for (let unitRecord of this._appear) {
             unitRecord.unit.alpha = 0;
-            let stacking = unitRecord.stacking===undefined ? CBStacking.TOP : unitRecord.stacking;
+            let stacking = unitRecord.stacking===undefined ? WStacking.TOP : unitRecord.stacking;
             unitRecord.unit.addToMap(unitRecord.hexLocation, stacking);
         }
     }

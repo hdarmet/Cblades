@@ -7,16 +7,16 @@ import {
 import {
     DAnimator,
     DImage, setDrawPlatform
-} from "../../../jslib/draw.js";
+} from "../../../jslib/board/draw.js";
 import {
     assertDirectives, assertNoMoreDirectives,
     getLayers,
     loadAllImages,
     mockPlatform, resetDirectives, skipDirectives
-} from "../../mocks.js";
+} from "../../board/mocks.js";
 import {
     Mechanisms, Memento
-} from "../../../jslib/mechanisms.js";
+} from "../../../jslib/board/mechanisms.js";
 import {
     clickOnActionMenu,
     clickOnPiece,
@@ -38,14 +38,14 @@ import {
     CBCreateFormationActuator, CBReleaseTroopActuator
 } from "../../../jslib/cblades/interactive/interactive-formation.js";
 import {
-    CBHexSideId
-} from "../../../jslib/cblades/map.js";
+    WHexSideId
+} from "../../../jslib/wargame/map.js";
 import {
-    CBStacking
-} from "../../../jslib/cblades/game.js";
+    WStacking
+} from "../../../jslib/wargame/game.js";
 import {
-    CBSequence
-} from "../../../jslib/cblades/sequences.js";
+    WSequence
+} from "../../../jslib/wargame/sequences.js";
 import {
     registerInteractiveFormation,
     unregisterInteractiveFormation
@@ -53,7 +53,7 @@ import {
 
 describe("Interactive Formation", ()=> {
 
-    var appendElement = CBSequence.appendElement;
+    var appendElement = WSequence.appendElement;
 
     before(() => {
         registerInteractiveFormation();
@@ -62,16 +62,16 @@ describe("Interactive Formation", ()=> {
         Mechanisms.reset();
         DAnimator.clear();
         Memento.clear();
-        CBSequence.awaitedElements = [];
-        CBSequence.appendElement = function(game, element) {
-            let awaited = CBSequence.awaitedElements.pop();
+        WSequence.awaitedElements = [];
+        WSequence.appendElement = function(game, element) {
+            let awaited = WSequence.awaitedElements.pop();
             assert(element).equalsTo(awaited);
         }
     });
 
     after(() => {
         unregisterInteractiveFormation();
-        CBSequence.appendElement = appendElement;
+        WSequence.appendElement = appendElement;
     });
 
     function showQuitFullTrigger([a, b, c, d, e, f]) {
@@ -235,7 +235,7 @@ describe("Interactive Formation", ()=> {
             assertDirectives(actuatorsLayer, showQuitFullTrigger(zoomAndRotate270(375, 246.0411)));
          when:
             var releaseTroopActuator = getReleaseTroopsActuator(game);
-            var trigger = releaseTroopActuator.getTrigger(formation.hexLocation.fromHex, 2, CBStacking.BOTTOM);
+            var trigger = releaseTroopActuator.getTrigger(formation.hexLocation.fromHex, 2, WStacking.BOTTOM);
         then:
             assert(trigger).isDefined();
         when:
@@ -258,7 +258,7 @@ describe("Interactive Formation", ()=> {
             assertDirectives(actuatorsLayer, showQuitFullTrigger(zoomAndRotate270(375, 246.0411)));
         when:
             releaseTroopActuator = getReleaseTroopsActuator(game);
-            trigger = releaseTroopActuator.getTrigger(formation.hexLocation.toHex, 1, CBStacking.TOP);
+            trigger = releaseTroopActuator.getTrigger(formation.hexLocation.toHex, 1, WStacking.TOP);
         then:
             assert(trigger).isDefined();
         when:
@@ -295,7 +295,7 @@ describe("Interactive Formation", ()=> {
             formation.angle = 90;
             formation.fixRemainingLossSteps(4);
             unit1.move(map.getHex(8, 8), 0);
-            formation.move(new CBHexSideId(unit1.hexLocation, unit2.hexLocation), 0);
+            formation.move(new WHexSideId(unit1.hexLocation, unit2.hexLocation), 0);
             unit2.move(map.getHex(8, 7), 0);
             formation.receivesOrder(true);
             clickOnPiece(game, formation);

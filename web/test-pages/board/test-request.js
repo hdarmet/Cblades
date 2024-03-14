@@ -2,12 +2,12 @@
 
 import {
     assert, describe, it, before
-} from "../jstest/jtest.js";
+} from "../../jstest/jtest.js";
 import {
     completeRequester,
     getCookie, loadFile,
     requester, requestServer, setCookie
-} from "../jslib/request.js";
+} from "../../jslib/board/request.js";
 import {
     MockPromise, ResponsePromise
 } from "./mocks.js";

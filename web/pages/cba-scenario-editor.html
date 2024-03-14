@@ -12,8 +12,8 @@
         CBScenarioEditorGame, CBEditorPlayer
     } from "../jslib/cblades/editor.js";
     import {
-        CBMap
-    } from "../jslib/cblades/map.js";
+        WMap
+    } from "../jslib/wargame/map.js";
     import {
         CBWing
     } from "../jslib/cblades/unit.js";
@@ -146,7 +146,7 @@
     );
      */
 
-    let map = new CBMap([
+    let map = new WMap([
         {path:"./../images/maps/map-4.png", icon:"./../images/maps/map-4-icon.png", col:0, row:0, invert:true},
         {path:"./../images/maps/map-5.png", icon:"./../images/maps/map-5-icon.png", col:1, row:0}
     ]);
