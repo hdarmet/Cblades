@@ -21,7 +21,7 @@ import {
     WithDiceRoll
 } from "./interactive-player.js";
 import {
-    CBCharge, CBUnitSceneAnimation, CBStateSequenceElement
+    CBCharge, CBStateSequenceElement
 } from "../unit.js";
 import {
     WSequence
@@ -29,6 +29,9 @@ import {
 import {
     SequenceLoader
 } from "../loader.js";
+import {
+    WUnitSceneAnimation
+} from "../../wargame/wunit.js";
 
 export function registerInteractiveRecover() {
     CBInteractivePlayer.prototype.restUnit = function(unit) {
@@ -144,7 +147,6 @@ export class InteractiveRestingAction extends WAction {
     }
 
 }
-WAction.register("InteractiveRestingAction", InteractiveRestingAction);
 
 export class InteractiveReplenishMunitionsAction extends WAction {
 
@@ -219,7 +221,6 @@ export class InteractiveReplenishMunitionsAction extends WAction {
     }
 
 }
-WAction.register("InteractiveReplenishMunitionsAction", InteractiveReplenishMunitionsAction);
 
 export class InteractiveReorganizeAction extends WAction {
 
@@ -299,7 +300,6 @@ export class InteractiveReorganizeAction extends WAction {
     }
 
 }
-WAction.register("InteractiveReorganizeAction", InteractiveReorganizeAction);
 
 export class InteractiveRallyAction extends WAction {
 
@@ -379,7 +379,6 @@ export class InteractiveRallyAction extends WAction {
     }
 
 }
-WAction.register("InteractiveRallyAction", InteractiveRallyAction);
 
 function createRecoverMenuItems(unit, actions) {
     return [
@@ -497,7 +496,7 @@ export class CBRefillSequenceElement extends WithDiceRoll(CBStateSequenceElement
     get delay() { return 1500; }
 
     apply(startTick) {
-        return new CBUnitSceneAnimation({
+        return new WUnitSceneAnimation({
             unit: this.unit, startTick, duration: this.delay, state: this, game: this.game,
             animation: () => new InteractiveReplenishMunitionsAction(this.game, this.unit).replay(this.dice)
         });
@@ -515,7 +514,7 @@ export class CBRallySequenceElement extends WithDiceRoll(CBStateSequenceElement)
     get delay() { return 1500; }
 
     apply(startTick) {
-        return new CBUnitSceneAnimation({
+        return new WUnitSceneAnimation({
             unit: this.unit, startTick, duration: this.delay, state: this, game: this.game,
             animation: ()=>new InteractiveRallyAction(this.game, this.unit).replay(this.dice)
         });
@@ -533,7 +532,7 @@ export class CBReorganizeSequenceElement extends WithDiceRoll(CBStateSequenceEle
     get delay() { return 1500; }
 
     apply(startTick) {
-        return new CBUnitSceneAnimation({
+        return new WUnitSceneAnimation({
             unit: this.unit, startTick, duration: this.delay, state: this, game: this.game,
             animation: ()=>new InteractiveReorganizeAction(this.game, this.unit).replay(this.dice)
         });

@@ -23,7 +23,7 @@ import {
     WithDiceRoll
 } from "./interactive-player.js";
 import {
-    CBCharge, CBSceneAnimation, CBStateSequenceElement, CBUnitSceneAnimation
+    CBCharge, CBStateSequenceElement
 } from "../unit.js";
 import {
     Dimension2D, Point2D
@@ -46,6 +46,9 @@ import {
 import {
     WHexLocation
 } from "../../wargame/map.js";
+import {
+    WSceneAnimation, WUnitSceneAnimation
+} from "../../wargame/wunit.js";
 
 export function registerInteractiveMiscellaneous() {
     CBInteractivePlayer.prototype.mergeUnits = function(unit) {
@@ -130,7 +133,6 @@ export class InteractiveMergeUnitAction extends WAction {
     }
 
 }
-WAction.register("InteractiveMergeUnitAction", InteractiveMergeUnitAction);
 
 function createStartFireCounter(game, hexLocation) {
     let fireStart = new CBFireCounter(game);
@@ -257,7 +259,6 @@ export class InteractiveSetFireAction extends WAction {
     }
 
 }
-WAction.register("InteractiveSetFireAction", InteractiveSetFireAction);
 
 export class InteractiveExtinguishFireAction extends WAction {
 
@@ -346,7 +347,6 @@ export class InteractiveExtinguishFireAction extends WAction {
     }
 
 }
-WAction.register("InteractiveExtinguishFireAction", InteractiveExtinguishFireAction);
 
 export class InteractiveSetStakesAction extends WAction {
 
@@ -433,7 +433,6 @@ export class InteractiveSetStakesAction extends WAction {
     }
 
 }
-WAction.register("InteractiveSetStakesAction", InteractiveSetStakesAction);
 
 export class InteractiveRemoveStakesAction extends WAction {
 
@@ -521,7 +520,6 @@ export class InteractiveRemoveStakesAction extends WAction {
     }
 
 }
-WAction.register("InteractiveRemoveStakesAction", InteractiveRemoveStakesAction);
 
 export class InteractivePlayWeatherAction extends WAction {
 
@@ -582,7 +580,6 @@ export class InteractivePlayWeatherAction extends WAction {
     }
 
 }
-WAction.register("InteractivePlayWeatherAction", InteractivePlayWeatherAction);
 
 export class InteractivePlayFogAction extends WAction {
 
@@ -643,7 +640,6 @@ export class InteractivePlayFogAction extends WAction {
     }
 
 }
-WAction.register("InteractivePlayFogAction", InteractivePlayFogAction);
 
 export class InteractivePlayWindDirectionAction extends WAction {
 
@@ -705,7 +701,6 @@ export class InteractivePlayWindDirectionAction extends WAction {
     }
 
 }
-WAction.register("InteractivePlayWindDirectionAction", InteractivePlayWindDirectionAction);
 
 export class InteractivePlayTirednessAction extends WAction {
 
@@ -763,7 +758,6 @@ export class InteractivePlayTirednessAction extends WAction {
     }
 
 }
-WAction.register("InteractivePlayTirednessAction", InteractivePlayTirednessAction);
 
 export class InteractivePlayMoralAction extends WAction {
 
@@ -821,7 +815,6 @@ export class InteractivePlayMoralAction extends WAction {
     }
 
 }
-WAction.register("InteractivePlayMoralAction", InteractivePlayMoralAction);
 
 export class InteractivePlaySmokeAndFireAction extends WAction {
 
@@ -1071,7 +1064,6 @@ export class InteractivePlaySmokeAndFireAction extends WAction {
     }
 
 }
-WAction.register("InteractivePlaySmokeAndFireAction", InteractivePlaySmokeAndFireAction);
 
 class PlayFireTrigger extends WPlayableActuatorTrigger {
 
@@ -1323,7 +1315,7 @@ export class CBSetFireSequenceElement extends WithDiceRoll(CBStateSequenceElemen
     get delay() { return 1500; }
 
     apply(startTick) {
-        return new CBUnitSceneAnimation({
+        return new WUnitSceneAnimation({
             unit: this.unit, startTick, duration: this.delay, state: this, game: this.game,
             animation: () => new InteractiveSetFireAction(this.game, this.unit).replay(this.dice)
         });
@@ -1349,7 +1341,7 @@ export class CBExtinguishFireSequenceElement extends WithDiceRoll(CBStateSequenc
     get delay() { return 1500; }
 
     apply(startTick) {
-        return new CBUnitSceneAnimation({
+        return new WUnitSceneAnimation({
             unit: this.unit, startTick, duration: this.delay, state: this, game: this.game,
             animation: () => new InteractiveExtinguishFireAction(this.game, this.unit).replay(this.dice)
         });
@@ -1375,7 +1367,7 @@ export class CBSetStakesSequenceElement extends WithDiceRoll(CBStateSequenceElem
     get delay() { return 1500; }
 
     apply(startTick) {
-        return new CBUnitSceneAnimation({
+        return new WUnitSceneAnimation({
             unit: this.unit, startTick, duration: this.delay, state: this, game: this.game,
             animation: () => new InteractiveSetStakesAction(this.game, this.unit).replay(this.dice)
         });
@@ -1401,7 +1393,7 @@ export class CBRemoveStakesSequenceElement extends WithDiceRoll(CBStateSequenceE
     get delay() { return 1500; }
 
     apply(startTick) {
-        return new CBUnitSceneAnimation({
+        return new WUnitSceneAnimation({
             unit: this.unit, startTick, duration: this.delay, state: this, game: this.game,
             animation: () => new InteractiveRemoveStakesAction(this.game, this.unit).replay(this.dice)
         });
@@ -1428,7 +1420,7 @@ export class CBPlaySmokeAndFireSequenceElement extends WithDiceRoll(WSequenceEle
     get delay() { return 2500; }
 
     apply(startTick) {
-        return new CBSceneAnimation({
+        return new WSceneAnimation({
             startTick, duration: this.delay, state: this, game: this.game,
             animation: () => new InteractivePlaySmokeAndFireAction(
                 this.game, null, this.location).replay(this.dice, this.options)

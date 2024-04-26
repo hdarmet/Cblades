@@ -38,7 +38,7 @@ export function createTinyGame() {
     return {game, map};
 }
 
-export class CBTestSequenceElement extends WSequenceElement {
+export class WTestSequenceElement extends WSequenceElement {
 
     constructor({id, game, data, type="test"}) {
         super({id, type, game});
@@ -58,7 +58,11 @@ export class CBTestSequenceElement extends WSequenceElement {
     }
 
     apply(startTick) {
-        this._animation = new CBTestAnimation({ game:this.game, startTick, duration:this.delay });
+        this._animation = new WTestAnimation({
+            game:this.game,
+            startTick,
+            duration:this.delay
+        });
         return this._animation;
     }
 
@@ -82,9 +86,9 @@ export class CBTestSequenceElement extends WSequenceElement {
     }
 
 }
-WSequence.register("test", CBTestSequenceElement);
+WSequence.register("test", WTestSequenceElement);
 
-export class CBTestAnimation extends WAnimation {
+export class WTestAnimation extends WAnimation {
 
     constructor({game, startTick, duration}) {
         super({game, startTick, duration});
@@ -112,8 +116,8 @@ describe("Sequences", ()=> {
             var {game} = createTinyGame();
             WSequence.setCount(game, 0);
         when:
-            var element1 = new CBTestSequenceElement({game, data:"d1", type:"test1"});
-            var element2 = new CBTestSequenceElement({game, data:"d2", type:"test2"});
+            var element1 = new WTestSequenceElement({game, data:"d1", type:"test1"});
+            var element2 = new WTestSequenceElement({game, data:"d2", type:"test2"});
             WSequence.addElement(game, element1);
             WSequence.addElement(game, element2);
             var elements = WSequence.getElements(game);
@@ -142,8 +146,8 @@ describe("Sequences", ()=> {
             var {game} = createTinyGame();
             WSequence.setCount(game, 0);
         when:
-            var element1 = new CBTestSequenceElement({game, data:"d1"});
-            var element2 = new CBTestSequenceElement({game, data:"d2"});
+            var element1 = new WTestSequenceElement({game, data:"d1"});
+            var element2 = new WTestSequenceElement({game, data:"d2"});
             WSequence.addElement(game, element1);
             Memento.open()
             WSequence.appendElement(game, element2);
@@ -170,8 +174,8 @@ describe("Sequences", ()=> {
             var {game} = createTinyGame();
             WSequence.setCount(game, 0);
         when:
-            var element1 = new CBTestSequenceElement({game, data:"d1"});
-            var element2 = new CBTestSequenceElement({game, data:"d2"});
+            var element1 = new WTestSequenceElement({game, data:"d1"});
+            var element2 = new WTestSequenceElement({game, data:"d2"});
             WSequence.addElement(game, element1);
             WSequence.addElement(game, element2);
             var finishReplay = false;
@@ -195,7 +199,7 @@ describe("Sequences", ()=> {
         given:
             var {game} = createTinyGame();
             WSequence.setCount(game, 0);
-            var element = new CBTestSequenceElement({game, data:"d1"});
+            var element = new WTestSequenceElement({game, data:"d1"});
             WSequence.addElement(game, element);
             WSequence.getSequence(game).commit();
         when:

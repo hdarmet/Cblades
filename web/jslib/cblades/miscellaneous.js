@@ -31,7 +31,7 @@ import {
 
 export class CBGroundMarkerArtifact extends WPieceImageArtifact {
 
-    constructor(counter, path, position, dimension= CBCounterMarkerArtifact.MARKER_DIMENSION) {
+    constructor(counter, path, position, dimension= CBCounterMarkerArtifact.DIMENSION) {
         super(counter, "ground", [DImage.getImage(path)], position, dimension);
     }
 
@@ -39,7 +39,7 @@ export class CBGroundMarkerArtifact extends WPieceImageArtifact {
         return WLevelBuilder.GLAYERS.MARKERS;
     }
 
-    static MARKER_DIMENSION = new Dimension2D(64, 64);
+    static DIMENSION = new Dimension2D(64, 64);
 }
 
 class BurningArtifact extends ActivableArtifactMixin(WHexCounterArtifact) {
@@ -343,11 +343,11 @@ WHexCounter.registerTokenType("stakes", CBStakesCounter);
 
 export class CBCounterMarkerArtifact extends WPieceImageArtifact {
 
-    constructor(counter, path, position, dimension= CBCounterMarkerArtifact.MARKER_DIMENSION) {
+    constructor(counter, path, position, dimension= CBCounterMarkerArtifact.DIMENSION) {
         super(counter, "counter-markers", [DImage.getImage(path)], position, dimension);
     }
 
-    static MARKER_DIMENSION = new Dimension2D(64, 64);
+    static DIMENSION = new Dimension2D(64, 64);
 }
 
 export class DisplayablePlayableArtifact extends ActivableArtifactMixin(WPieceImageArtifact) {

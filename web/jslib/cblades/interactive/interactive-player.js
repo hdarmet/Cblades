@@ -21,8 +21,8 @@ import {
     WInsert
 } from "../../wargame/playable.js";
 import {
-    CBStateSequenceElement, CBUnitAnimation,
-    CBUnitPlayer, CBUnitSceneAnimation
+    CBStateSequenceElement,
+    CBUnitPlayer
 } from "../unit.js";
 import {
     WNextTurnSequenceElement, WSequence, WSequenceElement
@@ -33,6 +33,9 @@ import {
 import {
     CBWeather, CBFog
 } from "../weather.js";
+import {
+    WUnitAnimation, WUnitSceneAnimation
+} from "../../wargame/wunit.js";
 
 export class CBInteractivePlayer extends CBUnitPlayer {
 
@@ -591,7 +594,7 @@ export class CBDefenderEngagementSequenceElement extends WithDiceRoll(CBStateSeq
     get delay() { return 1500; }
 
     apply(startTick) {
-        return new CBUnitSceneAnimation({
+        return new WUnitSceneAnimation({
             unit: this.unit, startTick, duration: this.delay, state: this, game: this.game,
             animation: () => new CBDefenderEngagementChecking(this.game, this.unit).replay(this.dice)
         });
@@ -610,7 +613,7 @@ export class CBRoutCheckingSequenceElement extends WithDiceRoll(CBStateSequenceE
 
     apply(startTick) {
         this.unit.setAttr("rout-checked", true);
-        return new CBUnitSceneAnimation({
+        return new WUnitSceneAnimation({
             unit: this.unit, startTick, duration: this.delay, state: this, game: this.game,
             animation: () => new CBLoseCohesionChecking(this.game, this.unit).replay(this.dice)
         });
@@ -635,7 +638,7 @@ export class CBNeighborRoutCheckingSequenceElement extends WithDiceRoll(CBStateS
 
     apply(startTick) {
         this.unit.setAttr("rout-checked", true);
-        return new CBUnitSceneAnimation({
+        return new WUnitSceneAnimation({
             unit: this.unit, startTick, duration: this.delay, state: this, game: this.game,
             animation: () => new CBLoseCohesionChecking(this.game, this.unit).replay(this.dice)
         });
@@ -666,7 +669,7 @@ export class CBRootNeighborsCohesionSequenceElement extends CBStateSequenceEleme
             neighbors: this.neighbors
         });
          */
-        return new CBUnitAnimation({
+        return new WUnitAnimation({
             unit: this.unit, startTick, duration: this.delay,
             state: this, game: this.game
         });

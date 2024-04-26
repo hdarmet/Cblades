@@ -19,13 +19,15 @@ import {
     WAction, WStacking
 } from "../../wargame/game.js";
 import {
+    HexLocated, WDisplaceAnimation, WUnitSceneAnimation
+} from "../../wargame/wunit.js";
+import {
     WActionActuator, WActuatorImageTrigger, WActuatorTriggerMixin, WMask, WInsert,
     WMoveMode, WAbstractInsert, WGame
 } from "../../wargame/playable.js";
 import {
     CBCharge,
-    CBMovement, CBMoveProfile, CBStateSequenceElement,
-    CBUnitSceneAnimation, HexLocated, CBDisplaceAnimation
+    CBMovement, CBMoveProfile, CBStateSequenceElement
 } from "../unit.js";
 import {
     DImage
@@ -845,7 +847,6 @@ export class InteractiveMovementAction extends InteractiveAbstractMovementAction
     }
 
 }
-WAction.register("InteractiveMovementAction", InteractiveMovementAction);
 
 export class CBAttackerEngagementChecking {
 
@@ -1214,7 +1215,6 @@ export class InteractiveRoutAction extends InteractiveAbstractMovementAction {
         this._markUnitActivationAfterMovement(played);
     }
 }
-WAction.register("InteractiveRoutAction", InteractiveRoutAction);
 
 export class InteractiveMoveBackAction extends InteractiveAbstractMovementAction {
 
@@ -1303,7 +1303,6 @@ export class InteractiveMoveBackAction extends InteractiveAbstractMovementAction
     }
 
 }
-WAction.register("InteractiveMoveBackAction", InteractiveMoveBackAction);
 
 export class InteractiveConfrontAction extends InteractiveAbstractMovementAction {
 
@@ -1365,7 +1364,6 @@ export class InteractiveConfrontAction extends InteractiveAbstractMovementAction
     }
 
 }
-WAction.register("InteractiveConfrontAction", InteractiveConfrontAction);
 
 function createMovementMenuItems(unit, actions) {
     return [
@@ -1900,7 +1898,7 @@ export class CBMoveSequenceElement extends HexLocated(CBStateSequenceElement) {
 
     apply(startTick) {
         this.game.centerOn(this.unit.viewportLocation);
-        return new CBDisplaceAnimation({
+        return new WDisplaceAnimation({
             unit:this.unit, startTick, duration:this.delay,
             state:this, hexLocation:this.hexLocation, stacking:this.stacking
         });
@@ -1955,7 +1953,7 @@ export class CBRotateSequenceElement extends Oriented(CBStateSequenceElement) {
     get delay() { return 500; }
 
     apply(startTick) {
-        return new CBDisplaceAnimation({
+        return new WDisplaceAnimation({
             unit: this.unit, startTick, duration:this.delay, state:this, angle:this.angle
         });
     }
@@ -1972,7 +1970,7 @@ export class CBReorientSequenceElement extends Oriented(CBStateSequenceElement) 
     get delay() { return 500; }
 
     apply(startTick) {
-        return new CBDisplaceAnimation({
+        return new WDisplaceAnimation({
             unit: this.unit, startTick, duration: this.delay, state:this, angle:this.angle
         });
     }
@@ -1989,7 +1987,7 @@ export class CBTurnSequenceElement extends Oriented(HexLocated(CBStateSequenceEl
     get delay() { return 500; }
 
     apply(startTick) {
-        return new CBDisplaceAnimation({
+        return new WDisplaceAnimation({
             unit: this.unit,
             startTick,
             duration: this.delay,
@@ -2012,7 +2010,7 @@ export class CBDisengagementSequenceElement extends WithDiceRoll(CBStateSequence
     get delay() { return 1500; }
 
     apply(startTick) {
-        return new CBUnitSceneAnimation({
+        return new WUnitSceneAnimation({
             unit: this.unit, startTick, duration: this.delay, state: this, game: this.game,
             animation: () => new CBDisengagementChecking(this.game, this.unit).replay(this.dice)
         });
@@ -2030,7 +2028,7 @@ export class CBAttackerEngagementSequenceElement extends WithDiceRoll(CBStateSeq
     get delay() { return 1500; }
 
     apply(startTick) {
-        return new CBUnitSceneAnimation({
+        return new WUnitSceneAnimation({
             unit: this.unit, startTick, duration: this.delay, state: this, game: this.game,
             animation: () => new CBAttackerEngagementChecking(this.game, this.unit).replay(this.dice)
         });
@@ -2048,7 +2046,7 @@ export class CBCrossingSequenceElement extends WithDiceRoll(CBStateSequenceEleme
     get delay() { return 1500; }
 
     apply(startTick) {
-        return new CBUnitSceneAnimation({
+        return new WUnitSceneAnimation({
             unit: this.unit, startTick, duration: this.delay, state: this, game: this.game,
             animation: () => new CBLoseCohesionForCrossingChecking(this.game, this.unit).replay(this.dice)
         });

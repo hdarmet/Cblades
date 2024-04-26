@@ -1362,10 +1362,12 @@ export class CBUnitsRoster extends DPopup {
             let wings = [];
             for (let wingDesc of playerDesc.wings) {
                 let wing = wingMap.get(wingDesc.name);
-                if (!wing) wing = new CBWing(null, {
-                    name:wingDesc.name,
-                    path:wingDesc.path
-                });
+                if (!wing) wing = new CBWing( player,
+                    {
+                        name: wingDesc.name,
+                        path: wingDesc.path
+                    }
+                );
                 wings.push(wing);
             }
             player.setWings(wings);

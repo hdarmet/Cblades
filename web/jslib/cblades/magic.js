@@ -13,7 +13,7 @@ import {
     CarriableMixin,
     OptionArtifactMixin,
     OptionMixin
-} from "./unit.js";
+} from "../wargame/wunit.js";
 
 class SpellImageArtifact extends OptionArtifactMixin(WHexCounterArtifact) {
 
@@ -34,7 +34,7 @@ class SpellImageArtifact extends OptionArtifactMixin(WHexCounterArtifact) {
     }
 
     get layer() {
-        return this.piece.isOption() ? WLevelBuilder.ULAYERS.OPTIONS : WLevelBuilder.ULAYERS.SPELLS;
+        return this.piece.optionNature ? WLevelBuilder.ULAYERS.OPTIONS : WLevelBuilder.ULAYERS.SPELLS;
     }
 
 }
@@ -86,7 +86,7 @@ export class CBSpell extends CarriableMixin(RetractablePieceMixin(WHexCounter)) 
         return this.wizard.game;
     }
 
-    isOption() {
+    get optionNature() {
         return false;
     }
 
@@ -247,7 +247,7 @@ export function UnitTargetedMixin(clazz) {
             return memento;
         }
 
-        isOption() {
+        get optionNature() {
             return this.activated;
         }
 

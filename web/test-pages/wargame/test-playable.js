@@ -64,7 +64,7 @@ import {
     DInsertFrame
 } from "../../jslib/board/widget.js";
 
-class CBTestPlayer extends WPlayer {
+class WTestPlayer extends WPlayer {
 
     constructor(...args) {
         super(...args);
@@ -96,7 +96,7 @@ class CBTestPlayer extends WPlayer {
     fromSpecs(game, specs, context) {
         super.fromSpecs(game, specs, context);
         for (let playableSpecs of specs.playables) {
-            let playable = new CBTestPlayable(this, game, playableSpecs.name, playableSpecs.paths);
+            let playable = new WTestPlayable(this, game, playableSpecs.name, playableSpecs.paths);
             playable.fromSpecs(playableSpecs, context);
             context.pieceMap.set(playableSpecs.name, playable);
         }
@@ -105,7 +105,7 @@ class CBTestPlayer extends WPlayer {
 
 }
 
-class CBTestMultiImagesActuator extends WActionActuator {
+class WTestMultiImagesActuator extends WActionActuator {
 
     constructor(action) {
         super(action);
@@ -138,7 +138,7 @@ class CBTestMultiImagesActuator extends WActionActuator {
     }
 }
 
-class CBTestPlayableActuatorTrigger extends WPlayableActuatorTrigger {
+class WTestPlayableActuatorTrigger extends WPlayableActuatorTrigger {
 
     get layer() {
         return WLevelBuilder.ULAYERS.ACTUATORS;
@@ -146,13 +146,13 @@ class CBTestPlayableActuatorTrigger extends WPlayableActuatorTrigger {
 
 }
 
-class CBTestPlayableActuator extends RetractableActuatorMixin(WActionActuator) {
+class WTestPlayableActuator extends RetractableActuatorMixin(WActionActuator) {
 
     constructor(action, playable) {
         super(action);
         let image = DImage.getImage("./../images/actuators/test.png");
         let imageArtifacts = [];
-        this.trigger = new CBTestPlayableActuatorTrigger(this, playable, "units", image,
+        this.trigger = new WTestPlayableActuatorTrigger(this, playable, "units", image,
             new Point2D(0, 0), new Dimension2D(142, 142));
         this.trigger.position = Point2D.position(action.playable.location, playable.location, 1);
         imageArtifacts.push(this.trigger);
@@ -185,13 +185,12 @@ class TestPlayableImageArtifact extends RetractableArtifactMixin(SelectableArtif
 
 }
 
-class CBTestPlayable extends RetractablePieceMixin(HexLocatableMixin(BelongsToPlayerMixin(PlayableMixin(WPiece)))) {
+class WTestPlayable extends RetractablePieceMixin(HexLocatableMixin(BelongsToPlayerMixin(PlayableMixin(WPiece)))) {
 
     constructor(player, game, name, paths) {
         super("units", game, paths, new Dimension2D(142, 142));
         this.player = player;
         this.name = name;
-        this.paths = paths;
     }
 
     createArtifact(levelName, images, position, dimension) {
@@ -221,7 +220,7 @@ class CBTestPlayable extends RetractablePieceMixin(HexLocatableMixin(BelongsToPl
 
 }
 
-class CBTestHexCounter extends WHexCounter {
+class WTestHexCounter extends WHexCounter {
 
     constructor(game) {
         super("ground", game, ["./../images/units/misc/counter.png"], new Dimension2D(50, 50));
@@ -254,7 +253,7 @@ class TestCounterImageArtifact extends RetractableArtifactMixin(SelectableArtifa
 
 }
 
-class CBTestCounter extends RetractablePieceMixin(HexLocatableMixin(BelongsToPlayerMixin(PlayableMixin(WPiece)))) {
+class WTestCounter extends RetractablePieceMixin(HexLocatableMixin(BelongsToPlayerMixin(PlayableMixin(WPiece)))) {
 
     constructor(owner, game, paths) {
         super("units", game, paths, new Dimension2D(142, 142));
@@ -382,9 +381,9 @@ function createBasicGame() {
 
 function createTinyGame() {
     var { game, map, arbitrator } = createBasicGame();
-    var player = new CBTestPlayer("player1");
+    var player = new WTestPlayer("player1");
     game.addPlayer(player);
-    let playable = new CBTestPlayable(player, game,"u1", ["./../images/units/misc/unit.png"]);
+    let playable = new WTestPlayable(player, game,"u1", ["./../images/units/misc/unit.png"]);
     playable.addToMap(map.getHex(5, 8));
     repaint(game);
     loadAllImages();
@@ -393,11 +392,11 @@ function createTinyGame() {
 
 function create2PlayablesTinyGame() {
     var { game, map, arbitrator } = createBasicGame();
-    var player = new CBTestPlayer("player1");
+    var player = new WTestPlayer("player1");
     game.addPlayer(player);
-    let playable1 = new CBTestPlayable(player, game,"u1", ["./../images/units/misc/unit1.png"]);
+    let playable1 = new WTestPlayable(player, game,"u1", ["./../images/units/misc/unit1.png"]);
     playable1.addToMap(map.getHex(5, 6));
-    let playable2 = new CBTestPlayable(player, game,"u2", ["./../images/units/misc/unit2.png"]);
+    let playable2 = new WTestPlayable(player, game,"u2", ["./../images/units/misc/unit2.png"]);
     playable2.addToMap(map.getHex(5, 7));
     repaint(game);
     loadAllImages();
@@ -406,15 +405,15 @@ function create2PlayablesTinyGame() {
 
 function create2PlayersTinyGame() {
     var { game, map } = createBasicGame();
-    let player1 = new CBTestPlayer();
+    let player1 = new WTestPlayer();
     game.addPlayer(player1);
-    let player2 = new CBTestPlayer();
+    let player2 = new WTestPlayer();
     game.addPlayer(player2);
-    let unit0 = new CBTestPlayable(player1, game,"u1",  ["./../images/units/misc/unit0.png"]);
+    let unit0 = new WTestPlayable(player1, game,"u1",  ["./../images/units/misc/unit0.png"]);
     unit0.addToMap(map.getHex(5, 8));
-    let unit1 = new CBTestPlayable(player1, game, "u2",  ["./../images/units/misc/unit1.png"]);
+    let unit1 = new WTestPlayable(player1, game, "u2",  ["./../images/units/misc/unit1.png"]);
     unit1.addToMap(map.getHex(5, 8));
-    let unit2 = new CBTestPlayable(player2, game, "u3", ["./../images/units/misc/unit2.png"]);
+    let unit2 = new WTestPlayable(player2, game, "u3", ["./../images/units/misc/unit2.png"]);
     unit2.addToMap(map.getHex(5, 7));
     game.start();
     loadAllImages();
@@ -793,7 +792,7 @@ describe("Playable", ()=> {
             var [actuatorsLayer] = getLayers(game.board, "actuators-0");
         when:
             var action = new WAction(game, playable1);
-            var actuator = new CBTestPlayableActuator(action, playable2);
+            var actuator = new WTestPlayableActuator(action, playable2);
             game.openActuator(actuator);
             repaint(game);
         then:
@@ -812,7 +811,7 @@ describe("Playable", ()=> {
             var [actuatorsLayer] = getLayers(game.board, "actuators");
         when:
             var action = new WAction(game, playable);
-            var actuator = new CBTestMultiImagesActuator(action);
+            var actuator = new WTestMultiImagesActuator(action);
             resetDirectives(actuatorsLayer);
             game.openActuator(actuator);
             paint(game);
@@ -1130,11 +1129,11 @@ describe("Playable", ()=> {
     it("Checks that when the mouse is over a (one hex) counter, the ones above are retracted", () => {
         given:
             var { game, map } = createBasicGame();
-            var player = new CBTestPlayer("player1");
+            var player = new WTestPlayer("player1");
             game.addPlayer(player);
-            let counter1 = new CBTestPlayable(player, game,"u1",  ["./../images/units/misc/counter1.png"]);
-            let counter2 = new CBTestPlayable(player, game,"u2",  ["./../images/units/misc/counter2.png"]);
-            let counter3 = new CBTestPlayable(player, game,"u3", ["./../images/units/misc/counter3.png"]);
+            let counter1 = new WTestPlayable(player, game,"u1",  ["./../images/units/misc/counter1.png"]);
+            let counter2 = new WTestPlayable(player, game,"u2",  ["./../images/units/misc/counter2.png"]);
+            let counter3 = new WTestPlayable(player, game,"u3", ["./../images/units/misc/counter3.png"]);
             counter1.addToMap(map.getHex(4, 5));
             counter2.addToMap(map.getHex(4, 5));
             counter3.addToMap(map.getHex(4, 5));
@@ -1180,10 +1179,10 @@ describe("Playable", ()=> {
     it("Checks that a retracted counter reappears after a period of time", () => {
         given:
             var { game, map } = createBasicGame();
-            var player = new CBTestPlayer("player1");
+            var player = new WTestPlayer("player1");
             game.addPlayer(player);
-            let counter1 = new CBTestPlayable(player, game,"u1",  ["./../images/units/misc/counter1.png"]);
-            let counter2 = new CBTestPlayable(player, game,"u2", ["./../images/units/misc/counter2.png"]);
+            let counter1 = new WTestPlayable(player, game,"u1",  ["./../images/units/misc/counter1.png"]);
+            let counter2 = new WTestPlayable(player, game,"u2", ["./../images/units/misc/counter2.png"]);
             counter1.addToMap(map.getHex(4, 5));
             counter2.addToMap(map.getHex(4, 5));
             repaint(game);
@@ -1210,10 +1209,10 @@ describe("Playable", ()=> {
     it("Checks that moving on a retracted counter reinit the reappearance delay", () => {
         given:
             var { game, map } = createBasicGame();
-            var player = new CBTestPlayer("player1");
+            var player = new WTestPlayer("player1");
             game.addPlayer(player);
-            let counter1 = new CBTestPlayable(player, game,"u1", ["./../images/units/misc/counter1.png"]);
-            let counter2 = new CBTestPlayable(player, game,"u2", ["./../images/units/misc/counter2.png"]);
+            let counter1 = new WTestPlayable(player, game,"u1", ["./../images/units/misc/counter1.png"]);
+            let counter2 = new WTestPlayable(player, game,"u2", ["./../images/units/misc/counter2.png"]);
             counter1.addToMap(map.getHex(4, 5));
             counter2.addToMap(map.getHex(4, 5));
             mouseMove(game, 333-71/2+5, 111-71/2+5); // On counter0 but not counter1
@@ -1244,7 +1243,7 @@ describe("Playable", ()=> {
             var { game, playable1, playable2 } = create2PlayablesTinyGame();
             playable2.hexLocation = playable1.hexLocation;
             var action = new WAction(game, playable1);
-            var actuator = new CBTestPlayableActuator(action, playable1);
+            var actuator = new WTestPlayableActuator(action, playable1);
             game.openActuator(actuator);
             game.start();
             loadAllImages();
@@ -1282,7 +1281,7 @@ describe("Playable", ()=> {
             var { game, playable1, playable2 } = create2PlayablesTinyGame();
             playable2.hexLocation = playable1.hexLocation;
             var action = new WAction(game, playable1);
-            var actuator = new CBTestPlayableActuator(action, playable2);
+            var actuator = new WTestPlayableActuator(action, playable2);
             game.openActuator(actuator);
             game.start();
             loadAllImages();
@@ -1320,12 +1319,12 @@ describe("Playable", ()=> {
     it("Checks that when the mouse is over a formation, the above counters are retracted", () => {
         given:
             var { game, map } = createBasicGame();
-            var player = new CBTestPlayer("player1");
+            var player = new WTestPlayer("player1");
             game.addPlayer(player);
             let formation1 = new CBTestFormation(player, game,["./../images/units/misc/formation1.png"]);
             formation1.angle = 90;
-            let counter2 = new CBTestPlayable(player, game,"u1",["./../images/units/misc/counter2.png"]);
-            let counter3 = new CBTestPlayable(player, game, "u2", ["./../images/units/misc/counter3.png"]);
+            let counter2 = new WTestPlayable(player, game,"u1",["./../images/units/misc/counter2.png"]);
+            let counter3 = new WTestPlayable(player, game, "u2", ["./../images/units/misc/counter3.png"]);
             formation1.addToMap(new WHexSideId(map.getHex(4, 5), map.getHex(4, 6)));
             counter2.addToMap(map.getHex(4, 5));
             counter3.addToMap(map.getHex(4, 6));
@@ -1434,15 +1433,15 @@ describe("Playable", ()=> {
     it("Checks playable and option counters registration on layers", () => {
         given:
             var { game, map } = createBasicGame();
-            var player = new CBTestPlayer("player1");
+            var player = new WTestPlayer("player1");
             game.addPlayer(player);
-            let playable1 = new CBTestPlayable(player, game, "u1", ["./../images/units/misc/unit1.png"]);
+            let playable1 = new WTestPlayable(player, game, "u1", ["./../images/units/misc/unit1.png"]);
             let markerImage = DImage.getImage("./../images/markers/misc/markers1.png");
             let marker = new CBTestMarker(playable1, "units", [markerImage],
                 new Point2D(0, 0), new Dimension2D(64, 64));
             playable1._element.addArtifact(marker);
-            let playable2 = new CBTestPlayable(player, game, "u2", ["./../images/units/misc/unit2.png"]);
-            let spell = new CBTestCounter(playable2, game,["./../images/units/misc/spell.png"]);
+            let playable2 = new WTestPlayable(player, game, "u2", ["./../images/units/misc/unit2.png"]);
+            let spell = new WTestCounter(playable2, game,["./../images/units/misc/spell.png"]);
             let option = new CBTestOption(playable2, "units",  game, ["./../images/units/misc/option.png"], new Dimension2D(142, 142));
             option.artifact.option = option;
             option.playable = playable2;
@@ -1478,7 +1477,7 @@ describe("Playable", ()=> {
     it("Checks formations and formation's marker and options registration on layers", () => {
         given:
             var { game, map } = createBasicGame();
-            var player = new CBTestPlayer("player1");
+            var player = new WTestPlayer("player1");
             game.addPlayer(player);
             let formation1 = new CBTestFormation(player, game,["./../images/units/misc/formation1.png"]);
             formation1.angle = 60;
@@ -1749,11 +1748,11 @@ describe("Playable", ()=> {
 
     function createPlayableAndCounterTinyGame() {
         var { game, map, arbitrator } = createBasicGame();
-        var player = new CBTestPlayer("player1");
+        var player = new WTestPlayer("player1");
         game.addPlayer(player);
-        let playable = new CBTestPlayable(player, game,"u1", ["./../images/units/misc/unit1.png"]);
+        let playable = new WTestPlayable(player, game,"u1", ["./../images/units/misc/unit1.png"]);
         playable.addToMap(map.getHex(5, 6));
-        let counter = new CBTestHexCounter(game);
+        let counter = new WTestHexCounter(game);
         counter.addToMap(map.getHex(5, 7));
         loadAllImages();
         return {game, map, arbitrator, playable, counter, player};
@@ -1800,7 +1799,7 @@ describe("Playable", ()=> {
 
     it("Checks game import", () => {
         given:
-            WHexCounter.registerTokenType("counter", CBTestHexCounter);
+            WHexCounter.registerTokenType("counter", WTestHexCounter);
             var game = new WGame(1);
             var context = new Map();
             var specs = {
@@ -1834,7 +1833,7 @@ describe("Playable", ()=> {
             };
         when:
             context.playerCreator = (name, path)=> {
-                return new CBTestPlayer(name, path);
+                return new WTestPlayer(name, path);
             }
             game.fromSpecs(clean(specs), context);
         then:

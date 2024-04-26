@@ -1071,6 +1071,14 @@ export class WPiece {
         return new WPieceImageArtifact(this, levelName, images, position, dimension);
     }
 
+    get paths() {
+        let paths = [];
+        for (let image of this._images) {
+            paths.push(image.path);
+        }
+        return paths;
+    }
+
     _memento() {
         return {}
     }
@@ -1455,41 +1463,8 @@ export function PlayableMixin(clazz) {
             }
         }
 
-        set attrs(attrs) {
-            this._attrs = attrs;
-        }
-
-        get attrs() {
-            if (!this._attrs) this.attrs = {};
-            return this._attrs;
-        }
-
-        getAttr(path) {
-            let attrs = this.attrs;
-            let names = path.split(".");
-            for (let index=0; index<names.length-1; index++) {
-                if (!attrs) return null;
-                attrs = attrs[names[index]];
-            }
-            if (!attrs) return null;
-            return attrs[names[names.length-1]];
-        }
-        setAttr(path, value) {
-            !this._attrs && (this._attrs={});
-            let attrs = this._attrs;
-            let names = path.split(".");
-            for (let index=0; index<names.length-1; index++) {
-                if (!attrs[names[index]]) {
-                    attrs[names[index]] = {}
-                }
-                attrs = attrs[names[index]];
-            }
-            attrs[names[names.length-1]] = value;
-        }
-
         finish() {
             this._updatePlayed && this._updatePlayed();
-            this.attrs = {};
         }
 
     }

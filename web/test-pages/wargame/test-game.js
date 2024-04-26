@@ -903,7 +903,7 @@ describe("Game", ()=> {
     it("Checks piece basic appearance and features", () => {
         given:
             var { game } = createBasicGame();
-            let piece = new WPiece("grounds", game,["./../images/units/misc/piece.png"], new Dimension2D(50, 50));
+            let piece = new WPiece("grounds", game,["./../images/units/misc/front.png", "./../images/units/misc/back.png"], new Dimension2D(50, 50));
             piece._setOnGame(game);
             piece.location = new Point2D(100, 200);
             game.start();
@@ -915,6 +915,7 @@ describe("Game", ()=> {
             resetDirectives(hexLayer);
             repaint(game);
         then:
+            assert(piece.paths).arrayEqualsTo(["./../images/units/misc/front.png", "./../images/units/misc/back.png"]);
             assert(piece.isShown()).isTrue();
             assert(piece.game).equalsTo(game);
             assert(piece.angle).equalsTo(45);
@@ -926,7 +927,7 @@ describe("Game", ()=> {
             assert(piece.pieces).arrayEqualsTo([piece]);
             assert(piece.allArtifacts).arrayEqualsTo([piece.artifact]);
             assertClearDirectives(hexLayer);
-            assertDirectives(hexLayer, showFakeTransparentPiece("misc/piece", 0.3, [0.3456, 0.3456, -0.3456, 0.3456, 548.8759, 497.7517]));
+            assertDirectives(hexLayer, showFakeTransparentPiece("misc/front", 0.3, [0.3456, 0.3456, -0.3456, 0.3456, 548.8759, 497.7517]));
             assertNoMoreDirectives(hexLayer);
         when:
             resetDirectives(hexLayer);
@@ -936,7 +937,7 @@ describe("Game", ()=> {
             assert(piece.location.toString()).equalsTo("point(10, 20)");
             assert(piece.viewportLocation.toString()).equalsTo("point(504.8876, 409.7752)");
             assertClearDirectives(hexLayer);
-            assertDirectives(hexLayer, showFakeTransparentPiece("misc/piece", 0.3, [0.3456, 0.3456, -0.3456, 0.3456, 504.8876, 409.7752]));
+            assertDirectives(hexLayer, showFakeTransparentPiece("misc/front", 0.3, [0.3456, 0.3456, -0.3456, 0.3456, 504.8876, 409.7752]));
             assertNoMoreDirectives(hexLayer);
         when:
             resetDirectives(hexLayer);
@@ -949,7 +950,7 @@ describe("Game", ()=> {
             paint(game);
         then:
             assertClearDirectives(hexLayer);
-            assertDirectives(hexLayer, showFakeTransparentPiece("misc/piece", 0.3, [0.3456, 0.3456, -0.3456, 0.3456, 504.8876, 409.7752]));
+            assertDirectives(hexLayer, showFakeTransparentPiece("misc/front", 0.3, [0.3456, 0.3456, -0.3456, 0.3456, 504.8876, 409.7752]));
             assertNoMoreDirectives(hexLayer);
         when:
             clickOnPiece(game, piece); // checks that tests does not crash
@@ -1382,30 +1383,6 @@ describe("Game", ()=> {
         then:
             assert(playable.isActivated()).isFalse();
             assert(playable.isPlayed()).isFalse();
-    });
-
-    it("Checks playable's attributes manipulation", () => {
-        given:
-            var {game, playable} = createTinyGame();
-        when:
-            playable.setAttr("root.branch.leave", "green");
-        then:
-            assert(playable.getAttr("root.branch.leave")).equalsTo("green");
-        when:
-            playable.setAttr("root.branch.leave", "yellow");
-        then:
-            assert(playable.getAttr("root.branch.leave")).equalsTo("yellow");
-        when:
-            playable.setAttr("root.branch.size", 10);
-        then:
-            assert(playable.attrs).objectEqualsTo({
-                "root": {
-                    "branch": {
-                        "leave": "yellow",
-                        "size": 10
-                    }
-                }
-            });
     });
 
     it("Checks playing a playable belonging to a player", () => {

@@ -7,7 +7,7 @@ import {
     DDice6, DIconMenuItem, DMask, DResult, DScene, DIconMenu, DMessage
 } from "../../board/widget.js";
 import {
-    WAction, WAbstractGame, WStacking
+    WAction, WAbstractGame
 } from "../../wargame/game.js";
 import {
     WActionActuator, RetractableActuatorMixin, WInsert, WGame
@@ -20,8 +20,8 @@ import {
     CBActionMenu, CBInteractivePlayer, WithDiceRoll
 } from "./interactive-player.js";
 import {
-    CBUnitActuatorTrigger, CBCharge,
-    CBOrderInstruction, getUnitFromContext, CBStateSequenceElement, CBSceneAnimation
+    CBCharge,
+    CBOrderInstruction, CBStateSequenceElement, CBUnit
 } from "../unit.js";
 import {
     WSequence, WSequenceElement,
@@ -29,6 +29,10 @@ import {
 import {
     SequenceLoader
 } from "../loader.js";
+import {
+    WSceneAnimation, WUnitActuatorTrigger,
+    getUnitFromContext, WUnitSceneAnimation
+} from "../../wargame/wunit.js";
 
 export function registerInteractiveCommand() {
     CBInteractivePlayer.prototype.tryToTakeCommand = function(unit) {
@@ -147,7 +151,6 @@ export class InteractiveTakeCommandAction extends WAction {
     }
 
 }
-WAction.register("InteractiveTakeCommandAction", InteractiveTakeCommandAction);
 
 export class InteractiveDismissCommandAction extends WAction {
 
@@ -229,7 +232,6 @@ export class InteractiveDismissCommandAction extends WAction {
     }
 
 }
-WAction.register("InteractiveDismissCommandAction", InteractiveDismissCommandAction);
 
 export class InteractiveChangeOrderInstructionAction extends WAction {
 
@@ -310,7 +312,6 @@ export class InteractiveChangeOrderInstructionAction extends WAction {
     }
 
 }
-WAction.register("InteractiveChangeOrderInstructionAction", InteractiveChangeOrderInstructionAction);
 
 export class InteractiveGiveOrdersAction extends WAction {
 
@@ -434,7 +435,6 @@ export class InteractiveGiveOrdersAction extends WAction {
         this._selectUnitsToGiveOrders();
     }
 }
-WAction.register("InteractiveGiveOrdersAction", InteractiveGiveOrdersAction);
 
 function createCommandMenuItems(unit, actions) {
     return [
@@ -508,7 +508,7 @@ export class CBOrderInstructionMenu extends DIconMenu {
 
 }
 
-class OrderGivenHelpTrigger extends CBUnitActuatorTrigger {
+class OrderGivenHelpTrigger extends WUnitActuatorTrigger {
 
     constructor(actuator, order) {
         let image = DImage.getImage("./../images/actuators/order-given-cost.png");
@@ -577,7 +577,7 @@ export class CBOrderGivenActuator extends RetractableActuatorMixin(WActionActuat
         let imageArtifacts = [];
         let orderImage = DImage.getImage("./../images/actuators/order.png");
         for (let order of orders) {
-            let trigger = new CBUnitActuatorTrigger(this, order.unit, "units", orderImage,
+            let trigger = new WUnitActuatorTrigger(this, order.unit, "units", orderImage,
                 new Point2D(order.unit.location.x, order.unit.location.y-80), new Dimension2D(105, 97));
             imageArtifacts.push(trigger);
         }
@@ -690,7 +690,7 @@ export class CBTry2ChangeOrderInstructionSequenceElement extends WithLeader(With
     get delay() { return 1500; }
 
     apply(startTick) {
-        return new CBSceneAnimation({
+        return new WUnitSceneAnimation({
             unit: this.unit, startTick, duration: this.delay, state: this, game: this.game,
             animation: () => new InteractiveChangeOrderInstructionAction(this.game, this.leader).replay(this.dice)
         });
@@ -743,23 +743,7 @@ export function WithOrderInstruction(clazz) {
         _fromSpecs(spec, context) {
             super._fromSpecs(spec, context);
             if (spec.orderInstruction !== undefined) {
-                this.orderInstruction = this.getOrderInstruction(spec.orderInstruction);
-            }
-        }
-
-        getOrderInstructionCode(orderInstruction) {
-            if (orderInstruction===CBOrderInstruction.ATTACK) return "A";
-            else if (orderInstruction===CBOrderInstruction.DEFEND) return "D";
-            else if (orderInstruction===CBOrderInstruction.REGROUP) return "G";
-            else return "R";
-        }
-
-        getOrderInstruction(code) {
-            switch (code) {
-                case "A": return CBOrderInstruction.ATTACK;
-                case "D": return CBOrderInstruction.DEFEND;
-                case "G": return CBOrderInstruction.REGROUP;
-                case "R": return CBOrderInstruction.RETREAT;
+                this.orderInstruction = CBUnit.getOrderInstruction(spec.orderInstruction);
             }
         }
 
@@ -795,7 +779,7 @@ export class CBTry2TakeCommandSequenceElement extends WithLeader(WithDiceRoll(WS
     get delay() { return 1500; }
 
     apply(startTick) {
-        return new CBSceneAnimation({
+        return new WUnitSceneAnimation({
             unit: this.unit, startTick, duration: this.delay, state: this, game: this.game,
             animation: () => new InteractiveTakeCommandAction(this.game, this.leader).replay(this.dice)
         });
@@ -813,7 +797,7 @@ export class CBTry2DismissCommandSequenceElement extends WithLeader(WithDiceRoll
     get delay() { return 1500; }
 
     apply(startTick) {
-        return new CBSceneAnimation({
+        return new WUnitSceneAnimation({
             unit: this.unit, startTick, duration: this.delay, state: this, game: this.game,
             animation: () => new InteractiveDismissCommandAction(this.game, this.leader).replay(this.dice)
         });
@@ -831,7 +815,7 @@ export class CBGiveOrdersSequenceElement extends WithLeader(WithDiceRoll(WSequen
     get delay() { return 1500; }
 
     apply(startTick) {
-        return new CBSceneAnimation({
+        return new WSceneAnimation({
             unit: this.unit, startTick, duration: this.delay, state: this, game: this.game,
             animation: () => new InteractiveGiveOrdersAction(this.game, this.leader).replay(this.dice)
         });

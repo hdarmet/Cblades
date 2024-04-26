@@ -30,7 +30,7 @@ import {
     CBCombatResultTableInsert
 } from "./interactive-combat.js";
 import {
-    CBUnitActuatorTrigger, CBCharge, CBStateSequenceElement
+    CBCharge, CBStateSequenceElement
 } from "../unit.js";
 import {
     WSequence
@@ -80,7 +80,6 @@ export class InteractiveChoseSpellAction extends WAction {
     }
 
 }
-WAction.register("InteractiveChoseSpellAction", InteractiveChoseSpellAction);
 
 export class InteractiveTryToCastSpellAction extends WAction {
 
@@ -135,7 +134,6 @@ export class InteractiveTryToCastSpellAction extends WAction {
     }
 
 }
-WAction.register("InteractiveTryToCastSpellAction", InteractiveTryToCastSpellAction);
 
 export class InteractiveCastSpellAction extends WAction {
 
@@ -226,7 +224,6 @@ export class InteractiveCastSpellAction extends WAction {
     }
 
 }
-WAction.register("InteractiveCastSpellAction", InteractiveCastSpellAction);
 
 export class CBSpellTargetFoesActuator extends RetractableActuatorMixin(WActionActuator) {
 
@@ -235,7 +232,7 @@ export class CBSpellTargetFoesActuator extends RetractableActuatorMixin(WActionA
         let image = DImage.getImage("./../images/actuators/spell-target-foe.png");
         let imageArtifacts = [];
         for (let foe of foes) {
-            let target = new CBUnitActuatorTrigger(this, foe,"units", image,
+            let target = new WUnitActuatorTrigger(this, foe,"units", image,
                 new Point2D(0, 0), new Dimension2D(100, 111));
             target.position = Point2D.position(this.playable.location, foe.location, 1);
             imageArtifacts.push(target);
@@ -260,7 +257,7 @@ export class CBSpellTargetFriendsActuator extends RetractableActuatorMixin(WActi
         let image = DImage.getImage("./../images/actuators/spell-target-friend.png");
         let imageArtifacts = [];
         for (let friend of friends) {
-            let target = new CBUnitActuatorTrigger(this, friend, "units", image,
+            let target = new WUnitActuatorTrigger(this, friend, "units", image,
                 new Point2D(0, 0), new Dimension2D(100, 111));
             target.position = Point2D.position(this.playable.location, friend.location, 1);
             imageArtifacts.push(target);

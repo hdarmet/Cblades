@@ -25,16 +25,18 @@ import {
 import {
     CBCharge,
     CBStateSequenceElement,
-    CBUnit,
-    CBUnitAnimation,
-    getStacking,
-    getStackingCode,
-    getUnitFromContext,
-    setUnitToContext
+    CBUnit
 } from "../unit.js";
 import {
     WSequence, WSequenceElement
 } from "../../wargame/sequences.js";
+import {
+    WUnitAnimation,
+    getStacking,
+    getStackingCode,
+    getUnitFromContext,
+    setUnitToContext, WUnit
+} from "../../wargame/wunit.js";
 
 export function registerInteractiveFormation() {
     CBInteractivePlayer.prototype.createFormation = function (unit) {
@@ -89,7 +91,6 @@ export class InteractiveBreakFormationAction extends WAction {
     }
 
 }
-WAction.register("InteractiveBreakFormationAction", InteractiveBreakFormationAction);
 
 export class InteractiveCreateFormationAction extends WAction {
 
@@ -137,7 +138,6 @@ export class InteractiveCreateFormationAction extends WAction {
     }
 
 }
-WAction.register("InteractiveCreateFormationAction", InteractiveCreateFormationAction);
 
 export class InteractiveReleaseTroopsAction extends WAction {
 
@@ -187,7 +187,6 @@ export class InteractiveReleaseTroopsAction extends WAction {
     }
 
 }
-WAction.register("InteractiveReleaseTroopsAction", InteractiveReleaseTroopsAction);
 
 export class InteractiveIncludeTroopsAction extends WAction {
 
@@ -218,7 +217,6 @@ export class InteractiveIncludeTroopsAction extends WAction {
     }
 
 }
-WAction.register("InteractiveIncludeTroopsAction", InteractiveIncludeTroopsAction);
 
 export class CBCreateFormationActuator extends WActionActuator {
 
@@ -346,8 +344,8 @@ export class CBLeaveFormationSequenceElement extends CBStateSequenceElement {
 
     _fromSpecs(spec, context) {
         super._fromSpecs(spec, context);
-        let unit = CBUnit.fromSpecs(this.unit.wing, spec.troop.unit);
-        setUnitToContext(context, spec.troop.unit.name, unit);
+        let unit = WUnit.fromSpecs(this.unit.wing, spec.troop.unit);
+        setUnitToContext(context, unit);
         this.unitRecord = {
             unit,
             hexLocation: WHexLocation.fromSpecs(this.unit.game.map, {
@@ -448,7 +446,7 @@ export class CBCreateFormationSequenceElement extends WSequenceElement {
         for (let troopName of spec.troops) {
             this.troops.push(getUnitFromContext(context, troopName));
         }
-        let unit = CBUnit.fromSpecs(this.troops[0].wing, spec.formation.unit);
+        let unit = WUnit.fromSpecs(this.troops[0].wing, spec.formation.unit);
         this.unitRecord = {
             unit,
             hexLocation: WHexLocation.fromSpecs(this.troops[0].game.map, {
@@ -523,8 +521,8 @@ export class CBBreakFormationSequenceElement extends WSequenceElement {
         this.unit = getUnitFromContext(context, spec.unit);
         this.unitRecords = [];
         for (let troopSpec of spec.troops) {
-            let unit = CBUnit.fromSpecs(this.unit.wing, troopSpec.unit);
-            setUnitToContext(context, troopSpec.unit.name, unit);
+            let unit = WUnit.fromSpecs(this.unit.wing, troopSpec.unit);
+            setUnitToContext(context, unit);
             this.unitRecords.push({
                 unit,
                 hexLocation: WHexLocation.fromSpecs(this.unit.game.map, {
@@ -538,7 +536,7 @@ export class CBBreakFormationSequenceElement extends WSequenceElement {
 }
 WSequence.register("break", CBBreakFormationSequenceElement);
 
-export class CBAppearAnimation extends CBUnitAnimation {
+export class CBAppearAnimation extends WUnitAnimation {
 
     constructor({unit, appear, disappear, startTick, duration, state}) {
         if (appear && disappear) duration*=2;

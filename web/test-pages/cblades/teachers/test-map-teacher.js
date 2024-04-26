@@ -128,7 +128,7 @@ describe("Map teacher", ()=> {
         game.setArbitrator(arbitrator);
         let player1 = new CBUnitPlayer("player1", "/players/player1.png");
         game.addPlayer(player1);
-        let wing1 = new CBWing(player1, banner1);
+        let wing1 = new CBWing( player1, banner1);
         let player2 = new CBUnitPlayer("player2", "/players/player2.png");
         game.addPlayer(player2);
         let wing2 = new CBWing(player2, banner2);

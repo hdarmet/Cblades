@@ -326,9 +326,9 @@ describe("Loader", ()=> {
             game.setMap(map);
             var player = new CBUnitPlayer("Hector", "/players/hector.png");
             game.addPlayer(player);
-            var wing = new CBWing(player, {
-                name: "redbanner",
-                path: "/red/redbanner.png"
+            var wing = new CBWing(player,{
+                    name: "redbanner",
+                    path: "/red/redbanner.png"
             });
             wing.setRetreatZone([
                 map.getHex(0, 0),
@@ -406,8 +406,8 @@ describe("Loader", ()=> {
             var player = new CBUnitPlayer("Hector", "/players/hector.png");
             game.addPlayer(player);
             var wing = new CBWing(player, {
-                name: "redbanner",
-                path: "/red/redbanner.png"
+                    name: "redbanner",
+                    path: "/red/redbanner.png"
             });
             wing.setRetreatZone([
                 map.getHex(0, 0),

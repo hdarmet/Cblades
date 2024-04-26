@@ -50,6 +50,14 @@ export function executeAllAnimations(finalization) {
     }
 }
 
+export function executeAnimations(count) {
+    let index=0;
+    while(index<count && DAnimator.isActive()) {
+        executeTimeouts();
+        index++;
+    }
+}
+
 export function clickOnArtifact(boardOrGame, artifact) {
     let arifactLocation = artifact.viewportLocation;
     var mouseEvent = createEvent("click", {offsetX:arifactLocation.x, offsetY:arifactLocation.y, artifact});

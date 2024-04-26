@@ -23,12 +23,7 @@ import {
 } from "../../wargame/map.js";
 import {
     CBCharge,
-    CBDisplaceAnimation,
-    CBUnitActuatorTrigger,
-    HexLocated,
-    CBStateSequenceElement,
-    getUnitFromContext,
-    CBSceneAnimation
+    CBStateSequenceElement
 } from "../unit.js";
 import {
     CBActionMenu,
@@ -54,6 +49,13 @@ import {
 import {
     DImageArtifact
 } from "../../board/board.js";
+import {
+    WSceneAnimation,
+    HexLocated,
+    WDisplaceAnimation,
+    WUnitActuatorTrigger,
+    getUnitFromContext, WUnitSceneAnimation
+} from "../../wargame/wunit.js";
 
 export function registerInteractiveCombat() {
     CBInteractivePlayer.prototype.unitShockAttack = function (unit) {
@@ -142,7 +144,6 @@ export class InteractiveAdvanceAction extends WAction {
     }
 
 }
-WAction.register("InteractiveAdvanceAction", InteractiveAdvanceAction);
 
 export class InteractiveRetreatAction extends WAction {
 
@@ -245,7 +246,6 @@ export class InteractiveRetreatAction extends WAction {
     }
 
 }
-WAction.register("InteractiveRetreatAction", InteractiveRetreatAction);
 
 export class InteractiveAbstractShockAttackAction extends WAction {
 
@@ -545,7 +545,6 @@ export class InteractiveShockAttackAction extends InteractiveAbstractShockAttack
     }
 
 }
-WAction.register("InteractiveShockAttackAction", InteractiveShockAttackAction);
 
 export class InteractiveDuelAttackAction extends InteractiveAbstractShockAttackAction {
 
@@ -558,7 +557,6 @@ export class InteractiveDuelAttackAction extends InteractiveAbstractShockAttackA
     }
 
 }
-WAction.register("InteractiveDuelAttackAction", InteractiveDuelAttackAction);
 
 export class InteractiveAbstractFireAttackAction extends WAction {
 
@@ -856,7 +854,6 @@ export class InteractiveFireAttackAction extends InteractiveAbstractFireAttackAc
     }
 
 }
-WAction.register("InteractiveFireAttackAction", InteractiveFireAttackAction);
 
 export class InteractiveDuelFireAction extends InteractiveAbstractFireAttackAction {
 
@@ -869,7 +866,6 @@ export class InteractiveDuelFireAction extends InteractiveAbstractFireAttackActi
     }
 
 }
-WAction.register("InteractiveDuelFireAction", InteractiveDuelFireAction);
 
 function createCombatMenuItems(unit, actions) {
     return [
@@ -896,7 +892,7 @@ function createCombatMenuItems(unit, actions) {
     ];
 }
 
-class ShockHexTrigger extends CBUnitActuatorTrigger {
+class ShockHexTrigger extends WUnitActuatorTrigger {
 
     constructor(actuator, unit, attackHex) {
         super(actuator, unit, "units",
@@ -933,7 +929,7 @@ export class CBShockHexActuator extends RetractableActuatorMixin(WActionActuator
 
 }
 
-class FireHexTrigger extends CBUnitActuatorTrigger {
+class FireHexTrigger extends WUnitActuatorTrigger {
 
     constructor(actuator, unit, attackHex) {
         super(actuator, unit, "units",
@@ -970,7 +966,7 @@ export class CBFireHexActuator extends RetractableActuatorMixin(WActionActuator)
 
 }
 
-class ShockAttackTrigger extends CBUnitActuatorTrigger {
+class ShockAttackTrigger extends WUnitActuatorTrigger {
 
     constructor(actuator, unit, supported, combat) {
         super(actuator, combat.foe, "units",
@@ -1029,7 +1025,7 @@ export class CBShockAttackActuator extends RetractableActuatorMixin(WActionActua
 
 }
 
-class FireAttackTrigger extends CBUnitActuatorTrigger {
+class FireAttackTrigger extends WUnitActuatorTrigger {
 
     constructor(actuator, unit, combat) {
         super(actuator, combat.foe, "units",
@@ -1074,7 +1070,7 @@ export class CBFireAttackActuator extends RetractableActuatorMixin(WActionActuat
 
 }
 
-class ShockHelpTrigger extends CBUnitActuatorTrigger {
+class ShockHelpTrigger extends WUnitActuatorTrigger {
 
     constructor(actuator, supported, foe, attackedHex, advantage) {
         let image = supported ?
@@ -1158,7 +1154,7 @@ export class CBShockHelpActuator extends RetractableActuatorMixin(WActionActuato
 
 }
 
-class FireHelpTrigger extends CBUnitActuatorTrigger {
+class FireHelpTrigger extends WUnitActuatorTrigger {
 
     constructor(actuator, foe, advantage) {
         let image = DImage.getImage("./../images/actuators/fire-advantage.png");
@@ -1342,7 +1338,7 @@ export class CBFormationRetreatActuator extends RetractableActuatorMixin(WAction
         super(action);
         let imageArtifacts = [];
         let bloodImage = DImage.getImage("./../images/actuators/blood.png");
-        let loss = new CBUnitActuatorTrigger(this, this.playable, "actuators", bloodImage,
+        let loss = new WUnitActuatorTrigger(this, this.playable, "actuators", bloodImage,
             new Point2D(0, 0), new Dimension2D(125, 173));
         loss.loss = true;
         imageArtifacts.push(loss);
@@ -1673,7 +1669,7 @@ export class CBShockAttackSequenceElement extends WithCombat(WithDiceRoll(CBStat
     get delay() { return 1500; }
 
     apply(startTick) {
-        return new CBSceneAnimation({
+        return new WUnitSceneAnimation({
             unit: this.unit, startTick, duration: this.delay, state: this, game: this.game,
             animation: () => {
                 let action = new InteractiveShockAttackAction(this.game, this.unit);
@@ -1731,7 +1727,7 @@ export class CBFireAttackSequenceElement extends WithCombat(WithDiceRoll(CBState
     get delay() { return 1500; }
 
     apply(startTick) {
-        return new CBSceneAnimation({
+        return new WUnitSceneAnimation({
             unit: this.unit, startTick, duration: this.delay, state: this, game: this.game,
             animation: () => {
                 let action = new InteractiveFireAttackAction(this.game, this.unit);
@@ -1861,7 +1857,7 @@ export class CBAsk4RetreatAnimation extends DAnimation {
 
 }
 
-export class CBRetreatAnimation extends CBDisplaceAnimation {
+export class CBRetreatAnimation extends WDisplaceAnimation {
 
     constructor({unit, startTick, duration, state, angle, hexLocation, stacking}) {
         super({unit, startTick, duration, state, angle, hexLocation, stacking});
@@ -1902,7 +1898,7 @@ export class CBAdvanceSequenceElement extends HexLocated(CBStateSequenceElement)
 }
 WSequence.register("advance", CBAdvanceSequenceElement);
 
-export class CBAdvanceAnimation extends CBDisplaceAnimation {
+export class CBAdvanceAnimation extends WDisplaceAnimation {
 
     constructor({unit, startTick, duration, state, angle, hexLocation, stacking}) {
         super({unit, startTick, duration, state, angle, hexLocation, stacking});

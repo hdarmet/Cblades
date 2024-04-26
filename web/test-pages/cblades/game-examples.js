@@ -69,7 +69,7 @@ export function create2PlayersBaseGame() {
     game.addPlayer(player2);
     let wing1 = new CBWing(player1, banner1);
     wing1.setRetreatZone(map.getWestZone());
-    let wing2 = new CBWing(player2, banner2);
+    let wing2 = new CBWing( player2, banner2);
     wing2.setRetreatZone(map.getEastZone());
     return {
         ...baseGame,
