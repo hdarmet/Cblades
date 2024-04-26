@@ -417,6 +417,12 @@ describe("WUnit", ()=> {
         ];
     }
 
+    function createCarriable(unit, path) {
+        let carriable = new WTestCarriable(unit, [path]);
+        unit.addCarried(carriable);
+        return carriable;
+    }
+
     it("Checks that a unit may carry other counters (not undoable)", () => {
         given:
             var { game, map } = prepareTinyGame();
@@ -429,8 +435,7 @@ describe("WUnit", ()=> {
             unit.addToMap(hexId);
             var [spellsLayer] = getLayers(game.board, "spells-0");
         when:
-            var playable1 = new WTestCarriable(unit, ["./../images/units/misc/playable1.png"]);
-            unit.addCarried(playable1);
+            var playable1 = createCarriable(unit, "./../images/units/misc/playable1.png");
             repaint(game);
             loadAllImages();
         then:
@@ -673,6 +678,35 @@ describe("WUnit", ()=> {
             assert(unit.options).arrayEqualsTo([])
             assert(getDirectives(optionsLayer, 4)).arrayEqualsTo([
             ]);
+    });
+
+    it("Checks that when a unit retracts, it also hides options", () => {
+        given:
+            var {game, map} = prepareTinyGame();
+            var player = new WUnitPlayer("player1", "/players/player1.png");
+            game.addPlayer(player);
+            var wing = new WWing(player);
+            var unit = new WUnit(game, ["./../images/units/blue.png"], wing, new Dimension2D(142, 142));
+            let hexId = map.getHex(5, 8);
+            unit.addToMap(hexId);
+            repaint(game);
+            var [spellLayer, optionsLayer] = getLayers(game.board, "spells-0", "options-0");
+        when:
+            createCarriable(unit, "./../images/units/misc/spell.png");
+            var option = createOption(unit, "./../images/units/misc/option.png");
+            repaint(game);
+        then:
+            assertClearDirectives(spellLayer);
+            assertClearDirectives(optionsLayer);
+            assertDirectives(spellLayer, showPlayable("misc/spell", zoomAndRotate0(416.6667, 351.8878)));
+            assertDirectives(optionsLayer, showPlayable("misc/option", zoomAndRotate0(406.8915, 347.0002)));
+            assertNoMoreDirectives(spellLayer, optionsLayer);
+        when:
+            option.retractAbove();
+            repaint(game);
+        then:
+            assert(getDirectives(spellLayer, 4)).arrayEqualsTo([]);
+            assert(getDirectives(optionsLayer, 4)).arrayEqualsTo([]);
     });
 
     it("Checks unit features", () => {

@@ -1,22 +1,22 @@
 'use strict'
 
 import {
-    CBBoard,
-    CBHex
-} from "./map.js";
+    WBoard,
+    WHex
+} from "../wargame/map.js";
 import {
     sendGet,
     sendPost
-} from "../draw.js";
+} from "../board/draw.js";
 import {
-    CBSequence
-} from "./sequences.js";
+    WSequence
+} from "../wargame/sequences.js";
 import {
     Mechanisms
-} from "../mechanisms.js";
+} from "../board/mechanisms.js";
 import {
-    CBGame
-} from "./playable.js";
+    WGame
+} from "../wargame/playable.js";
 
 //let consoleLog = console.log;
 let consoleLog = ()=>{};
@@ -66,7 +66,7 @@ export class BoardLoader {
         sendGet("/api/board/find/"+id,
             (text, status) => {
                 let json = JSON.parse(text);
-                let board = new CBBoard(json.name, json.path, json.icon);
+                let board = new WBoard(json.name, json.path, json.icon);
                 this.fromSpecs(board, json);
                 success(board);
                 consoleLog(`Board ${board.name} loaded : ${status}`)
@@ -120,61 +120,61 @@ export class BoardLoader {
 
     getHexTypeLabel(type) {
         switch(type) {
-            case CBHex.HEX_TYPES.OUTDOOR_CLEAR: return "OC";
-            case CBHex.HEX_TYPES.OUTDOOR_ROUGH: return "OR";
-            case CBHex.HEX_TYPES.OUTDOOR_DIFFICULT: return "OD";
-            case CBHex.HEX_TYPES.OUTDOOR_CLEAR_FLAMMABLE: return "OCF";
-            case CBHex.HEX_TYPES.OUTDOOR_ROUGH_FLAMMABLE: return "ORF";
-            case CBHex.HEX_TYPES.OUTDOOR_DIFFICULT_FLAMMABLE: return "ODF";
-            case CBHex.HEX_TYPES.WATER: return "WA";
-            case CBHex.HEX_TYPES.LAVA: return "LA";
-            case CBHex.HEX_TYPES.IMPASSABLE: return "IM";
-            case CBHex.HEX_TYPES.CAVE_CLEAR: return "CC";
-            case CBHex.HEX_TYPES.CAVE_ROUGH: return "CR";
-            case CBHex.HEX_TYPES.CAVE_DIFFICULT: return "CD";
-            case CBHex.HEX_TYPES.CAVE_CLEAR_FLAMMABLE: return "CCF";
-            case CBHex.HEX_TYPES.CAVE_ROUGH_FLAMMABLE: return "CRF";
-            case CBHex.HEX_TYPES.CAVE_DIFFICULT_FLAMMABLE: return "CDF";
+            case WHex.HEX_TYPES.OUTDOOR_CLEAR: return "OC";
+            case WHex.HEX_TYPES.OUTDOOR_ROUGH: return "OR";
+            case WHex.HEX_TYPES.OUTDOOR_DIFFICULT: return "OD";
+            case WHex.HEX_TYPES.OUTDOOR_CLEAR_FLAMMABLE: return "OCF";
+            case WHex.HEX_TYPES.OUTDOOR_ROUGH_FLAMMABLE: return "ORF";
+            case WHex.HEX_TYPES.OUTDOOR_DIFFICULT_FLAMMABLE: return "ODF";
+            case WHex.HEX_TYPES.WATER: return "WA";
+            case WHex.HEX_TYPES.LAVA: return "LA";
+            case WHex.HEX_TYPES.IMPASSABLE: return "IM";
+            case WHex.HEX_TYPES.CAVE_CLEAR: return "CC";
+            case WHex.HEX_TYPES.CAVE_ROUGH: return "CR";
+            case WHex.HEX_TYPES.CAVE_DIFFICULT: return "CD";
+            case WHex.HEX_TYPES.CAVE_CLEAR_FLAMMABLE: return "CCF";
+            case WHex.HEX_TYPES.CAVE_ROUGH_FLAMMABLE: return "CRF";
+            case WHex.HEX_TYPES.CAVE_DIFFICULT_FLAMMABLE: return "CDF";
         }
     }
 
     getHexSideTypeLabel(type) {
         switch(type) {
-            case CBHex.HEXSIDE_TYPES.NORMAL: return "N";
-            case CBHex.HEXSIDE_TYPES.EASY: return "E";
-            case CBHex.HEXSIDE_TYPES.DIFFICULT: return "D";
-            case CBHex.HEXSIDE_TYPES.CLIMB: return "C";
-            case CBHex.HEXSIDE_TYPES.WALL: return "W";
+            case WHex.HEXSIDE_TYPES.NORMAL: return "N";
+            case WHex.HEXSIDE_TYPES.EASY: return "E";
+            case WHex.HEXSIDE_TYPES.DIFFICULT: return "D";
+            case WHex.HEXSIDE_TYPES.CLIMB: return "C";
+            case WHex.HEXSIDE_TYPES.WALL: return "W";
         }
     }
 
     getHexType(label) {
         switch(label) {
-            case "OC": return CBHex.HEX_TYPES.OUTDOOR_CLEAR;
-            case "OR": return CBHex.HEX_TYPES.OUTDOOR_ROUGH;
-            case "OD": return CBHex.HEX_TYPES.OUTDOOR_DIFFICULT;
-            case "OCF": return CBHex.HEX_TYPES.OUTDOOR_CLEAR_FLAMMABLE;
-            case "ORF": return CBHex.HEX_TYPES.OUTDOOR_ROUGH_FLAMMABLE;
-            case "ODF": return CBHex.HEX_TYPES.OUTDOOR_DIFFICULT_FLAMMABLE;
-            case "WA": return CBHex.HEX_TYPES.WATER;
-            case "LA": return CBHex.HEX_TYPES.LAVA;
-            case "IM": return CBHex.HEX_TYPES.IMPASSABLE;
-            case "CC": return CBHex.HEX_TYPES.CAVE_CLEAR;
-            case "CR": return CBHex.HEX_TYPES.CAVE_ROUGH;
-            case "CD": return CBHex.HEX_TYPES.CAVE_DIFFICULT;
-            case "CCF": return CBHex.HEX_TYPES.CAVE_CLEAR_FLAMMABLE;
-            case "CRF": return CBHex.HEX_TYPES.CAVE_ROUGH_FLAMMABLE;
-            case "CDF": return CBHex.HEX_TYPES.CAVE_DIFFICULT_FLAMMABLE;
+            case "OC": return WHex.HEX_TYPES.OUTDOOR_CLEAR;
+            case "OR": return WHex.HEX_TYPES.OUTDOOR_ROUGH;
+            case "OD": return WHex.HEX_TYPES.OUTDOOR_DIFFICULT;
+            case "OCF": return WHex.HEX_TYPES.OUTDOOR_CLEAR_FLAMMABLE;
+            case "ORF": return WHex.HEX_TYPES.OUTDOOR_ROUGH_FLAMMABLE;
+            case "ODF": return WHex.HEX_TYPES.OUTDOOR_DIFFICULT_FLAMMABLE;
+            case "WA": return WHex.HEX_TYPES.WATER;
+            case "LA": return WHex.HEX_TYPES.LAVA;
+            case "IM": return WHex.HEX_TYPES.IMPASSABLE;
+            case "CC": return WHex.HEX_TYPES.CAVE_CLEAR;
+            case "CR": return WHex.HEX_TYPES.CAVE_ROUGH;
+            case "CD": return WHex.HEX_TYPES.CAVE_DIFFICULT;
+            case "CCF": return WHex.HEX_TYPES.CAVE_CLEAR_FLAMMABLE;
+            case "CRF": return WHex.HEX_TYPES.CAVE_ROUGH_FLAMMABLE;
+            case "CDF": return WHex.HEX_TYPES.CAVE_DIFFICULT_FLAMMABLE;
         }
     }
 
     getHexSideType(label) {
         switch(label) {
-            case "N": return CBHex.HEXSIDE_TYPES.NORMAL;
-            case "E": return CBHex.HEXSIDE_TYPES.EASY;
-            case "D": return CBHex.HEXSIDE_TYPES.DIFFICULT;
-            case "C": return CBHex.HEXSIDE_TYPES.CLIMB;
-            case "W": return CBHex.HEXSIDE_TYPES.WALL;
+            case "N": return WHex.HEXSIDE_TYPES.NORMAL;
+            case "E": return WHex.HEXSIDE_TYPES.EASY;
+            case "D": return WHex.HEXSIDE_TYPES.DIFFICULT;
+            case "C": return WHex.HEXSIDE_TYPES.CLIMB;
+            case "W": return WHex.HEXSIDE_TYPES.WALL;
         }
     }
 
@@ -215,7 +215,7 @@ export class GameLoader {
             (text, status) => {
                 let json = JSON.parse(text);
                 this.fromSpecs(json);
-                Mechanisms.fire(this._game, CBGame.LOADED_EVENT);
+                Mechanisms.fire(this._game, WGame.LOADED_EVENT);
                 loaded();
                 consoleLog(`Game ${this._game.id} loaded : ${status}`)
             },
@@ -228,9 +228,9 @@ export class GameLoader {
             actives,
             (text, status) => {
                 let json = JSON.parse(text);
-                CBSequence.setCount(this._game, json.sequenceCount);
+                WSequence.setCount(this._game, json.sequenceCount);
                 this.fromSpecs(json);
-                Mechanisms.fire(this._game, CBGame.LOADED_EVENT);
+                Mechanisms.fire(this._game, WGame.LOADED_EVENT);
                 loaded();
                 consoleLog(`Game ${this._game.id} loaded : ${status}`)
             },
@@ -256,7 +256,7 @@ export class GameLoader {
     }
 
     launch(specs, context, index) {
-        (CBSequence.getLauncher(specs.type))(specs, context, index);
+        (WSequence.getLauncher(specs.type))(specs, context, index);
     }
 
 }
@@ -279,7 +279,7 @@ export class SequenceLoader {
     }
 
     load(game, action) {
-        sendPost("/api/sequence/by-game/"+game.id+"/"+CBSequence.getCount(game),
+        sendPost("/api/sequence/by-game/"+game.id+"/"+WSequence.getCount(game),
             {},
             (text, status) => {
                 let json = JSON.parse(text);
@@ -300,7 +300,7 @@ export class SequenceLoader {
     fromSpecs(specList, game) {
         let sequences = [];
         for (let specs of specList) {
-            let sequence = new CBSequence(game, specs.count);
+            let sequence = new WSequence(game, specs.count);
             let context = new Map();
             context.game = game;
             sequence.fromSpecs(specs, context);

@@ -7,20 +7,20 @@ import {
 import {
     DAnimator,
     DImage, setDrawPlatform
-} from "../../../jslib/draw.js";
+} from "../../../jslib/board/draw.js";
 import {
     assertDirectives, assertHex, assertHexSide, assertNoMoreDirectives,
     createEvent,
     filterPainting, getDirectives, getLayers,
     loadAllImages,
     mockPlatform, removeFilterPainting, resetDirectives, skipDirectives, stopRegister
-} from "../../mocks.js";
+} from "../../board/mocks.js";
 import {
     Mechanisms, Memento
-} from "../../../jslib/mechanisms.js";
+} from "../../../jslib/board/mechanisms.js";
 import {
     DDice6, DResult
-} from "../../../jslib/widget.js";
+} from "../../../jslib/board/widget.js";
 import {
     CBFormationMoveActuator, CBMovementHelpActuator,
     CBMoveActuator, CBRotationActuator,
@@ -48,19 +48,19 @@ import {
     CBTiredness
 } from "../../../jslib/cblades/unit.js";
 import {
-    CBMoveMode
-} from "../../../jslib/cblades/playable.js";
+    WMoveMode
+} from "../../../jslib/wargame/playable.js";
 import {
     CBMoveSequenceElement, CBReorientSequenceElement, CBRotateSequenceElement,
-    CBSequence, CBStateSequenceElement, CBTurnSequenceElement
-} from "../../../jslib/cblades/sequences.js";
+    WSequence, CBStateSequenceElement, CBTurnSequenceElement
+} from "../../../jslib/wargame/sequences.js";
 import {
-    CBStacking
-} from "../../../jslib/cblades/game.js";
+    WStacking
+} from "../../../jslib/wargame/game.js";
 
 describe("Interactive Movement", ()=> {
 
-    var appendElement = CBSequence.appendElement;
+    var appendElement = WSequence.appendElement;
 
     before(() => {
         registerInteractiveMovement();
@@ -69,9 +69,9 @@ describe("Interactive Movement", ()=> {
         Mechanisms.reset();
         DAnimator.clear();
         Memento.clear();
-        CBSequence.awaitedElements = [];
-        CBSequence.appendElement = function(game, element) {
-            let awaited = CBSequence.awaitedElements.shift();
+        WSequence.awaitedElements = [];
+        WSequence.appendElement = function(game, element) {
+            let awaited = WSequence.awaitedElements.shift();
             if (!awaited) console.log(element.toString());
             assert(element.constructor).equalsTo(awaited.constructor);
             assert(element).objectEqualsTo(awaited);
@@ -80,7 +80,7 @@ describe("Interactive Movement", ()=> {
 
     after(() => {
         unregisterInteractiveMovement();
-        CBSequence.appendElement = appendElement;
+        WSequence.appendElement = appendElement;
     });
 
     function showMoveTrigger([a, b, c, d, e, f]) {
@@ -381,12 +381,12 @@ describe("Interactive Movement", ()=> {
             assertHex(unit.hexLocation, [5, 8]);
             assert(unit.angle).equalsTo(0);
         when:
-            CBSequence.awaitedElements.push(new CBMoveSequenceElement(unit, unit.hexLocation.getNearHex(0), CBStacking.BOTTOM));
+            WSequence.awaitedElements.push(new CBMoveSequenceElement(unit, unit.hexLocation.getNearHex(0), WStacking.BOTTOM));
             clickOnTrigger(game, moveActuator1.getTrigger(0));
         then:
             assertHex(unit.hexLocation, [5, 7]);
         when:
-            CBSequence.awaitedElements.push(new CBRotateSequenceElement(unit, 60));
+            WSequence.awaitedElements.push(new CBRotateSequenceElement(unit, 60));
             var orientationActuator2 = getOrientationActuator(game);
             clickOnTrigger(game, orientationActuator2.getTrigger(60));
         then:
@@ -395,8 +395,8 @@ describe("Interactive Movement", ()=> {
         when:
             var moveActuator3 = getMoveActuator(game);
             var orientationActuator3 = getOrientationActuator(game);
-            CBSequence.awaitedElements.push(
-                new CBMoveSequenceElement(unit, unit.hexLocation.getNearHex(60), CBStacking.BOTTOM)
+            WSequence.awaitedElements.push(
+                new CBMoveSequenceElement(unit, unit.hexLocation.getNearHex(60), WStacking.BOTTOM)
                     .setState({tiredness:CBTiredness.TIRED }));
             clickOnTrigger(game, moveActuator3.getTrigger(60));
         then:
@@ -434,14 +434,14 @@ describe("Interactive Movement", ()=> {
             assertHex(unit.hexLocation, [5, 8]);
             assert(unit.angle).equalsTo(0);
         when:
-            CBSequence.awaitedElements.push(new CBRotateSequenceElement(unit, 60));
+            WSequence.awaitedElements.push(new CBRotateSequenceElement(unit, 60));
             clickOnTrigger(game, orientationActuator1.getTrigger(60));
         then:
             assert(unit.angle).equalsTo(60);
         when:
             var moveActuator2 = getMoveActuator(game);
-            CBSequence.awaitedElements.push(
-                new CBMoveSequenceElement(unit, unit.hexLocation.getNearHex(60), CBStacking.BOTTOM));
+            WSequence.awaitedElements.push(
+                new CBMoveSequenceElement(unit, unit.hexLocation.getNearHex(60), WStacking.BOTTOM));
             clickOnTrigger(game, moveActuator2.getTrigger(60));
         then:
             assert(unit.location.toString()).equalsTo("point(0, -196.875)");
@@ -449,7 +449,7 @@ describe("Interactive Movement", ()=> {
         when:
             var moveActuator3 = getMoveActuator(game);
             var orientationActuator3 = getOrientationActuator(game);
-            CBSequence.awaitedElements.push(new CBRotateSequenceElement(unit, 90));
+            WSequence.awaitedElements.push(new CBRotateSequenceElement(unit, 90));
             clickOnTrigger(game, orientationActuator3.getTrigger(90));
         then:
             assert(unit.angle).equalsTo(90);
@@ -481,14 +481,14 @@ describe("Interactive Movement", ()=> {
             clickOnMoveAction(game);
         when:
             var orientationActuator = getOrientationActuator(game);
-            CBSequence.awaitedElements.push(new CBRotateSequenceElement(unit, 60));
+            WSequence.awaitedElements.push(new CBRotateSequenceElement(unit, 60));
             clickOnTrigger(game, orientationActuator.getTrigger(60));
             var moveActuator = getMoveActuator(game);
-            CBSequence.awaitedElements.push(
-                new CBMoveSequenceElement(unit, unit.hexLocation.getNearHex(60), CBStacking.BOTTOM));
+            WSequence.awaitedElements.push(
+                new CBMoveSequenceElement(unit, unit.hexLocation.getNearHex(60), WStacking.BOTTOM));
             clickOnTrigger(game, moveActuator.getTrigger(60));
             orientationActuator = getOrientationActuator(game);
-            CBSequence.awaitedElements.push(new CBRotateSequenceElement(unit, 90)
+            WSequence.awaitedElements.push(new CBRotateSequenceElement(unit, 90)
                 .setState({played:true}));
             clickOnTrigger(game, orientationActuator.getTrigger(90));
         then:
@@ -504,11 +504,11 @@ describe("Interactive Movement", ()=> {
             clickOnMoveAction(game);
         when:
             var moveActuator = getMoveActuator(game);
-            CBSequence.awaitedElements.push(
-                new CBMoveSequenceElement(unit, unit.hexLocation.getNearHex(60), CBStacking.BOTTOM)
+            WSequence.awaitedElements.push(
+                new CBMoveSequenceElement(unit, unit.hexLocation.getNearHex(60), WStacking.BOTTOM)
             );
             clickOnTrigger(game, moveActuator.getTrigger(60));
-            CBSequence.awaitedElements.push(
+            WSequence.awaitedElements.push(
                 new CBStateSequenceElement(unit).setState({ tiredness:CBTiredness.TIRED, charging:CBCharge.NONE })
             );
             unit.action.finalize();
@@ -575,7 +575,7 @@ describe("Interactive Movement", ()=> {
             assertHexSide(formation.hexLocation, [5, 8], [5, 7]);
             assert(formation.angle).equalsTo(90);
         when:
-            CBSequence.awaitedElements.push(new CBMoveSequenceElement(formation, formation.hexLocation.moveTo(120), CBStacking.BOTTOM));
+            WSequence.awaitedElements.push(new CBMoveSequenceElement(formation, formation.hexLocation.moveTo(120), WStacking.BOTTOM));
             clickOnTrigger(game, moveActuator1.getTrigger(120));
         then:
             assertHexSide(formation.hexLocation, [6, 8], [6, 7]);
@@ -583,7 +583,7 @@ describe("Interactive Movement", ()=> {
         when:
             var moveActuator2 = getFormationMoveActuator(game);
             var orientationActuator2 = getOrientationActuator(game);
-            CBSequence.awaitedElements.push(new CBTurnSequenceElement(formation,60, formation.hexLocation.turnTo(60), CBStacking.BOTTOM));
+            WSequence.awaitedElements.push(new CBTurnSequenceElement(formation,60, formation.hexLocation.turnTo(60), WStacking.BOTTOM));
             clickOnTrigger(game, moveActuator2.getTurnTrigger(60));
         then:
             assertHexSide(formation.hexLocation, [6, 7], [7, 8]);
@@ -591,7 +591,7 @@ describe("Interactive Movement", ()=> {
         when:
             var moveActuator3 = getFormationMoveActuator(game);
             var orientationActuator3 = getOrientationActuator(game);
-            CBSequence.awaitedElements.push(
+            WSequence.awaitedElements.push(
                 new CBRotateSequenceElement(formation, 210)
                     .setState({ tiredness:CBTiredness.TIRED, played:true }));
             clickOnTrigger(game, orientationActuator3.getTrigger(210));
@@ -621,14 +621,14 @@ describe("Interactive Movement", ()=> {
             loadAllImages();
             var moveActuator1 = getFormationMoveActuator(game);
         when:
-            CBSequence.awaitedElements.push(new CBMoveSequenceElement(formation, formation.hexLocation.moveTo(120), CBStacking.BOTTOM));
+            WSequence.awaitedElements.push(new CBMoveSequenceElement(formation, formation.hexLocation.moveTo(120), WStacking.BOTTOM));
             clickOnTrigger(game, moveActuator1.getCostTrigger(120));
         then:
             assertHexSide(formation.hexLocation, [6, 8], [6, 7]);
             assert(formation.angle).equalsTo(90);
         when:
             var moveActuator2 = getFormationMoveActuator(game);
-            CBSequence.awaitedElements.push(new CBTurnSequenceElement(formation, 60, formation.hexLocation.turnTo(60), CBStacking.BOTTOM));
+            WSequence.awaitedElements.push(new CBTurnSequenceElement(formation, 60, formation.hexLocation.turnTo(60), WStacking.BOTTOM));
             clickOnTrigger(game, moveActuator2.getTurnCostTrigger(60));
         then:
             assertHexSide(formation.hexLocation, [6, 7], [7, 8]);
@@ -636,7 +636,7 @@ describe("Interactive Movement", ()=> {
         when:
             var moveActuator3 = getFormationMoveActuator(game);
             var orientationActuator3 = getOrientationActuator(game);
-            CBSequence.awaitedElements.push(
+            WSequence.awaitedElements.push(
                 new CBRotateSequenceElement(formation, 210)
                     .setState({ tiredness:CBTiredness.TIRED, played:true }));
             clickOnTrigger(game, orientationActuator3.getCostTrigger(210));
@@ -679,18 +679,18 @@ describe("Interactive Movement", ()=> {
             clickOnMoveAction(game);
             repaint(game);
             var picture1 = registerAllDirectives(game);
-            CBSequence.awaitedElements.push(
-                new CBMoveSequenceElement(unit,unit.hexLocation.getNearHex(0), CBStacking.BOTTOM));
+            WSequence.awaitedElements.push(
+                new CBMoveSequenceElement(unit,unit.hexLocation.getNearHex(0), WStacking.BOTTOM));
             clickOnTrigger(game, getMoveActuator(game).getTrigger(0));
             repaint(game);
             var picture2 = registerAllDirectives(game);
-            CBSequence.awaitedElements.push(
-                new CBMoveSequenceElement(unit,unit.hexLocation.getNearHex(0), CBStacking.BOTTOM));
+            WSequence.awaitedElements.push(
+                new CBMoveSequenceElement(unit,unit.hexLocation.getNearHex(0), WStacking.BOTTOM));
             clickOnTrigger(game, getMoveActuator(game).getTrigger(0));
             repaint(game);
             var picture3 = registerAllDirectives(game);
-            CBSequence.awaitedElements.push(
-                new CBMoveSequenceElement(unit,unit.hexLocation.getNearHex(0), CBStacking.BOTTOM)
+            WSequence.awaitedElements.push(
+                new CBMoveSequenceElement(unit,unit.hexLocation.getNearHex(0), WStacking.BOTTOM)
                     .setState({ tiredness:CBTiredness.TIRED, played:true }));
             clickOnTrigger(game, getMoveActuator(game).getTrigger(0));
             Memento.undo();
@@ -722,14 +722,14 @@ describe("Interactive Movement", ()=> {
             assert(unit.movementPoints).equalsTo(2);
             assert(unit.extendedMovementPoints).equalsTo(3);
         when:
-            CBSequence.awaitedElements.push(new CBMoveSequenceElement(unit, unit.hexLocation.getNearHex(0), CBStacking.BOTTOM));
+            WSequence.awaitedElements.push(new CBMoveSequenceElement(unit, unit.hexLocation.getNearHex(0), WStacking.BOTTOM));
             clickOnTrigger(game, moveActuator.getTrigger(0));
         then:
             assert(unit.movementPoints).equalsTo(1);
             assert(unit.extendedMovementPoints).equalsTo(2);
         when:
             var orientationActuator = getOrientationActuator(game);
-            CBSequence.awaitedElements.push(new CBRotateSequenceElement(unit, 60));
+            WSequence.awaitedElements.push(new CBRotateSequenceElement(unit, 60));
             clickOnTrigger(game, orientationActuator.getTrigger(60));
         then:
             assert(unit.movementPoints).equalsTo(0.5);
@@ -762,8 +762,8 @@ describe("Interactive Movement", ()=> {
             assert(orientationActuator.getTrigger(30).image.path).equalsTo("./../images/actuators/toward.png");
             assert(orientationActuator.getCostTrigger(90).image.path).equalsTo("./../images/actuators/standard-move-cost.png");
         when:
-            CBSequence.awaitedElements.push(
-                new CBMoveSequenceElement(unit, unit.hexLocation.getNearHex(0), CBStacking.BOTTOM));
+            WSequence.awaitedElements.push(
+                new CBMoveSequenceElement(unit, unit.hexLocation.getNearHex(0), WStacking.BOTTOM));
             clickOnTrigger(game, moveActuator.getCostTrigger(0));
             moveActuator = getMoveActuator(game);
             orientationActuator = getOrientationActuator(game);
@@ -773,8 +773,8 @@ describe("Interactive Movement", ()=> {
             assert(orientationActuator.getTrigger(30).image.path).equalsTo("./../images/actuators/extended-toward.png");
             assert(orientationActuator.getCostTrigger(90).image.path).equalsTo("./../images/actuators/extended-move-cost.png");
         when:
-            CBSequence.awaitedElements.push(
-                new CBMoveSequenceElement(unit, unit.hexLocation.getNearHex(0), CBStacking.BOTTOM)
+            WSequence.awaitedElements.push(
+                new CBMoveSequenceElement(unit, unit.hexLocation.getNearHex(0), WStacking.BOTTOM)
                     .setState({ tiredness:CBTiredness.TIRED, played:true }));
             clickOnTrigger(game, moveActuator.getCostTrigger(0));
             moveActuator = getMoveActuator(game);
@@ -806,16 +806,16 @@ describe("Interactive Movement", ()=> {
             clickOnMoveAction(game);
         when:
             var moveActuator = getMoveActuator(game);
-            CBSequence.awaitedElements.push(
-                new CBMoveSequenceElement(unit, unit.hexLocation.getNearHex(60), CBStacking.BOTTOM));
+            WSequence.awaitedElements.push(
+                new CBMoveSequenceElement(unit, unit.hexLocation.getNearHex(60), WStacking.BOTTOM));
             clickOnTrigger(game, moveActuator.getTrigger(60));
             moveActuator = getMoveActuator(game);
-            CBSequence.awaitedElements.push(
-                new CBMoveSequenceElement(unit, unit.hexLocation.getNearHex(60), CBStacking.BOTTOM));
+            WSequence.awaitedElements.push(
+                new CBMoveSequenceElement(unit, unit.hexLocation.getNearHex(60), WStacking.BOTTOM));
             clickOnTrigger(game, moveActuator.getTrigger(60));
             moveActuator = getMoveActuator(game);
-            CBSequence.awaitedElements.push(
-                new CBMoveSequenceElement(unit, unit.hexLocation.getNearHex(60), CBStacking.BOTTOM)
+            WSequence.awaitedElements.push(
+                new CBMoveSequenceElement(unit, unit.hexLocation.getNearHex(60), WStacking.BOTTOM)
                     .setState({ tiredness:CBTiredness.TIRED, played:true }));
             clickOnTrigger(game, moveActuator.getTrigger(60));
         then:
@@ -829,13 +829,13 @@ describe("Interactive Movement", ()=> {
             clickOnMoveAction(game);
         when:
             var moveActuator = getMoveActuator(game);
-            CBSequence.awaitedElements.push(new CBMoveSequenceElement(unit, unit.hexLocation.getNearHex(60), CBStacking.BOTTOM));
+            WSequence.awaitedElements.push(new CBMoveSequenceElement(unit, unit.hexLocation.getNearHex(60), WStacking.BOTTOM));
             clickOnTrigger(game, moveActuator.getTrigger(60));
             moveActuator = getMoveActuator(game);
-            CBSequence.awaitedElements.push(new CBMoveSequenceElement(unit, unit.hexLocation.getNearHex(60), CBStacking.BOTTOM));
+            WSequence.awaitedElements.push(new CBMoveSequenceElement(unit, unit.hexLocation.getNearHex(60), WStacking.BOTTOM));
             clickOnTrigger(game, moveActuator.getTrigger(60));
             let orientationActuator = getOrientationActuator(game);
-            CBSequence.awaitedElements.push(new CBRotateSequenceElement(unit, 210)
+            WSequence.awaitedElements.push(new CBRotateSequenceElement(unit, 210)
                 .setState({ tiredness:CBTiredness.TIRED, played:true }));
             clickOnTrigger(game, orientationActuator.getTrigger(210));
         then:
@@ -854,8 +854,8 @@ describe("Interactive Movement", ()=> {
             var moveActuator1 = getMoveActuator(game);
         when:
             resetDirectives(markersLayer, unitsLayer);
-            CBSequence.awaitedElements.push(
-                new CBMoveSequenceElement(unit, unit.hexLocation.getNearHex(0), CBStacking.BOTTOM)
+            WSequence.awaitedElements.push(
+                new CBMoveSequenceElement(unit, unit.hexLocation.getNearHex(0), WStacking.BOTTOM)
                     .setState({tiredness:CBTiredness.TIRED }));
             clickOnTrigger(game, getMoveActuator(game).getTrigger(0));
             loadAllImages();
@@ -872,8 +872,8 @@ describe("Interactive Movement", ()=> {
             clickOnMoveAction(game);
             paint(game);
             resetDirectives(markersLayer);
-            CBSequence.awaitedElements.push(
-                new CBMoveSequenceElement(unit, unit.hexLocation.getNearHex(0), CBStacking.BOTTOM)
+            WSequence.awaitedElements.push(
+                new CBMoveSequenceElement(unit, unit.hexLocation.getNearHex(0), WStacking.BOTTOM)
                     .setState({tiredness:CBTiredness.EXHAUSTED, played:true }));
             clickOnTrigger(game, getMoveActuator(game).getTrigger(0));
             loadAllImages();
@@ -931,9 +931,9 @@ describe("Interactive Movement", ()=> {
     });
 
     function moveUnitByAction(unit, hex, state) {
-        unit.player.startMoveUnit(unit, CBMoveMode.NO_CONSTRAINT, dummyEvent);
-        CBSequence.awaitedElements.push(
-            new CBMoveSequenceElement(unit, hex, CBStacking.BOTTOM)
+        unit.player.startMoveUnit(unit, WMoveMode.NO_CONSTRAINT, dummyEvent);
+        WSequence.awaitedElements.push(
+            new CBMoveSequenceElement(unit, hex, WStacking.BOTTOM)
                 .setState(state));
         unit.action.moveUnit(hex, unit.hexLocation.isNearHex(hex));
     }
@@ -1018,7 +1018,7 @@ describe("Interactive Movement", ()=> {
             player1.finishTurn(()=>{finished=true;})
             loadAllImages();
         when:
-            CBSequence.awaitedElements.push(
+            WSequence.awaitedElements.push(
                 new CBStateSequenceElement(unit1).setState({cohesion: CBCohesion.DISRUPTED})
             );
             rollFor(5,6);
@@ -1051,7 +1051,7 @@ describe("Interactive Movement", ()=> {
             clickOnPiece(game, unit11);
             clickOnMoveAction(game);
             var moveActuator = getMoveActuator(game);
-            CBSequence.awaitedElements.push(new CBMoveSequenceElement(unit11, unit11.hexLocation.getNearHex(0), CBStacking.BOTTOM));
+            WSequence.awaitedElements.push(new CBMoveSequenceElement(unit11, unit11.hexLocation.getNearHex(0), WStacking.BOTTOM));
             clickOnTrigger(game, moveActuator.getTrigger(0));
             repaint(game);
         then:
@@ -1078,7 +1078,7 @@ describe("Interactive Movement", ()=> {
             clickOnPiece(game, unit11);
             clickOnMoveAction(game);
             var moveActuator = getMoveActuator(game);
-            CBSequence.awaitedElements.push(new CBMoveSequenceElement(unit11, unit11.hexLocation.getNearHex(0), CBStacking.BOTTOM));
+            WSequence.awaitedElements.push(new CBMoveSequenceElement(unit11, unit11.hexLocation.getNearHex(0), WStacking.BOTTOM));
             clickOnTrigger(game, moveActuator.getTrigger(0));
             rollFor(5,6);
             clickOnDice(game);
@@ -1128,7 +1128,7 @@ describe("Interactive Movement", ()=> {
             clickOnPiece(game, unit11);
             clickOnMoveAction(game);
             var moveActuator = getMoveActuator(game);
-            CBSequence.awaitedElements.push(new CBMoveSequenceElement(unit11, unit11.hexLocation.getNearHex(0), CBStacking.BOTTOM));
+            WSequence.awaitedElements.push(new CBMoveSequenceElement(unit11, unit11.hexLocation.getNearHex(0), WStacking.BOTTOM));
             clickOnTrigger(game, moveActuator.getTrigger(0));
             rollFor(1, 1);
             clickOnDice(game);
@@ -1195,8 +1195,8 @@ describe("Interactive Movement", ()=> {
             assertDirectives(actuatorsLayer, showMovementHelp("2", zoomAndRotate0(431.3294, 366.5506)));
         when:
             resetDirectives(unitsLayer, actuatorsLayer);
-            CBSequence.awaitedElements.push(
-                new CBMoveSequenceElement(unit1, unit1.hexLocation.getNearHex(180), CBStacking.TOP)
+            WSequence.awaitedElements.push(
+                new CBMoveSequenceElement(unit1, unit1.hexLocation.getNearHex(180), WStacking.TOP)
                     .setState({played:true})
             );
             clickOnTrigger(game, moveActuator.getTrigger(180));
@@ -1265,8 +1265,8 @@ describe("Interactive Movement", ()=> {
             assertDirectives(actuatorsLayer, showMovementHelp("2", zoomAndRotate90(485.3372, 366.5506)));
         when:
             resetDirectives(formationsLayer, actuatorsLayer);
-            CBSequence.awaitedElements.push(
-                new CBMoveSequenceElement(formation2, formation2.hexLocation.moveTo(240), CBStacking.TOP)
+            WSequence.awaitedElements.push(
+                new CBMoveSequenceElement(formation2, formation2.hexLocation.moveTo(240), WStacking.TOP)
                     .setState({played:true})
             );
             clickOnTrigger(game, moveActuator.getTrigger(240));
@@ -1290,8 +1290,8 @@ describe("Interactive Movement", ()=> {
             let moveActuator = getMoveActuator(game);
         when:
             resetDirectives(widgetsLayer, itemsLayer);
-            CBSequence.awaitedElements.push(
-                new CBMoveSequenceElement(unit1, unit1.hexLocation.getNearHex(180), CBStacking.TOP)
+            WSequence.awaitedElements.push(
+                new CBMoveSequenceElement(unit1, unit1.hexLocation.getNearHex(180), WStacking.TOP)
                     .setState({played:true})
             );
             clickOnTrigger(game, moveActuator.getTrigger(180));
@@ -1324,8 +1324,8 @@ describe("Interactive Movement", ()=> {
             clickOnMoveBackAction(game);
             let moveActuator = getMoveActuator(game);
         when:
-            CBSequence.awaitedElements.push(
-                new CBMoveSequenceElement(unit1, unit1.hexLocation.getNearHex(180), CBStacking.TOP)
+            WSequence.awaitedElements.push(
+                new CBMoveSequenceElement(unit1, unit1.hexLocation.getNearHex(180), WStacking.TOP)
                     .setState({played:true})
             );
             clickOnTrigger(game, moveActuator.getTrigger(180));
@@ -1363,14 +1363,14 @@ describe("Interactive Movement", ()=> {
             clickOnMoveBackAction(game);
             let moveActuator = getMoveActuator(game);
         when:
-            CBSequence.awaitedElements.push(
-                new CBMoveSequenceElement(unit1, unit1.hexLocation.getNearHex(180), CBStacking.TOP)
+            WSequence.awaitedElements.push(
+                new CBMoveSequenceElement(unit1, unit1.hexLocation.getNearHex(180), WStacking.TOP)
                     .setState({played:true})
             );
             clickOnTrigger(game, moveActuator.getTrigger(180));
             rollFor(5,6);
             clickOnDice(game);
-            CBSequence.awaitedElements.push(
+            WSequence.awaitedElements.push(
                 new CBStateSequenceElement(unit1)
                     .setState({cohesion:CBCohesion.DISRUPTED, played:true})
             );
@@ -1400,14 +1400,14 @@ describe("Interactive Movement", ()=> {
             var { game, unit1 } = create2PlayersTinyGame();
             unit1._charging = CBCharge.CHARGING;
             clickOnPiece(game, unit1);
-            CBSequence.awaitedElements.push(
+            WSequence.awaitedElements.push(
                 new CBStateSequenceElement(unit1).setState({ tiredness: CBTiredness.TIRED, charging: CBCharge.NONE })
             );
             clickOnMoveBackAction(game);
             let moveActuator = getMoveActuator(game);
         when:
-            CBSequence.awaitedElements.push(
-                new CBMoveSequenceElement(unit1, unit1.hexLocation.getNearHex(180), CBStacking.TOP)
+            WSequence.awaitedElements.push(
+                new CBMoveSequenceElement(unit1, unit1.hexLocation.getNearHex(180), WStacking.TOP)
                     .setState({played:true})
             );
             clickOnTrigger(game, moveActuator.getTrigger(180));
@@ -1425,8 +1425,8 @@ describe("Interactive Movement", ()=> {
             clickOnPiece(game, unit12);
             clickOnMoveBackAction(game);
             var moveActuator = getMoveActuator(game);
-            CBSequence.awaitedElements.push(
-                new CBMoveSequenceElement(unit12, unit12.hexLocation.getNearHex(240), CBStacking.TOP)
+            WSequence.awaitedElements.push(
+                new CBMoveSequenceElement(unit12, unit12.hexLocation.getNearHex(240), WStacking.TOP)
             );
             clickOnTrigger(game, moveActuator.getTrigger(240));
             repaint(game);
@@ -1454,7 +1454,7 @@ describe("Interactive Movement", ()=> {
             clickOnPiece(game, unit12);
             clickOnMoveBackAction(game);
             var moveActuator = getMoveActuator(game);
-            CBSequence.awaitedElements.push(new CBMoveSequenceElement(unit12, unit12.hexLocation.getNearHex(240), CBStacking.TOP));
+            WSequence.awaitedElements.push(new CBMoveSequenceElement(unit12, unit12.hexLocation.getNearHex(240), WStacking.TOP));
             clickOnTrigger(game, moveActuator.getTrigger(240));
             rollFor(5,6);
             clickOnDice(game);
@@ -1504,7 +1504,7 @@ describe("Interactive Movement", ()=> {
             clickOnPiece(game, unit12);
             clickOnMoveBackAction(game);
             var moveActuator = getMoveActuator(game);
-            CBSequence.awaitedElements.push(new CBMoveSequenceElement(unit12, unit12.hexLocation.getNearHex(240), CBStacking.TOP));
+            WSequence.awaitedElements.push(new CBMoveSequenceElement(unit12, unit12.hexLocation.getNearHex(240), WStacking.TOP));
             clickOnTrigger(game, moveActuator.getTrigger(240));
             rollFor(1, 1);
             clickOnDice(game);
@@ -1555,12 +1555,12 @@ describe("Interactive Movement", ()=> {
             clickOnPiece(game, unit11);
             clickOnMoveAction(game);
             var moveActuator = getMoveActuator(game);
-            CBSequence.awaitedElements.push(
-                new CBMoveSequenceElement(unit11, unit11.hexLocation.getNearHex(0), CBStacking.BOTTOM)
+            WSequence.awaitedElements.push(
+                new CBMoveSequenceElement(unit11, unit11.hexLocation.getNearHex(0), WStacking.BOTTOM)
             );
             clickOnTrigger(game, moveActuator.getTrigger(0));
-            CBSequence.awaitedElements.push(new CBReorientSequenceElement(unit11, 60));
-            CBSequence.awaitedElements.push(new CBStateSequenceElement(unit11).setState({cohesion:CBCohesion.DISRUPTED}));
+            WSequence.awaitedElements.push(new CBReorientSequenceElement(unit11, 60));
+            WSequence.awaitedElements.push(new CBStateSequenceElement(unit11).setState({cohesion:CBCohesion.DISRUPTED}));
             clickOnPiece(game, unit12);
         then:
             assert(unit11.angle).equalsTo(60);
@@ -1581,11 +1581,11 @@ describe("Interactive Movement", ()=> {
             clickOnPiece(game, leader11);
             clickOnMoveAction(game);
             var moveActuator = getMoveActuator(game);
-            CBSequence.awaitedElements.push(
-                new CBMoveSequenceElement(leader11, leader11.hexLocation.getNearHex(0), CBStacking.BOTTOM)
+            WSequence.awaitedElements.push(
+                new CBMoveSequenceElement(leader11, leader11.hexLocation.getNearHex(0), WStacking.BOTTOM)
             );
             clickOnTrigger(game, moveActuator.getTrigger(0));
-            CBSequence.awaitedElements.push(
+            WSequence.awaitedElements.push(
                 new CBReorientSequenceElement(leader11, 60)
             );
             clickOnPiece(game, unit11);
@@ -1607,11 +1607,11 @@ describe("Interactive Movement", ()=> {
             clickOnPiece(game, unit11);
             clickOnMoveAction(game);
             var moveActuator = getMoveActuator(game);
-            CBSequence.awaitedElements.push(
-                new CBMoveSequenceElement(unit11, unit11.hexLocation.getNearHex(0), CBStacking.BOTTOM)
+            WSequence.awaitedElements.push(
+                new CBMoveSequenceElement(unit11, unit11.hexLocation.getNearHex(0), WStacking.BOTTOM)
             );
             clickOnTrigger(game, moveActuator.getTrigger(0));
-            CBSequence.awaitedElements.push(
+            WSequence.awaitedElements.push(
                 new CBReorientSequenceElement(unit11, 0)
             );
             clickOnPiece(game, unit11);
@@ -1632,11 +1632,11 @@ describe("Interactive Movement", ()=> {
             clickOnPiece(game, leader12);
             clickOnMoveAction(game);
             var moveActuator = getMoveActuator(game);
-            CBSequence.awaitedElements.push(
-                new CBMoveSequenceElement(leader12, leader12.hexLocation.getNearHex(0), CBStacking.BOTTOM)
+            WSequence.awaitedElements.push(
+                new CBMoveSequenceElement(leader12, leader12.hexLocation.getNearHex(0), WStacking.BOTTOM)
             );
             clickOnTrigger(game, moveActuator.getTrigger(0));
-            CBSequence.awaitedElements.push(
+            WSequence.awaitedElements.push(
                 new CBReorientSequenceElement(leader12, 0)
             );
             clickOnPiece(game, leader12);
@@ -1675,7 +1675,7 @@ describe("Interactive Movement", ()=> {
             assertDirectives(actuatorsLayer, showMovementHelp("2", zoomAndRotate0(431.3294, 366.5506)));
         when:
             resetDirectives(unitsLayer, actuatorsLayer);
-            CBSequence.awaitedElements.push(
+            WSequence.awaitedElements.push(
                 new CBRotateSequenceElement(unit1,240)
             );
             clickOnTrigger(game, orientationActuator.getTrigger(240));
@@ -1691,8 +1691,8 @@ describe("Interactive Movement", ()=> {
         when:
             resetDirectives(unitsLayer, actuatorsLayer);
             var moveActuator = getMoveActuator(game);
-            CBSequence.awaitedElements.push(
-                new CBMoveSequenceElement(unit1, unit1.hexLocation.getNearHex(240), CBStacking.BOTTOM)
+            WSequence.awaitedElements.push(
+                new CBMoveSequenceElement(unit1, unit1.hexLocation.getNearHex(240), WStacking.BOTTOM)
             );
             clickOnTrigger(game, moveActuator.getTrigger(240));
         then:
@@ -1709,14 +1709,14 @@ describe("Interactive Movement", ()=> {
             assertDirectives(actuatorsLayer, showMovementHelp("1", zoomAndRotate240(338.7003, 379.9703)));
         when:
             moveActuator = getMoveActuator(game);
-            CBSequence.awaitedElements.push(
-                new CBMoveSequenceElement(unit1, unit1.hexLocation.getNearHex(240), CBStacking.BOTTOM)
+            WSequence.awaitedElements.push(
+                new CBMoveSequenceElement(unit1, unit1.hexLocation.getNearHex(240), WStacking.BOTTOM)
             );
             clickOnTrigger(game, moveActuator.getTrigger(240));
             resetDirectives(unitsLayer, actuatorsLayer);
             moveActuator = getMoveActuator(game);
-            CBSequence.awaitedElements.push(
-                new CBMoveSequenceElement(unit1, unit1.hexLocation.getNearHex(240), CBStacking.BOTTOM)
+            WSequence.awaitedElements.push(
+                new CBMoveSequenceElement(unit1, unit1.hexLocation.getNearHex(240), WStacking.BOTTOM)
                     .setState({tiredness:CBTiredness.TIRED, played:true})
             );
             clickOnTrigger(game, moveActuator.getTrigger(240));
@@ -1768,25 +1768,25 @@ describe("Interactive Movement", ()=> {
             loadAllImages();
             let orientationActuator = getOrientationActuator(game);
         when:
-            CBSequence.awaitedElements.push(
+            WSequence.awaitedElements.push(
                 new CBRotateSequenceElement(unit1, 240)
             );
             clickOnTrigger(game, orientationActuator.getTrigger(240));
             var moveActuator = getMoveActuator(game);
-            CBSequence.awaitedElements.push(
-                new CBMoveSequenceElement(unit1, unit1.hexLocation.getNearHex(240), CBStacking.BOTTOM)
+            WSequence.awaitedElements.push(
+                new CBMoveSequenceElement(unit1, unit1.hexLocation.getNearHex(240), WStacking.BOTTOM)
             );
             clickOnTrigger(game, moveActuator.getTrigger(240));
             loadAllImages();
             moveActuator = getMoveActuator(game);
-            CBSequence.awaitedElements.push(
-                new CBMoveSequenceElement(unit1, unit1.hexLocation.getNearHex(240), CBStacking.BOTTOM)
+            WSequence.awaitedElements.push(
+                new CBMoveSequenceElement(unit1, unit1.hexLocation.getNearHex(240), WStacking.BOTTOM)
             );
             clickOnTrigger(game, moveActuator.getTrigger(240));
             resetDirectives(actuatorsLayer, widgetsLayer, itemsLayer);
             moveActuator = getMoveActuator(game);
-            CBSequence.awaitedElements.push(
-                new CBMoveSequenceElement(unit1, unit1.hexLocation.getNearHex(240), CBStacking.BOTTOM)
+            WSequence.awaitedElements.push(
+                new CBMoveSequenceElement(unit1, unit1.hexLocation.getNearHex(240), WStacking.BOTTOM)
                     .setState({tiredness:CBTiredness.TIRED, played:true})
             );
             clickOnTrigger(game, moveActuator.getTrigger(240));
@@ -1819,24 +1819,24 @@ describe("Interactive Movement", ()=> {
             clickOnRoutAction(game);
             let orientationActuator = getOrientationActuator(game);
         when:
-            CBSequence.awaitedElements.push(
+            WSequence.awaitedElements.push(
                 new CBRotateSequenceElement(unit1, 240)
             );
             clickOnTrigger(game, orientationActuator.getTrigger(240));
             var moveActuator = getMoveActuator(game);
-            CBSequence.awaitedElements.push(
-                new CBMoveSequenceElement(unit1, unit1.hexLocation.getNearHex(240), CBStacking.BOTTOM)
+            WSequence.awaitedElements.push(
+                new CBMoveSequenceElement(unit1, unit1.hexLocation.getNearHex(240), WStacking.BOTTOM)
             );
             clickOnTrigger(game, moveActuator.getTrigger(240));
             moveActuator = getMoveActuator(game);
-            CBSequence.awaitedElements.push(
-                new CBMoveSequenceElement(unit1, unit1.hexLocation.getNearHex(240), CBStacking.BOTTOM)
+            WSequence.awaitedElements.push(
+                new CBMoveSequenceElement(unit1, unit1.hexLocation.getNearHex(240), WStacking.BOTTOM)
             );
             clickOnTrigger(game, moveActuator.getTrigger(240));
             resetDirectives(widgetsLayer, itemsLayer);
             moveActuator = getMoveActuator(game);
-            CBSequence.awaitedElements.push(
-                new CBMoveSequenceElement(unit1, unit1.hexLocation.getNearHex(240), CBStacking.BOTTOM)
+            WSequence.awaitedElements.push(
+                new CBMoveSequenceElement(unit1, unit1.hexLocation.getNearHex(240), WStacking.BOTTOM)
                     .setState({tiredness:CBTiredness.TIRED, played:true})
             );
             clickOnTrigger(game, moveActuator.getTrigger(240));
@@ -1874,30 +1874,30 @@ describe("Interactive Movement", ()=> {
             clickOnRoutAction(game);
             let orientationActuator = getOrientationActuator(game);
         when:
-            CBSequence.awaitedElements.push(
+            WSequence.awaitedElements.push(
                 new CBRotateSequenceElement(unit1, 240)
             );
             clickOnTrigger(game, orientationActuator.getTrigger(240));
             var moveActuator = getMoveActuator(game);
-            CBSequence.awaitedElements.push(
-                new CBMoveSequenceElement(unit1, unit1.hexLocation.getNearHex(240), CBStacking.BOTTOM)
+            WSequence.awaitedElements.push(
+                new CBMoveSequenceElement(unit1, unit1.hexLocation.getNearHex(240), WStacking.BOTTOM)
             );
             clickOnTrigger(game, moveActuator.getTrigger(240));
             moveActuator = getMoveActuator(game);
-            CBSequence.awaitedElements.push(
-                new CBMoveSequenceElement(unit1, unit1.hexLocation.getNearHex(240), CBStacking.BOTTOM)
+            WSequence.awaitedElements.push(
+                new CBMoveSequenceElement(unit1, unit1.hexLocation.getNearHex(240), WStacking.BOTTOM)
             );
             clickOnTrigger(game, moveActuator.getTrigger(240));
             resetDirectives(widgetsLayer, itemsLayer);
             moveActuator = getMoveActuator(game);
-            CBSequence.awaitedElements.push(
-                new CBMoveSequenceElement(unit1, unit1.hexLocation.getNearHex(240), CBStacking.BOTTOM)
+            WSequence.awaitedElements.push(
+                new CBMoveSequenceElement(unit1, unit1.hexLocation.getNearHex(240), WStacking.BOTTOM)
                     .setState({tiredness:CBTiredness.TIRED, played:true})
             );
             clickOnTrigger(game, moveActuator.getTrigger(240));
             rollFor(5,6);
             clickOnDice(game);
-            CBSequence.awaitedElements.push(
+            WSequence.awaitedElements.push(
                 new CBStateSequenceElement(unit1).setState({cohesion:CBCohesion.DISRUPTED})
             );
             executeAllAnimations();
@@ -1926,13 +1926,13 @@ describe("Interactive Movement", ()=> {
             var { game, unit1 } = create2PlayersTinyGame();
             unit1._charging = CBCharge.CHARGING;
             clickOnPiece(game, unit1);
-            CBSequence.awaitedElements.push(
+            WSequence.awaitedElements.push(
                 new CBStateSequenceElement(unit1).setState({ tiredness: CBTiredness.TIRED, charging: CBCharge.NONE })
             );
             clickOnRoutAction(game);
             let orientationActuator = getOrientationActuator(game);
         when:
-            CBSequence.awaitedElements.push(
+            WSequence.awaitedElements.push(
                 new CBRotateSequenceElement(unit1,240)
             );
             clickOnTrigger(game, orientationActuator.getTrigger(240));
@@ -1971,7 +1971,7 @@ describe("Interactive Movement", ()=> {
             assertDirectives(actuatorsLayer, showMovementHelp("2", zoomAndRotate0(431.3294, 366.5506)));
         when:
             resetDirectives(unitsLayer, actuatorsLayer);
-            CBSequence.awaitedElements.push(
+            WSequence.awaitedElements.push(
                 new CBRotateSequenceElement(unit1, 120).setState({ played:true })
             );
             clickOnTrigger(game, orientationActuator.getTrigger(120));
@@ -2027,8 +2027,8 @@ describe("Interactive Movement", ()=> {
             assertDirectives(actuatorsLayer, showMovementHelp("2", zoomAndRotate90(485.3372, 366.5506)));
         when:
             resetDirectives(formationsLayer, actuatorsLayer);
-            CBSequence.awaitedElements.push(
-                new CBTurnSequenceElement(formation2, 120, formation2.hexLocation.turnTo(120), CBStacking.BOTTOM)
+            WSequence.awaitedElements.push(
+                new CBTurnSequenceElement(formation2, 120, formation2.hexLocation.turnTo(120), WStacking.BOTTOM)
             );
             clickOnTrigger(game, moveActuator.getTurnTrigger(120));
         then:
@@ -2050,7 +2050,7 @@ describe("Interactive Movement", ()=> {
             let orientationActuator = getOrientationActuator(game);
         when:
             resetDirectives(widgetsLayer, itemsLayer);
-            CBSequence.awaitedElements.push(
+            WSequence.awaitedElements.push(
                 new CBRotateSequenceElement(unit1, 180).setState({ played:true })
             );
             clickOnTrigger(game, orientationActuator.getTrigger(180));
@@ -2084,7 +2084,7 @@ describe("Interactive Movement", ()=> {
             clickOnConfrontAction(game);
             var orientationActuator = getOrientationActuator(game);
         when:
-            CBSequence.awaitedElements.push(
+            WSequence.awaitedElements.push(
                 new CBRotateSequenceElement(unit1, 180).setState({ played:true })
             );
             clickOnTrigger(game, orientationActuator.getTrigger(180));
@@ -2123,13 +2123,13 @@ describe("Interactive Movement", ()=> {
             clickOnConfrontAction(game);
             var orientationActuator = getOrientationActuator(game);
         when:
-            CBSequence.awaitedElements.push(
+            WSequence.awaitedElements.push(
                 new CBRotateSequenceElement(unit1, 180).setState({ played:true })
             );
             clickOnTrigger(game, orientationActuator.getTrigger(180));
             rollFor(5, 6);
             clickOnDice(game);
-            CBSequence.awaitedElements.push(
+            WSequence.awaitedElements.push(
                 new CBStateSequenceElement(unit1).setState({cohesion:CBCohesion.DISRUPTED})
             );
             executeAllAnimations();
@@ -2162,13 +2162,13 @@ describe("Interactive Movement", ()=> {
             unit1._charging = CBCharge.CHARGING;
             unit2.move(unit1.hexLocation.getNearHex(120));
             clickOnPiece(game, unit1);
-            CBSequence.awaitedElements.push(
+            WSequence.awaitedElements.push(
                 new CBStateSequenceElement(unit1).setState({ tiredness: CBTiredness.TIRED, charging: CBCharge.NONE })
             );
             clickOnConfrontAction(game);
             let orientationActuator = getOrientationActuator(game);
         when:
-            CBSequence.awaitedElements.push(
+            WSequence.awaitedElements.push(
                 new CBRotateSequenceElement(unit1, 120).setState({ played:true })
             );
             clickOnTrigger(game, orientationActuator.getTrigger(120));
@@ -2181,7 +2181,7 @@ describe("Interactive Movement", ()=> {
             var {game, map, arbitrator, wing1, unit1} = create2PlayersTinyGame();
             unit1.hexLocation = map.getHex(2, 8);
             arbitrator.updateAllowedActions(actions=>{
-                actions.moveMode = CBMoveMode.ATTACK;
+                actions.moveMode = WMoveMode.ATTACK;
                 return actions;
             });
             var [actuatorLayer] = getLayers(game.board,"actuators");
@@ -2222,7 +2222,7 @@ describe("Interactive Movement", ()=> {
             formation2.angle = 210;
             unit1.played = true;
             arbitrator.updateAllowedActions(actions=>{
-                actions.moveMode = CBMoveMode.ATTACK;
+                actions.moveMode = WMoveMode.ATTACK;
                 return actions;
             });
             game.nextTurn();
@@ -2258,7 +2258,7 @@ describe("Interactive Movement", ()=> {
             formation2.angle = 90;
             unit1.played = true;
             arbitrator.updateAllowedActions(actions=>{
-                actions.moveMode = CBMoveMode.ATTACK;
+                actions.moveMode = WMoveMode.ATTACK;
                 return actions;
             });
             game.nextTurn();
@@ -2283,7 +2283,7 @@ describe("Interactive Movement", ()=> {
             unit2.hexLocation = map.getHex(8, 5);
             unit1.played = true;
             arbitrator.updateAllowedActions(actions=>{
-                actions.moveMode = CBMoveMode.ATTACK;
+                actions.moveMode = WMoveMode.ATTACK;
                 return actions;
             });
             var [actuatorLayer] = getLayers(game.board,"actuators");
@@ -2304,7 +2304,7 @@ describe("Interactive Movement", ()=> {
             var {game, map, arbitrator, unit1} = create2PlayersTinyGame();
             unit1.hexLocation = map.getHex(5, 8);
             arbitrator.updateAllowedActions(actions=>{
-                actions.moveMode = CBMoveMode.FIRE;
+                actions.moveMode = WMoveMode.FIRE;
                 return actions;
             });
             var [actuatorLayer] = getLayers(game.board,"actuators");
@@ -2343,7 +2343,7 @@ describe("Interactive Movement", ()=> {
             var {game, map, arbitrator, wing1, unit1} = create2PlayersTinyGame();
             unit1.angle = 60
             arbitrator.updateAllowedActions(actions=>{
-                actions.moveMode = CBMoveMode.DEFEND;
+                actions.moveMode = WMoveMode.DEFEND;
                 return actions;
             });
             var [actuatorLayer] = getLayers(game.board,"actuators");
@@ -2384,7 +2384,7 @@ describe("Interactive Movement", ()=> {
             formation2.angle = 210;
             unit1.played = true;
             arbitrator.updateAllowedActions(actions=>{
-                actions.moveMode = CBMoveMode.DEFEND;
+                actions.moveMode = WMoveMode.DEFEND;
                 return actions;
             });
             game.nextTurn();
@@ -2419,7 +2419,7 @@ describe("Interactive Movement", ()=> {
             var {game, map, arbitrator, wing1, unit1} = create2PlayersTinyGame();
             unit1.angle = 60
             arbitrator.updateAllowedActions(actions=>{
-                actions.moveMode = CBMoveMode.REGROUP;
+                actions.moveMode = WMoveMode.REGROUP;
                 return actions;
             });
             var [actuatorLayer] = getLayers(game.board,"actuators");
@@ -2459,7 +2459,7 @@ describe("Interactive Movement", ()=> {
             formation2.hexLocation = map.getHex(10, 8).toward(120);
             formation2.angle = 210;
             arbitrator.updateAllowedActions(actions=>{
-                actions.moveMode = CBMoveMode.REGROUP;
+                actions.moveMode = WMoveMode.REGROUP;
                 return actions;
             });
             unit1.played = true;
@@ -2495,7 +2495,7 @@ describe("Interactive Movement", ()=> {
             var {game, map, arbitrator, wing1, unit1} = create2PlayersTinyGame();
             unit1.angle = 60
             arbitrator.updateAllowedActions(actions=>{
-                actions.moveMode = CBMoveMode.RETREAT;
+                actions.moveMode = WMoveMode.RETREAT;
                 return actions;
             });
             var [actuatorLayer] = getLayers(game.board,"actuators");
@@ -2529,7 +2529,7 @@ describe("Interactive Movement", ()=> {
             formation2.hexLocation = map.getHex(10, 8).toward(120);
             formation2.angle = 210;
             arbitrator.updateAllowedActions(actions=>{
-                actions.moveMode = CBMoveMode.RETREAT;
+                actions.moveMode = WMoveMode.RETREAT;
                 return actions;
             });
             unit1.played = true;

@@ -351,7 +351,7 @@ export function showActiveMarker(image, [a, b, c, d, e, f]) {
     return [
         "save()",
             `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
-            "shadowColor = #00FFFF", "shadowBlur = 10",
+            "shadowBlur = 0",
             `drawImage(./../images/markers/${image}.png, -32, -32, 64, 64)`,
         "restore()"
     ];

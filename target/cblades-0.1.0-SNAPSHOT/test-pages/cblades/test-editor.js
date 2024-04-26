@@ -5,22 +5,22 @@ import {
 } from "../../jstest/jtest.js";
 import {
     Point2D
-} from "../../jslib/geometry.js";
+} from "../../jslib/board/geometry.js";
 import {
     DAnimator,
     DImage, getDrawPlatform, setDrawPlatform
-} from "../../jslib/draw.js";
+} from "../../jslib/board/draw.js";
 import {
     filterPainting, assertClearDirectives, assertDirectives, assertNoMoreDirectives,
     getDirectives, getLayers, loadAllImages, mockPlatform, resetDirectives, skipDirectives, stopRegister
-} from "../mocks.js";
+} from "../board/mocks.js";
 import {
     Mechanisms, Memento
-} from "../../jslib/mechanisms.js";
+} from "../../jslib/board/mechanisms.js";
 import {
-    CBBoard,
-    CBMap
-} from "../../jslib/cblades/map.js";
+    WBoard,
+    WMap
+} from "../../jslib/wargame/map.js";
 import {
     CBCharacter,
     CBFormation, CBOrderInstruction,
@@ -135,7 +135,7 @@ describe("Editor", ()=> {
     it("Checks switch to map editor mode", () => {
         given:
             var game = new CBMapEditorGame();
-            let map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+            let map = new WMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             game.setMap(map);
             game.start();
             loadAllImages();
@@ -163,7 +163,7 @@ describe("Editor", ()=> {
     it("Checks edit a hex type", () => {
         given:
             var game = new CBMapEditorGame();
-            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+            var map = new WMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             game.setMap(map);
             game.start();
             var [actuatorsLayer] = getLayers(game.board, "actuators");
@@ -293,7 +293,7 @@ describe("Editor", ()=> {
     it("Checks edit a hex side type", () => {
         given:
             var game = new CBMapEditorGame();
-            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+            var map = new WMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             game.setMap(map);
             game.start();
             var [actuatorsLayer] = getLayers(game.board, "actuators");
@@ -354,7 +354,7 @@ describe("Editor", ()=> {
     it("Checks edit a hex side height", () => {
         given:
             var game = new CBMapEditorGame();
-            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+            var map = new WMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             game.setMap(map);
             game.start();
             var [actuatorsLayer] = getLayers(game.board, "actuators");
@@ -431,7 +431,7 @@ describe("Editor", ()=> {
         let RedBanner0 = "./../images/units/red/banners/banner0.png";
 
         var game = new CBMapEditorGame();
-        let map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+        let map = new WMap([{path:"./../images/maps/map.png", col:0, row:0}]);
         game.setMap(map);
         game.start();
         return { game, map};
@@ -1159,7 +1159,7 @@ describe("Editor", ()=> {
         };
 
         var game = new CBScenarioEditorGame(1);
-        let map = new CBMap([{
+        let map = new WMap([{
             path:"./../images/maps/map.png",
             icon:"./../images/maps/map-icon.png",
             col:0, row:0, invert
@@ -3061,7 +3061,7 @@ describe("Editor", ()=> {
     it("Checks global push menu button for Map Editor", () => {
         given:
             var game = new CBMapEditorGame();
-            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+            var map = new WMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             game.setMap(map);
             var [commandsLayer] = getLayers(game.board, "widget-commands");
         when:
@@ -3098,7 +3098,7 @@ describe("Editor", ()=> {
     it("Checks global push menu button for Scenario Editor", () => {
         given:
             var game = new CBScenarioEditorGame(1);
-            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+            var map = new WMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             game.setMap(map);
             var [commandsLayer] = getLayers(game.board, "widget-commands");
         when:
@@ -3136,7 +3136,7 @@ describe("Editor", ()=> {
     it("Checks undo/redo push menu button on map editor", () => {
         given:
             var game = new CBMapEditorGame();
-            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+            var map = new WMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             game.setMap(map);
             game.setMenu();
             game.start();
@@ -3167,7 +3167,7 @@ describe("Editor", ()=> {
     it("Checks full screen push menu button on map editor", () => {
         given:
             var game = new CBMapEditorGame();
-            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+            var map = new WMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             game.setMap(map);
             game.setMenu();
             game.start();
@@ -3231,7 +3231,7 @@ describe("Editor", ()=> {
     it("Checks undo/redo push menu button on Scenario editor", () => {
         given:
             var game = new CBScenarioEditorGame(1);
-            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+            var map = new WMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             game.setMap(map);
             game.setMenu();
             game.start();
@@ -3262,7 +3262,7 @@ describe("Editor", ()=> {
     it("Checks full screen push menu button on Scenario editor", () => {
         given:
             var game = new CBScenarioEditorGame(1);
-            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+            var map = new WMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             game.setMap(map);
             game.setMenu();
             game.start();
@@ -3347,7 +3347,7 @@ describe("Editor", ()=> {
     it("Checks connect/save/load from the Map editor", () => {
         given:
             var game = new CBMapEditorGame();
-            var board = new CBBoard("board", "./../images/maps/map.png", "./../images/maps/map1-icon.png");
+            var board = new WBoard("board", "./../images/maps/map.png", "./../images/maps/map1-icon.png");
             game.setMap(board);
             game.setMenu();
             game.start();
@@ -3369,7 +3369,7 @@ describe("Editor", ()=> {
     it("Checks connect/save/load from the Scenario editor", () => {
         given:
             var game = new CBScenarioEditorGame(1);
-            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+            var map = new WMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             game.setMap(map);
             game.setMenu();
             game.start();

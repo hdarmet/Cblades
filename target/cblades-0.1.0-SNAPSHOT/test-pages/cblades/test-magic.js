@@ -5,13 +5,13 @@ import {
 } from "../../jstest/jtest.js";
 import {
     DImage, setDrawPlatform
-} from "../../jslib/draw.js";
+} from "../../jslib/board/draw.js";
 import {
     mockPlatform
-} from "../mocks.js";
+} from "../board/mocks.js";
 import {
     Mechanisms, Memento
-} from "../../jslib/mechanisms.js";
+} from "../../jslib/board/mechanisms.js";
 import {
     CBArcaneCircleSpell,
     CBArcanePentacleSpell, CBArcaneShieldSpell, CBArcaneSwordSpell,
@@ -27,8 +27,8 @@ import {
     createTinyGameWithLeader
 } from "./game-examples.js";
 import {
-    CBLevelBuilder
-} from "../../jslib/cblades/playable.js";
+    WLevelBuilder
+} from "../../jslib/wargame/playable.js";
 
 describe("Magic", ()=> {
 
@@ -82,13 +82,12 @@ describe("Magic", ()=> {
         then:
             assert(spell).is(CBTestSpell);
             assert(spell.spellNature).isTrue();
-            assert(spell.isOption()).isFalse();
+            assert(spell.optionNature).isFalse();
             assert(wizard.carried.indexOf(spell)).notEqualsTo(-1);
             assert(spell.artifact.spell).equalsTo(spell);
-            assert(spell.artifact.game).equalsTo(game);
             assert(spell.artifact.unit).equalsTo(wizard);
             assert(spell.artifact.slot).equalsTo(0);
-            assert(spell.artifact.layer).equalsTo(CBLevelBuilder.ULAYERS.SPELLS);
+            assert(spell.artifact.layer).equalsTo(WLevelBuilder.ULAYERS.SPELLS);
             assert(spell.getNextCinematic().cinematic).equalsTo(CBSpell.CINEMATIC.APPLY);
             assert(spell.hexLocation).equalsTo(wizard.hexLocation);
             assert(spell.hexLocation.playables.indexOf(spell)).equalsTo(-1);
@@ -98,7 +97,7 @@ describe("Magic", ()=> {
             Memento.open();
             spell.apply();
         then:
-            assert(spell.isOption()).isFalse();
+            assert(spell.optionNature).isFalse();
             assert(wizard.carried.indexOf(spell)).equalsTo(-1);
             assert(spell.activated).isTrue();
             assert(spell.artifact.image.path).equalsTo("./../images/magic/test/spell2.png");
@@ -146,7 +145,7 @@ describe("Magic", ()=> {
             assert(spell.activated).isFalse();
             assert(wizard.carried.indexOf(spell)).notEqualsTo(-1);
             assert(hexId.playables.indexOf(spell)).equalsTo(-1);
-            assert(spell.isOption()).isFalse();
+            assert(spell.optionNature).isFalse();
         when:
             Memento.open();
             spell.apply();
@@ -154,7 +153,7 @@ describe("Magic", ()=> {
             assert(spell.activated).isTrue();
             assert(wizard.carried.indexOf(spell)).equalsTo(-1);
             assert(hexId.playables.indexOf(spell)).notEqualsTo(-1);
-            assert(spell.isOption()).isFalse();
+            assert(spell.optionNature).isFalse();
         when:
             Memento.undo();
         then:
@@ -179,7 +178,7 @@ describe("Magic", ()=> {
             assert(spell.activated).isTrue();
             assert(wizard.carried.indexOf(spell)).equalsTo(-1);
             assert(hexId.playables.indexOf(spell)).notEqualsTo(-1);
-            assert(spell.isOption()).isFalse();
+            assert(spell.optionNature).isFalse();
         when:
             spell.discard();
         then:
@@ -204,7 +203,7 @@ describe("Magic", ()=> {
             assert(wizard.carried.indexOf(spell)).notEqualsTo(-1);
             assert(unit.hexLocation.playables.indexOf(spell)).equalsTo(-1);
             assert(unit.options.indexOf(spell)).equalsTo(-1);
-            assert(spell.isOption()).isFalse();
+            assert(spell.optionNature).isFalse();
         when:
             Memento.open();
             spell.apply();
@@ -213,7 +212,7 @@ describe("Magic", ()=> {
             assert(wizard.carried.indexOf(spell)).equalsTo(-1);
             assert(unit.hexLocation.playables.indexOf(spell)).equalsTo(-1);
             assert(unit.options.indexOf(spell)).notEqualsTo(-1);
-            assert(spell.isOption()).isTrue();
+            assert(spell.optionNature).isTrue();
         when:
             Memento.undo();
         then:
@@ -222,7 +221,7 @@ describe("Magic", ()=> {
             assert(wizard.carried.indexOf(spell)).notEqualsTo(-1);
             assert(unit.hexLocation.playables.indexOf(spell)).equalsTo(-1);
             assert(unit.options.indexOf(spell)).equalsTo(-1);
-            assert(spell.isOption()).isFalse();
+            assert(spell.optionNature).isFalse();
         when:
             Memento.undo();
         then:
@@ -241,10 +240,10 @@ describe("Magic", ()=> {
             assert(wizard.carried.indexOf(spell)).equalsTo(-1);
             assert(unit.hexLocation.playables.indexOf(spell)).equalsTo(-1);
             assert(unit.options.indexOf(spell)).notEqualsTo(-1);
-            assert(spell.isOption()).isTrue();
+            assert(spell.optionNature).isTrue();
         when:
             spell.discard(unit);
-            assert(spell.artifact.layer).equalsTo(CBLevelBuilder.ULAYERS.OPTIONS);
+            assert(spell.artifact.layer).equalsTo(WLevelBuilder.ULAYERS.OPTIONS);
         then:
             assert(wizard.carried.indexOf(spell)).equalsTo(-1);
             assert(unit.hexLocation.playables.indexOf(spell)).equalsTo(-1);
@@ -300,7 +299,7 @@ describe("Magic", ()=> {
             assert(spell.artifact.image.path).equalsTo("./../images/magic/fire/pentacle1.png");
             assert(wizard.carried.indexOf(spell)).equalsTo(-1);
             assert(wizard.hexLocation.playables.indexOf(spell)).notEqualsTo(-1);
-            assert(spell.isOption()).isFalse();
+            assert(spell.optionNature).isFalse();
     });
 
     it("Checks fire circle spell", () => {
@@ -320,7 +319,7 @@ describe("Magic", ()=> {
             assert(spell.artifact.image.path).equalsTo("./../images/magic/fire/circle1.png");
             assert(wizard.carried.indexOf(spell)).equalsTo(-1);
             assert(wizard.hexLocation.playables.indexOf(spell)).notEqualsTo(-1);
-            assert(spell.isOption()).isFalse();
+            assert(spell.optionNature).isFalse();
     });
 
     it("Checks successful fireball spell", () => {
@@ -351,13 +350,13 @@ describe("Magic", ()=> {
             assert(spell.artifact.image.path).equalsTo("./../images/magic/fire/fireball1.png");
             assert(wizard.carried.indexOf(spell)).equalsTo(-1);
             assert(foe.options.indexOf(spell)).notEqualsTo(-1);
-            assert(spell.isOption()).isTrue();
+            assert(spell.optionNature).isTrue();
         when:
             spell.resolve([1, 2]);
         then:
             assert(foe.options.indexOf(spell)).equalsTo(-1);
             assert(foe.steps).equalsTo(1);
-            assert(spell.isOption()).isTrue();
+            assert(spell.optionNature).isTrue();
     });
 
     it("Checks failed fireball spell", () => {
@@ -373,7 +372,7 @@ describe("Magic", ()=> {
         then:
             assert(foe.options.indexOf(spell)).equalsTo(-1);
             assert(foe.steps).equalsTo(2);
-            assert(spell.isOption()).isTrue();
+            assert(spell.optionNature).isTrue();
     });
 
     it("Checks fire sword spell", () => {
@@ -400,7 +399,7 @@ describe("Magic", ()=> {
             assert(spell.artifact.image.path).equalsTo("./../images/magic/fire/firesword1.png");
             assert(wizard.carried.indexOf(spell)).equalsTo(-1);
             assert(unit.options.indexOf(spell)).notEqualsTo(-1);
-            assert(spell.isOption()).isTrue();
+            assert(spell.optionNature).isTrue();
     });
 
     it("Checks blaze spell", () => {
@@ -428,7 +427,7 @@ describe("Magic", ()=> {
             assert(spell.artifact.image.path).equalsTo("./../images/magic/fire/blaze1.png");
             assert(wizard.carried.indexOf(spell)).equalsTo(-1);
             assert(hexId.playables.indexOf(spell)).notEqualsTo(-1);
-            assert(spell.isOption()).isFalse();
+            assert(spell.optionNature).isFalse();
     });
 
     it("Checks rain fire spell", () => {
@@ -456,7 +455,7 @@ describe("Magic", ()=> {
             assert(spell.artifact.image.path).equalsTo("./../images/magic/fire/rainfire1.png");
             assert(wizard.carried.indexOf(spell)).equalsTo(-1);
             assert(hexId.playables.indexOf(spell)).notEqualsTo(-1);
-            assert(spell.isOption()).isFalse();
+            assert(spell.optionNature).isFalse();
     });
 
     it("Checks when arcane spell laboratory", () => {
@@ -500,7 +499,7 @@ describe("Magic", ()=> {
             assert(spell.artifact.image.path).equalsTo("./../images/magic/arcane/pentacle1.png");
             assert(wizard.carried.indexOf(spell)).equalsTo(-1);
             assert(wizard.hexLocation.playables.indexOf(spell)).notEqualsTo(-1);
-            assert(spell.isOption()).isFalse();
+            assert(spell.optionNature).isFalse();
     });
 
     it("Checks arcane circle spell", () => {
@@ -520,7 +519,7 @@ describe("Magic", ()=> {
             assert(spell.artifact.image.path).equalsTo("./../images/magic/arcane/circle1.png");
             assert(wizard.carried.indexOf(spell)).equalsTo(-1);
             assert(wizard.hexLocation.playables.indexOf(spell)).notEqualsTo(-1);
-            assert(spell.isOption()).isFalse();
+            assert(spell.optionNature).isFalse();
     });
 
     it("Checks successful magic arrow spell", () => {
@@ -551,13 +550,13 @@ describe("Magic", ()=> {
             assert(spell.artifact.image.path).equalsTo("./../images/magic/arcane/missile1.png");
             assert(wizard.carried.indexOf(spell)).equalsTo(-1);
             assert(foe.options.indexOf(spell)).notEqualsTo(-1);
-            assert(spell.isOption()).isTrue();
+            assert(spell.optionNature).isTrue();
         when:
             spell.resolve([1, 2]);
         then:
             assert(foe.options.indexOf(spell)).equalsTo(-1);
             assert(foe.steps).equalsTo(1);
-            assert(spell.isOption()).isTrue();
+            assert(spell.optionNature).isTrue();
     });
 
     it("Checks failed magic arrow spell", () => {
@@ -573,7 +572,7 @@ describe("Magic", ()=> {
         then:
             assert(foe.options.indexOf(spell)).equalsTo(-1);
             assert(foe.steps).equalsTo(2);
-            assert(spell.isOption()).isTrue();
+            assert(spell.optionNature).isTrue();
     });
 
     it("Checks arcane sword spell", () => {
@@ -600,7 +599,7 @@ describe("Magic", ()=> {
             assert(spell.artifact.image.path).equalsTo("./../images/magic/arcane/sword1.png");
             assert(wizard.carried.indexOf(spell)).equalsTo(-1);
             assert(unit.options.indexOf(spell)).notEqualsTo(-1);
-            assert(spell.isOption()).isTrue();
+            assert(spell.optionNature).isTrue();
     });
 
     it("Checks arcane shield spell", () => {
@@ -627,7 +626,7 @@ describe("Magic", ()=> {
             assert(spell.artifact.image.path).equalsTo("./../images/magic/arcane/shield1.png");
             assert(wizard.carried.indexOf(spell)).equalsTo(-1);
             assert(unit.options.indexOf(spell)).notEqualsTo(-1);
-            assert(spell.isOption()).isTrue();
+            assert(spell.optionNature).isTrue();
     });
 
     it("Checks protection from magic spell", () => {
@@ -655,7 +654,7 @@ describe("Magic", ()=> {
             assert(spell.artifact.image.path).equalsTo("./../images/magic/arcane/protection1.png");
             assert(wizard.carried.indexOf(spell)).equalsTo(-1);
             assert(hexId.playables.indexOf(spell)).notEqualsTo(-1);
-            assert(spell.isOption()).isFalse();
+            assert(spell.optionNature).isFalse();
     });
 
 });

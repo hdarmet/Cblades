@@ -4,11 +4,11 @@ import {
     assert, before, describe, it
 } from "../../../jstest/jtest.js";
 import {
-    CBMap
-} from "../../../jslib/cblades/map.js";
+    WMap
+} from "../../../jslib/wargame/map.js";
 import {
-    CBGame
-} from "../../../jslib/cblades/playable.js";
+    WGame
+} from "../../../jslib/wargame/playable.js";
 import {
     CBUnitPlayer,
     CBCharacter,
@@ -24,11 +24,11 @@ import {
 } from "../../../jslib/cblades/teachers/map-teacher.js";
 import {
     setDrawPlatform
-} from "../../../jslib/draw.js";
+} from "../../../jslib/board/draw.js";
 import {
     mergeClasses,
     mockPlatform
-} from "../../mocks.js";
+} from "../../board/mocks.js";
 import {
     CBUnitManagementTeacher
 } from "../../../jslib/cblades/teachers/units-teacher.js";
@@ -63,18 +63,18 @@ describe("Miscellaneous teacher", ()=> {
     }
 
     function createBasicGame() {
-        let game = new CBGame(1);
+        let game = new WGame(1);
         let arbitrator = new Arbitrator();
         game.setArbitrator(arbitrator);
-        var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+        var map = new WMap([{path:"./../images/maps/map.png", col:0, row:0}]);
         game.setMap(map);
         game.start();
         return {game, arbitrator, map};
     }
 
     function createTinyGame() {
-        let game = new CBGame(1);
-        var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+        let game = new WGame(1);
+        var map = new WMap([{path:"./../images/maps/map.png", col:0, row:0}]);
         game.setMap(map);
         let arbitrator = new Arbitrator();
         game.setArbitrator(arbitrator);
@@ -88,7 +88,7 @@ describe("Miscellaneous teacher", ()=> {
     }
 
     function create2Players4UnitsTinyGame() {
-        let game = new CBGame(1);
+        let game = new WGame(1);
         let arbitrator = new Arbitrator();
         game.setArbitrator(arbitrator);
         let player1 = new CBUnitPlayer("player1", "/players/player1.png");
@@ -97,7 +97,7 @@ describe("Miscellaneous teacher", ()=> {
         let player2 = new CBUnitPlayer("player2", "/players/player2.png");
         game.addPlayer(player2);
         let wing2 = new CBWing(player2, banner2);
-        var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+        var map = new WMap([{path:"./../images/maps/map.png", col:0, row:0}]);
         game.setMap(map);
         let unitType1 = new CBTestUnitType("unit1", ["./../images/units/misc/unit1.png", "./../images/units/misc/unit1b.png"])
         let unit11 = new CBTroop(game, unitType1, wing1);

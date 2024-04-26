@@ -6,20 +6,20 @@ import {
 } from "../../jstest/jtest.js";
 import {
     DImage, setDrawPlatform
-} from "../../jslib/draw.js";
+} from "../../jslib/board/draw.js";
 import {
     mockPlatform
-} from "../mocks.js";
+} from "../board/mocks.js";
 import {
     Mechanisms, Memento
-} from "../../jslib/mechanisms.js";
+} from "../../jslib/board/mechanisms.js";
 import {
     CBFog,
     CBWeather, WeatherMixin
 } from "../../jslib/cblades/weather.js";
 import {
-    CBAbstractGame
-} from "../../jslib/cblades/game.js";
+    WAbstractGame
+} from "../../jslib/wargame/game.js";
 
 describe("Weather", ()=> {
 
@@ -32,12 +32,12 @@ describe("Weather", ()=> {
 
     it("Checks weather management on game", () => {
         when:
-            var GameClass = WeatherMixin(CBAbstractGame);
+            var GameClass = WeatherMixin(WAbstractGame);
             var game = new GameClass("Test");
             var received = null;
             Mechanisms.addListener({
                _processGlobalEvent(source, event, value) {
-                   if (event === CBAbstractGame.SETTINGS_EVENT) {
+                   if (event === WAbstractGame.SETTINGS_EVENT) {
                        received = value.weather;
                    }
                }
@@ -62,12 +62,12 @@ describe("Weather", ()=> {
 
     it("Checks fog management on game", () => {
         when:
-            var GameClass = WeatherMixin(CBAbstractGame);
+            var GameClass = WeatherMixin(WAbstractGame);
             var game = new GameClass("Test");
             var received = null;
             Mechanisms.addListener({
                 _processGlobalEvent(source, event, value) {
-                    if (event === CBAbstractGame.SETTINGS_EVENT) {
+                    if (event === WAbstractGame.SETTINGS_EVENT) {
                         received = value.fog;
                     }
                 }
@@ -92,12 +92,12 @@ describe("Weather", ()=> {
 
     it("Checks wind direction management on game", () => {
         when:
-            var GameClass = WeatherMixin(CBAbstractGame);
+            var GameClass = WeatherMixin(WAbstractGame);
             var game = new GameClass("Test");
             var received = null;
             Mechanisms.addListener({
                 _processGlobalEvent(source, event, value) {
-                    if (event === CBAbstractGame.SETTINGS_EVENT) {
+                    if (event === WAbstractGame.SETTINGS_EVENT) {
                         received = value.windDirection;
                     }
                 }

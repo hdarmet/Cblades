@@ -1,52 +1,52 @@
 'use strict'
 
 import {
-    CBAction,
-    CBPiece,
-    CBPieceImageArtifact,
+    WAction,
+    WPiece,
+    WPieceImageArtifact,
     DisplayLocatableMixin,
     PlayableMixin,
-    CBAbstractGame
-} from "./game.js";
+    WAbstractGame
+} from "../wargame/game.js";
 import {
     ActivableArtifactMixin,
-    CBHexCounter, CBHexCounterArtifact, CBLevelBuilder,
+    WHexCounter, WHexCounterArtifact, WLevelBuilder,
     RetractablePieceMixin
-} from "./playable.js";
+} from "../wargame/playable.js";
 import {
     Dimension2D, Point2D
-} from "../geometry.js";
+} from "../board/geometry.js";
 import {
     DImage
-} from "../draw.js";
+} from "../board/draw.js";
 import {
     Mechanisms, Memento
-} from "../mechanisms.js";
+} from "../board/mechanisms.js";
 import {
     DImageArtifact
-} from "../board.js";
+} from "../board/board.js";
 import {
     CBWing
 } from "./unit.js";
 
-export class CBGroundMarkerArtifact extends CBPieceImageArtifact {
+export class CBGroundMarkerArtifact extends WPieceImageArtifact {
 
-    constructor(counter, path, position, dimension= CBCounterMarkerArtifact.MARKER_DIMENSION) {
+    constructor(counter, path, position, dimension= CBCounterMarkerArtifact.DIMENSION) {
         super(counter, "ground", [DImage.getImage(path)], position, dimension);
     }
 
     get layer() {
-        return CBLevelBuilder.GLAYERS.MARKERS;
+        return WLevelBuilder.GLAYERS.MARKERS;
     }
 
-    static MARKER_DIMENSION = new Dimension2D(64, 64);
+    static DIMENSION = new Dimension2D(64, 64);
 }
 
-class BurningArtifact extends ActivableArtifactMixin(CBHexCounterArtifact) {
+class BurningArtifact extends ActivableArtifactMixin(WHexCounterArtifact) {
 
 }
 
-export class CBBurningCounter extends RetractablePieceMixin(CBHexCounter) {
+export class CBBurningCounter extends RetractablePieceMixin(WHexCounter) {
 
     constructor(game, images) {
         super("ground", game, images, CBBurningCounter.DIMENSION);
@@ -105,7 +105,7 @@ export class CBBurningCounter extends RetractablePieceMixin(CBHexCounter) {
     setPlayed() {
         Memento.register(this);
         if (!this.action) {
-            this.launchAction(new CBAction(this.game, this));
+            this.launchAction(new WAction(this.game, this));
             this.action.markAsFinished();
         }
         else {
@@ -184,7 +184,7 @@ export class CBSmokeCounter extends CBBurningCounter {
     }
 
 }
-CBHexCounter.registerTokenType("smoke", CBSmokeCounter);
+WHexCounter.registerTokenType("smoke", CBSmokeCounter);
 
 export class CBFireCounter extends CBBurningCounter {
 
@@ -222,7 +222,7 @@ export class CBFireCounter extends CBBurningCounter {
     }
 
 }
-CBHexCounter.registerTokenType("fire", CBFireCounter);
+WHexCounter.registerTokenType("fire", CBFireCounter);
 
 export function BurningMixin(gameClass) {
 
@@ -261,11 +261,11 @@ export function BurningMixin(gameClass) {
 
 }
 
-class StakesArtifact extends CBHexCounterArtifact {
+class StakesArtifact extends WHexCounterArtifact {
 
 }
 
-export class CBObstacleCounter extends RetractablePieceMixin(CBHexCounter) {
+export class CBObstacleCounter extends RetractablePieceMixin(WHexCounter) {
 
     toSpecs() {
         let specs = {
@@ -339,18 +339,18 @@ export class CBStakesCounter extends CBObstacleCounter {
     }
 
 }
-CBHexCounter.registerTokenType("stakes", CBStakesCounter);
+WHexCounter.registerTokenType("stakes", CBStakesCounter);
 
-export class CBCounterMarkerArtifact extends CBPieceImageArtifact {
+export class CBCounterMarkerArtifact extends WPieceImageArtifact {
 
-    constructor(counter, path, position, dimension= CBCounterMarkerArtifact.MARKER_DIMENSION) {
+    constructor(counter, path, position, dimension= CBCounterMarkerArtifact.DIMENSION) {
         super(counter, "counter-markers", [DImage.getImage(path)], position, dimension);
     }
 
-    static MARKER_DIMENSION = new Dimension2D(64, 64);
+    static DIMENSION = new Dimension2D(64, 64);
 }
 
-export class DisplayablePlayableArtifact extends ActivableArtifactMixin(CBPieceImageArtifact) {
+export class DisplayablePlayableArtifact extends ActivableArtifactMixin(WPieceImageArtifact) {
 
     constructor(fire, ...args) {
         super(fire, ...args);
@@ -358,7 +358,7 @@ export class DisplayablePlayableArtifact extends ActivableArtifactMixin(CBPieceI
 
 }
 
-export class CBDisplayableCounter extends PlayableMixin(DisplayLocatableMixin(CBPiece)) {
+export class CBDisplayableCounter extends PlayableMixin(DisplayLocatableMixin(WPiece)) {
 
     constructor(game, paths) {
         super("counters", game, paths, CBDisplayableCounter.DIMENSION);
@@ -416,7 +416,7 @@ export class CBWeatherCounter extends CBDisplayableCounter {
     }
 
     _processGlobalEvent(source, event, value) {
-        if (event===CBAbstractGame.SETTINGS_EVENT && value.weather!==undefined) {
+        if (event===WAbstractGame.SETTINGS_EVENT && value.weather!==undefined) {
             this.artifact.setImage(value.weather);
         }
     }
@@ -444,7 +444,7 @@ export class CBFogCounter extends CBDisplayableCounter {
     }
 
     _processGlobalEvent(source, event, value) {
-        if (event===CBAbstractGame.SETTINGS_EVENT && value.fog!==undefined) {
+        if (event===WAbstractGame.SETTINGS_EVENT && value.fog!==undefined) {
             this.artifact.setImage(value.fog-1);
         }
     }
@@ -469,7 +469,7 @@ export class CBWindDirectionCounter extends CBDisplayableCounter {
     }
 
     _processGlobalEvent(source, event, value) {
-        if (event===CBAbstractGame.SETTINGS_EVENT && value.windDirection!==undefined) {
+        if (event===WAbstractGame.SETTINGS_EVENT && value.windDirection!==undefined) {
             this.artifact.turn(value.windDirection);
         }
     }

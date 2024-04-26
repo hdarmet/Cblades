@@ -5,30 +5,25 @@ import {
     canonizeAngle,
     diffAngle,
     Dimension2D, invertAngle, Point2D, sumAngle
-} from "../../geometry.js";
+} from "../../board/geometry.js";
 import {
     DDice10,
     DDice20,
     DDice6, DIconMenuItem, DInsertFrame, DMask, DResult, DScene
-} from "../../widget.js";
+} from "../../board/widget.js";
 import {
-    CBAction, CBStacking
-} from "../game.js";
+    WAction, WStacking
+} from "../../wargame/game.js";
 import {
-    CBActionActuator, CBActuatorImageTrigger, CBMask, CBInsert, RetractableActuatorMixin, CBAbstractInsert, CBGame
-} from "../playable.js";
+    WActionActuator, WActuatorImageTrigger, WMask, WInsert, RetractableActuatorMixin, WAbstractInsert, WGame
+} from "../../wargame/playable.js";
 import {
-    CBHexLocation,
-    CBHexSideId
-} from "../map.js";
+    WHexLocation,
+    WHexSideId
+} from "../../wargame/map.js";
 import {
     CBCharge,
-    CBDisplaceAnimation,
-    CBUnitActuatorTrigger,
-    HexLocated,
-    CBStateSequenceElement,
-    getUnitFromContext,
-    CBSceneAnimation
+    CBStateSequenceElement
 } from "../unit.js";
 import {
     CBActionMenu,
@@ -38,22 +33,29 @@ import {
 import {
     DAnimation,
     DImage
-} from "../../draw.js";
+} from "../../board/draw.js";
 import {
     CBCombatTeacher
 } from "../teachers/combat-teacher.js";
 import {
     Memento
-} from "../../mechanisms.js";
+} from "../../board/mechanisms.js";
 import {
-    CBSequence, CBSequenceElement
-} from "../sequences.js";
+    WSequence, WSequenceElement
+} from "../../wargame/sequences.js";
 import {
     SequenceLoader
 } from "../loader.js";
 import {
     DImageArtifact
-} from "../../board.js";
+} from "../../board/board.js";
+import {
+    WSceneAnimation,
+    HexLocated,
+    WDisplaceAnimation,
+    WUnitActuatorTrigger,
+    getUnitFromContext
+} from "../../wargame/wunit.js";
 
 export function registerInteractiveCombat() {
     CBInteractivePlayer.prototype.unitShockAttack = function (unit) {
@@ -73,7 +75,7 @@ export function registerInteractiveCombat() {
             unit.takeALoss();
         }
         if (losses>1) {
-            CBSequence.appendElement(this.game, new CBStateSequenceElement({game: this.game, unit}));
+            WSequence.appendElement(this.game, new CBStateSequenceElement({game: this.game, unit}));
         }
     }
     CBInteractivePlayer.prototype.ask4LossesToUnit = function(unit, attacker, losses, defenderLocation, advance, continuation) {
@@ -102,7 +104,7 @@ export function unregisterInteractiveCombat() {
     CBActionMenu.menuBuilders.remove(createCombatMenuItems);
 }
 
-export class InteractiveAdvanceAction extends CBAction {
+export class InteractiveAdvanceAction extends WAction {
 
     constructor(game, unit, directions, continuation) {
         super(game, unit);
@@ -142,9 +144,8 @@ export class InteractiveAdvanceAction extends CBAction {
     }
 
 }
-CBAction.register("InteractiveAdvanceAction", InteractiveAdvanceAction);
 
-export class InteractiveRetreatAction extends CBAction {
+export class InteractiveRetreatAction extends WAction {
 
     constructor(game, unit, losses, attacker, advance, continuation, defenderLocation, active=true) {
         super(game, unit);
@@ -187,10 +188,10 @@ export class InteractiveRetreatAction extends CBAction {
                 hexes.push(directions[sangle].hex);
             }
             let enhancedContinuation = hexLocation=> {
-                CBSequence.appendElement(this._game,
+                WSequence.appendElement(this._game,
                     new CBAdvanceSequenceElement({game: this.game, unit:this._attacker, hexLocation})
                 );
-                new SequenceLoader().save(this.game, CBSequence.getSequence(this.game));
+                new SequenceLoader().save(this.game, WSequence.getSequence(this.game));
                 continuation();
             };
             if (hexes.length === 1) {
@@ -245,9 +246,8 @@ export class InteractiveRetreatAction extends CBAction {
     }
 
 }
-CBAction.register("InteractiveRetreatAction", InteractiveRetreatAction);
 
-export class InteractiveAbstractShockAttackAction extends CBAction {
+export class InteractiveAbstractShockAttackAction extends WAction {
 
     constructor(game, unit) {
         super(game, unit);
@@ -446,7 +446,7 @@ export class InteractiveAbstractShockAttackAction extends CBAction {
                 success => {
                     this.attackCount++;
                     this._processShockAttackResult(success, attackHex);
-                    CBSequence.appendElement(this.game, new CBShockAttackSequenceElement({
+                    WSequence.appendElement(this.game, new CBShockAttackSequenceElement({
                         unit: this.unit, attackHex, attackHexes: this.attackHexes,
                         defender, defenderHex,
                         supported, advantage: advantage.advantage,
@@ -454,7 +454,7 @@ export class InteractiveAbstractShockAttackAction extends CBAction {
                         game: this.game, dice: scene.dice.result
                     }));
                     defender.player.applyLossesToUnit(defender, scene.result.report.lossesForDefender, this.unit, true, continuation);
-                    new SequenceLoader().save(this.game, CBSequence.getSequence(this.game));
+                    new SequenceLoader().save(this.game, WSequence.getSequence(this.game));
                     this.game.validate();
                 },
                 success => {
@@ -504,7 +504,7 @@ export class InteractiveAbstractShockAttackAction extends CBAction {
     showRules(foe, supported, advantage) {
         let advantageCell = this._getAdvantageCell(foe);
         let scene = new DScene();
-        let mask = new CBMask("#000000", 0.3);
+        let mask = new WMask("#000000", 0.3);
         let close = ()=>{
             this.game.closePopup();
         };
@@ -545,7 +545,6 @@ export class InteractiveShockAttackAction extends InteractiveAbstractShockAttack
     }
 
 }
-CBAction.register("InteractiveShockAttackAction", InteractiveShockAttackAction);
 
 export class InteractiveDuelAttackAction extends InteractiveAbstractShockAttackAction {
 
@@ -558,9 +557,8 @@ export class InteractiveDuelAttackAction extends InteractiveAbstractShockAttackA
     }
 
 }
-CBAction.register("InteractiveDuelAttackAction", InteractiveDuelAttackAction);
 
-export class InteractiveAbstractFireAttackAction extends CBAction {
+export class InteractiveAbstractFireAttackAction extends WAction {
 
     constructor(game, unit) {
         super(game, unit);
@@ -755,7 +753,7 @@ export class InteractiveAbstractFireAttackAction extends CBAction {
                 success => {
                     this._processFireAttackResult(success, attackHex);
                     this._attackCount++;
-                    CBSequence.appendElement(this.game, new CBFireAttackSequenceElement({
+                    WSequence.appendElement(this.game, new CBFireAttackSequenceElement({
                         unit: this.unit,
                         attackHex, attackHexes: this.attackHexes,
                         defender, defenderHex,
@@ -764,7 +762,7 @@ export class InteractiveAbstractFireAttackAction extends CBAction {
                         game: this.game, dice: scene.dice.result
                     }));
                     defender.player.applyLossesToUnit(defender, scene.result.report.lossesForDefender, this.unit, true, continuation);
-                    new SequenceLoader().save(this.game, CBSequence.getSequence(this.game));
+                    new SequenceLoader().save(this.game, WSequence.getSequence(this.game));
                     this.game.validate();
                 },
                 success => {
@@ -814,7 +812,7 @@ export class InteractiveAbstractFireAttackAction extends CBAction {
     showRules(foe, advantage) {
         let advantageCell = this._getAdvantageCell(foe);
         let scene = new DScene();
-        let mask = new CBMask("#000000", 0.3);
+        let mask = new WMask("#000000", 0.3);
         let close = ()=>{
             this.game.closePopup();
         };
@@ -856,7 +854,6 @@ export class InteractiveFireAttackAction extends InteractiveAbstractFireAttackAc
     }
 
 }
-CBAction.register("InteractiveFireAttackAction", InteractiveFireAttackAction);
 
 export class InteractiveDuelFireAction extends InteractiveAbstractFireAttackAction {
 
@@ -869,7 +866,6 @@ export class InteractiveDuelFireAction extends InteractiveAbstractFireAttackActi
     }
 
 }
-CBAction.register("InteractiveDuelFireAction", InteractiveDuelFireAction);
 
 function createCombatMenuItems(unit, actions) {
     return [
@@ -896,7 +892,7 @@ function createCombatMenuItems(unit, actions) {
     ];
 }
 
-class ShockHexTrigger extends CBUnitActuatorTrigger {
+class ShockHexTrigger extends WUnitActuatorTrigger {
 
     constructor(actuator, unit, attackHex) {
         super(actuator, unit, "units",
@@ -909,7 +905,7 @@ class ShockHexTrigger extends CBUnitActuatorTrigger {
 
 }
 
-export class CBShockHexActuator extends RetractableActuatorMixin(CBActionActuator) {
+export class CBShockHexActuator extends RetractableActuatorMixin(WActionActuator) {
 
     constructor(action) {
         super(action);
@@ -933,7 +929,7 @@ export class CBShockHexActuator extends RetractableActuatorMixin(CBActionActuato
 
 }
 
-class FireHexTrigger extends CBUnitActuatorTrigger {
+class FireHexTrigger extends WUnitActuatorTrigger {
 
     constructor(actuator, unit, attackHex) {
         super(actuator, unit, "units",
@@ -946,7 +942,7 @@ class FireHexTrigger extends CBUnitActuatorTrigger {
 
 }
 
-export class CBFireHexActuator extends RetractableActuatorMixin(CBActionActuator) {
+export class CBFireHexActuator extends RetractableActuatorMixin(WActionActuator) {
 
     constructor(action) {
         super(action);
@@ -970,7 +966,7 @@ export class CBFireHexActuator extends RetractableActuatorMixin(CBActionActuator
 
 }
 
-class ShockAttackTrigger extends CBUnitActuatorTrigger {
+class ShockAttackTrigger extends WUnitActuatorTrigger {
 
     constructor(actuator, unit, supported, combat) {
         super(actuator, combat.foe, "units",
@@ -993,7 +989,7 @@ class ShockAttackTrigger extends CBUnitActuatorTrigger {
 
 }
 
-export class CBShockAttackActuator extends RetractableActuatorMixin(CBActionActuator) {
+export class CBShockAttackActuator extends RetractableActuatorMixin(WActionActuator) {
 
     constructor(action, combats) {
         super(action);
@@ -1029,7 +1025,7 @@ export class CBShockAttackActuator extends RetractableActuatorMixin(CBActionActu
 
 }
 
-class FireAttackTrigger extends CBUnitActuatorTrigger {
+class FireAttackTrigger extends WUnitActuatorTrigger {
 
     constructor(actuator, unit, combat) {
         super(actuator, combat.foe, "units",
@@ -1049,7 +1045,7 @@ class FireAttackTrigger extends CBUnitActuatorTrigger {
 
 }
 
-export class CBFireAttackActuator extends RetractableActuatorMixin(CBActionActuator) {
+export class CBFireAttackActuator extends RetractableActuatorMixin(WActionActuator) {
 
     constructor(action, fires) {
         super(action);
@@ -1074,7 +1070,7 @@ export class CBFireAttackActuator extends RetractableActuatorMixin(CBActionActua
 
 }
 
-class ShockHelpTrigger extends CBUnitActuatorTrigger {
+class ShockHelpTrigger extends WUnitActuatorTrigger {
 
     constructor(actuator, supported, foe, attackedHex, advantage) {
         let image = supported ?
@@ -1111,7 +1107,7 @@ class ShockHelpTrigger extends CBUnitActuatorTrigger {
 }
 ShockHelpTrigger.DIMENSION = new Dimension2D(55, 55);
 
-export class CBShockHelpActuator extends RetractableActuatorMixin(CBActionActuator) {
+export class CBShockHelpActuator extends RetractableActuatorMixin(WActionActuator) {
 
     constructor(action, combats) {
         super(action);
@@ -1152,13 +1148,13 @@ export class CBShockHelpActuator extends RetractableActuatorMixin(CBActionActuat
     setVisibility(level) {
         super.setVisibility(level);
         for (let artifact of this.triggers) {
-            artifact.setVisibility && artifact.setVisibility(level===CBGame.FULL_VISIBILITY ? 1:0);
+            artifact.setVisibility && artifact.setVisibility(level===WGame.FULL_VISIBILITY ? 1:0);
         }
     }
 
 }
 
-class FireHelpTrigger extends CBUnitActuatorTrigger {
+class FireHelpTrigger extends WUnitActuatorTrigger {
 
     constructor(actuator, foe, advantage) {
         let image = DImage.getImage("./../images/actuators/fire-advantage.png");
@@ -1187,7 +1183,7 @@ class FireHelpTrigger extends CBUnitActuatorTrigger {
 }
 FireHelpTrigger.DIMENSION = new Dimension2D(55, 55);
 
-export class CBFireHelpActuator extends RetractableActuatorMixin(CBActionActuator) {
+export class CBFireHelpActuator extends RetractableActuatorMixin(WActionActuator) {
 
     constructor(action, fires) {
         super(action);
@@ -1213,12 +1209,12 @@ export class CBFireHelpActuator extends RetractableActuatorMixin(CBActionActuato
     setVisibility(level) {
         super.setVisibility(level);
         for (let artifact of this.triggers) {
-            artifact.setVisibility && artifact.setVisibility(level===CBGame.FULL_VISIBILITY ? 1:0);
+            artifact.setVisibility && artifact.setVisibility(level===WGame.FULL_VISIBILITY ? 1:0);
         }
     }
 }
 
-export class CBAdvanceActuator extends CBActionActuator {
+export class CBAdvanceActuator extends WActionActuator {
 
     constructor(action, directions) {
         super(action);
@@ -1226,7 +1222,7 @@ export class CBAdvanceActuator extends CBActionActuator {
         let advanceImage = DImage.getImage("./../images/actuators/advance-move.png");
         for (let sangle in directions) {
             let angle = parseInt(sangle);
-            let orientation = new CBActuatorImageTrigger(this, "actuators", advanceImage,
+            let orientation = new WActuatorImageTrigger(this, "actuators", advanceImage,
                 new Point2D(0, 0), new Dimension2D(80, 130));
             orientation.pangle = parseInt(angle);
             orientation.position = Point2D.position(this.playable.location, directions[angle].hex.location, 0.9);
@@ -1242,21 +1238,21 @@ export class CBAdvanceActuator extends CBActionActuator {
     onMouseClick(trigger, event) {
         let hexLocation = this.playable.hexLocation.getNearHex(trigger.angle);
         this.action.advanceUnit(hexLocation);
-        CBSequence.appendElement(this.game, new CBMoveSequenceElement({
-            game:this.playable.game, unit: this.playable, hexLocation, stacking: CBStacking.BOTTOM
+        WSequence.appendElement(this.game, new CBMoveSequenceElement({
+            game:this.playable.game, unit: this.playable, hexLocation, stacking: WStacking.BOTTOM
         }));
     }
 
 }
 
-export class CBRetreatActuator extends CBActionActuator {
+export class CBRetreatActuator extends WActionActuator {
 
     constructor(action, directions, active) {
         super(action);
         let imageArtifacts = [];
         let bloodImage = DImage.getImage("./../images/actuators/blood.png");
         let loss = active ?
-            new CBActuatorImageTrigger(this, "actuators", bloodImage,
+            new WActuatorImageTrigger(this, "actuators", bloodImage,
                 new Point2D(0, 0), new Dimension2D(125, 173)):
             new DImageArtifact( "actuators", bloodImage,
                 new Point2D(0, 0), new Dimension2D(125, 173));
@@ -1266,7 +1262,7 @@ export class CBRetreatActuator extends CBActionActuator {
         for (let sangle in directions) {
             let angle = parseInt(sangle);
             let orientation = active ?
-                new CBActuatorImageTrigger(this, "actuators", retreatImage,
+                new WActuatorImageTrigger(this, "actuators", retreatImage,
                     new Point2D(0, 0), new Dimension2D(80, 130)):
                 new DImageArtifact( "actuators", retreatImage,
                     new Point2D(0, 0), new Dimension2D(80, 130));
@@ -1289,7 +1285,7 @@ export class CBRetreatActuator extends CBActionActuator {
     onMouseClick(trigger, event) {
         if (trigger.loss) {
             this.action.takeALossFromUnit(event);
-            CBSequence.appendElement(this.playable.game, new CBStateSequenceElement({game:this.playable.game, unit: this.playable}));
+            WSequence.appendElement(this.playable.game, new CBStateSequenceElement({game:this.playable.game, unit: this.playable}));
         }
         else {
             this.action.retreatUnit(
@@ -1301,7 +1297,7 @@ export class CBRetreatActuator extends CBActionActuator {
 
 }
 
-export class CBFormationRetreatActuator extends RetractableActuatorMixin(CBActionActuator) {
+export class CBFormationRetreatActuator extends RetractableActuatorMixin(WActionActuator) {
 
     constructor(action, moveDirections, rotateDirections) {
 
@@ -1309,7 +1305,7 @@ export class CBFormationRetreatActuator extends RetractableActuatorMixin(CBActio
             let moveImage = DImage.getImage("./../images/actuators/retreat-move.png");
             for (let sangle in moveDirections) {
                 let angle = parseInt(sangle);
-                let orientation = new CBActuatorImageTrigger(this, "actuators", moveImage,
+                let orientation = new WActuatorImageTrigger(this, "actuators", moveImage,
                     new Point2D(0, 0), new Dimension2D(80, 130));
                 orientation.pangle = parseInt(angle);
                 orientation.rotate = false;
@@ -1326,7 +1322,7 @@ export class CBFormationRetreatActuator extends RetractableActuatorMixin(CBActio
             let rotateImage = DImage.getImage("./../images/actuators/retreat-rotate.png");
             for (let sangle in rotateDirections) {
                 let angle = parseInt(sangle);
-                let orientation = new CBActuatorImageTrigger(this, "actuators", rotateImage,
+                let orientation = new WActuatorImageTrigger(this, "actuators", rotateImage,
                     new Point2D(0, 0), new Dimension2D(80, 96));
                 orientation.pangle = parseInt(angle);
                 orientation.rotate = true;
@@ -1342,7 +1338,7 @@ export class CBFormationRetreatActuator extends RetractableActuatorMixin(CBActio
         super(action);
         let imageArtifacts = [];
         let bloodImage = DImage.getImage("./../images/actuators/blood.png");
-        let loss = new CBUnitActuatorTrigger(this, this.playable, "actuators", bloodImage,
+        let loss = new WUnitActuatorTrigger(this, this.playable, "actuators", bloodImage,
             new Point2D(0, 0), new Dimension2D(125, 173));
         loss.loss = true;
         imageArtifacts.push(loss);
@@ -1362,7 +1358,7 @@ export class CBFormationRetreatActuator extends RetractableActuatorMixin(CBActio
     onMouseClick(trigger, event) {
         if (trigger.loss) {
             this.action.takeALossFromUnit(event);
-            CBSequence.appendElement(this.playable.game, new CBStateSequenceElement({game:this.playable.game, unit: this.playable}));
+            WSequence.appendElement(this.playable.game, new CBStateSequenceElement({game:this.playable.game, unit: this.playable}));
         }
         else if (trigger.rotate) {
             let hex1 = this.playable.hexLocation.getOtherHex(trigger.hex);
@@ -1370,21 +1366,21 @@ export class CBFormationRetreatActuator extends RetractableActuatorMixin(CBActio
             let delta = diffAngle(this.playable.angle, trigger.angle)*2;
             let angle = sumAngle(this.playable.angle, delta);
             this.action.reorientUnit(angle);
-            CBSequence.appendElement(this.playable.game, new CBReorientSequenceElement({
+            WSequence.appendElement(this.playable.game, new CBReorientSequenceElement({
                 game:this.playable.game, unit: this.playable, angle
             }));
-            let hexLocation = new CBHexSideId(hex1, hex2);
+            let hexLocation = new WHexSideId(hex1, hex2);
             this.action.retreatUnit(hexLocation, trigger.stacking);
-            CBSequence.appendElement(this.game, new CBMoveSequenceElement({
+            WSequence.appendElement(this.game, new CBMoveSequenceElement({
                 game:this.playable.game, unit: this.playable, hexLocation, stacking: trigger.stacking
             }));
         }
         else {
             let hex1 = this.playable.hexLocation.fromHex.getNearHex(trigger.angle);
             let hex2 = this.playable.hexLocation.toHex.getNearHex(trigger.angle);
-            let hexLocation = new CBHexSideId(hex1, hex2);
+            let hexLocation = new WHexSideId(hex1, hex2);
             this.action.retreatUnit(hexLocation, trigger.stacking);
-            CBSequence.appendElement(this.game, new CBMoveSequenceElement({
+            WSequence.appendElement(this.game, new CBMoveSequenceElement({
                 game:this.playable.game, unit: this.playable, hexLocation, stacking: trigger.stacking
             }));
         }
@@ -1392,7 +1388,7 @@ export class CBFormationRetreatActuator extends RetractableActuatorMixin(CBActio
 
 }
 
-export class CBShockAttackInsert extends CBInsert {
+export class CBShockAttackInsert extends WInsert {
 
     constructor(advantage) {
         super("./../images/inserts/shock-attack-insert.png", CBShockAttackInsert.DIMENSION,  CBShockAttackInsert.PAGE_DIMENSION);
@@ -1471,7 +1467,7 @@ export class CBShockAttackInsert extends CBInsert {
     static PAGE_DIMENSION = new Dimension2D(544, 850);
 }
 
-export class CBFireAttackInsert extends CBInsert {
+export class CBFireAttackInsert extends WInsert {
 
     constructor(advantage) {
         super("./../images/inserts/fire-attack-insert.png", CBFireAttackInsert.DIMENSION,  CBFireAttackInsert.PAGE_DIMENSION);
@@ -1543,7 +1539,7 @@ export class CBFireAttackInsert extends CBInsert {
     static PAGE_DIMENSION = new Dimension2D(544, 850);
 }
 
-export class CBCombatResultTableInsert extends CBInsert {
+export class CBCombatResultTableInsert extends WInsert {
 
     constructor() {
         super("./../images/inserts/combat-result-table-insert.png", CBCombatResultTableInsert.DIMENSION);
@@ -1552,7 +1548,7 @@ export class CBCombatResultTableInsert extends CBInsert {
 }
 CBCombatResultTableInsert.DIMENSION = new Dimension2D(804, 174);
 
-export class CBWeaponTableInsert extends CBAbstractInsert {
+export class CBWeaponTableInsert extends WAbstractInsert {
 
     constructor() {
         super("./../images/inserts/weapon-table-insert.png", CBWeaponTableInsert.DIMENSION, CBWeaponTableInsert.PAGE_DIMENSION);
@@ -1627,12 +1623,12 @@ export function WithCombat(clazz) {
 
         _toSpecs(spec, context) {
             super._toSpecs(spec, context);
-            spec.attackHex = CBHexLocation.toSpecs(this.attackHex);
+            spec.attackHex = WHexLocation.toSpecs(this.attackHex);
             spec.defender = this.defender.name;
-            spec.defenderHex = CBHexLocation.toSpecs(this.defenderHex);
+            spec.defenderHex = WHexLocation.toSpecs(this.defenderHex);
             spec.attackHexes = [];
             for (let hex of this.attackHexes) {
-                spec.attackHexes.push(CBHexLocation.toSpecs(hex));
+                spec.attackHexes.push(WHexLocation.toSpecs(hex));
             }
             spec.supported = this.supported;
             spec.advantage = this.advantage;
@@ -1641,12 +1637,12 @@ export function WithCombat(clazz) {
 
         _fromSpecs(spec, context) {
             super._fromSpecs(spec, context);
-            this.attackHex = CBHexLocation.fromSpecs(context.game.map, spec.attackHex);
+            this.attackHex = WHexLocation.fromSpecs(context.game.map, spec.attackHex);
             this.defender = getUnitFromContext(context, spec.defender);
-            this.defenderHex = CBHexLocation.fromSpecs(context.game.map, spec.defenderHex);
+            this.defenderHex = WHexLocation.fromSpecs(context.game.map, spec.defenderHex);
             this.attackHexes = [];
             for (let hex of spec.attackHexes) {
-                this.attackHexes.push(CBHexLocation.fromSpecs(context.game.map, hex));
+                this.attackHexes.push(WHexLocation.fromSpecs(context.game.map, hex));
             }
             this.supported = spec.supported;
             this.advantage = spec.advantage;
@@ -1673,7 +1669,7 @@ export class CBShockAttackSequenceElement extends WithCombat(WithDiceRoll(CBStat
     get delay() { return 1500; }
 
     apply(startTick) {
-        return new CBSceneAnimation({
+        return new WSceneAnimation({
             unit: this.unit, startTick, duration: this.delay, state: this, game: this.game,
             animation: () => {
                 let action = new InteractiveShockAttackAction(this.game, this.unit);
@@ -1691,14 +1687,14 @@ export class CBShockAttackSequenceElement extends WithCombat(WithDiceRoll(CBStat
     static launch(specs, context, index) {
         let unit = context.pieceMap.get(specs.content.unit);
         let action = new InteractiveShockAttackAction(unit.game, unit);
-        action.status = CBAction.STARTED;
+        action.status = WAction.STARTED;
         unit.game.selectedPlayable = unit;
         unit.changeAction(action);
         let attackHex = context.game.map.getHex(
             specs.content.attackHex.col,
             specs.content.attackHex.row
         );
-        if (CBSequence.getSequenceElement(context.sequenceElements.slice(index+1), "retreat")) {
+        if (WSequence.getSequenceElement(context.sequenceElements.slice(index+1), "retreat")) {
             action.passSequence(attackHex, specs.content.attackCount);
         }
         else {
@@ -1713,7 +1709,7 @@ export class CBShockAttackSequenceElement extends WithCombat(WithDiceRoll(CBStat
     }
 
 }
-CBSequence.register("shock-attack", CBShockAttackSequenceElement);
+WSequence.register("shock-attack", CBShockAttackSequenceElement);
 
 export class CBFireAttackSequenceElement extends WithCombat(WithDiceRoll(CBStateSequenceElement)) {
 
@@ -1731,7 +1727,7 @@ export class CBFireAttackSequenceElement extends WithCombat(WithDiceRoll(CBState
     get delay() { return 1500; }
 
     apply(startTick) {
-        return new CBSceneAnimation({
+        return new WSceneAnimation({
             unit: this.unit, startTick, duration: this.delay, state: this, game: this.game,
             animation: () => {
                 let action = new InteractiveFireAttackAction(this.game, this.unit);
@@ -1749,14 +1745,14 @@ export class CBFireAttackSequenceElement extends WithCombat(WithDiceRoll(CBState
     static launch(specs, context, index) {
         let unit = context.pieceMap.get(specs.content.unit);
         let action = new InteractiveFireAttackAction(unit.game, unit);
-        action.status = CBAction.STARTED;
+        action.status = WAction.STARTED;
         unit.game.selectedPlayable = unit;
         unit.changeAction(action);
         let attackHex = context.game.map.getHex(
             specs.content.attackHex.col,
             specs.content.attackHex.row
         );
-        if (CBSequence.getSequenceElement(context.sequenceElements.slice(index+1), "retreat")) {
+        if (WSequence.getSequenceElement(context.sequenceElements.slice(index+1), "retreat")) {
             action.passSequence(attackHex, specs.content.attackCount);
         }
         else {
@@ -1771,9 +1767,9 @@ export class CBFireAttackSequenceElement extends WithCombat(WithDiceRoll(CBState
     }
 
 }
-CBSequence.register("fire-attack", CBFireAttackSequenceElement);
+WSequence.register("fire-attack", CBFireAttackSequenceElement);
 
-export class CBAsk4RetreatSequenceElement extends CBSequenceElement {
+export class CBAsk4RetreatSequenceElement extends WSequenceElement {
 
     constructor({id, game, unit, losses, attacker, advance}) {
         super({id, type: "ask4-retreat", game});
@@ -1811,12 +1807,12 @@ export class CBAsk4RetreatSequenceElement extends CBSequenceElement {
     }
 
 }
-CBSequence.register("ask4-retreat", CBAsk4RetreatSequenceElement);
+WSequence.register("ask4-retreat", CBAsk4RetreatSequenceElement);
 
 export class CBRetreatSequenceElement extends HexLocated(CBStateSequenceElement) {
 
     constructor({id, game, unit, hexLocation}) {
-        super({id, type: "retreat", unit, hexLocation, stacking:CBStacking.TOP, game});
+        super({id, type: "retreat", unit, hexLocation, stacking:WStacking.TOP, game});
     }
 
     get delay() { return 500; }
@@ -1832,7 +1828,7 @@ export class CBRetreatSequenceElement extends HexLocated(CBStateSequenceElement)
     }
 
 }
-CBSequence.register("retreat", CBRetreatSequenceElement);
+WSequence.register("retreat", CBRetreatSequenceElement);
 
 export class CBAsk4RetreatAnimation extends DAnimation {
 
@@ -1849,10 +1845,10 @@ export class CBAsk4RetreatAnimation extends DAnimation {
     _init() {
         this._unit.launchAction(new InteractiveRetreatAction(this._game, this._unit, this._losses, this._attacker, false,
             ()=>{
-                CBSequence.appendElement(this._game,
+                WSequence.appendElement(this._game,
                     new CBRetreatSequenceElement({game: this._game, unit:this._unit, hexLocation:this._unit.hexLocation})
                 );
-                new SequenceLoader().save(this._game, CBSequence.getSequence(this._game));
+                new SequenceLoader().save(this._game, WSequence.getSequence(this._game));
                 this._game.validate();
             },
             this._unit.hexLocation
@@ -1861,7 +1857,7 @@ export class CBAsk4RetreatAnimation extends DAnimation {
 
 }
 
-export class CBRetreatAnimation extends CBDisplaceAnimation {
+export class CBRetreatAnimation extends WDisplaceAnimation {
 
     constructor({unit, startTick, duration, state, angle, hexLocation, stacking}) {
         super({unit, startTick, duration, state, angle, hexLocation, stacking});
@@ -1887,7 +1883,7 @@ export class CBRetreatAnimation extends CBDisplaceAnimation {
 export class CBAdvanceSequenceElement extends HexLocated(CBStateSequenceElement) {
 
     constructor({id, game, unit, hexLocation}) {
-        super({id, type: "advance", unit, hexLocation, stacking:CBStacking.TOP, game});
+        super({id, type: "advance", unit, hexLocation, stacking:WStacking.TOP, game});
     }
 
     get delay() { return 500; }
@@ -1900,9 +1896,9 @@ export class CBAdvanceSequenceElement extends HexLocated(CBStateSequenceElement)
     }
 
 }
-CBSequence.register("advance", CBAdvanceSequenceElement);
+WSequence.register("advance", CBAdvanceSequenceElement);
 
-export class CBAdvanceAnimation extends CBDisplaceAnimation {
+export class CBAdvanceAnimation extends WDisplaceAnimation {
 
     constructor({unit, startTick, duration, state, angle, hexLocation, stacking}) {
         super({unit, startTick, duration, state, angle, hexLocation, stacking});

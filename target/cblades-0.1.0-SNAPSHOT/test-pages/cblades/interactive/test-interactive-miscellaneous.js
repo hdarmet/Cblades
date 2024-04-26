@@ -7,17 +7,17 @@ import {
 import {
     DAnimator,
     DImage, getDrawPlatform, setDrawPlatform
-} from "../../../jslib/draw.js";
+} from "../../../jslib/board/draw.js";
 import {
     assertClearDirectives,
     assertDirectives, assertNoMoreDirectives,
     getDirectives, getLayers,
     loadAllImages,
     mockPlatform, resetDirectives, skipDirectives
-} from "../../mocks.js";
+} from "../../board/mocks.js";
 import {
     Mechanisms, Memento
-} from "../../../jslib/mechanisms.js";
+} from "../../../jslib/board/mechanisms.js";
 import {
     repaint,
     clickOnActionMenu,
@@ -59,7 +59,7 @@ import {
 } from "../../../jslib/cblades/interactive/interactive-miscellaneous.js";
 import {
     PlayableMixin
-} from "../../../jslib/cblades/game.js";
+} from "../../../jslib/wargame/game.js";
 import {
     CBFireCounter,
     CBFogCounter, CBSmokeCounter,
@@ -73,8 +73,8 @@ import {
     CBWeather, CBFog
 } from "../../../jslib/cblades/weather.js";
 import {
-    CBSequence
-} from "../../../jslib/cblades/sequences.js";
+    WSequence
+} from "../../../jslib/wargame/sequences.js";
 import {
     registerInteractiveMiscellaneous,
     unregisterInteractiveMiscellaneous
@@ -82,7 +82,7 @@ import {
 
 describe("Interactive Miscellaneous", ()=> {
 
-    var appendElement = CBSequence.appendElement;
+    var appendElement = WSequence.appendElement;
 
     before(() => {
         registerInteractiveMiscellaneous();
@@ -91,16 +91,16 @@ describe("Interactive Miscellaneous", ()=> {
         Mechanisms.reset();
         DAnimator.clear();
         Memento.clear();
-        CBSequence.awaitedElements = [];
-        CBSequence.appendElement = function(game, element) {
-            let awaited = CBSequence.awaitedElements.pop();
+        WSequence.awaitedElements = [];
+        WSequence.appendElement = function(game, element) {
+            let awaited = WSequence.awaitedElements.pop();
             assert(element).equalsTo(awaited);
         }
     });
 
     after(() => {
         unregisterInteractiveMiscellaneous();
-        CBSequence.appendElement = appendElement;
+        WSequence.appendElement = appendElement;
     });
 
     function showPlayIsFireTrigger([a, b, c, d, e, f]) {

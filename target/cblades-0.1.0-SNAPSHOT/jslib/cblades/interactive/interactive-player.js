@@ -1,38 +1,41 @@
 import {
     diffAngle,
     Dimension2D, Point2D
-} from "../../geometry.js";
+} from "../../board/geometry.js";
 import {
     DDice6, DIconMenu, DMultiImagesIndicator, DMask, DResult, DScene, DRotatableIndicator
-} from "../../widget.js";
+} from "../../board/widget.js";
 import {
     Mechanisms, Memento
-} from "../../mechanisms.js";
+} from "../../board/mechanisms.js";
 import {
-    CBAbstractGame
-} from "../game.js";
+    WAbstractGame
+} from "../../wargame/game.js";
 import {
     DBoard, DImageArtifact
-} from "../../board.js";
+} from "../../board/board.js";
 import {
     DImage
-} from "../../draw.js";
+} from "../../board/draw.js";
 import {
-    CBInsert
-} from "../playable.js";
+    WInsert
+} from "../../wargame/playable.js";
 import {
-    CBStateSequenceElement, CBUnitAnimation,
-    CBUnitPlayer, CBUnitSceneAnimation
+    CBStateSequenceElement,
+    CBUnitPlayer
 } from "../unit.js";
 import {
-    CBNextTurnSequenceElement, CBSequence, CBSequenceElement
-} from "../sequences.js";
+    WNextTurnSequenceElement, WSequence, WSequenceElement
+} from "../../wargame/sequences.js";
 import {
     SequenceLoader
 } from "../loader.js";
 import {
     CBWeather, CBFog
 } from "../weather.js";
+import {
+    WUnitAnimation, WUnitSceneAnimation
+} from "../../wargame/wunit.js";
 
 export class CBInteractivePlayer extends CBUnitPlayer {
 
@@ -116,7 +119,7 @@ export class CBInteractivePlayer extends CBUnitPlayer {
                 neighbor.attrs.routChecked = true;
                 if (!unit.attrs.neighborsRootChecked) {
                     unit.attrs.neighborsRootChecked = true;
-                    CBSequence.appendElement(this.game, new CBRootNeighborsCohesionSequenceElement({
+                    WSequence.appendElement(this.game, new CBRootNeighborsCohesionSequenceElement({
                         unit, game: this.game, neighbors
                     }));
                 }
@@ -193,8 +196,8 @@ export class CBInteractivePlayer extends CBUnitPlayer {
     finishTurn(animation) {
         let playable = this.game.selectedPlayable;
         let finishTurn = () => {
-            CBSequence.appendElement(this.game, new CBNextTurnSequenceElement({game: this.game}));
-            new SequenceLoader().save(this.game, CBSequence.getSequence(this.game));
+            WSequence.appendElement(this.game, new WNextTurnSequenceElement({game: this.game}));
+            new SequenceLoader().save(this.game, WSequence.getSequence(this.game));
             super.finishTurn(animation);
         }
         if (playable) {
@@ -211,8 +214,8 @@ export class CBInteractivePlayer extends CBUnitPlayer {
     openActionMenu(unit, offset, actions) {
         let popup = new CBActionMenu(this.game, unit, actions);
         this.game.openPopup(popup, new Point2D(
-            offset.x - popup.dimension.w/2 + CBAbstractGame.POPUP_MARGIN,
-            offset.y - popup.dimension.h/2 + CBAbstractGame.POPUP_MARGIN));
+            offset.x - popup.dimension.w/2 + WAbstractGame.POPUP_MARGIN,
+            offset.y - popup.dimension.h/2 + WAbstractGame.POPUP_MARGIN));
     }
 
     canPlay() {
@@ -268,10 +271,10 @@ export class CBDefenderEngagementChecking {
                 if (!success) {
                     this.unit.addOneCohesionLevel();
                 }
-                CBSequence.appendElement(this.game, new CBDefenderEngagementSequenceElement({
+                WSequence.appendElement(this.game, new CBDefenderEngagementSequenceElement({
                     game: this.game, unit:this.unit, dice: scene.dice.result
                 }));
-                new SequenceLoader().save(this.game, CBSequence.getSequence(this.game));
+                new SequenceLoader().save(this.game, WSequence.getSequence(this.game));
                 this.game.validate();
             },
             ()=>{
@@ -339,10 +342,10 @@ export class CBLoseCohesionChecking {
                 if (!success) {
                     this.unit.addOneCohesionLevel();
                 }
-                CBSequence.appendElement(this.game, new sequenceElement({
+                WSequence.appendElement(this.game, new sequenceElement({
                     game: this.game, unit: this.unit, dice: scene.dice.result
                 }));
-                new SequenceLoader().save(this.game, CBSequence.getSequence(this.game));
+                new SequenceLoader().save(this.game, WSequence.getSequence(this.game));
                 this.game.validate();
             },
             ()=>{
@@ -516,7 +519,7 @@ export class CBWindDirectionIndicator extends DRotatableIndicator {
     static DIMENSION = new Dimension2D(142, 142);
 }
 
-export class CBCheckEngagementInsert extends CBInsert {
+export class CBCheckEngagementInsert extends WInsert {
 
     constructor(url, dimension, condition) {
         super(url, dimension);
@@ -557,7 +560,7 @@ export class CBCheckDefenderEngagementInsert extends CBCheckEngagementInsert {
     static DIMENSION = new Dimension2D(444, 763);
 }
 
-export class CBLoseCohesionInsert extends CBInsert {
+export class CBLoseCohesionInsert extends WInsert {
 
     constructor(condition) {
         super("./../images/inserts/lose-cohesion-insert.png", CBLoseCohesionInsert.DIMENSION);
@@ -567,7 +570,7 @@ export class CBLoseCohesionInsert extends CBInsert {
     static DIMENSION = new Dimension2D(444, 330);
 }
 
-export class CBMoralInsert extends CBInsert {
+export class CBMoralInsert extends WInsert {
 
     constructor(unit) {
         super("./../images/inserts/moral-insert.png", CBMoralInsert.DIMENSION);
@@ -591,14 +594,14 @@ export class CBDefenderEngagementSequenceElement extends WithDiceRoll(CBStateSeq
     get delay() { return 1500; }
 
     apply(startTick) {
-        return new CBUnitSceneAnimation({
+        return new WUnitSceneAnimation({
             unit: this.unit, startTick, duration: this.delay, state: this, game: this.game,
             animation: () => new CBDefenderEngagementChecking(this.game, this.unit).replay(this.dice)
         });
     }
 
 }
-CBSequence.register("defender-engagement", CBDefenderEngagementSequenceElement);
+WSequence.register("defender-engagement", CBDefenderEngagementSequenceElement);
 
 export class CBRoutCheckingSequenceElement extends WithDiceRoll(CBStateSequenceElement) {
 
@@ -610,7 +613,7 @@ export class CBRoutCheckingSequenceElement extends WithDiceRoll(CBStateSequenceE
 
     apply(startTick) {
         this.unit.setAttr("rout-checked", true);
-        return new CBUnitSceneAnimation({
+        return new WUnitSceneAnimation({
             unit: this.unit, startTick, duration: this.delay, state: this, game: this.game,
             animation: () => new CBLoseCohesionChecking(this.game, this.unit).replay(this.dice)
         });
@@ -623,7 +626,7 @@ export class CBRoutCheckingSequenceElement extends WithDiceRoll(CBStateSequenceE
     }
 
 }
-CBSequence.register("rout-checking", CBRoutCheckingSequenceElement);
+WSequence.register("rout-checking", CBRoutCheckingSequenceElement);
 
 export class CBNeighborRoutCheckingSequenceElement extends WithDiceRoll(CBStateSequenceElement) {
 
@@ -635,7 +638,7 @@ export class CBNeighborRoutCheckingSequenceElement extends WithDiceRoll(CBStateS
 
     apply(startTick) {
         this.unit.setAttr("rout-checked", true);
-        return new CBUnitSceneAnimation({
+        return new WUnitSceneAnimation({
             unit: this.unit, startTick, duration: this.delay, state: this, game: this.game,
             animation: () => new CBLoseCohesionChecking(this.game, this.unit).replay(this.dice)
         });
@@ -646,7 +649,7 @@ export class CBNeighborRoutCheckingSequenceElement extends WithDiceRoll(CBStateS
     }
 
 }
-CBSequence.register("neighbor-rout-checking", CBNeighborRoutCheckingSequenceElement);
+WSequence.register("neighbor-rout-checking", CBNeighborRoutCheckingSequenceElement);
 
 export class CBRootNeighborsCohesionSequenceElement extends CBStateSequenceElement {
 
@@ -666,7 +669,7 @@ export class CBRootNeighborsCohesionSequenceElement extends CBStateSequenceEleme
             neighbors: this.neighbors
         });
          */
-        return new CBUnitAnimation({
+        return new WUnitAnimation({
             unit: this.unit, startTick, duration: this.delay,
             state: this, game: this.game
         });
@@ -705,7 +708,7 @@ export class CBRootNeighborsCohesionSequenceElement extends CBStateSequenceEleme
         return context.get(name)
     }
 }
-CBSequence.register("neighbors-rout-checking", CBRootNeighborsCohesionSequenceElement);
+WSequence.register("neighbors-rout-checking", CBRootNeighborsCohesionSequenceElement);
 
 export function WithDiceRoll(clazz) {
 

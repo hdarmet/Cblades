@@ -2,33 +2,37 @@
 
 import {
     Dimension2D, Point2D
-} from "../../geometry.js";
+} from "../../board/geometry.js";
 import {
     DDice6, DIconMenuItem, DMask, DResult, DScene, DIconMenu, DMessage
-} from "../../widget.js";
+} from "../../board/widget.js";
 import {
-    CBAction, CBAbstractGame, CBStacking
-} from "../game.js";
+    WAction, WAbstractGame
+} from "../../wargame/game.js";
 import {
-    CBActionActuator, RetractableActuatorMixin, CBInsert, CBGame
-} from "../playable.js";
+    WActionActuator, RetractableActuatorMixin, WInsert, WGame
+} from "../../wargame/playable.js";
 import {
     DAnimation,
     DImage
-} from "../../draw.js";
+} from "../../board/draw.js";
 import {
     CBActionMenu, CBInteractivePlayer, WithDiceRoll
 } from "./interactive-player.js";
 import {
-    CBUnitActuatorTrigger, CBCharge,
-    CBOrderInstruction, getUnitFromContext, CBStateSequenceElement, CBSceneAnimation
+    CBCharge,
+    CBOrderInstruction, CBStateSequenceElement, CBUnit
 } from "../unit.js";
 import {
-    CBSequence, CBSequenceElement,
-} from "../sequences.js";
+    WSequence, WSequenceElement,
+} from "../../wargame/sequences.js";
 import {
     SequenceLoader
 } from "../loader.js";
+import {
+    WSceneAnimation, WUnitActuatorTrigger,
+    getUnitFromContext
+} from "../../wargame/wunit.js";
 
 export function registerInteractiveCommand() {
     CBInteractivePlayer.prototype.tryToTakeCommand = function(unit) {
@@ -46,8 +50,8 @@ export function registerInteractiveCommand() {
     CBInteractivePlayer.prototype.openOrderInstructionMenu = function(unit, offset, allowedOrderInstructions) {
         let popup = new CBOrderInstructionMenu(this.game, unit, allowedOrderInstructions);
         this.game.openPopup(popup, new Point2D(
-            offset.x - popup.dimension.w/2 + CBAbstractGame.POPUP_MARGIN,
-            offset.y - popup.dimension.h/2 + CBAbstractGame.POPUP_MARGIN));
+            offset.x - popup.dimension.w/2 + WAbstractGame.POPUP_MARGIN,
+            offset.y - popup.dimension.h/2 + WAbstractGame.POPUP_MARGIN));
     }
     CBInteractivePlayer.prototype.changeOrderInstruction = function(unit, orderInstruction, event) {
         unit.wing.changeOrderInstruction(orderInstruction);
@@ -66,7 +70,7 @@ export function unregisterInteractiveCommand() {
     CBActionMenu.menuBuilders.remove(createCommandMenuItems);
 }
 
-export class InteractiveTakeCommandAction extends CBAction {
+export class InteractiveTakeCommandAction extends WAction {
 
     constructor(game, unit) {
         super(game, unit);
@@ -116,16 +120,16 @@ export class InteractiveTakeCommandAction extends CBAction {
         let scene = this.createScene(
             success=>{
                 this._processTakeCommandResult(success);
-                CBSequence.appendElement(this.game, new CBTry2TakeCommandSequenceElement({
+                WSequence.appendElement(this.game, new CBTry2TakeCommandSequenceElement({
                     game: this.game, leader: this.unit, dice: scene.dice.result
                 }));
                 if (success) {
                     this.unit.takeCommand();
-                    CBSequence.appendElement(this.game, new CBManageCommandSequenceElement({
+                    WSequence.appendElement(this.game, new CBManageCommandSequenceElement({
                         game: this.game, leader: this.unit, inCommand: true
                     }));
                 }
-                new SequenceLoader().save(this.game, CBSequence.getSequence(this.game));
+                new SequenceLoader().save(this.game, WSequence.getSequence(this.game));
                 this.game.validate();
             },
             success=>{
@@ -147,9 +151,8 @@ export class InteractiveTakeCommandAction extends CBAction {
     }
 
 }
-CBAction.register("InteractiveTakeCommandAction", InteractiveTakeCommandAction);
 
-export class InteractiveDismissCommandAction extends CBAction {
+export class InteractiveDismissCommandAction extends WAction {
 
     constructor(game, unit) {
         super(game, unit);
@@ -199,16 +202,16 @@ export class InteractiveDismissCommandAction extends CBAction {
         let scene = this.createScene(
             success=>{
                 this._processDismissCommandResult();
-                CBSequence.appendElement(this.game, new CBTry2DismissCommandSequenceElement({
+                WSequence.appendElement(this.game, new CBTry2DismissCommandSequenceElement({
                     game: this.game, leader: this.unit, dice: scene.dice.result
                 }));
                 if (success) {
                     this.unit.dismissCommand();
-                    CBSequence.appendElement(this.game, new CBManageCommandSequenceElement({
+                    WSequence.appendElement(this.game, new CBManageCommandSequenceElement({
                         game: this.game, leader: this.unit, inCommand: false
                     }));
                 }
-                new SequenceLoader().save(this.game, CBSequence.getSequence(this.game));
+                new SequenceLoader().save(this.game, WSequence.getSequence(this.game));
                 this.game.validate();
             },
             success=>{
@@ -229,9 +232,8 @@ export class InteractiveDismissCommandAction extends CBAction {
     }
 
 }
-CBAction.register("InteractiveDismissCommandAction", InteractiveDismissCommandAction);
 
-export class InteractiveChangeOrderInstructionAction extends CBAction {
+export class InteractiveChangeOrderInstructionAction extends WAction {
 
     constructor(game, unit) {
         super(game, unit);
@@ -281,10 +283,10 @@ export class InteractiveChangeOrderInstructionAction extends CBAction {
         let scene = this.createScene(
             ()=>{
                 this._processChangeOderInstructionResult();
-                CBSequence.appendElement(this.game, new CBTry2ChangeOrderInstructionSequenceElement({
+                WSequence.appendElement(this.game, new CBTry2ChangeOrderInstructionSequenceElement({
                     game: this.game, leader: this.unit, dice: scene.dice.result
                 }));
-                new SequenceLoader().save(this.game, CBSequence.getSequence(this.game));
+                new SequenceLoader().save(this.game, WSequence.getSequence(this.game));
                 this.game.validate();
             },
             success=>{
@@ -310,9 +312,8 @@ export class InteractiveChangeOrderInstructionAction extends CBAction {
     }
 
 }
-CBAction.register("InteractiveChangeOrderInstructionAction", InteractiveChangeOrderInstructionAction);
 
-export class InteractiveGiveOrdersAction extends CBAction {
+export class InteractiveGiveOrdersAction extends WAction {
 
     constructor(game, unit) {
         super(game, unit);
@@ -356,10 +357,10 @@ export class InteractiveGiveOrdersAction extends CBAction {
             commandPoints=>{
                 this.unit.receiveCommandPoints(commandPoints);
                 this.unit.setPlayed();
-                CBSequence.appendElement(this.game, new CBGiveOrdersSequenceElement({
+                WSequence.appendElement(this.game, new CBGiveOrdersSequenceElement({
                     game: this.game, leader: this.unit, dice: scene.dice.result
                 }));
-                new SequenceLoader().save(this.game, CBSequence.getSequence(this.game));
+                new SequenceLoader().save(this.game, WSequence.getSequence(this.game));
                 this.game.validate();
             },
             success=>{
@@ -429,12 +430,11 @@ export class InteractiveGiveOrdersAction extends CBAction {
         let cost = this.game.arbitrator.getOrderGivenCost(leader, unit).cost;
         this.unit.receiveCommandPoints(this.unit.commandPoints-cost);
         unit.receivesOrder(true);
-        CBSequence.appendElement(this.game, new CBStateSequenceElement({game: this.game, unit}));
+        WSequence.appendElement(this.game, new CBStateSequenceElement({game: this.game, unit}));
         this.game.closeActuators();
         this._selectUnitsToGiveOrders();
     }
 }
-CBAction.register("InteractiveGiveOrdersAction", InteractiveGiveOrdersAction);
 
 function createCommandMenuItems(unit, actions) {
     return [
@@ -467,7 +467,7 @@ export class CBOrderInstructionMenu extends DIconMenu {
         super(true, new DIconMenuItem("./../images/markers/attack.png","./../images/markers/attack-gray.png",
             0, 0, event => {
                     unit.player.changeOrderInstruction(unit, CBOrderInstruction.ATTACK);
-                    CBSequence.appendElement(game, new CBChangeOrderInstructionSequenceElement({
+                    WSequence.appendElement(game, new CBChangeOrderInstructionSequenceElement({
                         game, leader: unit, orderInstruction: CBOrderInstruction.ATTACK
                     }));
                     return true;
@@ -475,7 +475,7 @@ export class CBOrderInstructionMenu extends DIconMenu {
             new DIconMenuItem("./../images/markers/defend.png","./../images/markers/defend-gray.png",
                 1, 0, event => {
                     unit.player.changeOrderInstruction(unit, CBOrderInstruction.DEFEND);
-                    CBSequence.appendElement(game, new CBChangeOrderInstructionSequenceElement({
+                    WSequence.appendElement(game, new CBChangeOrderInstructionSequenceElement({
                         game, leader: unit, orderInstruction: CBOrderInstruction.DEFEND
                     }));
                     return true;
@@ -483,7 +483,7 @@ export class CBOrderInstructionMenu extends DIconMenu {
             new DIconMenuItem("./../images/markers/regroup.png","./../images/markers/regroup-gray.png",
                 0, 1, event => {
                     unit.player.changeOrderInstruction(unit, CBOrderInstruction.REGROUP);
-                    CBSequence.appendElement(game, new CBChangeOrderInstructionSequenceElement({
+                    WSequence.appendElement(game, new CBChangeOrderInstructionSequenceElement({
                         game, leader: unit, orderInstruction: CBOrderInstruction.REGROUP
                     }));
                     return true;
@@ -491,7 +491,7 @@ export class CBOrderInstructionMenu extends DIconMenu {
             new DIconMenuItem("./../images/markers/retreat.png","./../images/markers/retreat-gray.png",
                 1, 1, event => {
                     unit.player.changeOrderInstruction(unit, CBOrderInstruction.RETREAT);
-                    CBSequence.appendElement(game, new CBChangeOrderInstructionSequenceElement({
+                    WSequence.appendElement(game, new CBChangeOrderInstructionSequenceElement({
                         game, leader: unit, orderInstruction: CBOrderInstruction.RETREAT
                     }));
                     return true;
@@ -508,7 +508,7 @@ export class CBOrderInstructionMenu extends DIconMenu {
 
 }
 
-class OrderGivenHelpTrigger extends CBUnitActuatorTrigger {
+class OrderGivenHelpTrigger extends WUnitActuatorTrigger {
 
     constructor(actuator, order) {
         let image = DImage.getImage("./../images/actuators/order-given-cost.png");
@@ -541,7 +541,7 @@ class OrderGivenHelpTrigger extends CBUnitActuatorTrigger {
 
 OrderGivenHelpTrigger.DIMENSION = new Dimension2D(55, 55);
 
-export class CBOrderGivenHelpActuator extends RetractableActuatorMixin(CBActionActuator) {
+export class CBOrderGivenHelpActuator extends RetractableActuatorMixin(WActionActuator) {
 
     constructor(action, orders) {
         super(action);
@@ -564,20 +564,20 @@ export class CBOrderGivenHelpActuator extends RetractableActuatorMixin(CBActionA
     setVisibility(level) {
         super.setVisibility(level);
         for (let artifact of this.triggers) {
-            artifact.setVisibility && artifact.setVisibility(level===CBGame.FULL_VISIBILITY ? 1:0);
+            artifact.setVisibility && artifact.setVisibility(level===WGame.FULL_VISIBILITY ? 1:0);
         }
     }
 
 }
 
-export class CBOrderGivenActuator extends RetractableActuatorMixin(CBActionActuator) {
+export class CBOrderGivenActuator extends RetractableActuatorMixin(WActionActuator) {
 
     constructor(action, orders) {
         super(action);
         let imageArtifacts = [];
         let orderImage = DImage.getImage("./../images/actuators/order.png");
         for (let order of orders) {
-            let trigger = new CBUnitActuatorTrigger(this, order.unit, "units", orderImage,
+            let trigger = new WUnitActuatorTrigger(this, order.unit, "units", orderImage,
                 new Point2D(order.unit.location.x, order.unit.location.y-80), new Dimension2D(105, 97));
             imageArtifacts.push(trigger);
         }
@@ -594,7 +594,7 @@ export class CBOrderGivenActuator extends RetractableActuatorMixin(CBActionActua
 
 }
 
-export class CBCommandInsert extends CBInsert {
+export class CBCommandInsert extends WInsert {
 
     constructor() {
         super("./../images/inserts/command-insert.png", CBCommandInsert.DIMENSION);
@@ -603,7 +603,7 @@ export class CBCommandInsert extends CBInsert {
 }
 CBCommandInsert.DIMENSION = new Dimension2D(444, 680);
 
-export class CBChangeOrderInstructionInsert extends CBInsert {
+export class CBChangeOrderInstructionInsert extends WInsert {
 
     constructor() {
         super("./../images/inserts/change-order-instruction-insert.png", CBChangeOrderInstructionInsert.DIMENSION);
@@ -612,7 +612,7 @@ export class CBChangeOrderInstructionInsert extends CBInsert {
 }
 CBChangeOrderInstructionInsert.DIMENSION = new Dimension2D(444, 254);
 
-export class CBGiveOrdersInsert extends CBInsert {
+export class CBGiveOrdersInsert extends WInsert {
 
     constructor(detail) {
         super("./../images/inserts/orders-given-insert.png", CBGiveOrdersInsert.DIMENSION, CBGiveOrdersInsert.PAGE_DIMENSION);
@@ -637,7 +637,7 @@ export class CBGiveOrdersInsert extends CBInsert {
 CBGiveOrdersInsert.PAGE_DIMENSION = new Dimension2D(444, 872);
 CBGiveOrdersInsert.DIMENSION = new Dimension2D(444, 600);
 
-export class CBTakeCommandInsert extends CBInsert {
+export class CBTakeCommandInsert extends WInsert {
 
     constructor() {
         super("./../images/inserts/take-command-insert.png", CBTakeCommandInsert.DIMENSION);
@@ -646,7 +646,7 @@ export class CBTakeCommandInsert extends CBInsert {
 }
 CBTakeCommandInsert.DIMENSION = new Dimension2D(444, 298);
 
-export class CBDismissCommandInsert extends CBInsert {
+export class CBDismissCommandInsert extends WInsert {
 
     constructor() {
         super("./../images/inserts/dismiss-command-insert.png", CBDismissCommandInsert.DIMENSION);
@@ -681,7 +681,7 @@ export function WithLeader(clazz) {
 
 }
 
-export class CBTry2ChangeOrderInstructionSequenceElement extends WithLeader(WithDiceRoll(CBSequenceElement)) {
+export class CBTry2ChangeOrderInstructionSequenceElement extends WithLeader(WithDiceRoll(WSequenceElement)) {
 
     constructor({id, game, leader, dice}) {
         super({id, type: "try2-order-instructions", game, leader, dice});
@@ -690,16 +690,16 @@ export class CBTry2ChangeOrderInstructionSequenceElement extends WithLeader(With
     get delay() { return 1500; }
 
     apply(startTick) {
-        return new CBSceneAnimation({
+        return new WSceneAnimation({
             unit: this.unit, startTick, duration: this.delay, state: this, game: this.game,
             animation: () => new InteractiveChangeOrderInstructionAction(this.game, this.leader).replay(this.dice)
         });
     }
 
 }
-CBSequence.register("try2-order-instructions", CBTry2ChangeOrderInstructionSequenceElement);
+WSequence.register("try2-order-instructions", CBTry2ChangeOrderInstructionSequenceElement);
 
-export class CBChangeOrderInstructionSequenceElement extends WithLeader(WithOrderInstruction(CBSequenceElement)) {
+export class CBChangeOrderInstructionSequenceElement extends WithLeader(WithOrderInstruction(WSequenceElement)) {
 
     constructor({id, game, leader, orderInstruction}) {
         super({id, type: "change-instructions", leader, orderInstruction, game});
@@ -712,7 +712,7 @@ export class CBChangeOrderInstructionSequenceElement extends WithLeader(WithOrde
     }
 
 }
-CBSequence.register("change-instructions", CBChangeOrderInstructionSequenceElement);
+WSequence.register("change-instructions", CBChangeOrderInstructionSequenceElement);
 
 export function WithOrderInstruction(clazz) {
 
@@ -743,23 +743,7 @@ export function WithOrderInstruction(clazz) {
         _fromSpecs(spec, context) {
             super._fromSpecs(spec, context);
             if (spec.orderInstruction !== undefined) {
-                this.orderInstruction = this.getOrderInstruction(spec.orderInstruction);
-            }
-        }
-
-        getOrderInstructionCode(orderInstruction) {
-            if (orderInstruction===CBOrderInstruction.ATTACK) return "A";
-            else if (orderInstruction===CBOrderInstruction.DEFEND) return "D";
-            else if (orderInstruction===CBOrderInstruction.REGROUP) return "G";
-            else return "R";
-        }
-
-        getOrderInstruction(code) {
-            switch (code) {
-                case "A": return CBOrderInstruction.ATTACK;
-                case "D": return CBOrderInstruction.DEFEND;
-                case "G": return CBOrderInstruction.REGROUP;
-                case "R": return CBOrderInstruction.RETREAT;
+                this.orderInstruction = CBUnit.getOrderInstruction(spec.orderInstruction);
             }
         }
 
@@ -786,7 +770,7 @@ export class CBChangeOrderAnimation extends DAnimation {
 
 }
 
-export class CBTry2TakeCommandSequenceElement extends WithLeader(WithDiceRoll(CBSequenceElement)) {
+export class CBTry2TakeCommandSequenceElement extends WithLeader(WithDiceRoll(WSequenceElement)) {
 
     constructor({id, game, leader, dice}) {
         super({id, type: "try2-take-command", game, leader, dice});
@@ -795,16 +779,16 @@ export class CBTry2TakeCommandSequenceElement extends WithLeader(WithDiceRoll(CB
     get delay() { return 1500; }
 
     apply(startTick) {
-        return new CBSceneAnimation({
+        return new WSceneAnimation({
             unit: this.unit, startTick, duration: this.delay, state: this, game: this.game,
             animation: () => new InteractiveTakeCommandAction(this.game, this.leader).replay(this.dice)
         });
     }
 
 }
-CBSequence.register("try2-take-command", CBTry2TakeCommandSequenceElement);
+WSequence.register("try2-take-command", CBTry2TakeCommandSequenceElement);
 
-export class CBTry2DismissCommandSequenceElement extends WithLeader(WithDiceRoll(CBSequenceElement)) {
+export class CBTry2DismissCommandSequenceElement extends WithLeader(WithDiceRoll(WSequenceElement)) {
 
     constructor({id, game, leader, dice}) {
         super({id, type: "try2-dismiss-command", game, leader, dice});
@@ -813,16 +797,16 @@ export class CBTry2DismissCommandSequenceElement extends WithLeader(WithDiceRoll
     get delay() { return 1500; }
 
     apply(startTick) {
-        return new CBSceneAnimation({
+        return new WSceneAnimation({
             unit: this.unit, startTick, duration: this.delay, state: this, game: this.game,
             animation: () => new InteractiveDismissCommandAction(this.game, this.leader).replay(this.dice)
         });
     }
 
 }
-CBSequence.register("try2-dismiss-command", CBTry2DismissCommandSequenceElement);
+WSequence.register("try2-dismiss-command", CBTry2DismissCommandSequenceElement);
 
-export class CBGiveOrdersSequenceElement extends WithLeader(WithDiceRoll(CBSequenceElement)) {
+export class CBGiveOrdersSequenceElement extends WithLeader(WithDiceRoll(WSequenceElement)) {
 
     constructor({id, game, leader, dice}) {
         super({id, type: "give-orders", game, leader, dice});
@@ -831,7 +815,7 @@ export class CBGiveOrdersSequenceElement extends WithLeader(WithDiceRoll(CBSeque
     get delay() { return 1500; }
 
     apply(startTick) {
-        return new CBSceneAnimation({
+        return new WSceneAnimation({
             unit: this.unit, startTick, duration: this.delay, state: this, game: this.game,
             animation: () => new InteractiveGiveOrdersAction(this.game, this.leader).replay(this.dice)
         });
@@ -842,7 +826,7 @@ export class CBGiveOrdersSequenceElement extends WithLeader(WithDiceRoll(CBSeque
     }
 
 }
-CBSequence.register("give-orders", CBGiveOrdersSequenceElement);
+WSequence.register("give-orders", CBGiveOrdersSequenceElement);
 
 export function WithInCommand(clazz) {
 
@@ -876,7 +860,7 @@ export function WithInCommand(clazz) {
 
 }
 
-export class CBManageCommandSequenceElement extends WithLeader(WithInCommand(CBSequenceElement)) {
+export class CBManageCommandSequenceElement extends WithLeader(WithInCommand(WSequenceElement)) {
 
     constructor({id, game, leader, inCommand}) {
         super({id, type: "manage-command", leader, inCommand, game});
@@ -889,7 +873,7 @@ export class CBManageCommandSequenceElement extends WithLeader(WithInCommand(CBS
     }
 
 }
-CBSequence.register("manage-command", CBManageCommandSequenceElement);
+WSequence.register("manage-command", CBManageCommandSequenceElement);
 
 export class CBManageCommandAnimation extends DAnimation {
 

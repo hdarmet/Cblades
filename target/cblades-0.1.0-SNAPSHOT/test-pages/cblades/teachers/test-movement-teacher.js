@@ -4,12 +4,12 @@ import {
     assert, before, describe, it, stringifyArray
 } from "../../../jstest/jtest.js";
 import {
-    CBHex,
-    CBHexSideId, CBMap
-} from "../../../jslib/cblades/map.js";
+    WHex,
+    WHexSideId, WMap
+} from "../../../jslib/wargame/map.js";
 import {
-    CBGame
-} from "../../../jslib/cblades/playable.js";
+    WGame
+} from "../../../jslib/wargame/playable.js";
 import {
     CBUnitPlayer,
     CBCharacter,
@@ -25,12 +25,12 @@ import {
 } from "../../../jslib/cblades/teachers/map-teacher.js";
 import {
     setDrawPlatform
-} from "../../../jslib/draw.js";
+} from "../../../jslib/board/draw.js";
 import {
     loadAllImages,
     mergeClasses,
     mockPlatform
-} from "../../mocks.js";
+} from "../../board/mocks.js";
 import {
     CBUnitManagementTeacher
 } from "../../../jslib/cblades/teachers/units-teacher.js";
@@ -55,20 +55,20 @@ describe("Movement teacher", ()=> {
         }
         getMovementCostOnHex(hex) {
             switch (hex.type) {
-                case CBHex.HEX_TYPES.OUTDOOR_CLEAR : return {type:CBMoveProfile.COST_TYPE.ADD, value:1};
-                case CBHex.HEX_TYPES.OUTDOOR_ROUGH : return {type:CBMoveProfile.COST_TYPE.ADD, value:2.5};
-                case CBHex.HEX_TYPES.OUTDOOR_DIFFICULT : return {type:CBMoveProfile.COST_TYPE.MINIMAL_MOVE};
-                case CBHex.HEX_TYPES.IMPASSABLE : return {type:CBMoveProfile.COST_TYPE.IMPASSABLE};
+                case WHex.HEX_TYPES.OUTDOOR_CLEAR : return {type:CBMoveProfile.COST_TYPE.ADD, value:1};
+                case WHex.HEX_TYPES.OUTDOOR_ROUGH : return {type:CBMoveProfile.COST_TYPE.ADD, value:2.5};
+                case WHex.HEX_TYPES.OUTDOOR_DIFFICULT : return {type:CBMoveProfile.COST_TYPE.MINIMAL_MOVE};
+                case WHex.HEX_TYPES.IMPASSABLE : return {type:CBMoveProfile.COST_TYPE.IMPASSABLE};
                 default: throw "Unknown";
             }
         }
         getMovementCostOnHexSide(hexSide) {
             switch (hexSide.type) {
-                case CBHex.HEXSIDE_TYPES.NORMAL : return {type:CBMoveProfile.COST_TYPE.ADD, value:0};
-                case CBHex.HEXSIDE_TYPES.EASY : return {type:CBMoveProfile.COST_TYPE.SET, value:0.5};
-                case CBHex.HEXSIDE_TYPES.DIFFICULT : return {type:CBMoveProfile.COST_TYPE.ADD, value:0.5};
-                case CBHex.HEXSIDE_TYPES.CLIMB : return {type:CBMoveProfile.COST_TYPE.MINIMAL_MOVE};
-                case CBHex.HEXSIDE_TYPES.WALL : return {type:CBMoveProfile.COST_TYPE.IMPASSABLE};
+                case WHex.HEXSIDE_TYPES.NORMAL : return {type:CBMoveProfile.COST_TYPE.ADD, value:0};
+                case WHex.HEXSIDE_TYPES.EASY : return {type:CBMoveProfile.COST_TYPE.SET, value:0.5};
+                case WHex.HEXSIDE_TYPES.DIFFICULT : return {type:CBMoveProfile.COST_TYPE.ADD, value:0.5};
+                case WHex.HEXSIDE_TYPES.CLIMB : return {type:CBMoveProfile.COST_TYPE.MINIMAL_MOVE};
+                case WHex.HEXSIDE_TYPES.WALL : return {type:CBMoveProfile.COST_TYPE.IMPASSABLE};
                 default: throw "Unknown";
             }
         }
@@ -87,8 +87,8 @@ describe("Movement teacher", ()=> {
     }
 
     function createTinyGame() {
-        let game = new CBGame(1);
-        let map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+        let game = new WGame(1);
+        let map = new WMap([{path:"./../images/maps/map.png", col:0, row:0}]);
         game.setMap(map);
         let arbitrator = new Arbitrator();
         game.setArbitrator(arbitrator);
@@ -147,7 +147,7 @@ describe("Movement teacher", ()=> {
     }
 
     function create2Players1Formation2TroopsTinyGame() {
-        let game = new CBGame(1);
+        let game = new WGame(1);
         let arbitrator = new Arbitrator();
         game.setArbitrator(arbitrator);
         let player1 = new CBUnitPlayer("player1", "/players/player1.png");
@@ -156,7 +156,7 @@ describe("Movement teacher", ()=> {
         let player2 = new CBUnitPlayer("player2", "/players/player2.png");
         game.addPlayer(player2);
         let wing2 = new CBWing(player2, banner2);
-        let map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+        let map = new WMap([{path:"./../images/maps/map.png", col:0, row:0}]);
         game.setMap(map);
         let unitType1 = new CBTestUnitType("unit1",
             ["./../images/units/misc/unit1.png", "./../images/units/misc/unit1b.png"],
@@ -166,7 +166,7 @@ describe("Movement teacher", ()=> {
                 "./../images/units/misc/formation3.png", "./../images/units/misc/formation3b.png"
             ])
         let formation1 = new CBFormation(game, unitType1, wing1);
-        formation1.addToMap(new CBHexSideId(map.getHex(5, 8), map.getHex(5, 7)));
+        formation1.addToMap(new WHexSideId(map.getHex(5, 8), map.getHex(5, 7)));
         formation1.angle = 90;
         let leaderType1 = new CBTestUnitType("leader1", ["./../images/units/misc/leader1.png", "./../images/units/misc/leader1b.png"])
         let leader11 = new CBCharacter(game, leaderType1, wing1);
@@ -185,7 +185,7 @@ describe("Movement teacher", ()=> {
     }
 
     function create2Players1Formation3TroopsTinyGame() {
-        let game = new CBGame(1);
+        let game = new WGame(1);
         let arbitrator = new Arbitrator();
         game.setArbitrator(arbitrator);
         let player1 = new CBUnitPlayer("player1", "/players/player1.png");
@@ -193,8 +193,8 @@ describe("Movement teacher", ()=> {
         let wing1 = new CBWing(player1, banner1);
         let player2 = new CBUnitPlayer("player2", "/players/player2.png");
         game.addPlayer(player2);
-        let wing2 = new CBWing(player2, banner2);
-        let map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+        let wing2 = new CBWing( player2,  banner2);
+        let map = new WMap([{path:"./../images/maps/map.png", col:0, row:0}]);
         game.setMap(map);
         let unitType1 = new CBTestUnitType("unit1",
             ["./../images/units/misc/unit1.png", "./../images/units/misc/unit1b.png"],
@@ -206,7 +206,7 @@ describe("Movement teacher", ()=> {
         let unit11 = new CBTroop(game, unitType1, wing1);
         unit11.addToMap(map.getHex(5, 6));
         let formation1 = new CBFormation(game, unitType1, wing1);
-        formation1.addToMap(new CBHexSideId(map.getHex(5, 8), map.getHex(5, 7)));
+        formation1.addToMap(new WHexSideId(map.getHex(5, 8), map.getHex(5, 7)));
         formation1.angle = 90;
         let leaderType1 = new CBTestUnitType("leader1", ["./../images/units/misc/leader1.png", "./../images/units/misc/leader1b.png"])
         let leader11 = new CBCharacter(game, leaderType1, wing1);
@@ -303,32 +303,32 @@ describe("Movement teacher", ()=> {
         then:
             assert(cost).objectEqualsTo({type:CBMoveProfile.COST_TYPE.ADD, value:1})
         when:
-            unit11.hexLocation.getNearHex(0).type = CBHex.HEX_TYPES.IMPASSABLE;
-            unit11.hexLocation.toward(0).type = CBHex.HEXSIDE_TYPES.NORMAL;
+            unit11.hexLocation.getNearHex(0).type = WHex.HEX_TYPES.IMPASSABLE;
+            unit11.hexLocation.toward(0).type = WHex.HEXSIDE_TYPES.NORMAL;
             cost = arbitrator.getTerrainMoveCost(unit11, 0);
         then:
             assert(cost).objectEqualsTo({type:CBMoveProfile.COST_TYPE.IMPASSABLE})
         when:
-            unit11.hexLocation.getNearHex(0).type = CBHex.HEX_TYPES.IMPASSABLE;
-            unit11.hexLocation.toward(0).type = CBHex.HEXSIDE_TYPES.EASY;
+            unit11.hexLocation.getNearHex(0).type = WHex.HEX_TYPES.IMPASSABLE;
+            unit11.hexLocation.toward(0).type = WHex.HEXSIDE_TYPES.EASY;
             cost = arbitrator.getTerrainMoveCost(unit11, 0);
         then:
             assert(cost).objectEqualsTo({type:CBMoveProfile.COST_TYPE.SET, value:0.5})
         when:
-            unit11.hexLocation.getNearHex(0).type = CBHex.HEX_TYPES.OUTDOOR_CLEAR;
-            unit11.hexLocation.toward(0).type = CBHex.HEXSIDE_TYPES.CLIMB;
+            unit11.hexLocation.getNearHex(0).type = WHex.HEX_TYPES.OUTDOOR_CLEAR;
+            unit11.hexLocation.toward(0).type = WHex.HEXSIDE_TYPES.CLIMB;
             cost = arbitrator.getTerrainMoveCost(unit11, 0);
         then:
             assert(cost).objectEqualsTo({type:CBMoveProfile.COST_TYPE.MINIMAL_MOVE})
         when:
-            unit11.hexLocation.getNearHex(0).type = CBHex.HEX_TYPES.OUTDOOR_CLEAR;
-            unit11.hexLocation.toward(0).type = CBHex.HEXSIDE_TYPES.WALL;
+            unit11.hexLocation.getNearHex(0).type = WHex.HEX_TYPES.OUTDOOR_CLEAR;
+            unit11.hexLocation.toward(0).type = WHex.HEXSIDE_TYPES.WALL;
             cost = arbitrator.getTerrainMoveCost(unit11, 0);
         then:
             assert(cost).objectEqualsTo({type:CBMoveProfile.COST_TYPE.IMPASSABLE})
         when:
-            unit11.hexLocation.getNearHex(0).type = CBHex.HEX_TYPES.OUTDOOR_ROUGH;
-            unit11.hexLocation.toward(0).type = CBHex.HEXSIDE_TYPES.DIFFICULT;
+            unit11.hexLocation.getNearHex(0).type = WHex.HEX_TYPES.OUTDOOR_ROUGH;
+            unit11.hexLocation.toward(0).type = WHex.HEXSIDE_TYPES.DIFFICULT;
             cost = arbitrator.getTerrainMoveCost(unit11, 0);
         then:
             assert(cost).objectEqualsTo({type:CBMoveProfile.COST_TYPE.ADD, value:3})
@@ -375,9 +375,9 @@ describe("Movement teacher", ()=> {
             var {arbitrator, unit11} = createTinyGame();
             // unit11 on Hex(5, 8)
             unit11.type.setMoveProfile(2, new MoveProfile());
-            unit11.hexLocation.getNearHex(300).type = CBHex.HEX_TYPES.OUTDOOR_ROUGH;
-            unit11.hexLocation.getNearHex(0).type = CBHex.HEX_TYPES.IMPASSABLE;
-            unit11.hexLocation.getNearHex(60).type = CBHex.HEX_TYPES.OUTDOOR_DIFFICULT;
+            unit11.hexLocation.getNearHex(300).type = WHex.HEX_TYPES.OUTDOOR_ROUGH;
+            unit11.hexLocation.getNearHex(0).type = WHex.HEX_TYPES.IMPASSABLE;
+            unit11.hexLocation.getNearHex(60).type = WHex.HEX_TYPES.OUTDOOR_DIFFICULT;
         when:
             var allowedMoves = arbitrator.getAllowedFirstMoves(unit11);
         then:
@@ -428,7 +428,7 @@ describe("Movement teacher", ()=> {
     it("Checks formation allowed moves", () => {
         given:
             var {arbitrator, map, formation1, unit21} = create2Players1Formation2TroopsTinyGame();
-            formation1.move(new CBHexSideId(map.getHex(3, 4), map.getHex(3, 5)));
+            formation1.move(new WHexSideId(map.getHex(3, 4), map.getHex(3, 5)));
             unit21.move(map.getHex(4, 3)); // foes on forward zone
         when:
             var allowedMoves = arbitrator.getFormationAllowedSubsequentMoves(formation1);
@@ -460,7 +460,7 @@ describe("Movement teacher", ()=> {
     it("Checks formation allowed forward rotations", () => {
         given:
             var {arbitrator, map, formation1, unit21} = create2Players1Formation2TroopsTinyGame();
-            formation1.move(new CBHexSideId(map.getHex(3, 4), map.getHex(3, 5)));
+            formation1.move(new WHexSideId(map.getHex(3, 4), map.getHex(3, 5)));
         when:
             var allowedMoves = arbitrator.getFormationAllowedSubsequentTurns(formation1);
         then:
@@ -501,7 +501,7 @@ describe("Movement teacher", ()=> {
     it("Checks formation allowed moves back", () => {
         given:
             var {arbitrator, map, formation1, unit21} = create2Players1Formation2TroopsTinyGame();
-            formation1.move(new CBHexSideId(map.getHex(3, 4), map.getHex(3, 5)));
+            formation1.move(new WHexSideId(map.getHex(3, 4), map.getHex(3, 5)));
             formation1.angle = 270;
             unit21.move(map.getHex(4, 3)); // foes on backward zone
         when:
@@ -530,7 +530,7 @@ describe("Movement teacher", ()=> {
     it("Checks formation allowed backward rotations", () => {
         given:
             var {arbitrator, map, formation1, unit21} = create2Players1Formation2TroopsTinyGame();
-            formation1.move(new CBHexSideId(map.getHex(3, 4), map.getHex(3, 5)));
+            formation1.move(new WHexSideId(map.getHex(3, 4), map.getHex(3, 5)));
             formation1.angle = 270;
         when:
             var allowedMoves = arbitrator.getFormationAllowedMovesBackTurns(formation1, true);
@@ -679,7 +679,7 @@ describe("Movement teacher", ()=> {
     it("Checks formation allowed rotations", () => {
         given:
             var {arbitrator, map, formation1, unit21} = create2Players1Formation2TroopsTinyGame();
-            formation1.move(new CBHexSideId(map.getHex(3, 4), map.getHex(3, 5)));
+            formation1.move(new WHexSideId(map.getHex(3, 4), map.getHex(3, 5)));
             unit21.move(map.getHex(4, 3)); // foes on forward zone
         when:
             var allowedRotations = arbitrator.getAllowedFormationSubsequentRotations(formation1);
@@ -711,7 +711,7 @@ describe("Movement teacher", ()=> {
     it("Checks formation confront allowed rotations", () => {
         given:
             var {arbitrator, map, formation1, unit21, unit22} = create2Players1Formation2TroopsTinyGame();
-            formation1.move(new CBHexSideId(map.getHex(3, 4), map.getHex(3, 5)));
+            formation1.move(new WHexSideId(map.getHex(3, 4), map.getHex(3, 5)));
             unit21.move(map.getHex(3, 6)); // foes on backward zone
             unit21.angle = 60;
             unit22.move(map.getHex(2, 5)); // foes on backward zone
@@ -923,12 +923,12 @@ describe("Movement teacher", ()=> {
         then:
             assert(cost).equalsTo(0);
         when:
-            unit11.hexLocation.toward(0).changeType(CBHex.HEXSIDE_TYPES.CLIMB);
+            unit11.hexLocation.toward(0).changeType(WHex.HEXSIDE_TYPES.CLIMB);
             cost = costMethod(unit11.hexLocation, unit11.hexLocation.getNearHex(0));
         then:
             assert(cost).equalsTo(3);
         when:
-            unit11.hexLocation.toward(0).changeType(CBHex.HEXSIDE_TYPES.WALL);
+            unit11.hexLocation.toward(0).changeType(WHex.HEXSIDE_TYPES.WALL);
             cost = costMethod(unit11.hexLocation, unit11.hexLocation.getNearHex(0));
         then:
             assert(cost).isNotDefined();
@@ -951,8 +951,8 @@ describe("Movement teacher", ()=> {
             }
             unit11.type.setMoveProfile(2, moveProfile);
             wing1.setRetreatZone(map.getSouthZone());
-            map.getHex(4, 10).type = CBHex.HEX_TYPES.IMPASSABLE;
-            map.getHex(3, 10).type = CBHex.HEX_TYPES.OUTDOOR_DIFFICULT;
+            map.getHex(4, 10).type = WHex.HEX_TYPES.IMPASSABLE;
+            map.getHex(3, 10).type = WHex.HEX_TYPES.OUTDOOR_DIFFICULT;
         when:
             unit11.move(map.getHex(4, 9));
             var hexes = arbitrator.getAllowedRoutMoves(unit11);
@@ -1065,8 +1065,8 @@ describe("Movement teacher", ()=> {
         then:
             assert(moves.maxRemainingPoints).equalsTo(0);
             assert([...moves.hexLocations]).unorderedArrayEqualsTo([
-                new CBHexSideId(map.getHex(7, 10), map.getHex(8, 10)),
-                new CBHexSideId(map.getHex(8, 10), map.getHex(9, 11))
+                new WHexSideId(map.getHex(7, 10), map.getHex(8, 10)),
+                new WHexSideId(map.getHex(8, 10), map.getHex(9, 11))
             ]);
     });
 
@@ -1102,9 +1102,9 @@ describe("Movement teacher", ()=> {
             var moves = arbitrator.getAllowedAttackMoves(formation1);
         then:
             assert(stringifyArray([...moves])).unorderedArrayEqualsTo([
-                new CBHexSideId(map.getHex(10, 10), map.getHex(9, 10)).toString(),
-                new CBHexSideId(map.getHex(8, 10), map.getHex(9, 10)).toString(),
-                new CBHexSideId(map.getHex(9, 10), map.getHex(8, 9)).toString()
+                new WHexSideId(map.getHex(10, 10), map.getHex(9, 10)).toString(),
+                new WHexSideId(map.getHex(8, 10), map.getHex(9, 10)).toString(),
+                new WHexSideId(map.getHex(9, 10), map.getHex(8, 9)).toString()
             ]);
     });
 

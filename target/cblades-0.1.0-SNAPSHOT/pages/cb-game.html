@@ -9,14 +9,14 @@
 <script type="module">
 
     import {
-        CBMap
-    } from "../jslib/cblades/map.js";
+        WMap
+    } from "../jslib/wargame/map.js";
     import {
         GameLoader
     } from "../jslib/cblades/loader.js";
     import {
         getParameterByName
-    } from "../jslib/draw.js";
+    } from "../jslib/board/draw.js";
     import {
         BurningMixin
     } from "../jslib/cblades/miscellaneous.js";
@@ -24,8 +24,8 @@
         WeatherMixin
     } from "../jslib/cblades/weather.js";
     import {
-        CBGame
-    } from "../jslib/cblades/playable.js";
+        WGame
+    } from "../jslib/wargame/playable.js";
     import {
         CBInteractivePlayer
     } from "../jslib/cblades/interactive/interactive-player.js";
@@ -68,10 +68,10 @@
     registerInteractiveMiscellaneous();
 
     let gameId = parseInt(getParameterByName("id"));
-    let game = new (BurningMixin(WeatherMixin(CBGame)))(gameId);
+    let game = new (BurningMixin(WeatherMixin(WGame)))(gameId);
     let arbitrator = new CBArbitrator();
     game.setArbitrator(arbitrator);
-    let map = new CBMap([]);
+    let map = new WMap([]);
     game.setMap(map);
     let actives = getParameterByName("actives").split(",");
     new GameLoader(game, (name, path)=> {

@@ -1,8 +1,8 @@
 'use strict'
 
 import {
-    CBHex
-} from "./map.js";
+    WHex
+} from "../wargame/map.js";
 import {
     CBCommandProfile, CBMagicProfile, CBMoralProfile,
     CBMoveProfile, CBWeaponProfile
@@ -20,31 +20,31 @@ export class PedestrianMoveProfile extends CBMoveProfile {
 
     getMovementCostOnHex(hex) {
         switch (hex.type) {
-            case CBHex.HEX_TYPES.OUTDOOR_CLEAR : return {type:CBMoveProfile.COST_TYPE.ADD, value:1};
-            case CBHex.HEX_TYPES.OUTDOOR_ROUGH : return {type:CBMoveProfile.COST_TYPE.ADD, value:1.5};
-            case CBHex.HEX_TYPES.OUTDOOR_DIFFICULT : return {type:CBMoveProfile.COST_TYPE.ADD, value:2};
-            case CBHex.HEX_TYPES.OUTDOOR_CLEAR_FLAMMABLE : return {type:CBMoveProfile.COST_TYPE.ADD, value:1};
-            case CBHex.HEX_TYPES.OUTDOOR_ROUGH_FLAMMABLE : return {type:CBMoveProfile.COST_TYPE.ADD, value:1.5};
-            case CBHex.HEX_TYPES.OUTDOOR_DIFFICULT_FLAMMABLE : return {type:CBMoveProfile.COST_TYPE.ADD, value:2};
-            case CBHex.HEX_TYPES.WATER : return {type:CBMoveProfile.COST_TYPE.IMPASSABLE};
-            case CBHex.HEX_TYPES.LAVA : return {type:CBMoveProfile.COST_TYPE.IMPASSABLE};
-            case CBHex.HEX_TYPES.IMPASSABLE : return {type:CBMoveProfile.COST_TYPE.IMPASSABLE};
-            case CBHex.HEX_TYPES.CAVE_CLEAR : return {type:CBMoveProfile.COST_TYPE.ADD, value:1};
-            case CBHex.HEX_TYPES.CAVE_ROUGH : return {type:CBMoveProfile.COST_TYPE.ADD, value:1.5};
-            case CBHex.HEX_TYPES.CAVE_DIFFICULT : return {type:CBMoveProfile.COST_TYPE.ADD, value:2};
-            case CBHex.HEX_TYPES.CAVE_CLEAR_FLAMMABLE : return {type:CBMoveProfile.COST_TYPE.ADD, value:1};
-            case CBHex.HEX_TYPES.CAVE_ROUGH_FLAMMABLE : return {type:CBMoveProfile.COST_TYPE.ADD, value:1.5};
-            case CBHex.HEX_TYPES.CAVE_DIFFICULT_FLAMMABLE : return {type:CBMoveProfile.COST_TYPE.ADD, value:2};
+            case WHex.HEX_TYPES.OUTDOOR_CLEAR : return {type:CBMoveProfile.COST_TYPE.ADD, value:1};
+            case WHex.HEX_TYPES.OUTDOOR_ROUGH : return {type:CBMoveProfile.COST_TYPE.ADD, value:1.5};
+            case WHex.HEX_TYPES.OUTDOOR_DIFFICULT : return {type:CBMoveProfile.COST_TYPE.ADD, value:2};
+            case WHex.HEX_TYPES.OUTDOOR_CLEAR_FLAMMABLE : return {type:CBMoveProfile.COST_TYPE.ADD, value:1};
+            case WHex.HEX_TYPES.OUTDOOR_ROUGH_FLAMMABLE : return {type:CBMoveProfile.COST_TYPE.ADD, value:1.5};
+            case WHex.HEX_TYPES.OUTDOOR_DIFFICULT_FLAMMABLE : return {type:CBMoveProfile.COST_TYPE.ADD, value:2};
+            case WHex.HEX_TYPES.WATER : return {type:CBMoveProfile.COST_TYPE.IMPASSABLE};
+            case WHex.HEX_TYPES.LAVA : return {type:CBMoveProfile.COST_TYPE.IMPASSABLE};
+            case WHex.HEX_TYPES.IMPASSABLE : return {type:CBMoveProfile.COST_TYPE.IMPASSABLE};
+            case WHex.HEX_TYPES.CAVE_CLEAR : return {type:CBMoveProfile.COST_TYPE.ADD, value:1};
+            case WHex.HEX_TYPES.CAVE_ROUGH : return {type:CBMoveProfile.COST_TYPE.ADD, value:1.5};
+            case WHex.HEX_TYPES.CAVE_DIFFICULT : return {type:CBMoveProfile.COST_TYPE.ADD, value:2};
+            case WHex.HEX_TYPES.CAVE_CLEAR_FLAMMABLE : return {type:CBMoveProfile.COST_TYPE.ADD, value:1};
+            case WHex.HEX_TYPES.CAVE_ROUGH_FLAMMABLE : return {type:CBMoveProfile.COST_TYPE.ADD, value:1.5};
+            case WHex.HEX_TYPES.CAVE_DIFFICULT_FLAMMABLE : return {type:CBMoveProfile.COST_TYPE.ADD, value:2};
         }
     }
 
     getMovementCostOnHexSide(hexSide) {
         switch (hexSide.type) {
-            case CBHex.HEXSIDE_TYPES.NORMAL : return {type:CBMoveProfile.COST_TYPE.ADD, value:0};
-            case CBHex.HEXSIDE_TYPES.EASY : return {type:CBMoveProfile.COST_TYPE.SET, value:0.5};
-            case CBHex.HEXSIDE_TYPES.DIFFICULT : return {type:CBMoveProfile.COST_TYPE.ADD, value:0.5};
-            case CBHex.HEXSIDE_TYPES.CLIMB : return {type:CBMoveProfile.COST_TYPE.IMPASSABLE};
-            case CBHex.HEXSIDE_TYPES.WALL : return {type:CBMoveProfile.COST_TYPE.IMPASSABLE};
+            case WHex.HEXSIDE_TYPES.NORMAL : return {type:CBMoveProfile.COST_TYPE.ADD, value:0};
+            case WHex.HEXSIDE_TYPES.EASY : return {type:CBMoveProfile.COST_TYPE.SET, value:0.5};
+            case WHex.HEXSIDE_TYPES.DIFFICULT : return {type:CBMoveProfile.COST_TYPE.ADD, value:0.5};
+            case WHex.HEXSIDE_TYPES.CLIMB : return {type:CBMoveProfile.COST_TYPE.IMPASSABLE};
+            case WHex.HEXSIDE_TYPES.WALL : return {type:CBMoveProfile.COST_TYPE.IMPASSABLE};
         }
     }
 
@@ -71,31 +71,31 @@ export class AnimalMoveProfile extends CBMoveProfile {
 
     getMovementCostOnHex(hex) {
         switch (hex.type) {
-            case CBHex.HEX_TYPES.OUTDOOR_CLEAR : return {type:CBMoveProfile.COST_TYPE.ADD, value:0.5};
-            case CBHex.HEX_TYPES.OUTDOOR_ROUGH : return {type:CBMoveProfile.COST_TYPE.ADD, value:1.5};
-            case CBHex.HEX_TYPES.OUTDOOR_DIFFICULT : return {type:CBMoveProfile.COST_TYPE.ADD, value:2};
-            case CBHex.HEX_TYPES.OUTDOOR_CLEAR_FLAMMABLE : return {type:CBMoveProfile.COST_TYPE.ADD, value:0.5};
-            case CBHex.HEX_TYPES.OUTDOOR_ROUGH_FLAMMABLE : return {type:CBMoveProfile.COST_TYPE.ADD, value:1.5};
-            case CBHex.HEX_TYPES.OUTDOOR_DIFFICULT_FLAMMABLE : return {type:CBMoveProfile.COST_TYPE.ADD, value:2};
-            case CBHex.HEX_TYPES.WATER : return {type:CBMoveProfile.COST_TYPE.IMPASSABLE};
-            case CBHex.HEX_TYPES.LAVA : return {type:CBMoveProfile.COST_TYPE.IMPASSABLE};
-            case CBHex.HEX_TYPES.IMPASSABLE : return {type:CBMoveProfile.COST_TYPE.IMPASSABLE};
-            case CBHex.HEX_TYPES.CAVE_CLEAR : return {type:CBMoveProfile.COST_TYPE.ADD, value:1};
-            case CBHex.HEX_TYPES.CAVE_ROUGH : return {type:CBMoveProfile.COST_TYPE.ADD, value:1.5};
-            case CBHex.HEX_TYPES.CAVE_DIFFICULT : return {type:CBMoveProfile.COST_TYPE.ADD, value:2};
-            case CBHex.HEX_TYPES.CAVE_CLEAR_FLAMMABLE : return {type:CBMoveProfile.COST_TYPE.ADD, value:1};
-            case CBHex.HEX_TYPES.CAVE_ROUGH_FLAMMABLE : return {type:CBMoveProfile.COST_TYPE.ADD, value:1.5};
-            case CBHex.HEX_TYPES.CAVE_DIFFICULT_FLAMMABLE : return {type:CBMoveProfile.COST_TYPE.ADD, value:2};
+            case WHex.HEX_TYPES.OUTDOOR_CLEAR : return {type:CBMoveProfile.COST_TYPE.ADD, value:0.5};
+            case WHex.HEX_TYPES.OUTDOOR_ROUGH : return {type:CBMoveProfile.COST_TYPE.ADD, value:1.5};
+            case WHex.HEX_TYPES.OUTDOOR_DIFFICULT : return {type:CBMoveProfile.COST_TYPE.ADD, value:2};
+            case WHex.HEX_TYPES.OUTDOOR_CLEAR_FLAMMABLE : return {type:CBMoveProfile.COST_TYPE.ADD, value:0.5};
+            case WHex.HEX_TYPES.OUTDOOR_ROUGH_FLAMMABLE : return {type:CBMoveProfile.COST_TYPE.ADD, value:1.5};
+            case WHex.HEX_TYPES.OUTDOOR_DIFFICULT_FLAMMABLE : return {type:CBMoveProfile.COST_TYPE.ADD, value:2};
+            case WHex.HEX_TYPES.WATER : return {type:CBMoveProfile.COST_TYPE.IMPASSABLE};
+            case WHex.HEX_TYPES.LAVA : return {type:CBMoveProfile.COST_TYPE.IMPASSABLE};
+            case WHex.HEX_TYPES.IMPASSABLE : return {type:CBMoveProfile.COST_TYPE.IMPASSABLE};
+            case WHex.HEX_TYPES.CAVE_CLEAR : return {type:CBMoveProfile.COST_TYPE.ADD, value:1};
+            case WHex.HEX_TYPES.CAVE_ROUGH : return {type:CBMoveProfile.COST_TYPE.ADD, value:1.5};
+            case WHex.HEX_TYPES.CAVE_DIFFICULT : return {type:CBMoveProfile.COST_TYPE.ADD, value:2};
+            case WHex.HEX_TYPES.CAVE_CLEAR_FLAMMABLE : return {type:CBMoveProfile.COST_TYPE.ADD, value:1};
+            case WHex.HEX_TYPES.CAVE_ROUGH_FLAMMABLE : return {type:CBMoveProfile.COST_TYPE.ADD, value:1.5};
+            case WHex.HEX_TYPES.CAVE_DIFFICULT_FLAMMABLE : return {type:CBMoveProfile.COST_TYPE.ADD, value:2};
         }
     }
 
     getMovementCostOnHexSide(hexSide) {
         switch (hexSide.type) {
-            case CBHex.HEXSIDE_TYPES.NORMAL : return {type:CBMoveProfile.COST_TYPE.ADD, value:0};
-            case CBHex.HEXSIDE_TYPES.EASY : return {type:CBMoveProfile.COST_TYPE.SET, value:0.5};
-            case CBHex.HEXSIDE_TYPES.DIFFICULT : return {type:CBMoveProfile.COST_TYPE.ADD, value:0.5};
-            case CBHex.HEXSIDE_TYPES.CLIMB : return {type:CBMoveProfile.COST_TYPE.IMPASSABLE};
-            case CBHex.HEXSIDE_TYPES.WALL : return {type:CBMoveProfile.COST_TYPE.IMPASSABLE};
+            case WHex.HEXSIDE_TYPES.NORMAL : return {type:CBMoveProfile.COST_TYPE.ADD, value:0};
+            case WHex.HEXSIDE_TYPES.EASY : return {type:CBMoveProfile.COST_TYPE.SET, value:0.5};
+            case WHex.HEXSIDE_TYPES.DIFFICULT : return {type:CBMoveProfile.COST_TYPE.ADD, value:0.5};
+            case WHex.HEXSIDE_TYPES.CLIMB : return {type:CBMoveProfile.COST_TYPE.IMPASSABLE};
+            case WHex.HEXSIDE_TYPES.WALL : return {type:CBMoveProfile.COST_TYPE.IMPASSABLE};
         }
     }
 
@@ -122,31 +122,31 @@ export class CavalryMoveProfile extends CBMoveProfile {
 
     getMovementCostOnHex(hex) {
         switch (hex.type) {
-            case CBHex.HEX_TYPES.OUTDOOR_CLEAR : return {type:CBMoveProfile.COST_TYPE.ADD, value:0.5};
-            case CBHex.HEX_TYPES.OUTDOOR_ROUGH : return {type:CBMoveProfile.COST_TYPE.ADD, value:1.5};
-            case CBHex.HEX_TYPES.OUTDOOR_DIFFICULT : return {type:CBMoveProfile.COST_TYPE.MINIMAL_MOVE};
-            case CBHex.HEX_TYPES.OUTDOOR_CLEAR_FLAMMABLE : return {type:CBMoveProfile.COST_TYPE.ADD, value:0.5};
-            case CBHex.HEX_TYPES.OUTDOOR_ROUGH_FLAMMABLE : return {type:CBMoveProfile.COST_TYPE.ADD, value:1.5};
-            case CBHex.HEX_TYPES.OUTDOOR_DIFFICULT_FLAMMABLE : return {type:CBMoveProfile.COST_TYPE.MINIMAL_MOVE};
-            case CBHex.HEX_TYPES.WATER : return {type:CBMoveProfile.COST_TYPE.IMPASSABLE};
-            case CBHex.HEX_TYPES.LAVA : return {type:CBMoveProfile.COST_TYPE.IMPASSABLE};
-            case CBHex.HEX_TYPES.IMPASSABLE : return {type:CBMoveProfile.COST_TYPE.IMPASSABLE};
-            case CBHex.HEX_TYPES.CAVE_CLEAR : return {type:CBMoveProfile.COST_TYPE.ADD, value:1};
-            case CBHex.HEX_TYPES.CAVE_ROUGH : return {type:CBMoveProfile.COST_TYPE.ADD, value:1.5};
-            case CBHex.HEX_TYPES.CAVE_DIFFICULT : return {type:CBMoveProfile.COST_TYPE.MINIMAL_MOVE};
-            case CBHex.HEX_TYPES.CAVE_CLEAR_FLAMMABLE : return {type:CBMoveProfile.COST_TYPE.ADD, value:1};
-            case CBHex.HEX_TYPES.CAVE_ROUGH_FLAMMABLE : return {type:CBMoveProfile.COST_TYPE.ADD, value:1.5};
-            case CBHex.HEX_TYPES.CAVE_DIFFICULT_FLAMMABLE : return {type:CBMoveProfile.COST_TYPE.MINIMAL_MOVE};
+            case WHex.HEX_TYPES.OUTDOOR_CLEAR : return {type:CBMoveProfile.COST_TYPE.ADD, value:0.5};
+            case WHex.HEX_TYPES.OUTDOOR_ROUGH : return {type:CBMoveProfile.COST_TYPE.ADD, value:1.5};
+            case WHex.HEX_TYPES.OUTDOOR_DIFFICULT : return {type:CBMoveProfile.COST_TYPE.MINIMAL_MOVE};
+            case WHex.HEX_TYPES.OUTDOOR_CLEAR_FLAMMABLE : return {type:CBMoveProfile.COST_TYPE.ADD, value:0.5};
+            case WHex.HEX_TYPES.OUTDOOR_ROUGH_FLAMMABLE : return {type:CBMoveProfile.COST_TYPE.ADD, value:1.5};
+            case WHex.HEX_TYPES.OUTDOOR_DIFFICULT_FLAMMABLE : return {type:CBMoveProfile.COST_TYPE.MINIMAL_MOVE};
+            case WHex.HEX_TYPES.WATER : return {type:CBMoveProfile.COST_TYPE.IMPASSABLE};
+            case WHex.HEX_TYPES.LAVA : return {type:CBMoveProfile.COST_TYPE.IMPASSABLE};
+            case WHex.HEX_TYPES.IMPASSABLE : return {type:CBMoveProfile.COST_TYPE.IMPASSABLE};
+            case WHex.HEX_TYPES.CAVE_CLEAR : return {type:CBMoveProfile.COST_TYPE.ADD, value:1};
+            case WHex.HEX_TYPES.CAVE_ROUGH : return {type:CBMoveProfile.COST_TYPE.ADD, value:1.5};
+            case WHex.HEX_TYPES.CAVE_DIFFICULT : return {type:CBMoveProfile.COST_TYPE.MINIMAL_MOVE};
+            case WHex.HEX_TYPES.CAVE_CLEAR_FLAMMABLE : return {type:CBMoveProfile.COST_TYPE.ADD, value:1};
+            case WHex.HEX_TYPES.CAVE_ROUGH_FLAMMABLE : return {type:CBMoveProfile.COST_TYPE.ADD, value:1.5};
+            case WHex.HEX_TYPES.CAVE_DIFFICULT_FLAMMABLE : return {type:CBMoveProfile.COST_TYPE.MINIMAL_MOVE};
         }
     }
 
     getMovementCostOnHexSide(hexSide) {
         switch (hexSide.type) {
-            case CBHex.HEXSIDE_TYPES.NORMAL : return {type:CBMoveProfile.COST_TYPE.ADD, value:0};
-            case CBHex.HEXSIDE_TYPES.EASY : return {type:CBMoveProfile.COST_TYPE.SET, value:0.5};
-            case CBHex.HEXSIDE_TYPES.DIFFICULT : return {type:CBMoveProfile.COST_TYPE.MINIMAL_MOVE};
-            case CBHex.HEXSIDE_TYPES.CLIMB : return {type:CBMoveProfile.COST_TYPE.IMPASSABLE};
-            case CBHex.HEXSIDE_TYPES.WALL : return {type:CBMoveProfile.COST_TYPE.IMPASSABLE};
+            case WHex.HEXSIDE_TYPES.NORMAL : return {type:CBMoveProfile.COST_TYPE.ADD, value:0};
+            case WHex.HEXSIDE_TYPES.EASY : return {type:CBMoveProfile.COST_TYPE.SET, value:0.5};
+            case WHex.HEXSIDE_TYPES.DIFFICULT : return {type:CBMoveProfile.COST_TYPE.MINIMAL_MOVE};
+            case WHex.HEXSIDE_TYPES.CLIMB : return {type:CBMoveProfile.COST_TYPE.IMPASSABLE};
+            case WHex.HEXSIDE_TYPES.WALL : return {type:CBMoveProfile.COST_TYPE.IMPASSABLE};
         }
     }
 

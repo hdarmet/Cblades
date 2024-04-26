@@ -6,15 +6,15 @@ import {
 } from "../../jstest/jtest.js";
 import {
     DImage, setDrawPlatform
-} from "../../jslib/draw.js";
+} from "../../jslib/board/draw.js";
 import {
     getDirectives,
     getLayers, loadAllImages,
     mockPlatform, resetDirectives
-} from "../mocks.js";
+} from "../board/mocks.js";
 import {
     Mechanisms, Memento
-} from "../../jslib/mechanisms.js";
+} from "../../jslib/board/mechanisms.js";
 import {
     create1PlayerBaseGame,
     createTinyGame
@@ -38,8 +38,8 @@ import {
     CBWeather
 } from "../../jslib/cblades/weather.js";
 import {
-    CBAction
-} from "../../jslib/cblades/game.js";
+    WAction
+} from "../../jslib/wargame/game.js";
 
 describe("Miscellaneous", ()=> {
 
@@ -159,7 +159,7 @@ describe("Miscellaneous", ()=> {
             var burning1 = new CBFireCounter(game);
             var burning2 = new CBSmokeCounter(game);
             burning1.addToMap(map.getHex(7,8));
-            burning1.launchAction(new CBAction(game, burning1));
+            burning1.launchAction(new WAction(game, burning1));
             burning2.addToMap(map.getHex(8,8));
             player.playSmokeAndFire = function(burning, event) {
                 Mechanisms.fire(burning, CBBurningCounter.PLAYED_EVENT);

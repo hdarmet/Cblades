@@ -2,13 +2,13 @@
 
 import {
     loadAllImages
-} from "../mocks.js";
+} from "../board/mocks.js";
 import {
-    CBHexSideId, CBMap
-} from "../../jslib/cblades/map.js";
+    WHexSideId, WMap
+} from "../../jslib/wargame/map.js";
 import {
-    CBGame, CBMoveMode
-} from "../../jslib/cblades/playable.js";
+    WGame, WMoveMode
+} from "../../jslib/wargame/playable.js";
 import {
     CBArbitrator
 } from "../../jslib/cblades/arbitrator.js";
@@ -37,10 +37,10 @@ import {
 
 export * from "./game-elements.js";
 export function createBaseGame() {
-    let game = new (BurningMixin(WeatherMixin(CBGame)))("Game");
+    let game = new (BurningMixin(WeatherMixin(WGame)))("Game");
     let arbitrator = new CBTestArbitrator();
     game.setArbitrator(arbitrator);
-    var map = new CBMap([{path: "./../images/maps/map.png", col: 0, row: 0}]);
+    var map = new WMap([{path: "./../images/maps/map.png", col: 0, row: 0}]);
     game.setMap(map);
     game.start();
     return {game, arbitrator, map};
@@ -69,7 +69,7 @@ export function create2PlayersBaseGame() {
     game.addPlayer(player2);
     let wing1 = new CBWing(player1, banner1);
     wing1.setRetreatZone(map.getWestZone());
-    let wing2 = new CBWing(player2, banner2);
+    let wing2 = new CBWing( player2, banner2);
     wing2.setRetreatZone(map.getEastZone());
     return {
         ...baseGame,
@@ -98,7 +98,7 @@ export function setWeaponBonuses(unitType, step, attackBonus, defenseBonus, fire
 }
 
 export function createTroop(game, map, unitType, wing, angle, x, y) {
-    let troop = new CBTroop(game, 9unitType, wing);
+    let troop = new CBTroop(game, unitType, wing);
     troop.angle = angle;
     troop.addToMap(map.getHex(x, y));
     return troop;
@@ -107,7 +107,7 @@ export function createTroop(game, map, unitType, wing, angle, x, y) {
 export function createFormation(game, map, unitType, wing, angle, x1, y1, x2, y2) {
     let formation = new CBFormation(game, unitType, wing);
     formation.angle = angle;
-    formation.addToMap(new CBHexSideId(map.getHex(x1, y1), map.getHex(x2, y2)));
+    formation.addToMap(new WHexSideId(map.getHex(x1, y1), map.getHex(x2, y2)));
     return formation;
 }
 
@@ -164,7 +164,7 @@ export class CBTestArbitrator extends CBArbitrator {
     getAllowedActions(unit) {
         return this._updater({
             moveForward: true,
-            moveMode: CBMoveMode.NO_CONSTRAINT,
+            moveMode: WMoveMode.NO_CONSTRAINT,
             moveBack: true,
             escape: true,
             confront: true,

@@ -2,7 +2,7 @@
 
 import {
     getDrawPlatform
-} from "../draw.js";
+} from "../board/draw.js";
 
 /**
  * Base class for component. These objects are DOM handlers, not subclasses of DOM objects. The DOM object managed by

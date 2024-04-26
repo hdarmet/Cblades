@@ -4,14 +4,14 @@ import {
     assert, before, describe, it
 } from "../../../jstest/jtest.js";
 import {
-    CBHexSideId, CBMap
-} from "../../../jslib/cblades/map.js";
+    WHexSideId, WMap
+} from "../../../jslib/wargame/map.js";
 import {
-    CBAction
-} from "../../../jslib/cblades/game.js";
+    WAction
+} from "../../../jslib/wargame/game.js";
 import {
-    CBGame
-} from "../../../jslib/cblades/playable.js";
+    WGame
+} from "../../../jslib/wargame/playable.js";
 import {
     CBWeather, WeatherMixin
 } from "../../../jslib/cblades/weather.js";
@@ -31,12 +31,12 @@ import {
 } from "../../../jslib/cblades/teachers/map-teacher.js";
 import {
     setDrawPlatform
-} from "../../../jslib/draw.js";
+} from "../../../jslib/board/draw.js";
 import {
     loadAllImages,
     mergeClasses,
     mockPlatform
-} from "../../mocks.js";
+} from "../../board/mocks.js";
 import {
     CBUnitManagementTeacher
 } from "../../../jslib/cblades/teachers/units-teacher.js";
@@ -65,7 +65,7 @@ describe("Units teacher", ()=> {
     }
 
     function create2Players4UnitsTinyGame() {
-        let game = new (WeatherMixin(CBGame))("Test");
+        let game = new (WeatherMixin(WGame))("Test");
         let arbitrator = new Arbitrator();
         game.setArbitrator(arbitrator);
         let player1 = new CBUnitPlayer("player1", "/players/player1.png");
@@ -74,7 +74,7 @@ describe("Units teacher", ()=> {
         let player2 = new CBUnitPlayer("player2", "/players/player2.png");
         game.addPlayer(player2);
         let wing2 = new CBWing(player2, banner2);
-        let map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+        let map = new WMap([{path:"./../images/maps/map.png", col:0, row:0}]);
         game.setMap(map);
         let unitType1 = new CBTestUnitType("unit1", ["./../images/units/misc/unit1.png", "./../images/units/misc/unit1b.png"])
         let unit11 = new CBTroop(game, unitType1, wing1);
@@ -98,14 +98,14 @@ describe("Units teacher", ()=> {
     }
 
     function create2PlayersTinyFormationGame() {
-        let game = new CBGame(1);
+        let game = new WGame(1);
         let arbitrator = new Arbitrator();
         game.setArbitrator(arbitrator);
         let player1 = new CBUnitPlayer("player1", "/players/player1.png");
         game.addPlayer(player1);
         let player2 = new CBUnitPlayer("player2", "/players/player2.png");
         game.addPlayer(player2);
-        let map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+        let map = new WMap([{path:"./../images/maps/map.png", col:0, row:0}]);
         game.setMap(map);
         let wing1 = new CBWing(player1, banner1);
         let unitType1 = new CBTestUnitType("unit1", ["./../images/units/misc/unit1.png", "./../images/units/misc/unit1b.png"]);
@@ -119,7 +119,7 @@ describe("Units teacher", ()=> {
             ["./../)images/units/misc/formation2.png", "./../images/units/misc/formation2b.png"]);
         let formation2 = new CBFormation(game, unitType2, wing2);
         formation2.angle = 90;
-        formation2.addToMap(new CBHexSideId(map.getHex(6, 8), map.getHex(6, 7)));
+        formation2.addToMap(new WHexSideId(map.getHex(6, 8), map.getHex(6, 7)));
         game.start();
         loadAllImages();
         return {game, arbitrator, map, unit1, unit2, formation2, wing1, wing2, player1, player2};
@@ -138,7 +138,7 @@ describe("Units teacher", ()=> {
         then:
             assert(arbitrator.canPlayUnit(unit12)).isTrue();
         when:
-            unit12.launchAction(new CBAction(unit12.game, unit12));
+            unit12.launchAction(new WAction(unit12.game, unit12));
             unit12.action.markAsStarted();
         then:
             assert(arbitrator.canPlayUnit(unit12)).isFalse();
@@ -473,7 +473,7 @@ describe("Units teacher", ()=> {
 
     it("Checks unit filtering by type", () => {
         given:
-            var game = new CBGame(1);
+            var game = new WGame(1);
             var arbitrator = new Arbitrator();
             var type1 = new CBTestUnitType("red", ["red/unit1", "red/unit1b"]);
             var type2 = new CBTestUnitType("blue", ["blue/unit1", "blue/unit1b"]);

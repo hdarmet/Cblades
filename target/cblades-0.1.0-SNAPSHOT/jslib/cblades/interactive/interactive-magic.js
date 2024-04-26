@@ -3,38 +3,38 @@
 import {
     DDice6, DIconMenu,
     DIconMenuItem, DInsert, DMask, DResult, DScene
-} from "../../widget.js";
+} from "../../board/widget.js";
 import {
     CBActionMenu, CBInteractivePlayer
 } from "./interactive-player.js";
 import {
-    CBAction, CBAbstractGame
-} from "../game.js";
+    WAction, WAbstractGame
+} from "../../wargame/game.js";
 import {
-    CBActionActuator,
-    CBActuatorImageTrigger, CBInsert,
+    WActionActuator,
+    WActuatorImageTrigger, WInsert,
     RetractableActuatorMixin, NeighborActuatorMixin, NeighborActuatorArtifactMixin
-} from "../playable.js";
+} from "../../wargame/playable.js";
 import {
     Dimension2D,
     Point2D
-} from "../../geometry.js";
+} from "../../board/geometry.js";
 import {
     CBFireballSpell, CBMagicArrowSpell,
     CBSpell
 } from "../magic.js";
 import {
     DImage
-} from "../../draw.js";
+} from "../../board/draw.js";
 import {
     CBCombatResultTableInsert
 } from "./interactive-combat.js";
 import {
-    CBUnitActuatorTrigger, CBCharge, CBStateSequenceElement
+    CBCharge, CBStateSequenceElement
 } from "../unit.js";
 import {
-    CBSequence
-} from "../sequences.js";
+    WSequence
+} from "../../wargame/sequences.js";
 
 export function registerInteractiveMagic() {
     CBInteractivePlayer.prototype.choseSpell = function(unit) {
@@ -49,8 +49,8 @@ export function registerInteractiveMagic() {
     CBInteractivePlayer.prototype.openMagicMenu = function(unit, offset, allowedSpells) {
         let popup = new CBSpellsMenu(this.game, unit, allowedSpells);
         this.game.openPopup(popup, new Point2D(
-            offset.x - popup.dimension.w/2 + CBAbstractGame.POPUP_MARGIN,
-            offset.y - popup.dimension.h/2 + CBAbstractGame.POPUP_MARGIN)
+            offset.x - popup.dimension.w/2 + WAbstractGame.POPUP_MARGIN,
+            offset.y - popup.dimension.h/2 + WAbstractGame.POPUP_MARGIN)
         );
     }
     CBActionMenu.menuBuilders.push(
@@ -61,7 +61,7 @@ export function unregisterInteractiveMagic() {
     CBActionMenu.menuBuilders.remove(createMagicMenuItems);
 }
 
-export class InteractiveChoseSpellAction extends CBAction {
+export class InteractiveChoseSpellAction extends WAction {
 
     constructor(game, unit) {
         super(game, unit);
@@ -80,9 +80,8 @@ export class InteractiveChoseSpellAction extends CBAction {
     }
 
 }
-CBAction.register("InteractiveChoseSpellAction", InteractiveChoseSpellAction);
 
-export class InteractiveTryToCastSpellAction extends CBAction {
+export class InteractiveTryToCastSpellAction extends WAction {
 
     constructor(game, unit) {
         super(game, unit);
@@ -135,9 +134,8 @@ export class InteractiveTryToCastSpellAction extends CBAction {
     }
 
 }
-CBAction.register("InteractiveTryToCastSpellAction", InteractiveTryToCastSpellAction);
 
-export class InteractiveCastSpellAction extends CBAction {
+export class InteractiveCastSpellAction extends WAction {
 
     constructor(game, unit) {
         super(game, unit);
@@ -226,16 +224,15 @@ export class InteractiveCastSpellAction extends CBAction {
     }
 
 }
-CBAction.register("InteractiveCastSpellAction", InteractiveCastSpellAction);
 
-export class CBSpellTargetFoesActuator extends RetractableActuatorMixin(CBActionActuator) {
+export class CBSpellTargetFoesActuator extends RetractableActuatorMixin(WActionActuator) {
 
     constructor(action, foes) {
         super(action);
         let image = DImage.getImage("./../images/actuators/spell-target-foe.png");
         let imageArtifacts = [];
         for (let foe of foes) {
-            let target = new CBUnitActuatorTrigger(this, foe,"units", image,
+            let target = new WUnitActuatorTrigger(this, foe,"units", image,
                 new Point2D(0, 0), new Dimension2D(100, 111));
             target.position = Point2D.position(this.playable.location, foe.location, 1);
             imageArtifacts.push(target);
@@ -253,14 +250,14 @@ export class CBSpellTargetFoesActuator extends RetractableActuatorMixin(CBAction
 
 }
 
-export class CBSpellTargetFriendsActuator extends RetractableActuatorMixin(CBActionActuator) {
+export class CBSpellTargetFriendsActuator extends RetractableActuatorMixin(WActionActuator) {
 
     constructor(action, friends) {
         super(action);
         let image = DImage.getImage("./../images/actuators/spell-target-friend.png");
         let imageArtifacts = [];
         for (let friend of friends) {
-            let target = new CBUnitActuatorTrigger(this, friend, "units", image,
+            let target = new WUnitActuatorTrigger(this, friend, "units", image,
                 new Point2D(0, 0), new Dimension2D(100, 111));
             target.position = Point2D.position(this.playable.location, friend.location, 1);
             imageArtifacts.push(target);
@@ -278,7 +275,7 @@ export class CBSpellTargetFriendsActuator extends RetractableActuatorMixin(CBAct
 
 }
 
-class SpellTargetHexTrigger extends NeighborActuatorArtifactMixin(CBActuatorImageTrigger) {
+class SpellTargetHexTrigger extends NeighborActuatorArtifactMixin(WActuatorImageTrigger) {
 
     constructor(actuator, hex) {
         let image = DImage.getImage("./../images/actuators/spell-target-hex.png");
@@ -287,7 +284,7 @@ class SpellTargetHexTrigger extends NeighborActuatorArtifactMixin(CBActuatorImag
 
 }
 
-export class CBSpellTargetHexesActuator extends NeighborActuatorMixin(CBActionActuator) {
+export class CBSpellTargetHexesActuator extends NeighborActuatorMixin(WActionActuator) {
 
     constructor(action, hexes) {
         super(action);
@@ -394,7 +391,7 @@ CBFireballSpell.resolver = function(action) {
         dice.setFinalAction(()=>{
             dice.active = false;
             let report = this.resolve(dice.result);
-            CBSequence.appendElement(this.game, new CBStateSequenceElement({game: this.game, unit: this.unit}));
+            WSequence.appendElement(this.game, new CBStateSequenceElement({game: this.game, unit: this.unit}));
             if (report.success) {
                 result.success().appear();
             }
@@ -411,7 +408,7 @@ CBFireballSpell.resolver = function(action) {
     this.game.openPopup(scene, this.location);
 }
 
-export class CBFireballInsert extends CBInsert {
+export class CBFireballInsert extends WInsert {
 
     constructor() {
         super("./../images/inserts/fireball-insert.png", CBFireballInsert.DIMENSION);
@@ -438,7 +435,7 @@ CBMagicArrowSpell.resolver = function(action) {
         dice.setFinalAction(()=>{
             dice.active = false;
             let report = this.resolve(dice.result);
-            CBSequence.appendElement(this.game, new CBStateSequenceElement({game:this.game, unit: this.unit}));
+            WSequence.appendElement(this.game, new CBStateSequenceElement({game:this.game, unit: this.unit}));
             if (report.success) {
                 result.success().appear();
             }
@@ -455,7 +452,7 @@ CBMagicArrowSpell.resolver = function(action) {
     this.game.openPopup(scene, this.location);
 }
 
-export class CBMagicArrowInsert extends CBInsert {
+export class CBMagicArrowInsert extends WInsert {
 
     constructor() {
         super("./../images/inserts/magic-arrow-insert.png", CBMagicArrowInsert.DIMENSION);

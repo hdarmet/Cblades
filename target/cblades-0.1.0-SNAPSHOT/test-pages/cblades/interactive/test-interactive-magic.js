@@ -7,17 +7,17 @@ import {
 import {
     DAnimator,
     DImage, setDrawPlatform
-} from "../../../jslib/draw.js";
+} from "../../../jslib/board/draw.js";
 import {
     assertDirectives, assertNoMoreDirectives,
     createEvent, findInDirectives,
     getLayers,
     loadAllImages,
     mockPlatform, resetDirectives, skipDirectives
-} from "../../mocks.js";
+} from "../../board/mocks.js";
 import {
     Mechanisms, Memento
-} from "../../../jslib/mechanisms.js";
+} from "../../../jslib/board/mechanisms.js";
 import {
     clickOnActionMenu,
     clickOnPiece,
@@ -49,8 +49,8 @@ import {
     CBSpell
 } from "../../../jslib/cblades/magic.js";
 import {
-    CBSequence
-} from "../../../jslib/cblades/sequences.js";
+    WSequence
+} from "../../../jslib/wargame/sequences.js";
 import {
     registerInteractiveMagic,
     unregisterInteractiveMagic
@@ -58,7 +58,7 @@ import {
 
 describe("Interactive Magic", ()=> {
 
-    var appendElement = CBSequence.appendElement;
+    var appendElement = WSequence.appendElement;
 
     before(() => {
         registerInteractiveMagic();
@@ -67,16 +67,16 @@ describe("Interactive Magic", ()=> {
         Mechanisms.reset();
         DAnimator.clear();
         Memento.clear();
-        CBSequence.awaitedElements = [];
-        CBSequence.appendElement = function(game, element) {
-            let awaited = CBSequence.awaitedElements.pop();
+        WSequence.awaitedElements = [];
+        WSequence.appendElement = function(game, element) {
+            let awaited = WSequence.awaitedElements.pop();
             assert(element).equalsTo(awaited);
         }
     });
 
     after(() => {
         unregisterInteractiveMagic();
-        CBSequence.appendElement = appendElement;
+        WSequence.appendElement = appendElement;
     });
 
     function showSpell(spell, [a, b, c, d, e, f]) {

@@ -14,7 +14,7 @@ import {
 } from "./vforms.js";
 import {
     getDrawPlatform
-} from "../draw.js";
+} from "../board/draw.js";
 
 export class VFooter extends Vitamin(Div) {
 

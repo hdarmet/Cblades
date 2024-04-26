@@ -1,41 +1,41 @@
 'use strict'
 
 import {
-    CBActuator,
-    CBAbstractGame, CBAbstractPlayer
-} from "./game.js";
+    WActuator,
+    WAbstractGame, WAbstractPlayer
+} from "../wargame/game.js";
 import {
-    CBActuatorMultiImagesTrigger,
+    WActuatorMultiImagesTrigger,
     NeighborRawActuatorArtifactMixin,
     NeighborActuatorArtifactMixin,
     NeighborActuatorMixin,
     ActivableArtifactMixin,
-    CBActuatorImageTrigger,
+    WActuatorImageTrigger,
     GhostArtifactMixin,
-    CBLevelBuilder,
-    RetractableGameMixin, CBHexCounter, StandardGameMixin
-} from "./playable.js";
+    WLevelBuilder,
+    RetractableGameMixin, WHexCounter, StandardGameMixin
+} from "../wargame/playable.js";
 import {
     DImage, getDrawPlatform
-} from "../draw.js";
+} from "../board/draw.js";
 import {
     atan2, diffAngle,
     Dimension2D, inside, Point2D, sumAngle
-} from "../geometry.js";
+} from "../board/geometry.js";
 import {
     Mechanisms,
     Memento
-} from "../mechanisms.js";
+} from "../board/mechanisms.js";
 import {
     D2StatesIconMenuItem, DDownNavigation,
     DIconMenu, DIconMenuItem, DCancel,
     DLeftNavigation, DMultiStatePushButton, DNextNavigation, DOk,
     DPopup, DPrevNavigation, DPushButton, DRightNavigation, DUpNavigation
-} from "../widget.js";
+} from "../board/widget.js";
 import {
     DBoard, DElement,
     DImageArtifact, DMultiImagesArtifact, DPedestalArtifact, DRectArtifact
-} from "../board.js";
+} from "../board/board.js";
 import {
     GoblinLeader, GoblinSkirmisher, GoblinWolfRider, WizardLeader
 } from "./armies/orcs.js";
@@ -55,8 +55,8 @@ import {
     BoardLoader, Connector, GameLoader, PlayerIdentityListLoader
 } from "./loader.js";
 import {
-    CBMap
-} from "./map.js";
+    WMap
+} from "../wargame/map.js";
 import {
     CBBurningCounter, CBObstacleCounter
 } from "./miscellaneous.js";
@@ -64,7 +64,7 @@ import {
     CBSpell
 } from "./magic.js";
 
-export class CBBoardEditorHexHeightTrigger extends NeighborRawActuatorArtifactMixin(CBActuatorMultiImagesTrigger) {
+export class CBBoardEditorHexHeightTrigger extends NeighborRawActuatorArtifactMixin(WActuatorMultiImagesTrigger) {
     constructor(actuator, hex) {
         let images = [
             DImage.getImage("./../images/actuators/ground/level-down-5.png"),
@@ -105,7 +105,7 @@ export class CBBoardEditorHexHeightTrigger extends NeighborRawActuatorArtifactMi
 
 }
 
-export class CBBoardEditorHexTypeTrigger extends NeighborActuatorArtifactMixin(CBActuatorMultiImagesTrigger) {
+export class CBBoardEditorHexTypeTrigger extends NeighborActuatorArtifactMixin(WActuatorMultiImagesTrigger) {
 
     constructor(actuator, hex) {
         let images = [
@@ -151,7 +151,7 @@ export class CBBoardEditorHexTypeTrigger extends NeighborActuatorArtifactMixin(C
 
 }
 
-export class CBBoardEditorHexSideTypeTrigger extends NeighborRawActuatorArtifactMixin(CBActuatorMultiImagesTrigger) {
+export class CBBoardEditorHexSideTypeTrigger extends NeighborRawActuatorArtifactMixin(WActuatorMultiImagesTrigger) {
 
     constructor(actuator, hexSide) {
         let images = [
@@ -188,7 +188,7 @@ export class CBBoardEditorHexSideTypeTrigger extends NeighborRawActuatorArtifact
 
 }
 
-export class CBBoardEditActuator extends NeighborActuatorMixin(CBActuator) {
+export class CBBoardEditActuator extends NeighborActuatorMixin(WActuator) {
 
     constructor(map) {
         super();
@@ -224,7 +224,7 @@ export class CBBoardEditActuator extends NeighborActuatorMixin(CBActuator) {
 
 }
 
-export class CBPiecePlacementTrigger extends GhostArtifactMixin(CBActuatorImageTrigger) {
+export class CBPiecePlacementTrigger extends GhostArtifactMixin(WActuatorImageTrigger) {
 
     constructor(actuator, hex) {
         let image= DImage.getImage("./../images/actuators/unit-t.png");
@@ -264,7 +264,7 @@ export class CBPiecePlacementTrigger extends GhostArtifactMixin(CBActuatorImageT
 
 }
 
-export class CBPiecePlacementActuator extends CBActuator {
+export class CBPiecePlacementActuator extends WActuator {
 
     constructor(map) {
         super();
@@ -321,7 +321,7 @@ export class CBPieceMoveActuator extends CBPiecePlacementActuator {
 
 }
 
-export class CBFormationPlacementTrigger extends GhostArtifactMixin(CBActuatorImageTrigger) {
+export class CBFormationPlacementTrigger extends GhostArtifactMixin(WActuatorImageTrigger) {
 
     constructor(actuator, hexSide) {
         let image= DImage.getImage("./../images/actuators/unit-f.png");
@@ -366,7 +366,7 @@ export class CBFormationPlacementTrigger extends GhostArtifactMixin(CBActuatorIm
 
 }
 
-export class CBFormationPlacementActuator extends CBActuator {
+export class CBFormationPlacementActuator extends WActuator {
 
     constructor(map) {
         super();
@@ -432,7 +432,7 @@ export class CBTokenCreationActuator extends CBPiecePlacementActuator {
     action(hex, angle) {
         let context = new Map();
         context.game = this.game;
-        let counter = CBHexCounter.fromSpecs(this._specs, context);
+        let counter = WHexCounter.fromSpecs(this._specs, context);
         counter.appendToMap(hex);
         counter.angle = angle;
     }
@@ -1362,10 +1362,12 @@ export class CBUnitsRoster extends DPopup {
             let wings = [];
             for (let wingDesc of playerDesc.wings) {
                 let wing = wingMap.get(wingDesc.name);
-                if (!wing) wing = new CBWing(null, {
-                    name:wingDesc.name,
-                    path:wingDesc.path
-                });
+                if (!wing) wing = new CBWing( player,
+                    {
+                        name: wingDesc.name,
+                        path: wingDesc.path
+                    }
+                );
                 wings.push(wing);
             }
             player.setWings(wings);
@@ -2464,7 +2466,7 @@ export class CBTokensCatalog extends DIconMenu {
 
 }
 
-export class CBEditorPlayer extends CBAbstractPlayer {
+export class CBEditorPlayer extends WAbstractPlayer {
 
     _init() {
         super._init();
@@ -2506,15 +2508,15 @@ export class CBEditorPlayer extends CBAbstractPlayer {
     openEditUnitMenu(unit, offset) {
         let popup = new CBEditUnitMenu(this.game, unit);
         this.game.openPopup(popup, new Point2D(
-            offset.x - popup.dimension.w/2 + CBAbstractGame.POPUP_MARGIN,
-            offset.y - popup.dimension.h/2 + CBAbstractGame.POPUP_MARGIN));
+            offset.x - popup.dimension.w/2 + WAbstractGame.POPUP_MARGIN,
+            offset.y - popup.dimension.h/2 + WAbstractGame.POPUP_MARGIN));
     }
 
     openEditTokenMenu(token, offset) {
         let popup = new CBEditTokenMenu(this.game, token);
         this.game.openPopup(popup, new Point2D(
-            offset.x - popup.dimension.w/2 + CBAbstractGame.POPUP_MARGIN,
-            offset.y - popup.dimension.h/2 + CBAbstractGame.POPUP_MARGIN));
+            offset.x - popup.dimension.w/2 + WAbstractGame.POPUP_MARGIN,
+            offset.y - popup.dimension.h/2 + WAbstractGame.POPUP_MARGIN));
     }
 
     launchPlayableAction(playable, point) {
@@ -2545,10 +2547,10 @@ export class CBEditorPlayer extends CBAbstractPlayer {
 
 }
 
-export class CBMapEditorGame extends RetractableGameMixin(CBAbstractGame) {
+export class CBMapEditorGame extends RetractableGameMixin(WAbstractGame) {
 
     constructor() {
-        super(0, new CBLevelBuilder().buildLevels());
+        super(0, new WLevelBuilder().buildLevels());
     }
 
     _buildBoard(map) {
@@ -2636,10 +2638,10 @@ export class CBMapEditorGame extends RetractableGameMixin(CBAbstractGame) {
 
 }
 
-export class CBScenarioEditorGame extends StandardGameMixin(RetractableGameMixin(CBAbstractGame)) {
+export class CBScenarioEditorGame extends StandardGameMixin(RetractableGameMixin(WAbstractGame)) {
 
     constructor(id) {
-        super(id, new CBLevelBuilder().buildLevels());
+        super(id, new WLevelBuilder().buildLevels());
     }
 
     canSelectPlayable(playable) {
@@ -2780,7 +2782,7 @@ export class CBScenarioEditorGame extends StandardGameMixin(RetractableGameMixin
 
     replaceMap(configuration) {
         this.closePopup();
-        let map = new CBMap(configuration);
+        let map = new WMap(configuration);
         this.changeMap(map);
     }
 

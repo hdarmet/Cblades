@@ -2,7 +2,7 @@
 
 import {
     diffAngle
-} from "../../geometry.js";
+} from "../../board/geometry.js";
 import {
     CBEngageSideMode, CBOrderInstruction
 } from "../unit.js";

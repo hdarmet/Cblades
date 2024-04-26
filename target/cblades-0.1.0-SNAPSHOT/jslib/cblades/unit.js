@@ -1,48 +1,29 @@
 'use strict'
 
 import {
-    Point2D, Dimension2D, diffAngle, sumAngle
-} from "../geometry.js";
-import {
-    DImage
-} from "../draw.js";
+    Point2D, Dimension2D
+} from "../board/geometry.js";
 import {
     Mechanisms,
     Memento
-} from "../mechanisms.js";
+} from "../board/mechanisms.js";
 import {
-    CBPieceImageArtifact,
-    CBStacking,
-    HexLocatableMixin,
-    BelongsToPlayerMixin,
-    PlayableMixin,
-    CBPiece,
-    CBAction
-} from "./game.js";
+    WStacking,
+    WAction
+} from "../wargame/game.js";
 import {
-    RetractableArtifactMixin,
-    ActivableArtifactMixin,
-    RetractablePieceMixin,
-    SelectableArtifactMixin,
-    CBLevelBuilder,
-    CBGame,
-    CBPlayableActuatorTrigger, CBBasicPlayer
-} from "./playable.js";
+    WGame
+} from "../wargame/playable.js";
 import {
-    CBHexLocation
-} from "./map.js";
+    WHexLocation
+} from "../wargame/map.js";
 import {
-    CBAnimation,
-    CBSequence, CBSequenceElement
-} from "./sequences.js";
-
-CBAction.types = new Map();
-CBAction.register = function(label, actionType) {
-    CBAction.types.set(label, actionType);
-}
-CBAction.createAction = function(label, game, unit, mode) {
-    return new (CBAction.types.get(label))(game, unit, mode);
-}
+    WSequence, WSequenceElement
+} from "../wargame/sequences.js";
+import {
+    WUnit, WUnitAnimation, WUnitPlayer,
+    getUnitFromContext, WWing, WSimpleMarkerArtifact, TwoHexesUnit
+} from "../wargame/wunit.js";
 
 export let CBMovement = {
     NORMAL : "normal",
@@ -90,62 +71,10 @@ export let CBOrderInstruction = {
     RETREAT: 3
 }
 
-export class CBUnitPlayer extends CBBasicPlayer {
+export class CBUnitPlayer extends WUnitPlayer {
 
-    _init() {
-        super._init();
-        this._wings = [];
-    }
-
-    addWing(wing) {
-        this._wings.push(wing);
-        wing.player = this;
-    }
-
-    get wings() {
-        return this._wings;
-    }
-
-    get units() {
-        return this.game.playables.filter(playable=>playable.unitNature && playable.player === this);
-    }
-
-    toSpecs(context) {
-        let playerSpecs = super.toSpecs(context);
-        playerSpecs.wings = [];
-        for (let wing of this.wings) {
-            let wingSpecs = wing.toSpecs(context);
-            playerSpecs.wings.push(wingSpecs);
-        }
-        return playerSpecs;
-    }
-
-     fromSpecs(game, specs, context) {
-        super.fromSpecs(game, specs, context);
-        for (let wingSpecs of specs.wings) {
-            CBWing.fromSpecs(this, wingSpecs, context);
-        }
-        return this;
-    }
-
-}
-
-export class CBUnitActuatorTrigger extends CBPlayableActuatorTrigger {
-
-    constructor(actuator, unit, ...args) {
-        super(actuator, unit, ...args);
-    }
-
-    get unit() {
-        return this.playable;
-    }
-
-    get slot() {
-        return this.unit.slot;
-    }
-
-    get layer() {
-        return CBLevelBuilder.ULAYERS.ACTUATORS;
+    _fromWingSpec(wingSpecs, context) {
+        return CBWing.fromSpecs(this, wingSpecs, context);
     }
 
 }
@@ -440,13 +369,10 @@ export class CBTroopType extends CBUnitType {
 
 }
 
-export class CBWing {
+export class CBWing extends WWing {
 
     constructor(player, banner) {
-        console.assert(banner.name);
-        if (player) {
-            player.addWing(this);
-        }
+        super(player);
         this._orderInstruction = CBOrderInstruction.DEFEND;
         this._retreatZone = [];
         this._moral = 11;
@@ -454,8 +380,23 @@ export class CBWing {
         this._banner = banner;
     }
 
+    hasUnitByName(name) {
+        return this.playables.find(unit=>unit.name===name)!==undefined;
+    }
+
+    getNextUnitByName() {
+        let number = 0;
+        var unitNames = new Set(this.playables.map(unit=>unit.name));
+        while(true) {
+            let name = this._banner.name+"-"+number;
+            if (unitNames.has(name)) number+=1;
+            else return name;
+        }
+    }
+
     _memento() {
         let memento = {
+            ...super._memento(),
             orderInstruction : this._orderInstruction,
             moral : this._moral,
             tiredness : this._tiredness
@@ -465,6 +406,7 @@ export class CBWing {
     }
 
     _revert(memento) {
+        super._revert();
         this._orderInstruction = memento.orderInstruction;
         this._moral = memento.moral;
         this._tiredness = memento.tiredness;
@@ -474,14 +416,6 @@ export class CBWing {
         else {
             delete this._leader;
         }
-    }
-
-    get player() {
-        return this._player;
-    }
-
-    set player(player) {
-        this._player = player;
     }
 
     get leader() {
@@ -575,28 +509,6 @@ export class CBWing {
         Mechanisms.fire(this, CBWing.TIREDNESS_EVENT, {wing:this, tiredness});
     }
 
-    get playables() {
-        let playables = [];
-        for (let playable of this._player.playables) {
-            if (playable.wing === this) playables.push(playable);
-        }
-        return playables;
-    }
-
-    hasUnitName(name) {
-        return this.playables.find(unit=>unit.name===name)!==undefined;
-    }
-
-    getNextUnitName() {
-        let number = 0;
-        var unitNames = new Set(this.playables.map(unit=>unit.name));
-        while(true) {
-            let name = this._banner.name+"-"+number;
-            if (unitNames.has(name)) number+=1;
-            else return name;
-        }
-    }
-
     getOrderInstructionCode() {
         switch (this.orderInstruction) {
             case CBOrderInstruction.ATTACK: return "A";
@@ -617,8 +529,7 @@ export class CBWing {
 
     toSpecs(context) {
         let wingSpecs = {
-            id: this._oid,
-            version: this._oversion || 0,
+            ...super.toSpecs(context),
             leader: this.leader ? this.leader.name : undefined,
             moral: this.moral,
             tiredness: this.tiredness,
@@ -628,7 +539,6 @@ export class CBWing {
                 name: this.banner.name,
                 path: this.banner.path
             },
-            units: [],
             retreatZone: [],
             orderInstruction: this.getOrderInstructionCode()
         }
@@ -641,40 +551,39 @@ export class CBWing {
             }
             wingSpecs.retreatZone.push(retreatHexSpecs);
         }
-        for (let unit of this.playables) {
-            let unitSpecs = unit.toSpecs(context);
-            wingSpecs.units.push(unitSpecs);
-        }
-        return wingSpecs;
     }
 
-    static fromSpecs(player, specs, context) {
-        let wing = new CBWing(player, {
-            _oid: specs.banner.id,
-            _oversion: specs.banner.version,
-            name: specs.banner.name,
-            path: specs.banner.path
-        });
-        wing._oid = specs.id;
-        wing._oversion = specs.version;
-        wing.setMoral(specs.moral);
-        wing.setTiredness(specs.tiredness);
+    fromSpecs(specs, context) {
+        super.fromSpecs(specs, context);
+        this.setMoral(specs.moral);
+        this.setTiredness(specs.tiredness);
         let retreatZone = [];
         for (let retreatHexSpec of specs.retreatZone) {
-            let hexId = player.game.map.getHex(retreatHexSpec.col, retreatHexSpec.row);
+            let hexId = this.player.game.map.getHex(retreatHexSpec.col, retreatHexSpec.row);
             retreatZone.push(hexId);
         }
-        wing.setRetreatZone(retreatZone);
+        this.setRetreatZone(retreatZone);
         let leader = null;
         for (let unitSpecs of specs.units) {
-            let unit = CBUnit.fromSpecs(wing, unitSpecs, context);
-            context.pieceMap.set(unit.name, unit);
+            let unit =  context.pieceMap.get(unitSpecs.name);
             if (unit.name === specs.leader) {
                 leader = unit;
             }
         }
-        leader && wing.setLeader(leader);
-        wing.setOrderInstruction(this.getOrderInstruction(specs.orderInstruction));
+        leader && this.setLeader(leader);
+        this.setOrderInstruction(CBWing.getOrderInstruction(specs.orderInstruction));
+    }
+
+    static fromSpecs(player, specs, context) {
+        let wing = new CBWing(
+            player, {
+                _oid: specs.banner.id,
+                _oversion: specs.banner.version,
+                name: specs.banner.name,
+                path: specs.banner.path
+            }
+        );
+        wing.fromSpecs(specs, context);
         return wing;
     }
 
@@ -682,182 +591,11 @@ export class CBWing {
     static TIREDNESS_EVENT = "tiredness-event";
 }
 
-export function OptionArtifactMixin(clazz) {
-
-    return class extends clazz {
-        constructor(...args) {
-            super(...args);
-        }
-
-        get slot() {
-            return this.unit.slot;
-        }
-
-        get layer() {
-            return this.unit.formationNature ? CBLevelBuilder.ULAYERS.FOPTIONS : CBLevelBuilder.ULAYERS.OPTIONS;
-        }
-
-    }
-
-}
-
-export function OptionMixin(clazz) {
-
-    return class extends clazz {
-        constructor(...args) {
-            super(...args);
-        }
-
-        _memento() {
-            let memento = super._memento();
-            memento.owner = this._owner;
-            return memento;
-        }
-
-        _revert(memento) {
-            super._revert(memento);
-            if (memento.owner) {
-                this._owner = memento.owner;
-            }
-            else {
-                delete this._owner;
-            }
-        }
-
-        shift(owner, steps) {
-            Memento.register(this);
-            this._owner = owner;
-            this.artifact.shift(new Point2D(-steps*20, -steps*20+10));
-        }
-
-        setPosition(owner, steps) {
-            this._owner = owner
-            this.artifact.position = new Point2D(-steps*20, -steps*20+10);
-        }
-
-        removeAsOption() {
-            delete this._owner;
-        }
-
-        deleteAsOption() {
-            Memento.register(this);
-            delete this._owner;
-        }
-
-        get owner() {
-            return this._owner;
-        }
-
-        isOption() {
-            return true;
-        }
-
-    }
-
-}
-
-export function CarriableMixin(clazz) {
-
-    return class extends clazz {
-        constructor(...args) {
-            super(...args);
-        }
-
-        _move(hexLocation) {
-            Memento.register(this);
-            this._deletePlayable(this._hexLocation);
-            this._hexLocation = hexLocation;
-            this._appendPlayable(hexLocation, CBStacking.TOP);
-            this._element.move(hexLocation.location);
-        }
-
-        _rotate(angle) {
-            Memento.register(this);
-            this._element.rotate(angle);
-        }
-
-    }
-
-}
-
-export class CBMarkerArtifact extends RetractableArtifactMixin(CBPieceImageArtifact) {
-
-    constructor(unit, images, position, dimension= CBMarkerArtifact.MARKER_DIMENSION) {
-        super(unit, "units", images, position, dimension);
-    }
-
-    get unit() {
-        return this.piece;
-    }
-
-    get slot() {
-        return this.unit.slot;
-    }
-
-    get layer() {
-        return this.unit.formationNature ? CBLevelBuilder.ULAYERS.FMARKERS : CBLevelBuilder.ULAYERS.MARKERS;
-    }
-}
-CBMarkerArtifact.MARKER_DIMENSION = new Dimension2D(64, 64);
-
-export class CBSimpleMarkerArtifact extends CBMarkerArtifact {
-
-    constructor(unit, path, position, dimension = CBMarkerArtifact.MARKER_DIMENSION) {
-        super(unit, [DImage.getImage(path)], position, dimension);
-    }
-
-}
-
-export class CBActivableMarkerArtifact extends ActivableArtifactMixin(CBMarkerArtifact) {
-
-    constructor(unit, paths, position, action, dimension= CBMarkerArtifact.MARKER_DIMENSION) {
-        let images = [];
-        for (let path of paths) {
-            images.push(DImage.getImage(path));
-        }
-        super(unit, images, position, dimension);
-        this._action = action;
-    }
-
-    onMouseClick(event) {
-        this._action(this);
-        return true;
-    }
-
-}
-
-export class UnitImageArtifact extends RetractableArtifactMixin(SelectableArtifactMixin(CBPieceImageArtifact)) {
-
-    constructor(unit, ...args) {
-        super(unit, ...args);
-    }
-
-    get unit() {
-        return this.piece;
-    }
-
-    get game() {
-        return this.unit.game;
-    }
-
-    get slot() {
-        return this.unit.slot;
-    }
-
-    get layer() {
-        return CBLevelBuilder.ULAYERS.UNITS;
-    }
-
-}
-
-export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPlayerMixin(PlayableMixin(CBPiece)))) {
+export class CBUnit extends WUnit {
 
     constructor(game, type, paths, wing, dimension=CBUnit.DIMENSION) {
-        super("units", game, paths, dimension);
-        this._carried = [];
-        this._options = [];
+        super(game, paths, wing, dimension);
         this._type = type;
-        this._wing = wing;
         this._movementPoints=type.getMovementPoints(2);
         this._extendedMovementPoints=type.getExtendedMovementPoints(2);
         this._tiredness=CBTiredness.NONE;
@@ -865,21 +603,11 @@ export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
         this._cohesion=CBCohesion.GOOD_ORDER;
         this._engaging=false;
         this._charging=CBCharge.NONE;
-        this._lossSteps = 0;
         this._orderGiven = false;
-        this.artifact.setImage(this._lossSteps);
     }
 
-    createArtifact(levelName, images, position, dimension) {
-        return new UnitImageArtifact(this, levelName, images, position, dimension);
-    }
-
-    get unitNature() {
-        return true;
-    }
-
-    get slot() {
-        return this.hexLocation.units.indexOf(this);
+    get type() {
+        return this._type;
     }
 
     getAttackHex(type) {
@@ -891,24 +619,28 @@ export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
     }
 
     copy(unit) {
-        unit._movementPoints = this._movementPoints;
+        super.copy(unit);
         unit._extendedMovementPoints = this._extendedMovementPoints;
-        unit.lossSteps = this.lossSteps;
         unit.cohesion = this.cohesion;
         unit.munitions = this.munitions;
         unit.tiredness = this.tiredness;
     }
 
-    _getPieces() {
-        let counters = [];
-        for (let carried of this._carried) {
-            if (!carried.isOption || !carried.isOption()) {
-                counters.push(carried);
-            }
+
+    addToMap(hexId, stacking) {
+        let nameMustBeDefined = !this._name || this._wing.hasUnitByName(this._name);
+        super.addToMap(hexId, stacking);
+        if (nameMustBeDefined) {
+            this._name = this._wing.getNextUnitByName();
         }
-        counters.push(...super._getPieces());
-        counters.push(...this.options);
-        return counters;
+    }
+
+    appendToMap(hexLocation, stacking) {
+        let nameMustBeDefined = !this._name || this._wing.hasUnitByName(this._name);
+        super.appendToMap(hexLocation, stacking);
+        if (nameMustBeDefined) {
+            this._name = this._wing.getNextUnitByName();
+        }
     }
 
     removeMarkerArtifact(marker) {
@@ -919,48 +651,9 @@ export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
         this._element.deleteArtifact(marker);
     }
 
-    setMarkerArtifact(path, positionSlot) {
-        let marker = new CBSimpleMarkerArtifact(this, path, CBUnit.MARKERS_POSITION[positionSlot]);
-        this._element.addArtifact(marker);
-        return marker;
-    }
-
-    createMarkerArtifact(path, positionSlot) {
-        let marker = new CBSimpleMarkerArtifact(this, path, CBUnit.MARKERS_POSITION[positionSlot]);
-        this._element.appendArtifact(marker);
-        return marker;
-    }
-
-    setActivableMarkerArtifact(paths, action, positionSlot) {
-        let marker = new CBActivableMarkerArtifact(this, paths, CBUnit.MARKERS_POSITION[positionSlot], action);
-        this._element.addArtifact(marker);
-        return marker;
-    }
-
-    createActivableMarkerArtifact(paths, action, positionSlot) {
-        let marker = new CBActivableMarkerArtifact(this, paths, CBUnit.MARKERS_POSITION[positionSlot], action);
-        this._element.appendArtifact(marker);
-        return marker;
-    }
-
-    _setLocation(location) {
-        super._setLocation(location);
-        for (let carried of this._carried) {
-            carried.location = this.location;
-        }
-    }
-
-    _setAngle(angle) {
-        super._setAngle(angle);
-        for (let carried of this._carried) {
-            carried.angle = this.angle;
-        }
-    }
-
     _memento() {
         return {
             ...super._memento(),
-            movementPoints: this._movementPoints,
             extendedMovementPoints: this._extendedMovementPoints,
             tiredness: this._tiredness,
             tirednessArtifact: this._tirednessArtifact,
@@ -979,16 +672,12 @@ export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
             defenderEngagementChecking: this._defenderEngagementChecking,
             attackerEngagementChecking: this._attackerEngagementChecking,
             firstAttack: this._firstAttack,
-            secondAttack: this._secondAttack,
-            lossSteps: this._lossSteps,
-            carried: [...this._carried],
-            options: [...this._options]
+            secondAttack: this._secondAttack
         };
     }
 
     _revert(memento) {
         super._revert(memento);
-        this._movementPoints = memento.movementPoints;
         this._extendedMovementPoints = memento.extendedMovementPoints;
         this._tiredness = memento.tiredness;
         this._tirednessArtifact = memento.tirednessArtifact;
@@ -1008,115 +697,34 @@ export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
         this._attackerEngagementChecking = memento.attackerEngagementChecking;
         this._firstAttack = memento.firstAttack;
         this._secondAttack = memento.secondAttack;
-        this._lossSteps = memento.lossSteps;
-        this._carried = memento.carried;
-        this._options = memento.options;
+    }
+
+    setState(state) {
+        super.setState(state);
+        this._cohesion = state.cohesion;
+        this._tiredness = state.tiredness;
+        this._munitions = state.munitions;
+        this._charging = state.charging;
+        this._engaging = state.engaging;
+        this._orderGiven = state.orderGiven;
+        this.played = state.played;
+        this._updateTirednessArtifact(this.setMarkerArtifact, this.removeMarkerArtifact);
+        this._updateMunitionsArtifact(this.setMarkerArtifact, this.removeMarkerArtifact);
+        this._updatePlayedArtifact(this.setMarkerArtifact, this.removeMarkerArtifact);
+        this._updateEngagementArtifact(this.setMarkerArtifact, this.setActivableMarkerArtifact, this.removeMarkerArtifact);
+        this._updateCohesionArtifact(this.setMarkerArtifact, this.removeMarkerArtifact);
+        this.attrs = state.attrs;
+        super.setState(state);
+    }
+
+    destroy() {
+        super.destroy();
+        this._cohesion = CBCohesion.DESTROYED;
     }
 
     finish() {
         super.finish();
-        CBSequence.appendElement(this.game, new CBStateSequenceElement({game: this.game, unit: this}));
-    }
-
-    addToMap(hexId, stacking) {
-        let nameMustBeDefined = !this._name || this._wing.hasUnitName(this._name);
-        super.addToMap(hexId, stacking);
-        if (nameMustBeDefined) {
-            this._name = this._wing.getNextUnitName();
-        }
-        for (let carried of this._carried) {
-            carried.addToMap(hexId, stacking);
-        }
-    }
-
-    removeFromMap() {
-        super.removeFromMap();
-        for (let carried of this._carried) {
-            carried.removeFromMap();
-        }
-    }
-
-    appendToMap(hexLocation, stacking) {
-        let nameMustBeDefined = !this._name || this._wing.hasUnitName(this._name);
-        super.appendToMap(hexLocation, stacking);
-        if (nameMustBeDefined) this._name = this._wing.getNextUnitName();
-        for (let carried of this._carried) {
-            carried.appendToMap(hexLocation, stacking);
-        }
-    }
-
-    deleteFromMap() {
-        super.deleteFromMap();
-        for (let carried of this._carried) {
-            carried.deleteFromMap();
-        }
-    }
-
-    addCarried(piece) {
-        console.assert(this._carried.indexOf(piece)===-1);
-        this._carried.push(piece);
-        piece.angle = this.angle;
-        piece.location = this.location;
-        if (this.isShown()) piece.addToMap(this.hexLocation);
-    }
-
-    removeCarried(piece) {
-        this._carried.remove(piece);
-        if (this.isShown()) piece.removeFromMap();
-    }
-
-    carry(piece) {
-        console.assert(this._carried.indexOf(piece)===-1);
-        Memento.register(this);
-        this._carried.push(piece);
-        piece._rotate(this.angle);
-        if (this.isShown()) {
-            piece.appendToMap(this.hexLocation);
-        }
-    }
-
-    drop(piece) {
-        console.assert(this._carried.contains(piece));
-        Memento.register(this);
-        this._carried.remove(piece);
-        if (this.isShown()) {
-            piece.deleteFromMap();
-        }
-    }
-
-    addOption(piece) {
-        console.assert(this._options.indexOf(piece)===-1);
-        this.addCarried(piece);
-        this._options.push(piece);
-        piece.setPosition(this, this._options.length);
-    }
-
-    removeOption(piece) {
-        this.removeCarried(piece);
-        let indexPiece = this._options.remove(piece);
-        for (let index = indexPiece; index<this._options.length; index++) {
-            this._options[index].setPosition(this, index+1);
-        }
-        piece.removeAsOption();
-    }
-
-    appendOption(piece) {
-        console.assert(this._carried.indexOf(piece)===-1);
-        Memento.register(this);
-        this.carry(piece);
-        this._options.push(piece);
-        piece.shift(this, this._options.length);
-    }
-
-    deleteOption(piece) {
-        console.assert(this._options.contains(piece));
-        Memento.register(this);
-        this.drop(piece);
-        let indexPiece = this._options.remove(piece, 1);
-        for (let index = indexPiece; index<this._options.length; index++) {
-            this._options[index].shift(this, index+1);
-        }
-        piece.deleteAsOption();
+        WSequence.appendElement(this.game, new CBStateSequenceElement({game: this.game, unit: this}));
     }
 
     _unselect() {
@@ -1127,41 +735,14 @@ export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
     }
 
     _init() {
-        if (this._orderGiven === undefined) this._orderGiven = false;
+        super._init();
         if (this._movementPoints === undefined) this._movementPoints = this._type.getMovementPoints(this.steps);
+        if (this._orderGiven === undefined) this._orderGiven = false;
         if (this._extendedMovementPoints === undefined) this._extendedMovementPoints = this._type.getExtendedMovementPoints(this.steps);
-    }
-
-    get carried() {
-        return this._carried;
-    }
-
-    get name() {
-        return this._name;
-    }
-
-    get type() {
-        return this._type;
-    }
-
-    get wing() {
-        return this._wing;
-    }
-
-    get player() {
-        return this._wing.player;
     }
 
     get nominalMovementPoints() {
         return this._type.getMovementPoints(this.steps);
-    }
-
-    get movementPoints() {
-        return this._movementPoints;
-    }
-
-    set movementPoints(movementPoints) {
-        this._movementPoints = movementPoints;
     }
 
     get extendedMovementPoints() {
@@ -1172,13 +753,10 @@ export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
         this._extendedMovementPoints = extendedMovementPoints;
     }
 
-    get options() {
-        return this._options;
-    }
-
     get disruptChecked() {
         return this._disruptChecked;
     }
+
     set disruptChecked(disruptChecked) {
         console.assert(disruptChecked!==undefined);
         this._disruptChecked = disruptChecked;
@@ -1265,89 +843,15 @@ export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
         }
     }
 
-    get maxStepCount() {
-        return this._type.getFigureStepCount();
-    }
-
-    get lossSteps() {
-        return this._lossSteps;
-    }
-
-    get steps() {
-        return this.maxStepCount - this.lossSteps;
-    }
-
-    get visible() {
-        return this.steps>0;
-    }
-
-    set steps(steps) {
-        this.lossSteps = this.maxStepCount - steps;
-    }
-
-    set lossSteps(lossSteps) {
-        this._lossSteps = lossSteps;
-        if (this._lossSteps<this.maxStepCount) {
-            this.artifact.setImage(this._lossSteps);
-        }
-    }
-
-    destroy() {
-        super.destroy();
-        this._cohesion = CBCohesion.DESTROYED;
-    }
-
-    takeALoss() {
-        if (this._lossSteps <= this.maxStepCount) {
-            Memento.register(this);
-            this._lossSteps++;
-            if (this._lossSteps === this.maxStepCount) {
-                this.destroy();
-            } else {
-                this.artifact.changeImage(this._lossSteps);
-            }
-        }
-    }
-
-    fixRemainingLossSteps(stepCount) {
-        console.assert(stepCount<=this.maxStepCount);
-        Memento.register(this);
-        this._lossSteps=this.maxStepCount-stepCount;
-        this.artifact.changeImage(this._lossSteps);
-    }
-
-    _changeLocation(hexLocation, stacking) {
-        Memento.register(this);
-        this._hexLocation._deletePlayable(this);
-        this._hexLocation = hexLocation;
-        stacking===CBStacking.BOTTOM ? hexLocation._appendPlayableOnBottom(this) : hexLocation._appendPlayableOnTop(this);
-        this._element.move(hexLocation.location);
-        for (let carried of this._carried) {
-            carried._move(hexLocation);
-        }
-    }
-
-    _move(hexLocation, stacking) {
-        if ((hexLocation || this.hexLocation) && (hexLocation !== this.hexLocation)) {
-            if (this.hexLocation && !hexLocation) {
-                this.deleteFromMap()
-            } else if (!this.hexLocation && hexLocation) {
-                this.appendToMap(hexLocation, stacking);
-            } else {
-                this._changeLocation(hexLocation, stacking);
-            }
-        }
-    }
-
-    move(hexLocation, cost=null, stacking = CBStacking.TOP) {
-        this._move(hexLocation, stacking);
+    move(hexLocation, cost=null, stacking = WStacking.TOP) {
+        this.displace(hexLocation, stacking);
         if (cost!=null) {
             this._updateMovementPoints(cost);
         }
     }
 
     retreat(hexLocation, stacking, adjustCohesion=true) {
-        this._changeLocation(hexLocation, stacking);
+        this._displace(hexLocation, stacking);
         if (adjustCohesion) {
             this.addOneCohesionLevel();
         }
@@ -1355,19 +859,7 @@ export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
     }
 
     advance(hexLocation) {
-        this._changeLocation(hexLocation, CBStacking.BOTTOM);
-    }
-
-    _rotate(angle) {
-        this._element.rotate(angle);
-        for (let carried of this._carried) {
-            carried._rotate(angle);
-        }
-    }
-
-    reorient(angle) {
-        Memento.register(this);
-        this._rotate(angle);
+        this._displace(hexLocation, WStacking.BOTTOM);
     }
 
     rotate(angle, cost=null) {
@@ -1619,61 +1111,12 @@ export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
     }
 
     static DIMENSION = new Dimension2D(142, 142);
-    static MARKERS_POSITION = [
-        new Point2D(CBUnit.DIMENSION.w/2, -CBUnit.DIMENSION.h/2),
-        new Point2D(-CBUnit.DIMENSION.w/2, -CBUnit.DIMENSION.h/2),
-        new Point2D(-CBUnit.DIMENSION.w/2, 0),
-        new Point2D(-CBUnit.DIMENSION.w/2, CBUnit.DIMENSION.h/2),
-        new Point2D(0, CBUnit.DIMENSION.h/2),
-        new Point2D(CBUnit.DIMENSION.w/2, CBUnit.DIMENSION.h/2),
-        new Point2D(CBUnit.DIMENSION.w/2, 0)
-    ];
-
-    setState(state) {
-        this._cohesion = state.cohesion;
-        this._tiredness = state.tiredness;
-        this._munitions = state.munitions;
-        this._charging = state.charging;
-        this._engaging = state.engaging;
-        this._orderGiven = state.orderGiven;
-        this.played = state.played;
-        this._updateTirednessArtifact(this.setMarkerArtifact, this.removeMarkerArtifact);
-        this._updateMunitionsArtifact(this.setMarkerArtifact, this.removeMarkerArtifact);
-        this._updatePlayedArtifact(this.setMarkerArtifact, this.removeMarkerArtifact);
-        this._updateEngagementArtifact(this.setMarkerArtifact, this.setActivableMarkerArtifact, this.removeMarkerArtifact);
-        this._updateCohesionArtifact(this.setMarkerArtifact, this.removeMarkerArtifact);
-        this.attrs = state.attrs;
-        if (state.steps) {
-            this.steps = state.steps;
-            if (this.attrs.movementPoints!==undefined) {
-                this._movementPoints = this.attrs.movementPoints;
-            }
-            if (this.attrs.extendedMovementPoints!==undefined) {
-                this._extendedMovementPoints = this.attrs.extendedMovementPoints;
-            }
-            /*
-            if (this.attrs.disruptChecked || this.attrs.routChecked ||
-                this.attrs.neighborsCohesionLoss ||
-                this.attrs.defenderEngagementChecking ||
-                this.attrs.attackerEngagementChecking ||
-                this.attrs.firstAttack || this.attrs.secondAttack) {
-                this.game.setFocusedPlayable(this);
-            } else if (this.game.focusedPlayable === this) {
-                this.game.setFocusedPlayable(null);
-            }
-             */
-        } else {
-            if (this.isOnHex()) {
-                this.removeFromMap();
-            }
-        }
-    }
 
     setAction(actionSpec) {
         if (actionSpec.actionType) {
-            let action = CBAction.createAction(actionSpec.actionType, this.game, this, actionSpec.actionMode);
+            let action = WAction.createAction(actionSpec.actionType, this.game, this, actionSpec.actionMode);
             this.launchAction(action);
-            action.status = CBAction.STARTED;
+            action.status = WAction.STARTED;
             this._game.selectedPlayable = this;
         }
         else if (actionSpec.routNeighbors) {
@@ -1747,13 +1190,6 @@ export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
         }
     }
 
-    getPosition() {
-        return {
-            col: this.hexLocation.col,
-            row: this.hexLocation.row
-        };
-    }
-
     getTirednessCode() {
         if (this.isTired()) return "T";
         else if (this.isExhausted()) return "E";
@@ -1800,13 +1236,6 @@ export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
         return unitSpec;
     }
 
-    static fromSpecs(wing, unitSpec, context) {
-        let unitType = CBUnitType.getType(unitSpec.type);
-        let unit = unitType.createUnit(context.game, wing, unitSpec.steps);
-        unit.fromSpecs(unitSpec, context);
-        return unit;
-    }
-
     fromSpecs(specs, context) {
         super.fromSpecs(specs, context);
         this._name = specs.name;
@@ -1848,36 +1277,13 @@ export class CBUnit extends RetractablePieceMixin(HexLocatableMixin(BelongsToPla
             case "R": return CBCohesion.ROUTED;
         }
     }
-
 }
 
-Object.defineProperty(CBHexLocation.prototype, "units", {
-    get: function() {
-        return this.playables.filter(playable=>playable.unitNature);
-    }
-});
-Object.defineProperty(CBHexLocation.prototype, "empty", {
-    get: function() {
-        return this.units.length===0;
-    }
-});
-Object.defineProperty(CBGame.prototype, "units", {
-    get: function() {
-        let units = [];
-        if (this._playables) {
-            for (let playable of this._playables) {
-                if (playable.unitNature) {
-                    units.push(playable);
-                }
-            }
-        }
-        return units;
-    }
-});
-
-CBGame.prototype.getUnit = function(name) {
-    let unit = this._playables.filter(unit=>unit.name === name);
-    return unit.length>0 ? unit[0] : null;
+WUnit.fromSpecs = function(wing, unitSpec, context) {
+    let unitType = CBUnitType.getType(unitSpec.type);
+    let unit = unitType.createUnit(context.game, wing, unitSpec.steps);
+    unit.fromSpecs(unitSpec, context);
+    return unit;
 }
 
 export class CBTroop extends CBUnit {
@@ -1905,19 +1311,7 @@ export class CBTroop extends CBUnit {
     }
 }
 
-export class FormationImageArtifact extends UnitImageArtifact {
-
-    constructor(unit, ...args) {
-        super(unit, ...args);
-    }
-
-    get layer() {
-        return CBLevelBuilder.ULAYERS.FORMATIONS;
-    }
-
-}
-
-export class CBFormation extends CBUnit {
+export class CBFormation extends TwoHexesUnit(CBUnit) {
 
     constructor(game, type, wing) {
         super(game, type, type.getFormationPaths(), wing, CBFormation.DIMENSION);
@@ -1925,10 +1319,6 @@ export class CBFormation extends CBUnit {
 
     get troopNature() {
         return true;
-    }
-
-    createArtifact(levelName, images, position, dimension) {
-        return new FormationImageArtifact(this, levelName, images, position, dimension);
     }
 
     clone() {
@@ -1957,36 +1347,8 @@ export class CBFormation extends CBUnit {
         return hex===this.hexLocation.toHex ? "T" : hex===this.hexLocation.fromHex ? "F" : null;
     }
 
-    get slot() {
-        let slot1 = this.hexLocation.fromHex.units.indexOf(this);
-        let slot2 = this.hexLocation.toHex.units.indexOf(this);
-        return slot1>slot2 ? slot1 : slot2;
-    }
-
-    setMarkerArtifact(path, positionSlot) {
-        let marker = new CBSimpleMarkerArtifact(this, path, CBFormation.MARKERS_POSITION[positionSlot]);
-        this._element.addArtifact(marker);
-        return marker;
-    }
-
-    createMarkerArtifact(path, positionSlot) {
-        let marker = new CBSimpleMarkerArtifact(this, path, CBFormation.MARKERS_POSITION[positionSlot]);
-        this._element.appendArtifact(marker);
-        return marker;
-    }
-
     get minStepCount() {
         return this.type.getFormationMinStepCount();
-    }
-
-    getTurnOrientation(angle) {
-        let delta = diffAngle(this.angle, angle)*2;
-        return sumAngle(this.angle, delta);
-    }
-
-    turn(angle, cost=null, stacking = CBStacking.TOP) {
-        this.move(this.hexLocation.turnTo(angle), cost, stacking);
-        this.reorient(this.getTurnOrientation(angle));
     }
 
     takeALoss() {
@@ -2005,10 +1367,10 @@ export class CBFormation extends CBUnit {
         this.deleteFromMap();
         this.move(null, 0);
         for (let replacement of replacementOnFromHex) {
-            replacement.appendToMap(hexLocation.fromHex, CBStacking.TOP);
+            replacement.appendToMap(hexLocation.fromHex, WStacking.TOP);
         }
         for (let replacement of replacementOnToHex) {
-            replacement.appendToMap(hexLocation.toHex, CBStacking.TOP);
+            replacement.appendToMap(hexLocation.toHex, WStacking.TOP);
         }
     }
 
@@ -2016,23 +1378,7 @@ export class CBFormation extends CBUnit {
         return "F";
     }
 
-    getPosition() {
-        return {
-            col: this.hexLocation.fromHex.col,
-            row: this.hexLocation.fromHex.row,
-            angle: this.hexLocation.angle
-        };
-    }
-
     static DIMENSION = new Dimension2D(CBUnit.DIMENSION.w*2, CBUnit.DIMENSION.h);
-    static MARKERS_POSITION = [
-        new Point2D(CBFormation.DIMENSION.w/2, -CBFormation.DIMENSION.h/2),
-        new Point2D(-CBFormation.DIMENSION.w/2, -CBFormation.DIMENSION.h/2),
-        new Point2D(-CBFormation.DIMENSION.w/2, 0),
-        new Point2D(-CBFormation.DIMENSION.w/2, CBFormation.DIMENSION.h/2),
-        new Point2D(0, CBFormation.DIMENSION.h/2),
-        new Point2D(CBFormation.DIMENSION.w/2, CBFormation.DIMENSION.h/2),
-        new Point2D(CBFormation.DIMENSION.w/2, 0)];
 }
 
 export class CBCharacter extends CBUnit {
@@ -2067,6 +1413,10 @@ export class CBCharacter extends CBUnit {
         this._chosenSpell = memento.chosenSpell;
     }
 
+    get dimensionForMarkers() {
+        return CBUnit.DIMENSION;
+    }
+
     get commandPoints() {
         return this._commandPoints;
     }
@@ -2077,8 +1427,8 @@ export class CBCharacter extends CBUnit {
     }
 
     createOrderInstructionArtifact(orderInstruction) {
-        let marker = new CBSimpleMarkerArtifact(this, CBCharacter.ORDER_INSTRUCTION_PATHS[orderInstruction],
-            CBUnit.MARKERS_POSITION[6], CBCharacter.ORDER_INSTRUCTION_DIMENSION);
+        let marker = new WSimpleMarkerArtifact(this, CBCharacter.ORDER_INSTRUCTION_PATHS[orderInstruction],
+            this.getMarkerPosition(6), CBCharacter.ORDER_INSTRUCTION_DIMENSION);
         return marker;
     }
 
@@ -2168,62 +1518,7 @@ export class CBCharacter extends CBUnit {
     ];
 }
 
-function loadUnitsToContext(context) {
-    if (!context.units) {
-        context.units = new Map();
-        for (let playable of context.game.playables) {
-            if (playable instanceof CBUnit) {
-                context.units.set(playable.name, playable);
-            }
-        }
-    }
-    return context;
-}
-
-export function getUnitFromContext(context, spec) {
-    let unit = loadUnitsToContext(context).units.get(spec);
-    console.assert(unit);
-    return unit;
-}
-
-export function setUnitToContext(context, spec, unit) {
-    loadUnitsToContext(context).units.set(spec, unit);
-}
-
-export class CBUnitAnimation extends CBAnimation {
-
-    constructor({unit, state, ...params}) {
-        super({game: unit.game, ...params});
-        this._unit = unit;
-        this._state = state;
-    }
-
-    get unit() {
-        return this._unit;
-    }
-
-    _init() {
-        if (this.unit) {
-            if (this.unit._animation) {
-                this.unit._animation.cancel();
-            }
-            this.unit._animation = this;
-        }
-    }
-
-    _finalize() {
-        super._finalize();
-        if (this.unit) {
-            this.unit.setState(this._state);
-            delete this.unit._animation;
-        }
-    }
-
-}
-
-export let CBUnitSceneAnimation = SceneAnimation(CBUnitAnimation);
-
-export class CBStateSequenceElement extends CBSequenceElement {
+export class CBStateSequenceElement extends WSequenceElement {
 
     constructor({id, unit, game, type="state"}) {
         super({id, type, game});
@@ -2291,7 +1586,7 @@ export class CBStateSequenceElement extends CBSequenceElement {
     }
 
     apply(startTick) {
-        return new CBUnitAnimation({unit:this.unit, startTick, duration:this.delay, state:this});
+        return new WUnitAnimation({unit:this.unit, startTick, duration:this.delay, state:this});
     }
 
     get delay() { return 0; }
@@ -2389,140 +1684,5 @@ export class CBStateSequenceElement extends CBSequenceElement {
     }
 
 }
-CBSequence.register("state", CBStateSequenceElement);
-
-export function getStackingCode(stacking) {
-    if (stacking===CBStacking.TOP) return "T";
-    else return "B";
-}
-
-export function getStacking(code) {
-    switch (code) {
-        case "T": return CBStacking.TOP;
-        case "B": return CBStacking.BOTTOM;
-    }
-}
-
-export function HexLocated(clazz) {
-
-    return class extends clazz {
-
-        constructor({hexLocation, stacking, ...params}) {
-            super(params);
-            this.hexLocation = hexLocation;
-            this.stacking = stacking;
-        }
-
-        equalsTo(element) {
-            if (!super.equalsTo(element)) return false;
-            if (this.hexLocation.location.toString() !== element.hexLocation.location.toString()) return false;
-            if (this.stacking !== element.stacking) return false;
-            return true;
-        }
-
-        _toString() {
-            let result = super._toString();
-            if (this.hexLocation !== undefined) result+=", HexLocation: "+this.hexLocation.location.toString();
-            if (this.stacking !== undefined) result+=", Stacking: "+this.stacking;
-            return result;
-        }
-
-        _toSpecs(spec, context) {
-            super._toSpecs(spec, context);
-            if (this.hexLocation) {
-                spec.hexLocation = CBHexLocation.toSpecs(this.hexLocation);
-            }
-            spec.stacking = getStackingCode(this.stacking);
-        }
-
-        _fromSpecs(spec, context) {
-            super._fromSpecs(spec, context);
-            if (spec.hexLocation) {
-                this.hexLocation = CBHexLocation.fromSpecs(context.game.map, spec.hexLocation);
-            }
-            this.stacking = getStacking(spec.stacking);
-        }
-
-    }
-
-}
-
-export class CBDisplaceAnimation extends CBUnitAnimation {
-
-    constructor({unit, startTick, duration, state, angle, hexLocation, stacking}) {
-        super({unit, startTick, duration, state});
-        this._angle = angle;
-        this._hexLocation = hexLocation;
-        this._stacking = stacking;
-    }
-
-    _init() {
-        super._init();
-        if (this._angle!==undefined) {
-            this._startAngle = this.unit.element.angle;
-            this.unit._rotate(this._angle);
-            this._stopAngle = this.unit.element.angle;
-            this.unit.element.setAngle(this._startAngle);
-        }
-        if (this._hexLocation!==undefined) {
-            this._startLocation = this.unit.element.location;
-            this.unit._move(this._hexLocation, this._stacking);
-            this._stopLocation = this.unit.element.location;
-            this.unit.element.setLocation(this._startLocation);
-        }
-    }
-
-    _finalize() {
-        if (this._stopAngle) {
-            this.unit.element.setAngle(this._stopAngle);
-        }
-        if (this._stopLocation) {
-            this.unit.element.setLocation(this._stopLocation);
-        }
-        super._finalize();
-    }
-
-    _draw(count, ticks) {
-        let factor = this._factor(count);
-        if (this._startAngle!==undefined) {
-            console.log(this._startAngle + factor*diffAngle(this._startAngle, this._stopAngle));
-            this.unit.element.setAngle(this._startAngle + factor*diffAngle(this._startAngle, this._stopAngle));
-        }
-        if (this._startLocation!==undefined) {
-            let location = new Point2D(
-                this._startLocation.x + factor*(this._stopLocation.x-this._startLocation.x),
-                this._startLocation.y + factor*(this._stopLocation.y-this._startLocation.y)
-            );
-            console.log(location);
-            this.unit.element.setLocation(location);
-        }
-        return super._draw(count, ticks);
-    }
-
-}
-
-export let CBSceneAnimation = SceneAnimation(CBAnimation);
-
-export function SceneAnimation(clazz) {
-
-    return class extends clazz {
-        constructor({animation, ...params}) {
-            super(params);
-            this._animation = animation;
-        }
-
-        _draw(count, ticks) {
-            if (count === 0) {
-                this._animation();
-            }
-            return super._draw(count, ticks);
-        }
-
-        _finalize() {
-            this.game.closePopup();
-            super._finalize();
-        }
-    }
-
-}
+WSequence.register("state", CBStateSequenceElement);
 

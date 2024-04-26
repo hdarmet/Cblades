@@ -1,23 +1,23 @@
 
 import {
     DImage, getDrawPlatform, setDrawPlatform
-} from "../../jslib/draw.js";
+} from "../../jslib/board/draw.js";
 import {
-    CBGame
-} from "../../jslib/cblades/playable.js";
+    WGame
+} from "../../jslib/wargame/playable.js";
 import {
     Mechanisms, Memento
-} from "../../jslib/mechanisms.js";
+} from "../../jslib/board/mechanisms.js";
 import {
     assert,
     before, describe, it
 } from "../../jstest/jtest.js";
 import {
     mockPlatform
-} from "../mocks.js";
+} from "../board/mocks.js";
 import {
-    CBBoard, CBHex, CBMap,
-} from "../../jslib/cblades/map.js";
+    WBoard, WHex, WMap,
+} from "../../jslib/wargame/map.js";
 import {
     BannerListLoader, BoardListLoader,
     BoardLoader, Connector, GameLoader, PlayerIdentityListLoader, SequenceLoader
@@ -35,12 +35,12 @@ import {
     create1Player1Unit1FormationTinyGame
 } from "./game-examples.js";
 import {
-    CBMoveSequenceElement, CBNextTurnSequenceElement, CBReorientSequenceElement, CBRotateSequenceElement,
-    CBSequence, CBStateSequenceElement, CBTurnSequenceElement
-} from "../../jslib/cblades/sequences.js";
+    CBMoveSequenceElement, WNextTurnSequenceElement, CBReorientSequenceElement, CBRotateSequenceElement,
+    WSequence, CBStateSequenceElement, CBTurnSequenceElement
+} from "../../jslib/wargame/sequences.js";
 import {
-    CBStacking
-} from "../../jslib/cblades/game.js";
+    WStacking
+} from "../../jslib/wargame/game.js";
 
 describe("Loader", ()=> {
 
@@ -73,8 +73,8 @@ describe("Loader", ()=> {
 
     it("Create board", () => {
         given:
-            var game = new CBGame(1);
-            var board = new CBBoard("board", "./../images/maps/map.png", "./../images/maps/map1-icon.png");
+            var game = new WGame(1);
+            var board = new WBoard("board", "./../images/maps/map.png", "./../images/maps/map1-icon.png");
             game.setMap(board);
             game.start();
         when:
@@ -87,26 +87,26 @@ describe("Loader", ()=> {
             board.getHex(0, 6).height = 2;
             board.getHex(0, 7).height = 3;
             board.getHex(0, 8).height = 4;
-            board.getHex(0, 0).type = CBHex.HEX_TYPES.OUTDOOR_CLEAR;
-            board.getHex(0, 1).type = CBHex.HEX_TYPES.OUTDOOR_ROUGH;
-            board.getHex(0, 2).type = CBHex.HEX_TYPES.OUTDOOR_DIFFICULT;
-            board.getHex(0, 3).type = CBHex.HEX_TYPES.OUTDOOR_CLEAR_FLAMMABLE;
-            board.getHex(0, 4).type = CBHex.HEX_TYPES.OUTDOOR_ROUGH_FLAMMABLE;
-            board.getHex(0, 5).type = CBHex.HEX_TYPES.OUTDOOR_DIFFICULT_FLAMMABLE;
-            board.getHex(0, 6).type = CBHex.HEX_TYPES.WATER;
-            board.getHex(0, 7).type = CBHex.HEX_TYPES.LAVA;
-            board.getHex(0, 8).type = CBHex.HEX_TYPES.IMPASSABLE;
-            board.getHex(0, 9).type = CBHex.HEX_TYPES.CAVE_CLEAR;
-            board.getHex(0, 10).type = CBHex.HEX_TYPES.CAVE_ROUGH;
-            board.getHex(0, 11).type = CBHex.HEX_TYPES.CAVE_DIFFICULT;
-            board.getHex(0, 12).type = CBHex.HEX_TYPES.CAVE_CLEAR_FLAMMABLE;
-            board.getHex(0, 13).type = CBHex.HEX_TYPES.CAVE_ROUGH_FLAMMABLE;
-            board.getHex(0, 14).type = CBHex.HEX_TYPES.CAVE_DIFFICULT_FLAMMABLE;
-            board.getHex(0, 0).toward(120).type = CBHex.HEXSIDE_TYPES.NORMAL;
-            board.getHex(0, 0).toward(180).type = CBHex.HEXSIDE_TYPES.EASY;
-            board.getHex(0, 0).toward(240).type = CBHex.HEXSIDE_TYPES.DIFFICULT;
-            board.getHex(0, 1).toward(120).type = CBHex.HEXSIDE_TYPES.CLIMB;
-            board.getHex(0, 1).toward(180).type = CBHex.HEXSIDE_TYPES.WALL;
+            board.getHex(0, 0).type = WHex.HEX_TYPES.OUTDOOR_CLEAR;
+            board.getHex(0, 1).type = WHex.HEX_TYPES.OUTDOOR_ROUGH;
+            board.getHex(0, 2).type = WHex.HEX_TYPES.OUTDOOR_DIFFICULT;
+            board.getHex(0, 3).type = WHex.HEX_TYPES.OUTDOOR_CLEAR_FLAMMABLE;
+            board.getHex(0, 4).type = WHex.HEX_TYPES.OUTDOOR_ROUGH_FLAMMABLE;
+            board.getHex(0, 5).type = WHex.HEX_TYPES.OUTDOOR_DIFFICULT_FLAMMABLE;
+            board.getHex(0, 6).type = WHex.HEX_TYPES.WATER;
+            board.getHex(0, 7).type = WHex.HEX_TYPES.LAVA;
+            board.getHex(0, 8).type = WHex.HEX_TYPES.IMPASSABLE;
+            board.getHex(0, 9).type = WHex.HEX_TYPES.CAVE_CLEAR;
+            board.getHex(0, 10).type = WHex.HEX_TYPES.CAVE_ROUGH;
+            board.getHex(0, 11).type = WHex.HEX_TYPES.CAVE_DIFFICULT;
+            board.getHex(0, 12).type = WHex.HEX_TYPES.CAVE_CLEAR_FLAMMABLE;
+            board.getHex(0, 13).type = WHex.HEX_TYPES.CAVE_ROUGH_FLAMMABLE;
+            board.getHex(0, 14).type = WHex.HEX_TYPES.CAVE_DIFFICULT_FLAMMABLE;
+            board.getHex(0, 0).toward(120).type = WHex.HEXSIDE_TYPES.NORMAL;
+            board.getHex(0, 0).toward(180).type = WHex.HEXSIDE_TYPES.EASY;
+            board.getHex(0, 0).toward(240).type = WHex.HEXSIDE_TYPES.DIFFICULT;
+            board.getHex(0, 1).toward(120).type = WHex.HEXSIDE_TYPES.CLIMB;
+            board.getHex(0, 1).toward(180).type = WHex.HEXSIDE_TYPES.WALL;
             new BoardLoader(board).save();
         then:
             assert(getDrawPlatform().getRequest().uri).equalsTo("/api/board/create");
@@ -175,8 +175,8 @@ describe("Loader", ()=> {
 
     it("Fail to create board", () => {
         given:
-            var game = new CBGame(1);
-            var board = new CBBoard("board", "./../images/maps/map.png", "./../images/maps/map1-icon.png");
+            var game = new WGame(1);
+            var board = new WBoard("board", "./../images/maps/map.png", "./../images/maps/map1-icon.png");
             game.setMap(board);
             game.start();
         when:
@@ -193,8 +193,8 @@ describe("Loader", ()=> {
 
     it("Update board", () => {
         given:
-            var game = new CBGame(1);
-            var board = new CBBoard("board", "./../images/maps/map.png", "./../images/maps/map1-icon.png");
+            var game = new WGame(1);
+            var board = new WBoard("board", "./../images/maps/map.png", "./../images/maps/map1-icon.png");
             game.setMap(board);
             game.start();
         when:
@@ -223,8 +223,8 @@ describe("Loader", ()=> {
 
     it("Update board", () => {
         given:
-            var game = new CBGame(1);
-            var board = new CBBoard("board", "./../images/maps/map.png", "./../images/maps/map1-icon.png");
+            var game = new WGame(1);
+            var board = new WBoard("board", "./../images/maps/map.png", "./../images/maps/map1-icon.png");
             game.setMap(board);
             game.start();
         when:
@@ -243,8 +243,8 @@ describe("Loader", ()=> {
 
     it("Load board", () => {
         given:
-            var game = new CBGame(1);
-            var board = new CBBoard("board", "./../images/maps/map.png", "./../images/maps/map1-icon.png");
+            var game = new WGame(1);
+            var board = new WBoard("board", "./../images/maps/map.png", "./../images/maps/map1-icon.png");
             game.setMap(board);
             game.start();
         when:
@@ -275,8 +275,8 @@ describe("Loader", ()=> {
 
     it("Fails to load board", () => {
         given:
-            var game = new CBGame(1);
-            var board = new CBBoard("board", "./../images/maps/map.png", "./../images/maps/map1-icon.png");
+            var game = new WGame(1);
+            var board = new WBoard("board", "./../images/maps/map.png", "./../images/maps/map1-icon.png");
             game.setMap(board);
             game.start();
         when:
@@ -321,14 +321,14 @@ describe("Loader", ()=> {
 
     it("Create game", () => {
         given:
-            var game = new CBGame(1);
-            var map = new CBMap([{path: "./../images/maps/map.png", col:0, row:0}]);
+            var game = new WGame(1);
+            var map = new WMap([{path: "./../images/maps/map.png", col:0, row:0}]);
             game.setMap(map);
             var player = new CBUnitPlayer("Hector", "/players/hector.png");
             game.addPlayer(player);
-            var wing = new CBWing(player, {
-                name: "redbanner",
-                path: "/red/redbanner.png"
+            var wing = new CBWing(player,{
+                    name: "redbanner",
+                    path: "/red/redbanner.png"
             });
             wing.setRetreatZone([
                 map.getHex(0, 0),
@@ -400,14 +400,14 @@ describe("Loader", ()=> {
 
     it("Create game", () => {
         given:
-            var game = new CBGame(1);
-            var map = new CBMap([{path: "./../images/maps/map.png", col:0, row:0}]);
+            var game = new WGame(1);
+            var map = new WMap([{path: "./../images/maps/map.png", col:0, row:0}]);
             game.setMap(map);
             var player = new CBUnitPlayer("Hector", "/players/hector.png");
             game.addPlayer(player);
             var wing = new CBWing(player, {
-                name: "redbanner",
-                path: "/red/redbanner.png"
+                    name: "redbanner",
+                    path: "/red/redbanner.png"
             });
             wing.setRetreatZone([
                 map.getHex(0, 0),
@@ -469,8 +469,8 @@ describe("Loader", ()=> {
 
     it("Fail to create game", () => {
         given:
-            var game = new CBGame(1);
-            var map = new CBMap([{path: "./../images/maps/map.png", col:0, row:0}]);
+            var game = new WGame(1);
+            var map = new WMap([{path: "./../images/maps/map.png", col:0, row:0}]);
             game.setMap(map);
             game.start();
         when:
@@ -486,9 +486,9 @@ describe("Loader", ()=> {
 
     it("Update game", () => {
         given:
-            var game = new CBGame(1);
+            var game = new WGame(1);
             game._oversion = 1;
-            var map = new CBMap([{path: "./../images/maps/map.png", col:0, row:0}]);
+            var map = new WMap([{path: "./../images/maps/map.png", col:0, row:0}]);
             game.setMap(map);
             game.start();
             new CBTestTroopType("unit", [
@@ -512,9 +512,9 @@ describe("Loader", ()=> {
 
     it("Failed to update game", () => {
         given:
-            var game = new CBGame(1);
+            var game = new WGame(1);
             game._oversion = 1;
-            var map = new CBMap([{
+            var map = new WMap([{
                 _oid: 111, _oversion:3,
                 path: "./../images/maps/map.png", icon: "./../images/maps/map-icon.png",
                 col:0, row:0
@@ -534,8 +534,8 @@ describe("Loader", ()=> {
 
     it("Load game", () => {
         given:
-            var game = new CBGame(1);
-            var map = new CBMap([{path: "./../images/maps/map.png", col:0, row:0}]);
+            var game = new WGame(1);
+            var map = new WMap([{path: "./../images/maps/map.png", col:0, row:0}]);
             var player = new CBUnitPlayer("Hector", "/players/hector.png");
             game.addPlayer(player);
             game.setMap(map);
@@ -633,8 +633,8 @@ describe("Loader", ()=> {
 
     it("Load game with formation and characters", () => {
         given:
-            var game = new CBGame(1);
-            var map = new CBMap([{path: "./../images/maps/map.png", col:0, row:0}]);
+            var game = new WGame(1);
+            var map = new WMap([{path: "./../images/maps/map.png", col:0, row:0}]);
             var player = new CBUnitPlayer("Hector", "/players/hector.png");
             game.addPlayer(player);
             game.setMap(map);
@@ -727,8 +727,8 @@ describe("Loader", ()=> {
 
     it("Fails toad game", () => {
         given:
-            var game = new CBGame(1);
-            var map = new CBMap([{
+            var game = new WGame(1);
+            var map = new WMap([{
                 path: "./../images/maps/map.png",
                 icon: "./../images/maps/map-icon.png",
                 col:0, row:0
@@ -753,28 +753,28 @@ describe("Loader", ()=> {
         given:
             var {game, unit11, formation1} = create1Player1Unit1FormationTinyGame();
         when:
-            CBSequence.appendElement(game, new CBStateSequenceElement(unit11));
-            CBSequence.appendElement(game, new CBMoveSequenceElement(unit11, unit11.hexLocation, CBStacking.BOTTOM)
+            WSequence.appendElement(game, new CBStateSequenceElement(unit11));
+            WSequence.appendElement(game, new CBMoveSequenceElement(unit11, unit11.hexLocation, WStacking.BOTTOM)
                 .setState({
                     cohesion:CBCohesion.DISRUPTED, tiredness:CBTiredness.TIRED,
                     munitions:CBMunitions.SCARCE, charging:CBCharge.BEGIN_CHARGE
                 })
             );
-            CBSequence.appendElement(game, new CBRotateSequenceElement(unit11, 60)
+            WSequence.appendElement(game, new CBRotateSequenceElement(unit11, 60)
                 .setState({
                     cohesion:CBCohesion.ROUTED, tiredness:CBTiredness.EXHAUSTED,
                     munitions:CBMunitions.EXHAUSTED, charging:CBCharge.CAN_CHARGE
                 })
             );
-            CBSequence.appendElement(game, new CBReorientSequenceElement(unit11, 60)
+            WSequence.appendElement(game, new CBReorientSequenceElement(unit11, 60)
                 .setState({
                     cohesion:CBCohesion.DESTROYED, charging:CBCharge.CHARGING,
                     engaging: true, orderGiven:true, played:true
                 })
             );
-            CBSequence.appendElement(game, new CBTurnSequenceElement(formation1, 60, formation1.hexLocation, CBStacking.TOP));
-            CBSequence.appendElement(game, new CBNextTurnSequenceElement(game));
-            var sequence = CBSequence.getSequence(game);
+            WSequence.appendElement(game, new CBTurnSequenceElement(formation1, 60, formation1.hexLocation, WStacking.TOP));
+            WSequence.appendElement(game, new WNextTurnSequenceElement(game));
+            var sequence = WSequence.getSequence(game);
             new SequenceLoader().save(game, sequence);
         then:
             var requestContent = getDrawPlatform().getRequest().requestContent;
@@ -826,8 +826,8 @@ describe("Loader", ()=> {
             var {game, unit11} = create1Player1Unit1FormationTinyGame();
         when:
             var element = new CBStateSequenceElement(unit11);
-            CBSequence.appendElement(game, element);
-            var sequence = CBSequence.getSequence(game);
+            WSequence.appendElement(game, element);
+            var sequence = WSequence.getSequence(game);
             new SequenceLoader().save(game, sequence);
             getDrawPlatform().requestFails("Test Error", 500);
         then:
@@ -886,7 +886,7 @@ describe("Loader", ()=> {
             assert(sequence.count).equalsTo(1);
             assert(sequence._game).equalsTo(game);
             assert(sequence.elements[0]).equalsTo(new CBStateSequenceElement(unit11));
-            assert(sequence.elements[1]).equalsTo(new CBMoveSequenceElement(unit11, unit11.hexLocation, CBStacking.BOTTOM)
+            assert(sequence.elements[1]).equalsTo(new CBMoveSequenceElement(unit11, unit11.hexLocation, WStacking.BOTTOM)
                 .setState({
                     cohesion:CBCohesion.DISRUPTED, tiredness:CBTiredness.TIRED,
                     munitions:CBMunitions.SCARCE, charging:CBCharge.BEGIN_CHARGE
@@ -905,9 +905,9 @@ describe("Loader", ()=> {
                 })
             );
             assert(sequence.elements[4]).equalsTo(
-                new CBTurnSequenceElement(formation1, 60, formation1.hexLocation, CBStacking.TOP)
+                new CBTurnSequenceElement(formation1, 60, formation1.hexLocation, WStacking.TOP)
             );
-            assert(sequence.elements[5]).equalsTo(new CBNextTurnSequenceElement(game));
+            assert(sequence.elements[5]).equalsTo(new WNextTurnSequenceElement(game));
     });
 
     it("Load sequence fails", () => {

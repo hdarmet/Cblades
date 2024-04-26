@@ -5,26 +5,29 @@ import {
 } from "../../jstest/jtest.js";
 import {
     DImage, setDrawPlatform
-} from "../../jslib/draw.js";
+} from "../../jslib/board/draw.js";
 import {
     assertClearDirectives, assertDirectives,
     assertNoMoreDirectives,
     getDirectives, getLayers, loadAllImages, mockPlatform, resetDirectives
-} from "../mocks.js";
+} from "../board/mocks.js";
 import {
     Mechanisms, Memento
-} from "../../jslib/mechanisms.js";
+} from "../../jslib/board/mechanisms.js";
 import {
-    CBMap, CBHexSideId
-} from "../../jslib/cblades/map.js";
+    WMap, WHexSideId
+} from "../../jslib/wargame/map.js";
 import {
-    CBAction, CBPieceImageArtifact, CBPiece, CBStacking
-} from "../../jslib/cblades/game.js";
+    WAction, WPieceImageArtifact, WPiece, WStacking
+} from "../../jslib/wargame/game.js";
 import {
-    CBActionActuator,
-    CBGame, RetractableActuatorMixin,
-    CBHexCounter, CBLevelBuilder
-} from "../../jslib/cblades/playable.js";
+    WGame,
+    WHexCounter,
+    WLevelBuilder
+} from "../../jslib/wargame/playable.js";
+import {
+    CarriableMixin
+} from "../../jslib/wargame/wunit.js";
 import {
     CBUnitPlayer,
     CBTroop,
@@ -35,27 +38,23 @@ import {
     CBCohesion,
     CBOrderInstruction,
     CBFormation,
-    CarriableMixin,
-    OptionArtifactMixin,
-    OptionMixin,
     CBMoveProfile,
     CBWeaponProfile,
     CBCharge,
     CBCommandProfile,
     CBMoralProfile,
     CBMagicProfile,
-    CBUnitActuatorTrigger,
     CBTroopType,
     CBCharacterType,
     CBUnitType
 } from "../../jslib/cblades/unit.js";
 import {
     Dimension2D, Point2D
-} from "../../jslib/geometry.js";
+} from "../../jslib/board/geometry.js";
 import {
     clickOnPiece,
-    clickOnTrigger, repaint,
-    showActiveMarker, showActuatorTrigger, showCharacter,
+    repaint,
+    showActiveMarker, showCharacter,
     showCommandMarker, showFormation,
     showMarker,
     showTroop,
@@ -65,7 +64,7 @@ import {
     zoomAndRotate90
 } from "./interactive-tools.js";
 import {
-    banner, banner1, banner2, banner3
+    banner
 } from "./game-elements.js";
 
 describe("Unit", ()=> {
@@ -80,8 +79,8 @@ describe("Unit", ()=> {
     let dummyEvent = {offsetX:0, offsetY:0};
 
     function prepareTinyGame() {
-        var game = new CBGame(1);
-        var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+        var game = new WGame(1);
+        var map = new WMap([{path:"./../images/maps/map.png", col:0, row:0}]);
         game.setMap(map);
         return {game, map};
     }
@@ -169,7 +168,7 @@ describe("Unit", ()=> {
         let formation = new CBFormation(game, unitType, wing);
         formation.angle = 90;
         formation.lossSteps = 4;
-        formation.addToMap(new CBHexSideId(map.getHex(5, 8), map.getHex(5, 7)));
+        formation.addToMap(new WHexSideId(map.getHex(5, 8), map.getHex(5, 7)));
         game.start();
         loadAllImages();
         return {game, player, formation, wing, map};
@@ -193,10 +192,10 @@ describe("Unit", ()=> {
         return {game, map, unit1, unit2, wing, player};
     }
 
-    class CBTestCarriable extends CarriableMixin(CBHexCounter) {
+    class CBTestCarriable extends CarriableMixin(WHexCounter) {
 
         constructor(unit, paths) {
-            super("units", paths, new Dimension2D(142, 142));
+            super("units", unit.game, paths, new Dimension2D(142, 142));
             Object.defineProperty(this.artifact, "slot", {
                 get: function () {
                     return unit.slot;
@@ -204,227 +203,14 @@ describe("Unit", ()=> {
             });
             Object.defineProperty(this.artifact, "layer", {
                 get: function () {
-                    return CBLevelBuilder.ULAYERS.SPELLS;
+                    return WLevelBuilder.ULAYERS.SPELLS;
                 }
             });
         }
 
     }
 
-    function showPlayable(image, [a, b, c, d, e, f]) {
-        return [
-            "save()",
-            `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
-            "shadowColor = #000000", "shadowBlur = 10",
-            `drawImage(./../images/units/${image}.png, -71, -71, 142, 142)`,
-            "restore()"
-        ];
-    }
-
-    function showOption(image, [a, b, c, d, e, f]) {
-        return [
-            "save()",
-            `setTransform(${a}, ${b}, ${c}, ${d}, ${e}, ${f})`,
-            "shadowColor = #000000", "shadowBlur = 10",
-            `drawImage(./../images/units/${image}.png, -71, -71, 142, 142)`,
-            "restore()"
-        ];
-    }
-
-    class CBTestActuatorTrigger extends CBUnitActuatorTrigger {
-    }
-
-    class CBTestUnitActuator extends RetractableActuatorMixin(CBActionActuator) {
-
-        constructor(action, unit) {
-            super(action);
-            let image = DImage.getImage("./../images/actuators/test.png");
-            let imageArtifacts = [];
-            this.trigger = new CBTestActuatorTrigger(this, unit, "units", image,
-                new Point2D(0, 0), new Dimension2D(142, 142));
-            this.trigger.position = Point2D.position(action.playable.location, unit.location, 1);
-            imageArtifacts.push(this.trigger);
-            this.initElement(imageArtifacts);
-        }
-
-        get unit() {
-            return this.playable;
-        }
-
-        onMouseClick(trigger, event) {
-            this.unitProcessed = trigger.playable;
-        }
-
-    }
-
-    it("Checks unit player", () => {
-        given:
-            var { game, map } = prepareTinyGame();
-            let player1 = new CBUnitPlayer("player1", "/players/player1.png");
-            player1.canPlay = function() { return true; };
-            game.addPlayer(player1);
-            let player2 = new CBUnitPlayer("player2", "/players/player2.png");
-            game.addPlayer(player2);
-            let unitType = new CBTestTroopType("unit1", ["./../images/units/misc/unit1.png"]);
-            var wing1 = new CBWing(player1, banner1);
-            var wing2 = new CBWing(player1, banner2);
-            var wing3 = new CBWing(player1, banner3);
-            let unit1 = new CBTroop(game, unitType, wing1);
-            unit1.addToMap(map.getHex(5, 8));
-            let unit2 = new CBTroop(game, unitType, wing1);
-            unit2.addToMap(map.getHex(6, 8));
-        then:
-            assert(game.currentPlayer).equalsTo(player1);
-            assert(player1.wings).arrayEqualsTo([wing1, wing2, wing3]);
-            assert(player1.units).arrayEqualsTo([unit1, unit2]);
-        when:
-            player1.finishTurn(()=>{});
-        then:
-            assert(game.currentPlayer).equalsTo(player2);
-    });
-
-    it("Checks actuators trigger on playable", () => {
-        given:
-            var {game, unit1, unit2} = create2UnitsTinyGame();
-            var [actuatorsLayer] = getLayers(game.board, "actuators-0");
-        when:
-            var action = new CBAction(game, unit1);
-            var actuator = new CBTestUnitActuator(action, unit2);
-            game.openActuator(actuator);
-            repaint(game);
-            loadAllImages();
-        then:
-            assertClearDirectives(actuatorsLayer);
-            assertDirectives(actuatorsLayer, showActuatorTrigger("test", 142, 142, zoomAndRotate0(416.6667, 255.6635)))
-            assertNoMoreDirectives(actuatorsLayer);
-        when:
-            clickOnTrigger(game, actuator.trigger);
-        then:
-            assert(actuator.unitProcessed).equalsTo(unit2);
-    });
-
-    it("Checks that a unit may carry other counters (not undoable)", () => {
-        given:
-            var { game, map } = prepareTinyGame();
-            var player = new CBUnitPlayer("player1", "/players/player1.png");
-            game.addPlayer(player);
-            var wing = new CBWing(player, banner);
-            let unitType1 = new CBTestTroopType("unit1",
-                ["./../images/units/misc/unit1.png"]);
-            var unit = new CBTroop(game, unitType1, wing);
-            let hexId = map.getHex(5, 8);
-            let nextHexId = map.getHex(6, 8);
-            unit.addToMap(hexId);
-            var [spellsLayer] = getLayers(game.board, "spells-0");
-        when:
-            var playable1 = new CBTestCarriable(unit,["./../images/units/misc/playable1.png"]);
-            unit.addCarried(playable1);
-            repaint(game);
-            loadAllImages();
-        then:
-            assert(unit.carried).arrayEqualsTo([playable1])
-            assertClearDirectives(spellsLayer);
-            assertDirectives(spellsLayer, showPlayable("misc/playable1", zoomAndRotate0(416.6667, 351.8878)));
-            assertNoMoreDirectives(spellsLayer);
-        when:
-            unit.angle = 60;
-            unit.hexLocation = nextHexId;
-            repaint(game);
-        then:
-            assertClearDirectives(spellsLayer);
-            assertDirectives(spellsLayer, showPlayable("misc/playable1", zoomAndRotate60(500, 400)));
-            assertNoMoreDirectives(spellsLayer);
-        when:
-            unit.removeCarried(playable1);
-            repaint(game);
-        then:
-            assert(unit.carried).arrayEqualsTo([])
-            assert(getDirectives(spellsLayer, 4)).arrayEqualsTo([
-            ]);
-        when:
-            unit.addCarried(playable1);
-            unit.removeFromMap();
-            repaint(game);
-        then:
-            assert(unit.carried).arrayEqualsTo([playable1])
-            assert(getDirectives(spellsLayer, 4)).arrayEqualsTo([
-            ]);
-        when:
-            unit.addToMap(hexId, CBStacking.TOP);
-            repaint(game);
-        then:
-            assertClearDirectives(spellsLayer);
-            assertDirectives(spellsLayer, showPlayable("misc/playable1", zoomAndRotate60(416.6667, 351.8878)));
-            assertNoMoreDirectives(spellsLayer);
-    });
-
-    it("Checks that a unit may carry other counters (undoable)", () => {
-        given:
-            var { game, map, unit } = createTinyGame();
-            let hexId = map.getHex(5, 8);
-            unit.move(hexId, CBStacking.TOP);
-            let nextHexId = hexId.getNearHex(0);
-            var [spellsLayer] = getLayers(game.board, "spells-0");
-        when:
-            var playable1 = new CBTestCarriable(unit,["./../images/units/misc/playable1.png"]);
-            unit.carry(playable1);
-            repaint(game);
-            loadAllImages();
-        then:
-            assert(unit.carried).arrayEqualsTo([playable1])
-            assertClearDirectives(spellsLayer);
-            assertDirectives(spellsLayer, showPlayable("misc/playable1", zoomAndRotate0(416.6667, 351.8878)));
-            assertNoMoreDirectives(spellsLayer);
-        when:
-            unit.rotate(60);
-            unit.move(nextHexId, CBStacking.TOP);
-            repaint(game);
-        then:
-            assertClearDirectives(spellsLayer);
-            assertDirectives(spellsLayer, showPlayable("misc/playable1", zoomAndRotate60(416.6667, 255.6635)));
-            assertNoMoreDirectives(spellsLayer);
-        when:
-            Memento.open();
-            unit.drop(playable1);
-            repaint(game);
-        then:
-            assert(unit.carried).arrayEqualsTo([])
-            assert(getDirectives(spellsLayer, 4)).arrayEqualsTo([
-            ]);
-        when:
-            Memento.open();
-            unit.carry(playable1);
-            unit.deleteFromMap();
-            repaint(game);
-        then:
-            assert(unit.carried).arrayEqualsTo([playable1])
-            assert(getDirectives(spellsLayer, 4)).arrayEqualsTo([
-            ]);
-        when:
-            unit.appendToMap(hexId, CBStacking.TOP);
-            repaint(game);
-        then:
-            assertClearDirectives(spellsLayer);
-            assertDirectives(spellsLayer, showPlayable("misc/playable1", zoomAndRotate60(416.6667, 351.8878)));
-            assertNoMoreDirectives(spellsLayer);
-        when:
-            Memento.undo();
-            repaint(game);
-        then:
-            assert(unit.carried).arrayEqualsTo([])
-            assert(getDirectives(spellsLayer, 4)).arrayEqualsTo([
-            ]);
-        when:
-            Memento.undo();
-            repaint(game);
-        then:
-            assert(unit.carried).arrayEqualsTo([playable1]);
-            assertClearDirectives(spellsLayer);
-            assertDirectives(spellsLayer, showPlayable("misc/playable1", zoomAndRotate60(416.6667, 255.6635)));
-            assertNoMoreDirectives(spellsLayer);
-    });
-
-    class CBTestOptionArtifact extends OptionArtifactMixin(CBPieceImageArtifact) {
+    class CBTestOptionArtifact extends OptionArtifactMixin(WPieceImageArtifact) {
          constructor(...args) {
              super(...args);
          }
@@ -434,10 +220,10 @@ describe("Unit", ()=> {
          }
     }
 
-    class CBTestOption extends OptionMixin(CarriableMixin(CBHexCounter)) {
+    class CBTestOption extends OptionMixin(CarriableMixin(WHexCounter)) {
 
         constructor(unit, paths) {
-            super("units", paths, new Dimension2D(142, 142));
+            super("units", unit.game, paths, new Dimension2D(142, 142));
             this._unit = unit;
         }
 
@@ -466,8 +252,6 @@ describe("Unit", ()=> {
         given:
             var { unit, wing, game } = createTinyGame();
             var [unitsLayer, markersLayer] = getLayers(game.board, "units-0", "markers-0");
-        then:
-            assert(unit.artifact.game).equalsTo(game);
         when:
             var otherUnit = unit.type.createUnit(game, wing, 2);
         then:
@@ -525,120 +309,6 @@ describe("Unit", ()=> {
             assert(getDirectives(unitsLayer, 4)).arrayEqualsTo([]);
     });
 
-    it("Checks that a unit may have option counters (not undoable)", () => {
-        given:
-            var { game, map } = prepareTinyGame();
-            var player = new CBUnitPlayer("player1", "/players/player1.png");
-            game.addPlayer(player);
-            var wing = new CBWing(player, banner);
-            let unitType1 = new CBTestTroopType("unit1",
-                ["./../images/units/misc/unit1.png"]);
-            var unit = new CBTroop(game, unitType1, wing);
-            let hexId = map.getHex(5, 8);
-            unit.addToMap(hexId);
-            var [optionsLayer] = getLayers(game.board, "options-0");
-        when:
-            var option0 = createOption(unit, "./../images/units/misc/option0.png");
-            var option1 = createOption(unit, "./../images/units/misc/option1.png");
-            var option2 = createOption(unit, "./../images/units/misc/option2.png");
-            repaint(game);
-        then:
-            assert(unit.options).arrayEqualsTo([option0, option1, option2])
-            assertClearDirectives(optionsLayer);
-            assertDirectives(optionsLayer, showPlayable("misc/option0", zoomAndRotate0(406.8915, 347.0002)));
-            assertDirectives(optionsLayer, showPlayable("misc/option1", zoomAndRotate0(397.1163, 337.2251)));
-            assertDirectives(optionsLayer, showPlayable("misc/option2", zoomAndRotate0(387.3412, 327.4499)));
-            assertNoMoreDirectives(optionsLayer);
-        when:
-            resetDirectives(optionsLayer);
-            unit.removeOption(option1);
-            repaint(game);
-        then:
-            assert(unit.options).arrayEqualsTo([option0, option2])
-            assertClearDirectives(optionsLayer);
-            assertDirectives(optionsLayer, showPlayable("misc/option0", zoomAndRotate0(406.8915, 347.0002)));
-            assertDirectives(optionsLayer, showPlayable("misc/option2", zoomAndRotate0(397.1163, 337.2251)));
-            assertNoMoreDirectives(optionsLayer);
-    });
-
-    it("Checks option features", () => {
-        given:
-            var { game, map } = prepareTinyGame();
-            var player = new CBUnitPlayer("player1", "/players/player1.png");
-            game.addPlayer(player);
-            var wing = new CBWing(player, banner);
-            let unitType1 = new CBTestTroopType("unit1",
-                ["./../images/units/misc/unit1.png"]);
-            var unit = new CBTroop(game, unitType1, wing);
-            let hexId = map.getHex(5, 8);
-            unit.addToMap(hexId);
-        when:
-            var option = createOption(unit, "./../images/units/misc/option.png");
-            repaint(game);
-        then:
-            assert(option.isOption()).isTrue();
-            assert(option.owner).equalsTo(unit);
-    });
-
-    it("Checks that a unit may have option counters (undoable)", () => {
-        function createOption(unit, path) {
-            var option = new CBTestOption(unit,[path]);
-            unit.appendOption(option);
-            return option;
-        }
-
-        given:
-            var { game, map } = prepareTinyGame();
-            var player = new CBUnitPlayer("player1", "/players/player1.png");
-            game.addPlayer(player);
-            var wing = new CBWing(player, banner);
-            let unitType1 = new CBTestTroopType("unit1",
-                ["./../images/units/misc/unit1.png"]);
-            var unit = new CBTroop(game, unitType1, wing);
-            let hexId = map.getHex(5, 8);
-            unit.addToMap(hexId);
-            var [optionsLayer] = getLayers(game.board, "options-0");
-        when:
-            var option0 = createOption(unit, "./../images/units/misc/option0.png");
-            var option1 = createOption(unit, "./../images/units/misc/option1.png");
-            var option2 = createOption(unit, "./../images/units/misc/option2.png");
-            repaint(game);
-        then:
-            assert(unit.options).arrayEqualsTo([option0, option1, option2]);
-            assertClearDirectives(optionsLayer);
-            assertDirectives(optionsLayer, showPlayable("misc/option0", zoomAndRotate0(406.8915, 347.0002)));
-            assertDirectives(optionsLayer, showPlayable("misc/option1", zoomAndRotate0(397.1163, 337.2251)));
-            assertDirectives(optionsLayer, showPlayable("misc/option2", zoomAndRotate0(387.3412, 327.4499)));
-            assertNoMoreDirectives(optionsLayer);
-        when:
-            Memento.open();
-            unit.deleteOption(option1);
-            repaint(game);
-        then:
-            assert(unit.options).arrayEqualsTo([option0, option2])
-            assertClearDirectives(optionsLayer);
-            assertDirectives(optionsLayer, showPlayable("misc/option0", zoomAndRotate0(406.8915, 347.0002)));
-            assertDirectives(optionsLayer, showPlayable("misc/option2", zoomAndRotate0(397.1163, 337.2251)));
-            assertNoMoreDirectives(optionsLayer);
-        when:
-            Memento.undo();
-            repaint(game);
-        then:
-            assert(unit.options).arrayEqualsTo([option0, option1, option2])
-            assertClearDirectives(optionsLayer);
-            assertDirectives(optionsLayer, showPlayable("misc/option0", zoomAndRotate0(406.8915, 347.0002)));
-            assertDirectives(optionsLayer, showPlayable("misc/option1", zoomAndRotate0(397.1163, 337.2251)));
-            assertDirectives(optionsLayer, showPlayable("misc/option2", zoomAndRotate0(387.3412, 327.4499)));
-            assertNoMoreDirectives(optionsLayer);
-        when:
-            Memento.undo();
-            repaint(game);
-        then:
-            assert(unit.options).arrayEqualsTo([])
-            assert(getDirectives(optionsLayer, 4)).arrayEqualsTo([
-            ]);
-    });
-
     it("Checks units types", () => {
         given:
             var { game, map } = prepareTinyGame();
@@ -687,7 +357,7 @@ describe("Unit", ()=> {
             var unit = new CBTroop(game, unitType1, wing);
             unit.addToMap(map.getHex(5, 8));
             var formation = new CBFormation(game, unitType1, wing);
-            formation.addToMap(new CBHexSideId(map.getHex(5, 8), map.getHex(5, 9)));
+            formation.addToMap(new WHexSideId(map.getHex(5, 8), map.getHex(5, 9)));
             formation.angle = 90;
         then:
             assert(unit.wing).equalsTo(wing);
@@ -741,8 +411,8 @@ describe("Unit", ()=> {
 
     it("Checks unit naming by wings", () => {
         given:
-            var game = new CBGame(1);
-            var { wing, unit, map, unitType } = createTinyGame();
+            //var game = new CBGame(1);
+            var { game, wing, unit, map, unitType } = createTinyGame();
         then:
             assert(unit.name).equalsTo("banner-0");
         when:
@@ -828,7 +498,7 @@ describe("Unit", ()=> {
             assert(leader.magicArt).equalsTo("Fire");
     });
 
-    it("Checks unit move on the on map", () => {
+    it("Checks unit move on the map", () => {
         given:
             var { game, map, unit } = createTinyGame();
             var hexId = map.getHex(5, 8);
@@ -887,7 +557,7 @@ describe("Unit", ()=> {
             assert(hexId.units).arrayEqualsTo([unit]);
         when:
             var hexId2 = map.getHex(6, 8);
-            unit.retreat(hexId2, CBStacking.BOTTOM);
+            unit.retreat(hexId2, WStacking.BOTTOM);
         then:
             assert(unit.movementPoints).equalsTo(2);
             assert(unit.extendedMovementPoints).equalsTo(3);
@@ -1135,7 +805,7 @@ describe("Unit", ()=> {
             var {game, unit} = createTinyGame();
             var [markersLayer] = getLayers(game.board, "markers-0");
         when:
-            unit.launchAction(new CBAction(game, unit));
+            unit.launchAction(new WAction(game, unit));
             unit.setPlayed();
             repaint(game);
         then:
@@ -1184,7 +854,7 @@ describe("Unit", ()=> {
             unit.receivesOrder(true);
             repaint(game);
         when:
-            unit.launchAction(new CBAction(game, unit));
+            unit.launchAction(new WAction(game, unit));
             unit.setPlayed();
             repaint(game);
         then:
@@ -1199,7 +869,7 @@ describe("Unit", ()=> {
             var [markersLayer] = getLayers(game.board, "markers-0");
             player.canPlay = function() { return true; };
             player.launchPlayableAction = function(unit, point) {
-                unit.launchAction(new CBAction(game, unit));
+                unit.launchAction(new WAction(game, unit));
             }
         when:
             player.changeSelection(unit1, dummyEvent);
@@ -1373,7 +1043,10 @@ describe("Unit", ()=> {
                         unit.fixRemainingLossSteps(stepCounts);
                         return unit;
                     }
-                    return { fromHex:[_createUnit.call(this, 2)], toHex:[_createUnit.call(this, 1)] };
+                    return {
+                        fromHex:[_createUnit.call(this, game,2)],
+                        toHex:[_createUnit.call(this, game1)]
+                    };
                 }
             });
             var [unitsLayer, formationsLayer] = getLayers(game.board, "units-0", "formations-0");
@@ -1859,7 +1532,7 @@ describe("Unit", ()=> {
 
     it("Checks wizardry", () => {
 
-        class TestSpell extends CBPiece {
+        class TestSpell extends WPiece {
             constructor(wizard) {
                 super("units", ["./../images/magic/red/redspell.png"], new Dimension2D(142, 142));
                 this.wizard = wizard;
@@ -1955,7 +1628,7 @@ describe("Unit", ()=> {
         ]);
         let formation = new CBFormation(game, unitType, wing);
         formation.angle = 150;
-        let formationLocation = new CBHexSideId(map.getHex(5, 8), map.getHex(6, 7))
+        let formationLocation = new WHexSideId(map.getHex(5, 8), map.getHex(6, 7))
         formation.addToMap(formationLocation);
         game.start();
         loadAllImages();
@@ -1999,7 +1672,7 @@ describe("Unit", ()=> {
             var fHexId2 = map.getHex(6, 7);
             var sHexId1 = map.getHex(7, 8);
             var sHexId2 = map.getHex(8, 7);
-            formation.hexLocation = new CBHexSideId(sHexId1, sHexId2);
+            formation.hexLocation = new WHexSideId(sHexId1, sHexId2);
             repaint(game);
         then:
             assertClearDirectives(formationsLayer);
@@ -2013,7 +1686,7 @@ describe("Unit", ()=> {
             resetDirectives(formationsLayer);
             var mHexId1 = map.getHex(7, 9);
             var mHexId2 = map.getHex(8, 8);
-            formation.move(new CBHexSideId(mHexId1, mHexId2), 0);
+            formation.move(new WHexSideId(mHexId1, mHexId2), 0);
             repaint(game);
         then:
             assertClearDirectives(formationsLayer);
@@ -2042,7 +1715,7 @@ describe("Unit", ()=> {
             assert(sHexId1.units).arrayEqualsTo([]);
             assert(sHexId2.units).arrayEqualsTo([]);
         when:
-            formation.move(new CBHexSideId(mHexId1, mHexId2), 0);
+            formation.move(new WHexSideId(mHexId1, mHexId2), 0);
             repaint(game);
         then:
             assertClearDirectives(formationsLayer);
@@ -2060,7 +1733,7 @@ describe("Unit", ()=> {
             var [formationsLayer] = getLayers(game.board, "formations-0");
             var sHexId1 = map.getHex(7, 8);
             var sHexId2 = map.getHex(7, 9);
-            formation.hexLocation = new CBHexSideId(sHexId1, sHexId2);
+            formation.hexLocation = new WHexSideId(sHexId1, sHexId2);
             formation.angle = 90;
             repaint(game);
         when:

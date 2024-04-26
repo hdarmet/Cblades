@@ -5,10 +5,10 @@ import {
 } from "../unit.js";
 import {
     distanceFromHexToHex
-} from "../map.js";
+} from "../../wargame/map.js";
 import {
     sumAngle
-} from "../../geometry.js";
+} from "../../board/geometry.js";
 
 export class CBCommandTeacher {
 

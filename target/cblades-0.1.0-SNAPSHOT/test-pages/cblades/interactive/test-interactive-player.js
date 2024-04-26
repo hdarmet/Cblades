@@ -7,22 +7,22 @@ import {
 import {
     DAnimator,
     DImage, setDrawPlatform
-} from "../../../jslib/draw.js";
+} from "../../../jslib/board/draw.js";
 import {
     assertDirectives, assertNoMoreDirectives,
     getDirectives, getLayers,
     loadAllImages,
     mockPlatform, resetDirectives, skipDirectives
-} from "../../mocks.js";
+} from "../../board/mocks.js";
 import {
     Mechanisms, Memento
-} from "../../../jslib/mechanisms.js";
+} from "../../../jslib/board/mechanisms.js";
 import {
-    CBAction
-} from "../../../jslib/cblades/game.js";
+    WAction
+} from "../../../jslib/wargame/game.js";
 import {
     DBoard
-} from "../../../jslib/board.js";
+} from "../../../jslib/board/board.js";
 import {
     repaint,
     paint,
@@ -52,20 +52,20 @@ import {
 } from "../../../jslib/cblades/interactive/interactive-player.js";
 import {
     DIconMenuItem
-} from "../../../jslib/widget.js";
+} from "../../../jslib/board/widget.js";
 import {
     Point2D
-} from "../../../jslib/geometry.js";
+} from "../../../jslib/board/geometry.js";
 import {
     CBCharge
 } from "../../../jslib/cblades/unit.js";
 import {
-    CBSequence
-} from "../../../jslib/cblades/sequences.js";
+    WSequence
+} from "../../../jslib/wargame/sequences.js";
 
 describe("Interactive Player", ()=> {
 
-    var appendElement = CBSequence.appendElement;
+    var appendElement = WSequence.appendElement;
 
     before(() => {
         setDrawPlatform(mockPlatform);
@@ -73,9 +73,9 @@ describe("Interactive Player", ()=> {
         Mechanisms.reset();
         DAnimator.clear();
         Memento.clear();
-        CBSequence.awaitedElements = [];
-        CBSequence.appendElement = function(game, element) {
-            let awaited = CBSequence.awaitedElements.pop();
+        WSequence.awaitedElements = [];
+        WSequence.appendElement = function(game, element) {
+            let awaited = WSequence.awaitedElements.pop();
             assert(element).equalsTo(awaited);
         }
         CBActionMenu.menuBuilders = [
@@ -96,7 +96,7 @@ describe("Interactive Player", ()=> {
 
     after(() => {
         CBActionMenu.menuBuilders = [];
-        CBSequence.appendElement = appendElement;
+        WSequence.appendElement = appendElement;
     });
 
     function clickOnDoThisAction(game) {
@@ -196,7 +196,7 @@ describe("Interactive Player", ()=> {
         given:
             var {game, unit1, unit2, player} = create2UnitsTinyGame();
             player.changeSelection(unit1, dummyEvent);
-            var action = new CBAction(game, unit1);
+            var action = new WAction(game, unit1);
             unit1.launchAction(action);
             action.markAsFinished();
         when:
@@ -209,7 +209,7 @@ describe("Interactive Player", ()=> {
         given:
             var {game, unit1, unit2, player} = create2UnitsTinyGame();
             player.changeSelection(unit1, dummyEvent);
-            var action = new CBAction(game, unit1);
+            var action = new WAction(game, unit1);
             unit1.launchAction(action);
         when:
             player.changeSelection(unit2, dummyEvent);
@@ -222,7 +222,7 @@ describe("Interactive Player", ()=> {
         given:
             var {game, unit, player} = createTinyGame();
             player.changeSelection(unit, dummyEvent);
-            unit.launchAction(new CBAction(game, unit));
+            unit.launchAction(new WAction(game, unit));
             unit.action.markAsFinished();
             unit.action.finalize();
             var finished = false;
@@ -758,7 +758,7 @@ describe("Interactive Player", ()=> {
         given:
             var {game, unit, player} = createTinyGame();
             player.changeSelection(unit, dummyEvent);
-            var action = new CBAction(game, unit);
+            var action = new WAction(game, unit);
             unit.launchAction(action);
             action.markAsFinished();
         then:

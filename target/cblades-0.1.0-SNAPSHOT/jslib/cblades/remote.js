@@ -8,10 +8,10 @@ import {
 } from "./loader.js";
 import {
     getDrawPlatform
-} from "../draw.js";
+} from "../board/draw.js";
 import {
-    CBSequence
-} from "./sequences.js";
+    WSequence
+} from "../wargame/sequences.js";
 import {
     InteractiveRetreatAction,
     CBAsk4RetreatSequenceElement, InteractiveAdvanceAction
@@ -47,7 +47,7 @@ export class CBRemoteUnitPlayer extends CBUnitPlayer {
                 new SequenceLoader().load(this.game, sequences => {
                     if (sequences.length>0) {
                         sequences.sort((s1, s2)=>s1.count-s2.count);
-                        this.game._sequence = new CBSequence(this.game, sequences.last().count+1);
+                        this.game._sequence = new WSequence(this.game, sequences.last().count+1);
                         let tick = 0;
                         for (let sequence of sequences) {
                             tick = sequence.replay(tick, () => {
@@ -74,9 +74,9 @@ export class CBRemoteUnitPlayer extends CBUnitPlayer {
             unit.takeALoss();
         }
         if (losses>0) {
-            CBSequence.appendElement(this.game, new CBStateSequenceElement({game: this.game, unit}));
+            WSequence.appendElement(this.game, new CBStateSequenceElement({game: this.game, unit}));
             if (!unit.isDestroyed()) {
-                CBSequence.appendElement(this.game,
+                WSequence.appendElement(this.game,
                     new CBAsk4RetreatSequenceElement({game: this.game, unit, losses, attacker})
                 );
             }

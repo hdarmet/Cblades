@@ -7,17 +7,17 @@ import {
 import {
     DAnimator,
     DImage, setDrawPlatform
-} from "../../../jslib/draw.js";
+} from "../../../jslib/board/draw.js";
 import {
     assertDirectives, assertNoMoreDirectives,
     createEvent,
     getDirectives, getLayers,
     loadAllImages,
     mockPlatform, resetDirectives, skipDirectives
-} from "../../mocks.js";
+} from "../../board/mocks.js";
 import {
     Mechanisms, Memento
-} from "../../../jslib/mechanisms.js";
+} from "../../../jslib/board/mechanisms.js";
 import {
     repaint,
     clickOnActionMenu,
@@ -56,8 +56,8 @@ import {
     CBOrderInstruction, CBTiredness
 } from "../../../jslib/cblades/unit.js";
 import {
-    CBSequence
-} from "../../../jslib/cblades/sequences.js";
+    WSequence
+} from "../../../jslib/wargame/sequences.js";
 import {
     registerInteractiveCommand,
     unregisterInteractiveCommand
@@ -65,7 +65,7 @@ import {
 
 describe("Interactive Command", ()=> {
 
-    var appendElement = CBSequence.appendElement;
+    var appendElement = WSequence.appendElement;
 
     before(() => {
         registerInteractiveCommand();
@@ -74,16 +74,16 @@ describe("Interactive Command", ()=> {
         Mechanisms.reset();
         DAnimator.clear();
         Memento.clear();
-        CBSequence.awaitedElements = [];
-        CBSequence.appendElement = function(game, element) {
-            let awaited = CBSequence.awaitedElements.pop();
+        WSequence.awaitedElements = [];
+        WSequence.appendElement = function(game, element) {
+            let awaited = WSequence.awaitedElements.pop();
             assert(element).equalsTo(awaited);
         }
     });
 
     after(() => {
         unregisterInteractiveCommand();
-        CBSequence.appendElement = appendElement;
+        WSequence.appendElement = appendElement;
     });
 
     function showOrderTrigger([a, b, c, d, e, f]) {

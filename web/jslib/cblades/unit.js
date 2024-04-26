@@ -396,7 +396,6 @@ export class CBWing extends WWing {
 
     _memento() {
         let memento = {
-            ...super._memento(),
             orderInstruction : this._orderInstruction,
             moral : this._moral,
             tiredness : this._tiredness
@@ -406,7 +405,6 @@ export class CBWing extends WWing {
     }
 
     _revert(memento) {
-        super._revert();
         this._orderInstruction = memento.orderInstruction;
         this._moral = memento.moral;
         this._tiredness = memento.tiredness;
@@ -709,7 +707,6 @@ export class CBUnit extends WUnit {
         this._updatePlayedArtifact(this.setMarkerArtifact, this.removeMarkerArtifact);
         this._updateEngagementArtifact(this.setMarkerArtifact, this.setActivableMarkerArtifact, this.removeMarkerArtifact);
         this._updateCohesionArtifact(this.setMarkerArtifact, this.removeMarkerArtifact);
-        super.setState(state);
     }
 
     destroy() {
@@ -1127,10 +1124,10 @@ export class CBUnit extends WUnit {
         this._tirednessArtifact && removeMarkerArtifact.call(this, this._tirednessArtifact);
         delete this._tirednessArtifact;
         if (this._tiredness === CBTiredness.TIRED) {
-            this._tirednessArtifact = setMarkerArtifact.call(this, "./../images/markers/tired.png", 2);
+            this._tirednessArtifact = setMarkerArtifact.call(this, "./../images/markers/tired.png", 3);
         }
         else if (this._tiredness === CBTiredness.EXHAUSTED) {
-            this._tirednessArtifact = setMarkerArtifact.call(this, "./../images/markers/exhausted.png", 2);
+            this._tirednessArtifact = setMarkerArtifact.call(this, "./../images/markers/exhausted.png", 3);
         }
     }
 
@@ -1138,10 +1135,10 @@ export class CBUnit extends WUnit {
         this._munitionsArtifact && removeMarkerArtifact.call(this, this._munitionsArtifact);
         delete this._munitionsArtifact;
         if (this._munitions === CBMunitions.SCARCE) {
-            this._munitionsArtifact = setMarkerArtifact.call(this, "./../images/markers/scarceamno.png", 4);
+            this._munitionsArtifact = setMarkerArtifact.call(this, "./../images/markers/scarceamno.png", 5);
         }
         else if (this._munitions === CBMunitions.EXHAUSTED) {
-            this._munitionsArtifact = setMarkerArtifact.call(this, "./../images/markers/lowamno.png", 4);
+            this._munitionsArtifact = setMarkerArtifact.call(this, "./../images/markers/lowamno.png", 5);
         }
     }
 
@@ -1160,17 +1157,17 @@ export class CBUnit extends WUnit {
         this._engagingArtifact && removeMarkerArtifact.call(this, this._engagingArtifact);
         delete this._engagingArtifact;
         if (this._charging === CBCharge.CHARGING) {
-            this._engagingArtifact = setMarkerArtifact.call(this, "./../images/markers/charge.png", 1);
+            this._engagingArtifact = setMarkerArtifact.call(this, "./../images/markers/charge.png", 2);
         }
         else if (this._charging === CBCharge.CAN_CHARGE) {
             this._engagingArtifact = setActivableMarkerArtifact.call(this, [
                 "./../images/markers/possible-charge.png", "./../images/markers/charge.png"
             ], marker=>{
                 marker.setImage((marker.imageIndex+1)%2);
-            }, 1);
+            }, 2);
         }
         else if (this._engaging) {
-            this._engagingArtifact = setMarkerArtifact.call(this, "./../images/markers/contact.png", 1);
+            this._engagingArtifact = setMarkerArtifact.call(this, "./../images/markers/contact.png", 2);
         }
     }
 
@@ -1178,10 +1175,10 @@ export class CBUnit extends WUnit {
         this._cohesionArtifact && removeMarkerArtifact.call(this, this._cohesionArtifact);
         delete this._cohesionArtifact;
         if (this._cohesion === CBCohesion.DISRUPTED) {
-            this._cohesionArtifact = setMarkerArtifact.call(this, "./../images/markers/disrupted.png", 3);
+            this._cohesionArtifact = setMarkerArtifact.call(this, "./../images/markers/disrupted.png", 4);
         }
         else if (this._cohesion === CBCohesion.ROUTED) {
-            this._cohesionArtifact = setMarkerArtifact.call(this, "./../images/markers/fleeing.png", 3);
+            this._cohesionArtifact = setMarkerArtifact.call(this, "./../images/markers/fleeing.png", 4);
         }
     }
 
@@ -1428,7 +1425,7 @@ export class CBCharacter extends CBUnit {
 
     createOrderInstructionArtifact(orderInstruction) {
         let marker = new WSimpleMarkerArtifact(this, CBCharacter.ORDER_INSTRUCTION_PATHS[orderInstruction],
-            this.getMarkerPosition(6), CBCharacter.ORDER_INSTRUCTION_DIMENSION);
+            this.getMarkerPosition(7), CBCharacter.ORDER_INSTRUCTION_DIMENSION);
         return marker;
     }
 

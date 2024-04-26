@@ -2,24 +2,24 @@
 
 import {
     DImage, setDrawPlatform
-} from "../../jslib/draw.js";
+} from "../../jslib/board/draw.js";
 import {
-    CBGame
-} from "../../jslib/cblades/playable.js";
+    WGame
+} from "../../jslib/wargame/playable.js";
 import {
     Mechanisms, Memento
-} from "../../jslib/mechanisms.js";
+} from "../../jslib/board/mechanisms.js";
 import {
     assert,
     before, describe, it
 } from "../../jstest/jtest.js";
 import {
     mockPlatform
-} from "../mocks.js";
+} from "../board/mocks.js";
 import {
-    CBHex,
-    CBMap
-} from "../../jslib/cblades/map.js";
+    WHex,
+    WMap
+} from "../../jslib/wargame/map.js";
 import {
     CBMoveProfile
 } from "../../jslib/cblades/unit.js";
@@ -53,33 +53,33 @@ describe("Profile", ()=> {
     });
 
     function setGround(map) {
-        map.getHex(1, 1).type = CBHex.HEX_TYPES.OUTDOOR_CLEAR;
-        map.getHex(1, 2).type = CBHex.HEX_TYPES.OUTDOOR_ROUGH;
-        map.getHex(1, 3).type = CBHex.HEX_TYPES.OUTDOOR_DIFFICULT;
-        map.getHex(1, 4).type = CBHex.HEX_TYPES.OUTDOOR_CLEAR_FLAMMABLE;
-        map.getHex(1, 5).type = CBHex.HEX_TYPES.OUTDOOR_ROUGH_FLAMMABLE;
-        map.getHex(2, 1).type = CBHex.HEX_TYPES.OUTDOOR_DIFFICULT_FLAMMABLE;
-        map.getHex(2, 2).type = CBHex.HEX_TYPES.WATER;
-        map.getHex(2, 3).type = CBHex.HEX_TYPES.LAVA;
-        map.getHex(2, 4).type = CBHex.HEX_TYPES.IMPASSABLE;
-        map.getHex(2, 5).type = CBHex.HEX_TYPES.CAVE_CLEAR;
-        map.getHex(3, 1).type = CBHex.HEX_TYPES.CAVE_ROUGH;
-        map.getHex(3, 2).type = CBHex.HEX_TYPES.CAVE_DIFFICULT;
-        map.getHex(3, 3).type = CBHex.HEX_TYPES.CAVE_CLEAR_FLAMMABLE;
-        map.getHex(3, 4).type = CBHex.HEX_TYPES.CAVE_ROUGH_FLAMMABLE;
-        map.getHex(3, 5).type = CBHex.HEX_TYPES.CAVE_DIFFICULT_FLAMMABLE;
+        map.getHex(1, 1).type = WHex.HEX_TYPES.OUTDOOR_CLEAR;
+        map.getHex(1, 2).type = WHex.HEX_TYPES.OUTDOOR_ROUGH;
+        map.getHex(1, 3).type = WHex.HEX_TYPES.OUTDOOR_DIFFICULT;
+        map.getHex(1, 4).type = WHex.HEX_TYPES.OUTDOOR_CLEAR_FLAMMABLE;
+        map.getHex(1, 5).type = WHex.HEX_TYPES.OUTDOOR_ROUGH_FLAMMABLE;
+        map.getHex(2, 1).type = WHex.HEX_TYPES.OUTDOOR_DIFFICULT_FLAMMABLE;
+        map.getHex(2, 2).type = WHex.HEX_TYPES.WATER;
+        map.getHex(2, 3).type = WHex.HEX_TYPES.LAVA;
+        map.getHex(2, 4).type = WHex.HEX_TYPES.IMPASSABLE;
+        map.getHex(2, 5).type = WHex.HEX_TYPES.CAVE_CLEAR;
+        map.getHex(3, 1).type = WHex.HEX_TYPES.CAVE_ROUGH;
+        map.getHex(3, 2).type = WHex.HEX_TYPES.CAVE_DIFFICULT;
+        map.getHex(3, 3).type = WHex.HEX_TYPES.CAVE_CLEAR_FLAMMABLE;
+        map.getHex(3, 4).type = WHex.HEX_TYPES.CAVE_ROUGH_FLAMMABLE;
+        map.getHex(3, 5).type = WHex.HEX_TYPES.CAVE_DIFFICULT_FLAMMABLE;
 
-        map.getHex(6, 6).toward(0).type = CBHex.HEXSIDE_TYPES.NORMAL;
-        map.getHex(6, 6).toward(60).type = CBHex.HEXSIDE_TYPES.EASY;
-        map.getHex(6, 6).toward(120).type = CBHex.HEXSIDE_TYPES.DIFFICULT;
-        map.getHex(6, 6).toward(180).type = CBHex.HEXSIDE_TYPES.CLIMB;
-        map.getHex(6, 6).toward(240).type = CBHex.HEXSIDE_TYPES.WALL;
+        map.getHex(6, 6).toward(0).type = WHex.HEXSIDE_TYPES.NORMAL;
+        map.getHex(6, 6).toward(60).type = WHex.HEXSIDE_TYPES.EASY;
+        map.getHex(6, 6).toward(120).type = WHex.HEXSIDE_TYPES.DIFFICULT;
+        map.getHex(6, 6).toward(180).type = WHex.HEXSIDE_TYPES.CLIMB;
+        map.getHex(6, 6).toward(240).type = WHex.HEXSIDE_TYPES.WALL;
     }
 
     it("Checks Pedestrian Profile", () => {
         given:
-            var game = new CBGame(1);
-            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+            var game = new WGame(1);
+            var map = new WMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             game.setMap(map);
             game.start();
             setGround(map);
@@ -166,8 +166,8 @@ describe("Profile", ()=> {
 
     it("Checks Animal Profile", () => {
         given:
-            var game = new CBGame(1);
-            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+            var game = new WGame(1);
+            var map = new WMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             game.setMap(map);
             game.start();
             setGround(map);
@@ -254,8 +254,8 @@ describe("Profile", ()=> {
 
     it("Checks cavalry Profile", () => {
         given:
-            var game = new CBGame(1);
-            var map = new CBMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+            var game = new WGame(1);
+            var map = new WMap([{path:"./../images/maps/map.png", col:0, row:0}]);
             game.setMap(map);
             game.start();
             setGround(map);

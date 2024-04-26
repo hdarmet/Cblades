@@ -7,16 +7,16 @@ import {
 import {
     DAnimator,
     DImage, setDrawPlatform
-} from "../../../jslib/draw.js";
+} from "../../../jslib/board/draw.js";
 import {
     assertDirectives, assertNoMoreDirectives,
     getDirectives, getLayers,
     loadAllImages,
     mockPlatform, resetDirectives, skipDirectives
-} from "../../mocks.js";
+} from "../../board/mocks.js";
 import {
     Mechanisms, Memento
-} from "../../../jslib/mechanisms.js";
+} from "../../../jslib/board/mechanisms.js";
 import {
     CBAdvanceActuator,
     CBFireAttackActuator, CBFireHelpActuator, CBFireHexActuator, CBFormationRetreatActuator,
@@ -70,14 +70,14 @@ import {
     create2Players4UnitsFireTinyGame, create2Players2LeadersTinyGame
 } from "../game-examples.js";
 import {
-    CBHexSideId, CBHex
-} from "../../../jslib/cblades/map.js";
+    WHexSideId, WHex
+} from "../../../jslib/wargame/map.js";
 import {
     CBCharge, CBMunitions, CBTiredness
 } from "../../../jslib/cblades/unit.js";
 import {
-    CBSequence
-} from "../../../jslib/cblades/sequences.js";
+    WSequence
+} from "../../../jslib/wargame/sequences.js";
 import {
     registerInteractiveCombat,
     unregisterInteractiveCombat
@@ -85,7 +85,7 @@ import {
 
 describe("Interactive Combat", ()=> {
 
-    var appendElement = CBSequence.appendElement;
+    var appendElement = WSequence.appendElement;
 
     before(() => {
         registerInteractiveCombat();
@@ -94,16 +94,16 @@ describe("Interactive Combat", ()=> {
         Mechanisms.reset();
         DAnimator.clear();
         Memento.clear();
-        CBSequence.awaitedElements = [];
-        CBSequence.appendElement = function(game, element) {
-            let awaited = CBSequence.awaitedElements.pop();
+        WSequence.awaitedElements = [];
+        WSequence.appendElement = function(game, element) {
+            let awaited = WSequence.awaitedElements.pop();
             assert(element).equalsTo(awaited);
         }
     });
 
     after(() => {
         unregisterInteractiveCombat();
-        CBSequence.appendElement = appendElement;
+        WSequence.appendElement = appendElement;
     });
 
     function showUnsupportedShock([a, b, c, d, e, f]) {
@@ -607,13 +607,13 @@ describe("Interactive Combat", ()=> {
             var { game, map, unit11, unitType1, unit21, unitType2 } = create2Players4UnitsTinyGame();
             var [widgetsLayer] = getLayers(game.board, "widgets", "actuators-0");
             unit11.move(map.getHex(5, 8));
-            unit11.hexLocation.type = CBHex.HEX_TYPES.OUTDOOR_ROUGH;
+            unit11.hexLocation.type = WHex.HEX_TYPES.OUTDOOR_ROUGH;
             unit11.hexLocation.height = 1;
             unit21.move(map.getHex(5, 7));
             unit21.disrupt();
             unit11.setTiredness(CBTiredness.TIRED);
             unit21.setTiredness(CBTiredness.EXHAUSTED);
-            unit21.hexLocation.type = CBHex.HEX_TYPES.OUTDOOR_DIFFICULT;
+            unit21.hexLocation.type = WHex.HEX_TYPES.OUTDOOR_DIFFICULT;
             setWeaponBonuses(unitType1, 2, 1, 0, 0);
             setWeaponBonuses(unitType2, 2, 0, 2, 0);
             clickOnPiece(game, unit11);
@@ -652,13 +652,13 @@ describe("Interactive Combat", ()=> {
             var [widgetsLayer] = getLayers(game.board, "widgets", "actuators-0");
             unit11.move(map.getHex(5, 8));
             unit11.disrupt();
-            unit11.hexLocation.type = CBHex.HEX_TYPES.OUTDOOR_DIFFICULT;
+            unit11.hexLocation.type = WHex.HEX_TYPES.OUTDOOR_DIFFICULT;
             unit11.hexLocation.height = -1;
             unit21.move(map.getHex(5, 7));
             unit21.rout();
             unit21.angle = 90;
             unit11.setTiredness(CBTiredness.EXHAUSTED);
-            unit21.hexLocation.type = CBHex.HEX_TYPES.OUTDOOR_ROUGH;
+            unit21.hexLocation.type = WHex.HEX_TYPES.OUTDOOR_ROUGH;
             clickOnPiece(game, unit11);
             clickOnShockAttackAction(game);
             loadAllImages();
@@ -728,7 +728,7 @@ describe("Interactive Combat", ()=> {
             unit12.move(map.getHex(5, 8));
             unit21.move(map.getHex(5, 7));
             unit22.move(map.getHex(5, 7));
-            unit11.hexLocation.toward(0).type = CBHex.HEXSIDE_TYPES.DIFFICULT;
+            unit11.hexLocation.toward(0).type = WHex.HEXSIDE_TYPES.DIFFICULT;
             clickOnPiece(game, unit11);
             clickOnShockAttackAction(game);
             var shockHelpActuator = getShockHelpActuator(game);
@@ -866,7 +866,7 @@ describe("Interactive Combat", ()=> {
             formation2.angle = 330;
             let fromHex = map.getHex(5, 8);
             let toHex = fromHex.getNearHex(60);
-            formation2.move(new CBHexSideId(fromHex, toHex), 0);
+            formation2.move(new WHexSideId(fromHex, toHex), 0);
             unit1.move(map.getHex(5, 7));
             unit1.angle = 180;
             clickOnPiece(game, formation2);
@@ -948,7 +948,7 @@ describe("Interactive Combat", ()=> {
                 "actuators", "widgets", "widget-commands","widget-items"
             );
             unit1.move(map.getHex(5, 8));
-            formation2.move(new CBHexSideId(map.getHex(5, 7), map.getHex(6, 7)));
+            formation2.move(new WHexSideId(map.getHex(5, 7), map.getHex(6, 7)));
             formation2.angle = 180;
             clickOnPiece(game, unit1);
             clickOnShockAttackAction(game);
@@ -1017,7 +1017,7 @@ describe("Interactive Combat", ()=> {
                 "actuators", "formations-0"
             );
             unit1.move(map.getHex(5, 8));
-            formation2.move(new CBHexSideId(map.getHex(5, 7), map.getHex(6, 7)));
+            formation2.move(new WHexSideId(map.getHex(5, 7), map.getHex(6, 7)));
             formation2.angle = 210;
             clickOnPiece(game, unit1);
             clickOnShockAttackAction(game);
@@ -1047,7 +1047,7 @@ describe("Interactive Combat", ()=> {
                 "actuators", "formations-0"
             );
             unit1.move(map.getHex(5, 8));
-            formation2.move(new CBHexSideId(map.getHex(6, 7), map.getHex(7, 8)));
+            formation2.move(new WHexSideId(map.getHex(6, 7), map.getHex(7, 8)));
             formation2.angle = 210;
             clickOnPiece(game, unit1);
             clickOnShockAttackAction(game);
@@ -1085,7 +1085,7 @@ describe("Interactive Combat", ()=> {
             );
             unit1.move(map.getHex(5, 8));
             unit1.setCharging(CBCharge.CHARGING);
-            formation2.move(new CBHexSideId(map.getHex(5, 7), map.getHex(6, 7)));
+            formation2.move(new WHexSideId(map.getHex(5, 7), map.getHex(6, 7)));
             formation2.angle = 210;
             clickOnPiece(game, unit1);
             clickOnShockAttackAction(game);
@@ -1154,7 +1154,7 @@ describe("Interactive Combat", ()=> {
                 "actuators", "formations-0"
             );
             unit1.move(map.getHex(5, 8));
-            formation2.move(new CBHexSideId(map.getHex(5, 7), map.getHex(6, 7)));
+            formation2.move(new WHexSideId(map.getHex(5, 7), map.getHex(6, 7)));
             formation2.angle = 210;
             clickOnPiece(game, unit1);
             clickOnShockAttackAction(game);
@@ -1417,12 +1417,12 @@ describe("Interactive Combat", ()=> {
             var [widgetsLayer] = getLayers(game.board, "widgets", "actuators-0");
             unit1.move(map.getHex(5, 8));
             unit1.disrupt();
-            unit1.hexLocation.type = CBHex.HEX_TYPES.OUTDOOR_DIFFICULT;
+            unit1.hexLocation.type = WHex.HEX_TYPES.OUTDOOR_DIFFICULT;
             unit1.hexLocation.height = 1;
             unit2.move(map.getHex(5, 6));
             unit2.disrupt();
-            unit2.hexLocation.type = CBHex.HEX_TYPES.OUTDOOR_DIFFICULT;
-            unit2.hexLocation.toward(180).type = CBHex.HEXSIDE_TYPES.DIFFICULT;
+            unit2.hexLocation.type = WHex.HEX_TYPES.OUTDOOR_DIFFICULT;
+            unit2.hexLocation.toward(180).type = WHex.HEXSIDE_TYPES.DIFFICULT;
             setWeaponBonuses(unitType1, 2, 0, 0, 1);
             setWeaponBonuses(unitType2, 2, 0, 2, 0);
             clickOnPiece(game, unit1);
@@ -1463,12 +1463,12 @@ describe("Interactive Combat", ()=> {
             var [widgetsLayer] = getLayers(game.board, "widgets", "actuators-0");
             unit1.move(map.getHex(5, 8));
             unit1.setTiredness(CBTiredness.EXHAUSTED);
-            unit1.hexLocation.type = CBHex.HEX_TYPES.OUTDOOR_ROUGH;
+            unit1.hexLocation.type = WHex.HEX_TYPES.OUTDOOR_ROUGH;
             unit1.hexLocation.height = -1;
             unit2.move(map.getHex(5, 6));
             unit2.angle = 90;
             unit2.rout();
-            unit2.hexLocation.type = CBHex.HEX_TYPES.OUTDOOR_ROUGH;
+            unit2.hexLocation.type = WHex.HEX_TYPES.OUTDOOR_ROUGH;
             clickOnPiece(game, unit1);
             clickOnFireAttackAction(game);
             loadAllImages();
@@ -1649,7 +1649,7 @@ describe("Interactive Combat", ()=> {
             formation2.angle = 330;
             let fromHex = map.getHex(5, 8);
             let toHex = fromHex.getNearHex(60);
-            formation2.move(new CBHexSideId(fromHex, toHex), 0);
+            formation2.move(new WHexSideId(fromHex, toHex), 0);
             unit1.move(map.getHex(5, 6));
             unit1.angle = 180;
             clickOnPiece(game, formation2);

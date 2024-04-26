@@ -12,7 +12,7 @@ import {
 } from "../vitamin/components.js";
 import {
     sendGet
-} from "../draw.js";
+} from "../board/draw.js";
 import {
     showMessage
 } from "../vitamin/vpage.js";

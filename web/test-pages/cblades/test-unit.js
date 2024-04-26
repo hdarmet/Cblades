@@ -18,16 +18,11 @@ import {
     WMap, WHexSideId
 } from "../../jslib/wargame/map.js";
 import {
-    WAction, WPieceImageArtifact, WPiece, WStacking
+    WAction, WPiece, WStacking
 } from "../../jslib/wargame/game.js";
 import {
-    WGame,
-    WHexCounter,
-    WLevelBuilder
+    WGame
 } from "../../jslib/wargame/playable.js";
-import {
-    CarriableMixin
-} from "../../jslib/wargame/wunit.js";
 import {
     CBUnitPlayer,
     CBTroop,
@@ -60,12 +55,14 @@ import {
     showTroop,
     zoomAndRotate0,
     zoomAndRotate150, zoomAndRotate30,
-    zoomAndRotate60,
     zoomAndRotate90
 } from "./interactive-tools.js";
 import {
     banner
 } from "./game-elements.js";
+import {
+    WSequence
+} from "../../jslib/wargame/sequences.js";
 
 describe("Unit", ()=> {
 
@@ -192,62 +189,6 @@ describe("Unit", ()=> {
         return {game, map, unit1, unit2, wing, player};
     }
 
-    class CBTestCarriable extends CarriableMixin(WHexCounter) {
-
-        constructor(unit, paths) {
-            super("units", unit.game, paths, new Dimension2D(142, 142));
-            Object.defineProperty(this.artifact, "slot", {
-                get: function () {
-                    return unit.slot;
-                }
-            });
-            Object.defineProperty(this.artifact, "layer", {
-                get: function () {
-                    return WLevelBuilder.ULAYERS.SPELLS;
-                }
-            });
-        }
-
-    }
-
-    class CBTestOptionArtifact extends OptionArtifactMixin(WPieceImageArtifact) {
-         constructor(...args) {
-             super(...args);
-         }
-
-         get unit() {
-             return this.piece.unit;
-         }
-    }
-
-    class CBTestOption extends OptionMixin(CarriableMixin(WHexCounter)) {
-
-        constructor(unit, paths) {
-            super("units", unit.game, paths, new Dimension2D(142, 142));
-            this._unit = unit;
-        }
-
-        createArtifact(levelName, images, location, dimension) {
-            return new CBTestOptionArtifact(this, levelName, images, location, dimension);
-        }
-
-        get unit() {
-            return this._unit;
-        }
-    }
-
-    function createOption(unit, path) {
-        var option = new CBTestOption(unit,[path]);
-        unit.addOption(option);
-        return option;
-    }
-
-    function createSpell(unit, path) {
-        var option = new CBTestCarriable(unit,[path]);
-        unit.addCarried(option);
-        return option;
-    }
-
     it("Checks unit general features", () => {
         given:
             var { unit, wing, game } = createTinyGame();
@@ -344,7 +285,7 @@ describe("Unit", ()=> {
             assert(characterType.getMaxFiguresCount()).equalsTo(1);
     });
 
-    it("Checks unit/wing/player structure", () => {
+    it("Checks unit and formation structure", () => {
         given:
             var { game, map } = prepareTinyGame();
         when:
@@ -360,8 +301,6 @@ describe("Unit", ()=> {
             formation.addToMap(new WHexSideId(map.getHex(5, 8), map.getHex(5, 9)));
             formation.angle = 90;
         then:
-            assert(unit.wing).equalsTo(wing);
-            assert(unit.player).equalsTo(player);
             assert(unit.maxStepCount).equalsTo(2);
             assert(formation.maxStepCount).equalsTo(4);
             assert(formation.minStepCount).equalsTo(3);
@@ -411,7 +350,6 @@ describe("Unit", ()=> {
 
     it("Checks unit naming by wings", () => {
         given:
-            //var game = new CBGame(1);
             var { game, wing, unit, map, unitType } = createTinyGame();
         then:
             assert(unit.name).equalsTo("banner-0");
@@ -488,6 +426,26 @@ describe("Unit", ()=> {
             assert(unit.type.getMoral(1)).equalsTo(7);
             assert(unit.moral).equalsTo(8);
     });
+
+    function createTinyCommandGame() {
+        var { game, map } = prepareTinyGame();
+        var player = new CBUnitPlayer("player1", "/players/player1.png");
+        game.addPlayer(player);
+        let wing = new CBWing(player, banner);
+        let unitType = new CBTestTroopType("unit", [
+            "./../images/units/misc/unit.png", "./../images/units/misc/unitb.png"
+        ]);
+        let unit = new CBTroop(game, unitType, wing);
+        unit.addToMap(map.getHex(5, 8));
+        let leaderType = new CBTestLeaderType("leader", [
+            "./../images/units/misc/leader.png", "./../images/units/misc/leaderb.png"
+        ]);
+        let leader = new CBCharacter(game, leaderType, wing);
+        leader.addToMap(map.getHex(5, 9));
+        game.start();
+        loadAllImages();
+        return {game, player, unit, leader, wing, map};
+    }
 
     it("Checks unit magic profile", () => {
         given:
@@ -803,6 +761,7 @@ describe("Unit", ()=> {
     it("Checks playing a unit", () => {
         given:
             var {game, unit} = createTinyGame();
+            WSequence.setCount(game, 0);
             var [markersLayer] = getLayers(game.board, "markers-0");
         when:
             unit.launchAction(new WAction(game, unit));
@@ -821,7 +780,7 @@ describe("Unit", ()=> {
 
     it("Checks giving an order to a unit", () => {
         given:
-            var {game, unit, map} = createTinyGame();
+            var {game, unit} = createTinyGame();
             var [markersLayer] = getLayers(game.board, "markers-0");
         when:
             unit.receivesOrder(true);
@@ -849,7 +808,8 @@ describe("Unit", ()=> {
 
     it("Checks that playing an order replace (hide) 'order given' marker", () => {
         given:
-            var {game, unit, map} = createTinyGame();
+            var {game, unit} = createTinyGame();
+            WSequence.setCount(game, 0);
             var [markersLayer] = getLayers(game.board, "markers-0");
             unit.receivesOrder(true);
             repaint(game);
@@ -866,13 +826,14 @@ describe("Unit", ()=> {
     it("Checks played marker appearance / disappearance when selection is changed or turn is changed", () => {
         given:
             var {game, player, unit1, unit2} = create2UnitsTinyGame();
+            WSequence.setCount(game, 0);
             var [markersLayer] = getLayers(game.board, "markers-0");
             player.canPlay = function() { return true; };
             player.launchPlayableAction = function(unit, point) {
                 unit.launchAction(new WAction(game, unit));
             }
         when:
-            player.changeSelection(unit1, dummyEvent);
+            game.changeSelection(unit1, dummyEvent);
             unit1.action.markAsStarted();
             clickOnPiece(game, unit2);
             loadAllImages(); // to load actiondone.png
@@ -1044,8 +1005,8 @@ describe("Unit", ()=> {
                         return unit;
                     }
                     return {
-                        fromHex:[_createUnit.call(this, game,2)],
-                        toHex:[_createUnit.call(this, game1)]
+                        fromHex:[_createUnit.call(this, game, 2)],
+                        toHex:[_createUnit.call(this, game, 1)]
                     };
                 }
             });
@@ -1080,6 +1041,7 @@ describe("Unit", ()=> {
             var [markersLayer] = getLayers(game.board, "markers-0");
         when:
             unit.setState({
+                steps: 2,
                 cohesion : CBCohesion.GOOD_ORDER,
                 tiredness : CBTiredness.TIRED,
                 munitions : CBMunitions.SCARCE,
@@ -1088,6 +1050,7 @@ describe("Unit", ()=> {
                 orderGiven : true,
                 played : false
             });
+            loadAllImages();
             repaint(game);
         then:
             assertClearDirectives(markersLayer);
@@ -1106,6 +1069,7 @@ describe("Unit", ()=> {
             assert(unit.isPlayed()).isFalse();
         when:
             unit.setState({
+                steps: 2,
                 cohesion : CBCohesion.DISRUPTED,
                 tiredness : CBTiredness.NONE,
                 munitions : CBMunitions.NONE,
@@ -1326,6 +1290,7 @@ describe("Unit", ()=> {
     it("Checks that when a unit retracts, it also hides markers", () => {
         given:
             var {game, unit1, unit2} = create2UnitsTinyGame();
+            WSequence.setCount(game, 0);
             unit2.move(unit1.hexLocation);
             repaint(game);
             var [markersLayer] = getLayers(game.board, "markers-1");
@@ -1352,51 +1317,6 @@ describe("Unit", ()=> {
             assert(getDirectives(markersLayer, 4)).arrayEqualsTo([
             ]);
     });
-
-    it("Checks that when a unit retracts, it also hides options", () => {
-        given:
-            var {game, unit} = createTinyGame();
-            repaint(game);
-            var [spellLayer, optionsLayer] = getLayers(game.board, "spells-0", "options-0");
-        when:
-            var spell = createSpell(unit, "./../images/units/misc/spell.png");
-            var option = createOption(unit, "./../images/units/misc/option.png");
-            repaint(game);
-        then:
-            assertClearDirectives(spellLayer);
-            assertClearDirectives(optionsLayer);
-            assertDirectives(spellLayer, showOption("misc/spell", zoomAndRotate0(416.6667, 351.8878)));
-            assertDirectives(optionsLayer, showOption("misc/option", zoomAndRotate0(406.8915, 347.0002)));
-            assertNoMoreDirectives(spellLayer, optionsLayer);
-        when:
-            option.retractAbove();
-            repaint(game);
-        then:
-            assert(getDirectives(spellLayer, 4)).arrayEqualsTo([
-            ]);
-            assert(getDirectives(optionsLayer, 4)).arrayEqualsTo([
-            ]);
-    });
-
-    function createTinyCommandGame() {
-        var { game, map } = prepareTinyGame();
-        var player = new CBUnitPlayer("player1", "/players/player1.png");
-        game.addPlayer(player);
-        let wing = new CBWing(player, banner);
-        let unitType = new CBTestTroopType("unit", [
-            "./../images/units/misc/unit.png", "./../images/units/misc/unitb.png"
-        ]);
-        let unit = new CBTroop(game, unitType, wing);
-        unit.addToMap(map.getHex(5, 8));
-        let leaderType = new CBTestLeaderType("leader", [
-            "./../images/units/misc/leader.png", "./../images/units/misc/leaderb.png"
-        ]);
-        let leader = new CBCharacter(game, leaderType, wing);
-        leader.addToMap(map.getHex(5, 9));
-        game.start();
-        loadAllImages();
-        return {game, player, unit, leader, wing, map};
-    }
 
     it("Checks leader specificities", () => {
         given:
@@ -1469,9 +1389,9 @@ describe("Unit", ()=> {
             ]);
     });
 
-    it("Checks wing management", () => {
+    it("Checks wing command", () => {
         given:
-            var {game, unit, leader, player, wing} = createTinyCommandGame();
+            var {leader, player, wing} = createTinyCommandGame();
             Memento.open();
         when:
             wing.setLeader(leader);
@@ -1533,8 +1453,8 @@ describe("Unit", ()=> {
     it("Checks wizardry", () => {
 
         class TestSpell extends WPiece {
-            constructor(wizard) {
-                super("units", ["./../images/magic/red/redspell.png"], new Dimension2D(142, 142));
+            constructor(game, wizard) {
+                super("units", game, ["./../images/magic/red/redspell.png"], new Dimension2D(142, 142));
                 this.wizard = wizard;
             }
             _rotate(angle) {}
@@ -1543,14 +1463,18 @@ describe("Unit", ()=> {
         }
 
         class TestSpellDefinition {
+
+            constructor(game) {
+                this.game = game;
+            }
             createSpellCounter(wizard) {
-                return new TestSpell(wizard);
+                return new TestSpell(this.game, wizard);
             }
         }
 
         given:
-            var {leader} = createTinyCommandGame();
-            var spellDefinition = new TestSpellDefinition();
+            var {game, leader} = createTinyCommandGame();
+            var spellDefinition = new TestSpellDefinition(game);
         when:
             leader.choseSpell(spellDefinition);
         then:
@@ -1581,7 +1505,7 @@ describe("Unit", ()=> {
 
     it("Checks unit cloning", () => {
         given:
-            var {game, unit, leader, player, wing} = createTinyCommandGame();
+            var {unit, leader} = createTinyCommandGame();
         when:
             unit.movementPoints = 3;
             unit.extendedMovementPoints = 5;
