@@ -94,9 +94,9 @@
     game.setArbitrator(arbitrator);
     game.setMenu();
     /*
-    new CBWeatherCounter().setOnGame(game);
-    new CBWindDirectionCounter().setOnGame(game);
-    new CBFogCounter().setOnGame(game);
+    new CBWeatherCounter(game).setOnGame();
+    new CBWindDirectionCounter(game).setOnGame();
+    new CBFogCounter(game).setOnGame();
 */
     let player1 = new CBInteractivePlayer("player1", "./../images/units/players/orc-1.png");
     game.addPlayer(player1);

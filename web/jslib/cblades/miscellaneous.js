@@ -199,10 +199,6 @@ export class CBFireCounter extends CBBurningCounter {
         this.artifact.changeImage(1);
     }
 
-    afterActivation(action) {
-        return super.afterActivation(action);
-    }
-
     isFire() {
         return this.artifact.imageIndex>0;
     }
@@ -302,8 +298,8 @@ export class CBObstacleCounter extends RetractablePieceMixin(WHexCounter) {
 
 export class CBStakesCounter extends CBObstacleCounter {
 
-    constructor() {
-        super("ground", ["./../images/counters/stakes.png"], CBStakesCounter.DIMENSION);
+    constructor(game) {
+        super("ground", game, ["./../images/counters/stakes.png"], CBStakesCounter.DIMENSION);
     }
 
     createArtifact(levelName, images, position, dimension) {
@@ -399,8 +395,8 @@ export class CBDisplayableCounter extends PlayableMixin(DisplayLocatableMixin(WP
 
 export class CBWeatherCounter extends CBDisplayableCounter {
 
-    constructor() {
-        super([
+    constructor(game) {
+        super(game, [
             "./../images/counters/meteo1.png",
             "./../images/counters/meteo2.png",
             "./../images/counters/meteo3.png",
@@ -410,9 +406,9 @@ export class CBWeatherCounter extends CBDisplayableCounter {
         ]);
     }
 
-    setOnGame(game) {
-        super.setOnGame(game);
-        this.artifact.setImage(game.arbitrator.getWeather(game));
+    setOnGame() {
+        super.setOnGame();
+        this.artifact.setImage(this.game.arbitrator.getWeather(this.game));
     }
 
     _processGlobalEvent(source, event, value) {
@@ -429,8 +425,8 @@ export class CBWeatherCounter extends CBDisplayableCounter {
 
 export class CBFogCounter extends CBDisplayableCounter {
 
-    constructor() {
-        super( [
+    constructor(game) {
+        super( game, [
             "./../images/counters/fog0.png",
             "./../images/counters/fog1.png",
             "./../images/counters/fog2.png",
@@ -438,9 +434,9 @@ export class CBFogCounter extends CBDisplayableCounter {
         ]);
     }
 
-    setOnGame(game) {
-        super.setOnGame(game);
-        this.artifact.setImage(game.arbitrator.getFog(game));
+    setOnGame() {
+        super.setOnGame();
+        this.artifact.setImage(this.game.arbitrator.getFog(this.game));
     }
 
     _processGlobalEvent(source, event, value) {
@@ -457,15 +453,15 @@ export class CBFogCounter extends CBDisplayableCounter {
 
 export class CBWindDirectionCounter extends CBDisplayableCounter {
 
-    constructor() {
-        super( [
+    constructor(game) {
+        super( game, [
             "./../images/counters/wind-direction.png"
         ]);
     }
 
-    setOnGame(game) {
-        super.setOnGame(game);
-        this.artifact.turn(game.arbitrator.getWindDirection(game));
+    setOnGame() {
+        super.setOnGame();
+        this.artifact.turn(this.game.arbitrator.getWindDirection(this.game));
     }
 
     _processGlobalEvent(source, event, value) {
@@ -483,7 +479,7 @@ export class CBWindDirectionCounter extends CBDisplayableCounter {
 export class CBWingDisplayablePlayable extends CBDisplayableCounter {
 
     constructor(wing, paths) {
-        super( paths);
+        super(wing.player.game, paths);
         this._wing = wing;
         this.artifact.changeImage(this.getValue(this._wing));
         this._bannerArtifact = new DImageArtifact("counters",

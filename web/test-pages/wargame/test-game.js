@@ -341,9 +341,9 @@ function createDisplayTinyGame() {
     let player = new CBTestPlayer("player1");
     game.addPlayer(player);
     let display0 = new CBTestDisplayPlayable("counters", game,["./../images/units/misc/display0.png"]);
-    display0.setOnGame(game);
+    display0.setOnGame();
     let display1 = new CBTestDisplayPlayable("counters", game,["./../images/units/misc/display1.png"]);
-    display1.setOnGame(game);
+    display1.setOnGame();
     game.start();
     loadAllImages();
     return {game, map, display0, display1, player};

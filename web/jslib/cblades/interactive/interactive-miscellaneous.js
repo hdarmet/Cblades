@@ -424,7 +424,7 @@ export class InteractiveSetStakesAction extends WAction {
     _processSetStakesResult(result) {
         let token = undefined;
         if (result.success) {
-            token = new CBStakesCounter();
+            token = new CBStakesCounter(this.game);
             token.angle = this.unit.angle;
             token.appendToMap(this.unit.hexLocation);
         }

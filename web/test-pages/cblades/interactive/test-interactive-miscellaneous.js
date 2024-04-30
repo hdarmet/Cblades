@@ -545,7 +545,7 @@ describe("Interactive Miscellaneous", ()=> {
         given:
             var {game, map, unit1} = create2UnitsTinyGame();
             unit1.move(map.getHex(8, 8), 0);
-            var fireStart = new CBStakesCounter();
+            var fireStart = new CBStakesCounter(game);
             fireStart.addToMap(unit1.hexLocation);
             var [widgetsLayer, itemsLayer] = getLayers(game.board,"widgets", "widget-items");
             clickOnPiece(game, unit1);
@@ -575,7 +575,7 @@ describe("Interactive Miscellaneous", ()=> {
         given:
             var {game, map, unit1} = create2UnitsTinyGame();
             unit1.move(map.getHex(8, 8), 0);
-            var fireStart = new CBStakesCounter();
+            var fireStart = new CBStakesCounter(game);
             fireStart.addToMap(unit1.hexLocation);
             var [widgetsLayer, itemsLayer, commandsLayer] = getLayers(game.board,"widgets", "widget-items", "widget-commands");
             clickOnPiece(game, unit1);
@@ -609,7 +609,7 @@ describe("Interactive Miscellaneous", ()=> {
         given:
             var {game, map, unit1} = create2UnitsTinyGame();
             unit1.move(map.getHex(8, 8), 0);
-            var fireStart = new CBStakesCounter();
+            var fireStart = new CBStakesCounter(game);
             fireStart.addToMap(unit1.hexLocation);
             var [widgetsLayer, itemsLayer, commandsLayer] = getLayers(game.board,"widgets", "widget-items", "widget-commands");
             clickOnPiece(game, unit1);
@@ -643,8 +643,8 @@ describe("Interactive Miscellaneous", ()=> {
         given:
             var {game} = createTinyGame();
             var [widgetsLayer, itemsLayer] = getLayers(game.board,"widgets", "widget-items");
-            var counter = new CBWeatherCounter();
-            counter.setOnGame(game);
+            var counter = new CBWeatherCounter(game);
+            counter.setOnGame();
             repaint(game);
         when:
             resetDirectives(widgetsLayer, itemsLayer);
@@ -672,8 +672,8 @@ describe("Interactive Miscellaneous", ()=> {
         given:
             var {game} = createTinyGame();
             var [widgetsLayer, itemsLayer, commandsLayer] = getLayers(game.board,"widgets", "widget-items", "widget-commands");
-            var counter = new CBWeatherCounter();
-            counter.setOnGame(game);
+            var counter = new CBWeatherCounter(game);
+            counter.setOnGame();
             resetDirectives(widgetsLayer, itemsLayer);
             clickOnPiece(game, counter);
             loadAllImages();
@@ -706,8 +706,8 @@ describe("Interactive Miscellaneous", ()=> {
         given:
             var {game} = createTinyGame();
             var [widgetsLayer, itemsLayer, commandsLayer] = getLayers(game.board,"widgets", "widget-items", "widget-commands");
-            var counter = new CBWeatherCounter();
-            counter.setOnGame(game);
+            var counter = new CBWeatherCounter(game);
+            counter.setOnGame();
             resetDirectives(widgetsLayer, itemsLayer);
             clickOnPiece(game, counter);
             loadAllImages();
@@ -740,8 +740,8 @@ describe("Interactive Miscellaneous", ()=> {
         given:
             var {game} = createTinyGame();
             var [widgetsLayer, itemsLayer, commandsLayer] = getLayers(game.board,"widgets", "widget-items", "widget-commands");
-            var counter = new CBWeatherCounter();
-            counter.setOnGame(game);
+            var counter = new CBWeatherCounter(game);
+            counter.setOnGame();
             resetDirectives(widgetsLayer, itemsLayer);
             clickOnPiece(game, counter);
             loadAllImages();
@@ -775,7 +775,7 @@ describe("Interactive Miscellaneous", ()=> {
             var {game} = createTinyGame();
             var [widgetsLayer, itemsLayer] = getLayers(game.board,"widgets", "widget-items");
             var counter = new CBFogCounter();
-            counter.setOnGame(game);
+            counter.setOnGame();
             repaint(game);
         when:
             resetDirectives(widgetsLayer, itemsLayer);
@@ -805,7 +805,7 @@ describe("Interactive Miscellaneous", ()=> {
             var [widgetsLayer, itemsLayer, commandsLayer] = getLayers(game.board,"widgets", "widget-items", "widget-commands");
             game.fog = CBFog.DENSE_MIST;
             var counter = new CBFogCounter();
-            counter.setOnGame(game);
+            counter.setOnGame();
             resetDirectives(widgetsLayer, itemsLayer);
             clickOnPiece(game, counter);
             loadAllImages();
@@ -840,7 +840,7 @@ describe("Interactive Miscellaneous", ()=> {
             var [widgetsLayer, itemsLayer, commandsLayer] = getLayers(game.board,"widgets", "widget-items", "widget-commands");
             game.fog = CBFog.DENSE_MIST;
             var counter = new CBFogCounter();
-            counter.setOnGame(game);
+            counter.setOnGame();
             resetDirectives(widgetsLayer, itemsLayer);
             clickOnPiece(game, counter);
             loadAllImages();
@@ -875,7 +875,7 @@ describe("Interactive Miscellaneous", ()=> {
             var [widgetsLayer, itemsLayer, commandsLayer] = getLayers(game.board,"widgets", "widget-items", "widget-commands");
             game.fog = CBFog.DENSE_MIST;
             var counter = new CBFogCounter();
-            counter.setOnGame(game);
+            counter.setOnGame();
             resetDirectives(widgetsLayer, itemsLayer);
             clickOnPiece(game, counter);
             loadAllImages();
@@ -909,7 +909,7 @@ describe("Interactive Miscellaneous", ()=> {
             var {game} = createTinyGame();
             var [widgetsLayer, itemsLayer] = getLayers(game.board,"widgets", "widget-items");
             var counter = new CBWindDirectionCounter();
-            counter.setOnGame(game);
+            counter.setOnGame();
             repaint(game);
         when:
             resetDirectives(widgetsLayer, itemsLayer);
@@ -937,7 +937,7 @@ describe("Interactive Miscellaneous", ()=> {
             var {game} = createTinyGame();
             var [widgetsLayer, itemsLayer, commandsLayer] = getLayers(game.board,"widgets", "widget-items", "widget-commands");
             var counter = new CBWindDirectionCounter();
-            counter.setOnGame(game);
+            counter.setOnGame();
             resetDirectives(widgetsLayer, itemsLayer);
             clickOnPiece(game, counter);
             loadAllImages();
@@ -975,7 +975,7 @@ describe("Interactive Miscellaneous", ()=> {
             var {game} = createTinyGame();
             var [widgetsLayer, itemsLayer, commandsLayer] = getLayers(game.board,"widgets", "widget-items", "widget-commands");
             var counter = new CBWindDirectionCounter();
-            counter.setOnGame(game);
+            counter.setOnGame();
             resetDirectives(widgetsLayer, itemsLayer);
             clickOnPiece(game, counter);
             loadAllImages();
@@ -1013,7 +1013,7 @@ describe("Interactive Miscellaneous", ()=> {
             var {game} = createTinyGame();
             var [widgetsLayer, itemsLayer, commandsLayer] = getLayers(game.board,"widgets", "widget-items", "widget-commands");
             var counter = new CBWindDirectionCounter();
-            counter.setOnGame(game);
+            counter.setOnGame();
             resetDirectives(widgetsLayer, itemsLayer);
             clickOnPiece(game, counter);
             loadAllImages();
@@ -1052,7 +1052,7 @@ describe("Interactive Miscellaneous", ()=> {
             var [widgetsLayer, itemsLayer] = getLayers(game.board,"widgets", "widget-items");
             unit.wing.setTiredness(10);
             var counter = new CBWingTirednessCounter(unit.wing);
-            counter.setOnGame(game);
+            counter.setOnGame();
             repaint(game);
         when:
             resetDirectives(widgetsLayer, itemsLayer);
@@ -1081,7 +1081,7 @@ describe("Interactive Miscellaneous", ()=> {
             var [widgetsLayer, itemsLayer, commandsLayer] = getLayers(game.board,"widgets", "widget-items", "widget-commands");
             unit.wing.setTiredness(10);
             var counter = new CBWingTirednessCounter(unit.wing);
-            counter.setOnGame(game);
+            counter.setOnGame();
             resetDirectives(widgetsLayer, itemsLayer);
             clickOnPiece(game, counter);
             loadAllImages();
@@ -1120,7 +1120,7 @@ describe("Interactive Miscellaneous", ()=> {
             var [widgetsLayer, itemsLayer, commandsLayer] = getLayers(game.board,"widgets", "widget-items", "widget-commands");
             unit.wing.setTiredness(10);
             var counter = new CBWingTirednessCounter(unit.wing);
-            counter.setOnGame(game);
+            counter.setOnGame();
             resetDirectives(widgetsLayer, itemsLayer);
             clickOnPiece(game, counter);
             loadAllImages();
@@ -1159,7 +1159,7 @@ describe("Interactive Miscellaneous", ()=> {
             var [widgetsLayer, itemsLayer] = getLayers(game.board,"widgets", "widget-items");
             unit.wing.setMoral(10);
             var counter = new CBWingMoralCounter(unit.wing);
-            counter.setOnGame(game);
+            counter.setOnGame();
             repaint(game);
         when:
             resetDirectives(widgetsLayer, itemsLayer);
@@ -1188,7 +1188,7 @@ describe("Interactive Miscellaneous", ()=> {
             var [widgetsLayer, itemsLayer, commandsLayer] = getLayers(game.board,"widgets", "widget-items", "widget-commands");
             unit.wing.setMoral(10);
             var counter = new CBWingMoralCounter(unit.wing);
-            counter.setOnGame(game);
+            counter.setOnGame();
             resetDirectives(widgetsLayer, itemsLayer);
             clickOnPiece(game, counter);
             loadAllImages();
@@ -1227,7 +1227,7 @@ describe("Interactive Miscellaneous", ()=> {
             var [widgetsLayer, itemsLayer, commandsLayer] = getLayers(game.board,"widgets", "widget-items", "widget-commands");
             unit.wing.setMoral(10);
             var counter = new CBWingMoralCounter(unit.wing);
-            counter.setOnGame(game);
+            counter.setOnGame();
             resetDirectives(widgetsLayer, itemsLayer);
             clickOnPiece(game, counter);
             loadAllImages();

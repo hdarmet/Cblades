@@ -1211,20 +1211,20 @@ export function DisplayLocatableMixin(clazz) {
 
     return class extends clazz {
 
-        setOnGame(game) {
-            game.counterDisplay.addCounter(this);
+        setOnGame() {
+            this.game.counterDisplay.addCounter(this);
         }
 
-        removeFromGame(game) {
-            game.counterDisplay.removeCounter(this);
+        removeFromGame() {
+            this.game.counterDisplay.removeCounter(this);
         }
 
-        show(game) {
-            game.counterDisplay.appendCounter(this);
+        show() {
+            this.game.counterDisplay.appendCounter(this);
         }
 
-        hide(game) {
-            game.counterDisplay.deleteCounter(this);
+        hide() {
+            this.game.counterDisplay.deleteCounter(this);
         }
 
     }
