@@ -25,6 +25,7 @@ import {
 } from "../../jslib/wargame/playable.js";
 import {
     CBUnitPlayer,
+    CBUnit,
     CBTroop,
     CBWing,
     CBCharacter,
@@ -41,13 +42,13 @@ import {
     CBMagicProfile,
     CBTroopType,
     CBCharacterType,
-    CBUnitType
+    CBUnitType, CBStateSequenceElement
 } from "../../jslib/cblades/unit.js";
 import {
-    Dimension2D, Point2D
+    Dimension2D
 } from "../../jslib/board/geometry.js";
 import {
-    clickOnPiece,
+    clickOnPiece, executeAllAnimations, executeAnimations,
     repaint,
     showActiveMarker, showCharacter,
     showCommandMarker, showFormation,
@@ -57,9 +58,6 @@ import {
     zoomAndRotate150, zoomAndRotate30,
     zoomAndRotate90
 } from "./interactive-tools.js";
-import {
-    banner
-} from "./game-elements.js";
 import {
     WSequence
 } from "../../jslib/wargame/sequences.js";
@@ -75,6 +73,12 @@ describe("Unit", ()=> {
 
     let dummyEvent = {offsetX:0, offsetY:0};
 
+    let banner = {
+        _oid: 1000,
+        _oversion: 2,
+        name: "banner",
+        path: "./../units/banner.png"
+    }
     function prepareTinyGame() {
         var game = new WGame(1);
         var map = new WMap([{path:"./../images/maps/map.png", col:0, row:0}]);
@@ -758,6 +762,13 @@ describe("Unit", ()=> {
             assert(unit.munitions).equalsTo(2);
     });
 
+    function checkSequenceElement(game, sequenceModel) {
+        var specs = {};
+        var context = new Map();
+        WSequence.getSequence(game).elements[0].toSpecs(specs, context);
+        assert(specs).objectEqualsTo(sequenceModel);
+    }
+
     it("Checks playing a unit", () => {
         given:
             var {game, unit} = createTinyGame();
@@ -768,6 +779,16 @@ describe("Unit", ()=> {
             unit.setPlayed();
             repaint(game);
         then:
+            checkSequenceElement(game, {
+                "version":0,
+                "type":"state","content":{
+                    "unit":"banner-0","steps":2,
+                    "cohesion":"GO","tiredness":"F","ammunition":"P","charging":"N",
+                    "engaging":false,"orderGiven":false,
+                    "movementPoints":2,"extendedMovementPoints":3,
+                    "played":true
+                }
+            });
             assertClearDirectives(markersLayer);
             assertDirectives(markersLayer, showMarker("actiondone", zoomAndRotate0(451.3685, 317.186)));
             assertNoMoreDirectives(markersLayer);
@@ -840,6 +861,16 @@ describe("Unit", ()=> {
             resetDirectives(markersLayer);
             repaint(game);
         then:
+            checkSequenceElement(game, {
+                "version":0,
+                "type":"state","content":{
+                    "unit":"banner-0","steps":2,
+                    "cohesion":"GO","tiredness":"F","ammunition":"P","charging":"N",
+                    "engaging":false,"orderGiven":false,
+                    "movementPoints":2,"extendedMovementPoints":3,
+                    "played":true
+                }
+            });
             assertClearDirectives(markersLayer);
             assertDirectives(markersLayer, showMarker("actiondone", zoomAndRotate0(451.3685, 317.186)));
             assertNoMoreDirectives(markersLayer);
@@ -1385,8 +1416,27 @@ describe("Unit", ()=> {
             unit.retractAbove();
             repaint(game);
         then:
-            assert(getDirectives(markersLayer, 4)).arrayEqualsTo([
-            ]);
+            assert(getDirectives(markersLayer, 4)).arrayEqualsTo([]);
+    });
+
+    it("Checks that when a character lose wing command, its command artifact disapear", () => {
+        given:
+            var {game, wing, unit, leader} = createTinyCommandGame();
+            wing.setLeader(leader);
+            repaint(game);
+            var [markersLayer] = getLayers(game.board, "markers-0");
+        when:
+            repaint(game);
+        then:
+            assertClearDirectives(markersLayer);
+            assertDirectives(markersLayer, showCommandMarker("defend", zoomAndRotate0(451.3685, 448.1122)));
+            assertNoMoreDirectives(markersLayer);
+        when:
+            wing.setLeader(null);
+            repaint(game);
+        then:
+            assertClearDirectives(markersLayer);
+            assertNoMoreDirectives(markersLayer);
     });
 
     it("Checks wing command", () => {
@@ -1425,6 +1475,10 @@ describe("Unit", ()=> {
         then:
             assert(wing.leader).equalsTo(leader);
             assert(wing.orderInstruction).equalsTo(CBOrderInstruction.ATTACK);
+        when:
+            wing.setLeader(null);
+        then:
+            assert(wing.leader).isNotDefined();
     });
 
     it("Checks leader command points management", () => {
@@ -1540,6 +1594,25 @@ describe("Unit", ()=> {
             assert(cloneLeader.munitions).equalsTo(CBMunitions.EXHAUSTED);
             assert(cloneLeader.steps).equalsTo(2);
             assert(cloneLeader.tiredness).equalsTo(CBTiredness.TIRED);
+    });
+
+    it("Checks miscellaneous unit feature", () => {
+        given:
+            var {unit} = createTinyGame();
+        when:
+            assert(unit.toReferenceSpecs(new Map())).objectEqualsTo({name:"banner-0"});
+    });
+
+    it("Checks miscellaneous Troop feature", () => {
+        given:
+            var {unit, map} = createTinyGame();
+        when:
+            assert(unit.allowedAttackCount).equalsTo(1);
+            assert(unit.getUnitCategoryCode()).equalsTo("T");
+            assert(unit.getAttackHex()).isNotDefined();
+            assert(unit.getAttackHex("F")).equalsTo(map.getHex(5, 8));
+            assert(unit.getAttackHexType(map.getHex(1, 1))).isNotDefined();
+            assert(unit.getAttackHexType(map.getHex(5, 8))).equalsTo("F");
     });
 
     function prepareTinyGameWithFormation() {
@@ -1694,6 +1767,237 @@ describe("Unit", ()=> {
             assert(cloneFormation).is(CBFormation);
             assert(cloneFormation.movementPoints).equalsTo(3);
             assert(cloneFormation.tiredness).equalsTo(CBTiredness.TIRED);
+    });
+
+    it("Checks miscellaneous formation feature", () => {
+        given:
+            var {formation, map} = prepareTinyGameWithFormation();
+        when:
+            assert(formation.allowedAttackCount).equalsTo(2);
+            assert(formation.getUnitCategoryCode()).equalsTo("F");
+            assert(formation.getAttackHex()).isNotDefined();
+            assert(formation.getAttackHex("T")).equalsTo(map.getHex(6, 7));
+            assert(formation.getAttackHex("F")).equalsTo(map.getHex(5, 8));
+            assert(formation.getAttackHexType(map.getHex(1, 1))).isNotDefined();
+            assert(formation.getAttackHexType(map.getHex(6, 7))).equalsTo("T");
+            assert(formation.getAttackHexType(map.getHex(5, 8))).equalsTo("F");
+    });
+
+    var specsModel = {
+        "id":201,"version":0,
+        "units":[
+            {
+                "id":101,"version":102,
+                "positionCol":5,"positionRow":9,
+                "name":"banner-0","category":"C","type":"leader",
+                "angle":0,"steps":2,
+                "tiredness":"F","ammunition":"P",
+                "cohesion":"GO","charging":false, "contact":false,
+                "orderGiven":false,"played":false
+            },{
+                "version":0,
+                "positionCol":5,"positionRow":8,
+                "name": "banner-1","category":"T","type":"unit1",
+                "angle":0,"steps":2,
+                "tiredness":"F","ammunition":"P",
+                "cohesion":"GO","charging":false,"contact":false,
+                "orderGiven":false,"played":false
+            }
+        ],
+        "leader":"banner-0",
+        "moral":10,"tiredness":9,
+        "banner":{"id":1000,"version":2,"name":"banner","path":"./../units/banner.png"},
+        "retreatZone":[{"col":0,"row":17},{"col":1,"row":17}],
+        "orderInstruction":"D"
+    }
+
+    it("Checks wing toSpecs", () => {
+        given:
+            var {game, map} = prepareTinyGame();
+            var player = new CBUnitPlayer("player1", "/players/player1.png");
+            game.addPlayer(player);
+            var wing = new CBWing(player, banner);
+            wing._oid = 201;
+            wing._oversoin = 202;
+            wing.setRetreatZone([map.getHex(0, 17), map.getHex(1, 17)]);
+            wing.setMoral(10);
+            wing.setTiredness(9);
+            let leaderType = new CBTestLeaderType("leader", [
+                "./../images/units/misc/leader.png", "./../images/units/misc/leaderb.png"
+            ]);
+            let leader = new CBCharacter(game, leaderType, wing);
+            leader._oid = 101;
+            leader._oversion = 102;
+            leader.addToMap(map.getHex(5, 9));
+            wing.setLeader(leader);
+            let unitType1 = new CBTestTroopType("unit1",
+                ["./../images/units/misc/unit1.png", "./../images/units/misc/unit1b.png"],
+                ["./../images/units/misc/formation1.png", "./../images/units/misc/formation1b.png"]);
+            var unit = new CBTroop(game, unitType1, wing);
+            unit.addToMap(map.getHex(5, 8));
+        when:
+            var context = new Map();
+            var specs = wing.toSpecs(context);
+        then:
+            assert(specs).objectEqualsTo(specsModel);
+    });
+
+    it("Checks wing toSpecs", () => {
+        given:
+            var {game, map} = prepareTinyGame();
+            var player = new CBUnitPlayer("player1", "/players/player1.png");
+            game.addPlayer(player);
+        when:
+            var context = new Map();
+            context.map = map;
+            context.game = game;
+            context.pieceMap = new Map();
+            var wing = player._fromWingSpec(specsModel, context);
+            //var wing = CBWing.fromSpecs(player, specsModel, context);
+            for (let unit of context.pieceMap.values()) {
+                game._registerPlayable(unit);
+            }
+        then:
+            assert(wing.toSpecs(new Map())).objectEqualsTo(specsModel);
+    });
+
+    it("Checks order instruction encoding/decoding", () => {
+        assert(CBUnit.getUnitTiredness("F")).equalsTo(CBTiredness.NONE);
+        assert(CBUnit.getUnitTiredness("T")).equalsTo(CBTiredness.TIRED);
+        assert(CBUnit.getUnitTiredness("E")).equalsTo(CBTiredness.EXHAUSTED);
+        assert(CBUnit.getUnitAmmunition("P")).equalsTo(CBMunitions.NONE);
+        assert(CBUnit.getUnitAmmunition("S")).equalsTo(CBMunitions.SCARCE);
+        assert(CBUnit.getUnitAmmunition("E")).equalsTo(CBMunitions.EXHAUSTED);
+        assert(CBUnit.getUnitCohesion("GO")).equalsTo(CBCohesion.GOOD_ORDER);
+        assert(CBUnit.getUnitCohesion("D")).equalsTo(CBCohesion.DISRUPTED);
+        assert(CBUnit.getUnitCohesion("R")).equalsTo(CBCohesion.ROUTED);
+    });
+
+    it("Checks order instruction encoding/decoding", () => {
+        given:
+            var {game} = prepareTinyGame();
+            var player = new CBUnitPlayer("player1", "/players/player1.png");
+            game.addPlayer(player);
+        when:
+            var wing = new CBWing(player, banner);
+            wing.setOrderInstruction(CBOrderInstruction.ATTACK);
+        then:
+            assert(wing.getOrderInstructionCode()).equalsTo("A");
+        when:
+            wing.setOrderInstruction(CBOrderInstruction.DEFEND);
+        then:
+            assert(wing.getOrderInstructionCode()).equalsTo("D");
+        when:
+            wing.setOrderInstruction(CBOrderInstruction.REGROUP);
+        then:
+            assert(wing.getOrderInstructionCode()).equalsTo("G");
+        when:
+            wing.setOrderInstruction(CBOrderInstruction.RETREAT);
+        then:
+            assert(wing.getOrderInstructionCode()).equalsTo("R");
+            assert(CBWing.getOrderInstruction("A")).equalsTo(CBOrderInstruction.ATTACK);
+            assert(CBWing.getOrderInstruction("D")).equalsTo(CBOrderInstruction.DEFEND);
+            assert(CBWing.getOrderInstruction("G")).equalsTo(CBOrderInstruction.REGROUP);
+            assert(CBWing.getOrderInstruction("R")).equalsTo(CBOrderInstruction.RETREAT);
+    });
+
+    function verifySequenceElement(sequenceElement, sequenceModel) {
+        var specs = {};
+        var context = new Map();
+        sequenceElement.toSpecs(specs, context);
+        assert(specs).objectEqualsTo(sequenceModel);
+    }
+
+    it("Checks State Sequence Element features", () => {
+        given:
+            var {game, unit} = createTinyGame();
+            unit.launchAction(new WAction(game, unit));
+            var sequenceModel = {
+                "version":0,
+                "type":"state",
+                "content":{
+                    "unit":"banner-0",
+                    "steps":2,"cohesion":"GO","tiredness":"F","ammunition":"P","charging":"N",
+                    "engaging":false,"orderGiven":false,
+                    "movementPoints":2,"extendedMovementPoints":3,
+                    "actionType":"WAction",
+                    "played":false
+                }
+            };
+        when:
+            var sequenceElement = new CBStateSequenceElement({game, unit});
+        then:
+            verifySequenceElement(sequenceElement, sequenceModel);
+            assert(sequenceElement.toString()).equalsTo(
+                "{ Type: state, Unit: banner-0, steps: 2, Cohesion: 0, Tiredness: 0, Munitions: 0, Charging: 0, " +
+                "Engaging: false, OrderGiven: false, MovementPoints: 2, ExtendedMovementPoints: 3, " +
+                "ActionType: WAction, Played: false }");
+        when:
+            sequenceElement = new CBStateSequenceElement({game});
+            var context = new Map();
+            context.game = game;
+            sequenceElement.fromSpecs(sequenceModel, context);
+            verifySequenceElement(sequenceElement, sequenceModel);
+            assert(sequenceElement.delay).equalsTo(0);
+            assert(sequenceElement.getTiredness("F")).equalsTo(CBTiredness.NONE);
+            assert(sequenceElement.getTiredness("T")).equalsTo(CBTiredness.TIRED);
+            assert(sequenceElement.getTiredness("E")).equalsTo(CBTiredness.EXHAUSTED);
+            assert(sequenceElement.getMunitions("P")).equalsTo(CBMunitions.NONE);
+            assert(sequenceElement.getMunitions("S")).equalsTo(CBMunitions.SCARCE);
+            assert(sequenceElement.getMunitions("E")).equalsTo(CBMunitions.EXHAUSTED);
+            assert(sequenceElement.getCohesion("GO")).equalsTo(CBCohesion.GOOD_ORDER);
+            assert(sequenceElement.getCohesion("D")).equalsTo(CBCohesion.DISRUPTED);
+            assert(sequenceElement.getCohesion("R")).equalsTo(CBCohesion.ROUTED);
+            assert(sequenceElement.getCohesion("X")).equalsTo(CBCohesion.DESTROYED);
+            assert(sequenceElement.getCharging("BC")).equalsTo(CBCharge.BEGIN_CHARGE);
+            assert(sequenceElement.getCharging("CC")).equalsTo(CBCharge.CAN_CHARGE);
+            assert(sequenceElement.getCharging("C")).equalsTo(CBCharge.CHARGING);
+            assert(sequenceElement.getCharging("N")).equalsTo(CBCharge.NONE);
+    });
+
+    it("Checks State Sequence Element animation", () => {
+        given:
+            var {game, unit} = createTinyGame();
+            var sequenceElement = new CBStateSequenceElement({game});
+            var context = new Map();
+            context.game = game;
+            var sequenceModel = {
+                "version":0,
+                "type":"state",
+                "content":{
+                    "unit":"banner-0",
+                    "steps":1,"cohesion":"D","tiredness":"T","ammunition":"S","charging":"BC",
+                    "engaging":true,"orderGiven":true,
+                    "movementPoints":1,"extendedMovementPoints":2,
+                    "played":true
+                }
+            };
+            sequenceElement.fromSpecs(sequenceModel, context);
+        when:
+            sequenceElement.apply(1);
+            executeAnimations(1);
+        then:
+            assert(unit.toSpecs(context)).objectEqualsTo({
+                "version":0,
+                "positionCol":5,"positionRow":8,
+                "name":"banner-0","category":"T",
+                "type":"unit","angle":0,"steps":2,
+                "tiredness":"F","ammunition":"P","cohesion":"GO",
+                "charging":false,"contact":false,
+                "orderGiven":false,"played":false
+            });
+        when:
+            executeAllAnimations();
+        then:
+            assert(unit.toSpecs(context)).objectEqualsTo({
+                "version":0,
+                "positionCol":5,"positionRow":8,
+                "name":"banner-0","category":"T",
+                "type":"unit","angle":0,"steps":1,
+                "tiredness":"T","ammunition":"S","cohesion":"D",
+                "charging":false,"contact":true,
+                "orderGiven":true,"played":true
+            });
     });
 
 });

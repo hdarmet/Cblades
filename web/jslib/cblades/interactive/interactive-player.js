@@ -54,10 +54,9 @@ export class CBInteractivePlayer extends CBUnitPlayer {
     }
 
     _doDisruptChecking(unit, processing, cancellable) {
-        if (!unit.attrs.routChecked && this.game.arbitrator.doesANonRoutedUnitHaveRoutedNeighbors(unit)) {
+        if (this.game.arbitrator.doesANonRoutedUnitHaveRoutedNeighbors(unit)) {
             new CBLoseCohesionChecking(this.game, unit).play(
             () => {
-                unit.attrs.routChecked = true;
                 this._selectAndFocusPlayable(unit);
             },
             processing,
@@ -99,7 +98,7 @@ export class CBInteractivePlayer extends CBUnitPlayer {
             let neighbor = neighbors.pop();
             new CBLoseCohesionChecking(this.game, neighbor).play(
                 () => {
-                    neighbor.attrs.routChecked = true;
+                    // rout checking ?
                 },
                 ()=>this._checkIfANonRoutedNeighborLoseCohesion(unit, neighbors, processing, false),
                 CBNeighborRoutCheckingSequenceElement,
@@ -111,12 +110,10 @@ export class CBInteractivePlayer extends CBUnitPlayer {
     }
 
     _checkIfAFirstNonRoutedNeighborLoseCohesion(unit, neighbors, processing, cancellable) {
-        neighbors = neighbors.filter(neighbor=>!neighbor.attrs.routChecked);
-        if (!unit.attrs.neighborsCohesionLoss && neighbors.length) {
+        if (!neighbors.length) {
             let neighbor = neighbors.pop();
             new CBLoseCohesionChecking(this.game, neighbor).play(
             () => {
-                neighbor.attrs.routChecked = true;
                 if (!unit.attrs.neighborsRootChecked) {
                     unit.attrs.neighborsRootChecked = true;
                     WSequence.appendElement(this.game, new CBRootNeighborsCohesionSequenceElement({
@@ -142,10 +139,9 @@ export class CBInteractivePlayer extends CBUnitPlayer {
     }
 
     _doEngagementChecking(unit, processing) {
-        if (!unit.attrs.defenderEngagementChecking && this.game.arbitrator.isUnitEngaged(unit, true)) {
+        if (this.game.arbitrator.isUnitEngaged(unit, true)) {
             new CBDefenderEngagementChecking(this.game, unit).play(() => {
                 unit.setEngaging(false);
-                unit.attrs.defenderEngagementChecking = true;
                 let hexLocation = unit.hexLocation;
                 if (unit.isOnHex()) {
                     this._selectAndFocusPlayable(unit);

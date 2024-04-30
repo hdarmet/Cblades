@@ -113,7 +113,6 @@ public class SequenceController implements InjectorSunbeam, CollectionSunbeam, D
 			.check("charging", Charging.byLabels().keySet())
 			.checkBoolean("engaging")
 			.checkBoolean("orderGiven")
-			.checkBoolean("disruptChecked")
 			.checkRequired("movementPoints").checkDouble("movementPoints")
 			.checkMin("movementPoints", 0).checkMax("movementPoints", 6)
 			.checkRequired("extendedMovementPoints").checkDouble("extendedMovementPoints")

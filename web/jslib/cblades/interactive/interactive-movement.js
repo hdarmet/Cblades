@@ -781,8 +781,7 @@ export class InteractiveMovementAction extends InteractiveAbstractMovementAction
     }
 
     _checkAttackerEngagement(engaging, action) {
-        if (!this.unit.attackerEngagementChecking && engaging && this.game.arbitrator.isUnitEngaged(this.unit, false)) {
-            this.unit.attackerEngagementChecking = true;
+        if (!engaging && this.game.arbitrator.isUnitEngaged(this.unit, false)) {
             new CBAttackerEngagementChecking(this.game, this.unit).play(() => {
                 super.finalize(action);
                 this.game.validate();

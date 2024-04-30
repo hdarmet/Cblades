@@ -549,10 +549,12 @@ export class CBWing extends WWing {
             }
             wingSpecs.retreatZone.push(retreatHexSpecs);
         }
+        return wingSpecs;
     }
 
     fromSpecs(specs, context) {
-        super.fromSpecs(specs, context);
+        this._oid = specs.id;
+        this._oversion = specs.version;
         this.setMoral(specs.moral);
         this.setTiredness(specs.tiredness);
         let retreatZone = [];
@@ -563,7 +565,8 @@ export class CBWing extends WWing {
         this.setRetreatZone(retreatZone);
         let leader = null;
         for (let unitSpecs of specs.units) {
-            let unit =  context.pieceMap.get(unitSpecs.name);
+            let unit = CBUnit.fromSpecs(this, unitSpecs, context);
+            context.pieceMap.set(unit.name, unit);
             if (unit.name === specs.leader) {
                 leader = unit;
             }
@@ -613,7 +616,7 @@ export class CBUnit extends WUnit {
     }
 
     getAttackHex(type) {
-        return type ? null : this._hexLocation;
+        return !type ? null : type==="F" ? this.hexLocation : null;
     }
 
     getAttackHexType(hex) {
@@ -658,14 +661,7 @@ export class CBUnit extends WUnit {
             engaging: this._engaging,
             charging: this._charging,
             engagingArtifact: this._engagingArtifact,
-            orderGiven: this._orderGiven,
-            disruptChecked: this._disruptChecked,
-            routChecked: this._routChecked,
-            neighborsCohesionLoss: this._neighborsCohesionLoss,
-            defenderEngagementChecking: this._defenderEngagementChecking,
-            attackerEngagementChecking: this._attackerEngagementChecking,
-            firstAttack: this._firstAttack,
-            secondAttack: this._secondAttack
+            orderGiven: this._orderGiven
         };
     }
 
@@ -683,13 +679,6 @@ export class CBUnit extends WUnit {
         this._charging = memento.charging;
         this._engagingArtifact = memento.engagingArtifact;
         this._orderGiven = memento.orderGiven;
-        this._disruptChecked = memento.disruptChecked;
-        this._routChecked = memento.routChecked;
-        this._neighborsCohesionLoss = memento.neighborsCohesionLoss;
-        this._defenderEngagementChecking = memento.defenderEngagementChecking;
-        this._attackerEngagementChecking = memento.attackerEngagementChecking;
-        this._firstAttack = memento.firstAttack;
-        this._secondAttack = memento.secondAttack;
     }
 
     setState(state) {
@@ -743,63 +732,6 @@ export class CBUnit extends WUnit {
 
     set extendedMovementPoints(extendedMovementPoints) {
         this._extendedMovementPoints = extendedMovementPoints;
-    }
-
-    get disruptChecked() {
-        return this._disruptChecked;
-    }
-
-    set disruptChecked(disruptChecked) {
-        console.assert(disruptChecked!==undefined);
-        this._disruptChecked = disruptChecked;
-    }
-
-    get routChecked() {
-        return this._routChecked;
-    }
-    set routChecked(routChecked) {
-        console.assert(routChecked!==undefined);
-        this._routChecked = routChecked;
-    }
-
-    get neighborsCohesionLoss() {
-        return this._neighborsCohesionLoss;
-    }
-    set neighborsCohesionLoss(neighborsCohesionLoss) {
-        console.assert(neighborsCohesionLoss!==undefined);
-        this._neighborsCohesionLoss = neighborsCohesionLoss;
-    }
-
-    get defenderEngagementChecking() {
-        return this._defenderEngagementChecking;
-    }
-    set defenderEngagementChecking(defenderEngagementChecking) {
-        console.assert(defenderEngagementChecking!==undefined);
-        this._defenderEngagementChecking = defenderEngagementChecking;
-    }
-
-    get attackerEngagementChecking() {
-        return this._attackerEngagementChecking;
-    }
-    set attackerEngagementChecking(attackerEngagementChecking) {
-        console.assert(attackerEngagementChecking!==undefined);
-        this._attackerEngagementChecking = attackerEngagementChecking;
-    }
-
-    get firstAttack() {
-        return this._firstAttack;
-    }
-    set firstAttack(firstAttack) {
-        console.assert(firstAttack!==undefined);
-        this._firstAttack = firstAttack;
-    }
-
-    get secondAttack() {
-        return this._secondAttack;
-    }
-    set secondAttack(secondAttack) {
-        console.assert(secondAttack!==undefined);
-        this._secondAttack = secondAttack;
     }
 
     receivesOrder(order) {
@@ -1104,6 +1036,7 @@ export class CBUnit extends WUnit {
 
     static DIMENSION = new Dimension2D(142, 142);
 
+    /*
     setAction(actionSpec) {
         if (actionSpec.actionType) {
             let action = WAction.createAction(actionSpec.actionType, this.game, this, actionSpec.actionMode);
@@ -1119,6 +1052,7 @@ export class CBUnit extends WUnit {
             this._game.focusedPlayable = this;
         }
     }
+     */
 
     _updateTirednessArtifact(setMarkerArtifact, removeMarkerArtifact) {
         this._tirednessArtifact && removeMarkerArtifact.call(this, this._tirednessArtifact);
@@ -1202,10 +1136,16 @@ export class CBUnit extends WUnit {
 
     toReferenceSpecs(context) {
         return {
-            id: this._oid,
-            version: this._oversion || 0,
             name:this.name
         }
+    }
+
+    static fromSpecs(wing, unitSpec, context) {
+        let unitType = CBUnitType.getType(unitSpec.type);
+        let unit = unitType.createUnit(context.game, wing, unitSpec.steps);
+
+        unit.fromSpecs(unitSpec, context);
+        return unit;
     }
 
     toSpecs(context) {
@@ -1271,13 +1211,6 @@ export class CBUnit extends WUnit {
     }
 }
 
-WUnit.fromSpecs = function(wing, unitSpec, context) {
-    let unitType = CBUnitType.getType(unitSpec.type);
-    let unit = unitType.createUnit(context.game, wing, unitSpec.steps);
-    unit.fromSpecs(unitSpec, context);
-    return unit;
-}
-
 export class CBTroop extends CBUnit {
 
     constructor(game, type, wing) {
@@ -1301,6 +1234,7 @@ export class CBTroop extends CBUnit {
     getUnitCategoryCode(unit) {
         return "T";
     }
+
 }
 
 export class CBFormation extends TwoHexesUnit(CBUnit) {
@@ -1337,7 +1271,7 @@ export class CBFormation extends TwoHexesUnit(CBUnit) {
     }
 
     getAttackHex(type) {
-        return type ? null : type==="T" ? this.hexLocation.fromHex : this.hexLocation.toHex;
+        return !type ? null : type==="F" ? this.hexLocation.fromHex : this.hexLocation.toHex;
     }
 
     getAttackHexType(hex) {
@@ -1540,33 +1474,17 @@ export class CBStateSequenceElement extends WSequenceElement {
         this.played = unit.isPlayed();
     }
 
+    /*
     setState(state) {
         Object.assign(state, this);
         return this;
     }
-
-    equalsTo(element) {
-        if (!super.equalsTo(element)) return false;
-        if (this.steps !== element.steps) return false;
-        if (this.unit !== element.unit) return false;
-        if (this.cohesion !== element.cohesion) return false;
-        if (this.tiredness !== element.tiredness) return false;
-        if (this.munitions !== element.munitions) return false;
-        if (this.charging !== element.charging) return false;
-        if (this.engaging !== element.engaging) return false;
-        if (this.orderGiven !== element.orderGiven) return false;
-        if (this.movementPoints !== element.movementPoints) return false;
-        if (this.extendedMovementPoints !== element.extendedMovementPoints) return false;
-        if (this.actionType !== element.actionType) return false;
-        if (this.actionMode !== element.actionMode) return false;
-        if (this.played !== element.played) return false;
-        return true;
-    }
+     */
 
     _toString() {
         let result = super._toString();
         if (this.unit !== undefined) result+=", Unit: "+this.unit.name;
-        if (this.steps !== undefined) result+=", Unit: "+this.unit.steps;
+        if (this.steps !== undefined) result+=", steps: "+this.unit.steps;
         if (this.cohesion !== undefined) result+=", Cohesion: "+this.cohesion;
         if (this.tiredness !== undefined) result+=", Tiredness: "+this.tiredness;
         if (this.munitions !== undefined) result+=", Munitions: "+this.munitions;
@@ -1673,9 +1591,6 @@ export class CBStateSequenceElement extends WSequenceElement {
             case "C": return CBCharge.CHARGING;
             case "N": return CBCharge.NONE;
         }
-    }
-
-    static launch(specs, content) {
     }
 
 }
