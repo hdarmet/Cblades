@@ -40,7 +40,7 @@ export function getWeather(code) {
         case "N": return CBWeather.CLOUDY;
         case "O": return CBWeather.OVERCAST;
         case "R": return CBWeather.RAIN;
-        default: CBWeather.STORM;
+        default: return CBWeather.STORM;
     }
 }
 
@@ -58,7 +58,7 @@ export function getFog(code) {
         case "M": return CBFog.MIST;
         case "DM": return CBFog.DENSE_MIST;
         case "F": return CBFog.FOG;
-        default: CBFog.DENSE_FOG;
+        default: return CBFog.DENSE_FOG;
     }
 }
 
@@ -137,16 +137,16 @@ export function WeatherMixin(gameClass) {
         toSpecs(context) {
             let gameSpecs = super.toSpecs(context);
             gameSpecs.windDirection = this.windDirection;
-            gameSpecs.weather = getWeather(this.weather);
-            gameSpecs.fog = getFog(this.fog);
+            gameSpecs.weather = getWeatherCode(this.weather);
+            gameSpecs.fog = getFogCode(this.fog);
             return gameSpecs;
         }
 
         fromSpecs(specs, context) {
             super.fromSpecs(specs, context)
             this.windDirection = specs.windDirection;
-            this.weather = getWeatherCode(specs.weather);
-            this.fog = getFogCode(specs.fog);
+            this.weather = getWeather(specs.weather);
+            this.fog = getFog(specs.fog);
         }
 
     }

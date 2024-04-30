@@ -10,7 +10,7 @@ import {
     Memento
 } from "../board/mechanisms.js";
 import {
-    CarriableMixin,
+    CarriableMixin, getUnitFromContext,
     OptionArtifactMixin,
     OptionMixin
 } from "../wargame/wunit.js";
@@ -21,9 +21,11 @@ class SpellImageArtifact extends OptionArtifactMixin(WHexCounterArtifact) {
         return this.piece;
     }
 
+/*
     get game() {
         return this.spell.game;
     }
+*/
 
     get unit() {
         return this.spell.unit;
@@ -42,7 +44,7 @@ class SpellImageArtifact extends OptionArtifactMixin(WHexCounterArtifact) {
 export class CBSpell extends CarriableMixin(RetractablePieceMixin(WHexCounter)) {
 
     constructor(paths, wizard, spellLevel) {
-        super("units", paths, CBSpell.DIMENSION);
+        super("units", wizard.game, paths, CBSpell.DIMENSION);
         this._spellLevel = spellLevel;
         this._wizard = wizard;
     }
@@ -321,12 +323,12 @@ export class CBArcanePentacleSpell extends HexTargetedMixin(CBSpell) {
         return {
             type: "arcane-pentacle",
             level: this.spellLevel,
-            wizard: this.wizard
+            wizard: this.wizard.name
         }
     }
 
     static fromSpecs(specs, context) {
-        return new CBArcanePentacleSpell(context.get(specs.wizard), specs.level);
+        return new CBArcanePentacleSpell(getUnitFromContext(context, specs.wizard), specs.level);
     }
 
 }
@@ -356,12 +358,12 @@ export class CBArcaneCircleSpell extends HexTargetedMixin(CBSpell) {
         return {
             type: "arcane-circle",
             level: this.spellLevel,
-            wizard: this.wizard
+            wizard: this.wizard.name
         }
     }
 
     static fromSpecs(specs, context) {
-        return new CBArcaneCircleSpell(context.get(specs.wizard), specs.level);
+        return new CBArcaneCircleSpell(getUnitFromContext(context, specs.wizard), specs.level);
     }
 
 }
@@ -408,12 +410,12 @@ export class CBMagicArrowSpell extends UnitTargetedMixin(CBSpell) {
         return {
             type: "magic-arrow",
             level: this.spellLevel,
-            wizard: this.wizard
+            wizard: this.wizard.name
         }
     }
 
     static fromSpecs(specs, context) {
-        return new CBMagicArrowSpell(context.get(specs.wizard), specs.level);
+        return new CBMagicArrowSpell(getUnitFromContext(context, specs.wizard), specs.level);
     }
 
 }
@@ -443,12 +445,12 @@ export class CBArcaneSwordSpell extends UnitTargetedMixin(CBSpell) {
         return {
             type: "arcane-sword",
             level: this.spellLevel,
-            wizard: this.wizard
+            wizard: this.wizard.name
         }
     }
 
     static fromSpecs(specs, context) {
-        return new CBArcaneSwordSpell(context.get(specs.wizard), specs.level);
+        return new CBArcaneSwordSpell(getUnitFromContext(context, specs.wizard), specs.level);
     }
 }
 WHexCounter.registerTokenType("arcane-sword", CBArcaneSwordSpell);
@@ -477,12 +479,12 @@ export class CBArcaneShieldSpell extends UnitTargetedMixin(CBSpell) {
         return {
             type: "arcane-shield",
             level: this.spellLevel,
-            wizard: this.wizard
+            wizard: this.wizard.name
         }
     }
 
     static fromSpecs(specs, context) {
-        return new CBArcaneShieldSpell(context.get(specs.wizard), specs.level);
+        return new CBArcaneShieldSpell(getUnitFromContext(context, specs.wizard), specs.level);
     }
 
 }
@@ -512,12 +514,12 @@ export class CBProtectionFromMagicSpell extends HexTargetedMixin(CBSpell) {
         return {
             type: "protection-magic",
             level: this.spellLevel,
-            wizard: this.wizard
+            wizard: this.wizard.name
         }
     }
 
     static fromSpecs(specs, context) {
-        return new CBProtectionFromMagicSpell(context.get(specs.wizard), specs.level);
+        return new CBProtectionFromMagicSpell(getUnitFromContext(context, specs.wizard), specs.level);
     }
 
 }
@@ -547,12 +549,12 @@ export class CBFirePentacleSpell extends HexTargetedMixin(CBSpell) {
         return {
             type: "fire-pentacle",
             level: this.spellLevel,
-            wizard: this.wizard
+            wizard: this.wizard.name
         }
     }
 
     static fromSpecs(specs, context) {
-        return new CBFirePentacleSpell(context.get(specs.wizard), specs.level);
+        return new CBFirePentacleSpell(getUnitFromContext(context, specs.wizard), specs.level);
     }
 
 }
@@ -582,12 +584,12 @@ export class CBFireCircleSpell extends HexTargetedMixin(CBSpell) {
         return {
             type: "fire-circle",
             level: this.spellLevel,
-            wizard: this.wizard
+            wizard: this.wizard.name
         }
     }
 
     static fromSpecs(specs, context) {
-        return new CBFireCircleSpell(context.get(specs.wizard), specs.level);
+        return new CBFireCircleSpell(getUnitFromContext(context, specs.wizard), specs.level);
     }
 
 }
@@ -634,12 +636,12 @@ export class CBFireballSpell extends UnitTargetedMixin(CBSpell) {
         return {
             type: "fire-ball",
             level: this.spellLevel,
-            wizard: this.wizard
+            wizard: this.wizard.name
         }
     }
 
     static fromSpecs(specs, context) {
-        return new CBFireballSpell(context.get(specs.wizard), specs.level);
+        return new CBFireballSpell(getUnitFromContext(context, specs.wizard), specs.level);
     }
 
 }
@@ -669,12 +671,12 @@ export class CBFireswordSpell extends UnitTargetedMixin(CBSpell) {
         return {
             type: "fire-sword",
             level: this.spellLevel,
-            wizard: this.wizard
+            wizard: this.wizard.name
         }
     }
 
     static fromSpecs(specs, context) {
-        return new CBFireswordSpell(context.get(specs.wizard), specs.level);
+        return new CBFireswordSpell(getUnitFromContext(context, specs.wizard), specs.level);
     }
 
 }
@@ -704,12 +706,12 @@ export class CBBlazeSpell extends HexTargetedMixin(CBSpell) {
         return {
             type: "blaze",
             level: this.spellLevel,
-            wizard: this.wizard
+            wizard: this.wizard.name
         }
     }
 
     static fromSpecs(specs, context) {
-        return new CBBlazeSpell(context.get(specs.wizard), specs.level);
+        return new CBBlazeSpell(getUnitFromContext(context, specs.wizard), specs.level);
     }
 
 }
@@ -739,12 +741,12 @@ export class CBRainFireSpell extends HexTargetedMixin(CBSpell) {
         return {
             type: "rain-fire",
             level: this.spellLevel,
-            wizard: this.wizard
+            wizard: this.wizard.name
         }
     }
 
     static fromSpecs(specs, context) {
-        return new CBRainFireSpell(context.get(specs.wizard), specs.level);
+        return new CBRainFireSpell(getUnitFromContext(context, specs.wizard), specs.level);
     }
 
 }
