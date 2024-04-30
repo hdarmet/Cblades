@@ -126,7 +126,7 @@ export class CBBurningCounter extends RetractablePieceMixin(WHexCounter) {
             id: this._oid,
             version: this._oversion || 0,
             angle: this.angle,
-            played: this.played
+            played: this.isPlayed()
         }
         if (this.getPosition()) {
             specs.positionCol = this.getPosition().col;

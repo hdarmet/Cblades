@@ -60,6 +60,7 @@ describe("Miscellaneous", ()=> {
             fire.addToMap(hexId);
             repaint(game);
         then:
+            assert(fire.getPosition()).objectEqualsTo({col:7, row:8});
             assert(fire.isFire()).isFalse();
             assert(hexId.playables[0]).equalsTo(fire);
             assert(getDirectives(groundLayer, 4)).arrayEqualsTo([
@@ -94,6 +95,23 @@ describe("Miscellaneous", ()=> {
                     "drawImage(./../images/counters/start-fire.png, -71, -71, 142, 142)",
                 "restore()"
             ]);
+        then:
+            assert(fire.toSpecs()).objectEqualsTo({
+                "version":0,"angle":0,
+                "positionCol":7,"positionRow":8,
+                "type":"fire","fire":false
+            });
+        when:
+            var context = new Map();
+            fire.fromSpecs({
+                "id": 1, "version":2,"angle":60,
+                "type":"fire","fire":true, "played": true
+            }, context);
+        then:
+            assert(fire.toSpecs()).objectEqualsTo({
+                "id": 1, "version":2,"angle":60,
+                "type":"fire","fire":true, "played": true
+            });
     });
 
     it("Checks smoke counter", () => {
@@ -149,6 +167,23 @@ describe("Miscellaneous", ()=> {
             Memento.undo();
         then:
             assert(smoke.isDense()).isFalse();
+        then:
+            assert(smoke.toSpecs()).objectEqualsTo({
+                "version":0,"angle":0,
+                "positionCol":7,"positionRow":8,
+                "type":"smoke","density":false
+            });
+        when:
+            var context = new Map();
+            smoke.fromSpecs({
+                "id": 1, "version":2,"angle":60,
+                "type":"smoke","density":true, "played": true
+            }, context);
+        then:
+            assert(smoke.toSpecs()).objectEqualsTo({
+                "id": 1, "version":2,"angle":60,
+                "type":"smoke","density":true, "played": true
+            });
     });
 
     it("Checks playing burning counter", () => {
@@ -251,13 +286,13 @@ describe("Miscellaneous", ()=> {
             var [groundLayer] = getLayers(game.board,"hex-0");
             var hexId = map.getHex(7,8);
         when:
-            var fireStart = new CBStakesCounter(game);
+            var stakesCounter = new CBStakesCounter(game);
             resetDirectives(groundLayer);
-            fireStart.addToMap(hexId);
+            stakesCounter.addToMap(hexId);
             paint(game);
             loadAllImages();
         then:
-            assert(hexId.playables[0]).equalsTo(fireStart);
+            assert(hexId.playables[0]).equalsTo(stakesCounter);
             assert(getDirectives(groundLayer, 4)).arrayEqualsTo([
                 "save()",
                     "setTransform(0.4888, 0, 0, 0.4888, 583.3333, 361.663)",
@@ -265,6 +300,24 @@ describe("Miscellaneous", ()=> {
                     "drawImage(./../images/counters/stakes.png, -71, -71, 142, 142)",
                 "restore()"
             ]);
+        then:
+            assert(stakesCounter.isFinishable()).isTrue();
+            assert(stakesCounter.toSpecs()).objectEqualsTo({
+                "version":0,"angle":0,
+                "positionCol":7,"positionRow":8,
+                "type":"stakes"
+            });
+        when:
+            var context = new Map();
+            stakesCounter.fromSpecs({
+                "id": 1, "version":2,"angle":60,
+                "type":"stakes"
+            }, context);
+        then:
+            assert(stakesCounter.toSpecs()).objectEqualsTo({
+                "id": 1, "version":2,"angle":60,
+                "type":"stakes"
+            });
     });
 
     it("Checks memorize/revert displayable counter", () => {

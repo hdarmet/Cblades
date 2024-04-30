@@ -115,7 +115,7 @@ describe("Arbitrator", ()=> {
         let {game, arbitrator, map, player1, wing1, unit11, unit12, leader11} = createTinyGame();
         let player2 = new CBUnitPlayer("player2", "/players/player2.png");
         game.addPlayer(player2);
-        let wing2 = new CBWing(player2, anner2);
+        let wing2 = new CBWing(player2, banner2);
         //wing2.setRetreatZone(map.getEastZone());
         let unitType2 = new CBTestUnitType("unit2", ["./../images/units/misc/unit2.png", "./../images/units/misc/unit1b.png"])
         let unit21 = new CBTroop(game, unitType2, wing2);
@@ -184,7 +184,7 @@ describe("Arbitrator", ()=> {
 
     class TestSpell extends WPiece {
         constructor(wizard) {
-            super("units", ["./../images/magic/red/redspell.png"], new Dimension2D(142, 142));
+            super("units", wizard.player.game, ["./../images/magic/red/redspell.png"], new Dimension2D(142, 142));
             this.wizard = wizard;
         }
         _rotate(angle) {}

@@ -43,6 +43,9 @@ import {
 import {
     banner, banner1, banner2
 } from "../game-examples.js";
+import {
+    WSequence
+} from "../../../jslib/wargame/sequences.js";
 
 describe("Command teacher", ()=> {
 
@@ -66,6 +69,7 @@ describe("Command teacher", ()=> {
 
     function create2Players4UnitsTinyGame() {
         let game = new WGame(1);
+        WSequence.setCount(game, 1);
         let arbitrator = new Arbitrator();
         game.setArbitrator(arbitrator);
         let player1 = new CBUnitPlayer("player1", "/players/player1.png");
@@ -298,6 +302,7 @@ describe("Command teacher", ()=> {
     it("Checks that a merge action is not allowed for characters", () => {
         given:
             var {game, arbitrator, leader11, map} = create2Players4UnitsTinyGame();
+            WSequence.setCount(game, 1);
             let leader12 = new CBCharacter(game, leader11.type, leader11.wing);
             leader12.addToMap(map.getHex(8, 8));
             leader11.move(map.getHex(8, 8));
@@ -334,6 +339,7 @@ describe("Command teacher", ()=> {
 
     function createTinyFormationAndTroopsForTheSamePlayerGame() {
         let game = new WGame(1);
+        WSequence.setCount(game, 1);
         let arbitrator = new Arbitrator();
         game.setArbitrator(arbitrator);
         let player = new CBUnitPlayer("player", "/players/player.png");
