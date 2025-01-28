@@ -1,15 +1,11 @@
 package org.summer;
 
-import org.summer.annotation.Profile;
-import org.summer.data.BaseEntity;
 import org.summer.data.DataManager;
 
-import javax.persistence.Entity;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import java.lang.reflect.Proxy;
 import java.util.*;
-import java.util.function.Consumer;
 
 public class MockDataManagerImpl implements DataManager {
 
