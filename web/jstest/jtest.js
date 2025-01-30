@@ -381,30 +381,30 @@ export class Assertor {
         return this;
     }
 
-    isDefined() {
+    isDefined(message = "Not defined.") {
         if (this._value===null || this._value===undefined) {
-            throw new AssertionFailed("Not defined.");
+            throw new AssertionFailed(message);
         }
         return this;
     }
 
-    isNotDefined() {
+    isNotDefined(message = "Defined.") {
         if (this._value!==null && this._value!==undefined) {
-            throw new AssertionFailed("Defined.");
+            throw new AssertionFailed(message);
         }
         return this;
     }
 
-    isTrue() {
+    isTrue(message = "Not true.") {
         if (!this._value) {
-            throw new AssertionFailed("Not true.");
+            throw new AssertionFailed(message);
         }
         return this;
     }
 
-    isFalse() {
+    isFalse(message = "Not false.") {
         if (this._value) {
-            throw new AssertionFailed("Not false.");
+            throw new AssertionFailed(message);
         }
         return this;
     }

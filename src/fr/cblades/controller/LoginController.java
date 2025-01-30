@@ -1,9 +1,7 @@
 package fr.cblades.controller;
 
 import fr.cblades.StandardUsers;
-import fr.cblades.domain.Account;
-import fr.cblades.domain.Login;
-import fr.cblades.domain.Notice;
+import fr.cblades.domain.*;
 import org.summer.InjectorSunbeam;
 import org.summer.Ref;
 import org.summer.annotation.Controller;
@@ -12,6 +10,7 @@ import org.summer.annotation.REST.Method;
 import org.summer.controller.ControllerSunbeam;
 import org.summer.controller.Json;
 import org.summer.controller.SummerControllerException;
+import org.summer.controller.Verifier;
 import org.summer.data.DataSunbeam;
 import org.summer.services.MailService;
 import org.summer.platform.PlatformManager;
@@ -34,7 +33,7 @@ public class LoginController implements InjectorSunbeam, DataSunbeam, SecuritySu
 		ifAuthorized(user->{
 			try {
 				inTransaction(em->{
-					Login newLogin = writeToLogin(request, new Login());
+					Login newLogin = writeToLogin(request, new Login(), true);
 					persist(em, newLogin);
 					result.set(readFromLogin(newLogin));
 				});
@@ -97,7 +96,7 @@ public class LoginController implements InjectorSunbeam, DataSunbeam, SecuritySu
 				inTransaction(em->{
 					String id = (String)params.get("id");
 					Login login = findLogin(em, new Long(id));
-					writeToLogin(request, login);
+					writeToLogin(request, login, false);
 					flush(em);
 					result.set(readFromLogin(login));
 				});
@@ -216,21 +215,31 @@ public class LoginController implements InjectorSunbeam, DataSunbeam, SecuritySu
 		return login;
 	}
 
-	Login writeToLogin(Json json, Login login) {
-		verify(json)
+	Login writeToLogin(Json json, Login login, boolean full) {
+		Verifier verifier = verify(json);
+		verifier
 			.checkRequired("login")
+			.checkRequired("password")
+			.checkRequired("altPassword");
+		verifier
 			.checkMinSize("login", 2)
 			.checkMaxSize("login", 20)
-			.checkRequired("password")
 			.checkMinSize("password", 4)
 			.checkMaxSize("password", 20)
+			.checkMinSize("altPassword", 4)
+			.checkMaxSize("altPassword", 20)
+			.checkInteger("altPasswordLease")
+			.check("role", LoginRole.byLabels().keySet());
+		verifier
 			.ensure();
 		sync(json, login)
 			.write("version")
 			.write("login")
 			.write("password", password->Login.encrypt((String)password))
-			.write("admin");
-		return login;
+			.write("altPassword", password->Login.encrypt((String)password))
+			.write("altPasswordLease")
+			.write("role", label->LoginRole.byLabels().get(label));
+			return login;
 	}
 
 	Json readFromLogin(Login login) {
@@ -240,7 +249,9 @@ public class LoginController implements InjectorSunbeam, DataSunbeam, SecuritySu
 			.read("version")
 			.read("login")
 			.read("password")
-			.read("admin");
+			.read("altPassword")
+			.read("altPasswordLease")
+			.read("role", LoginRole::getLabel);
 		return lJson;
 	}
 

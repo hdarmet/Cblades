@@ -40,6 +40,9 @@ import {
 import {
     banner1, banner2
 } from "./game-examples.js";
+import {
+    WSequence
+} from "../../jslib/wargame/sequences.js";
 
 describe("Arbitrator", ()=> {
 
@@ -90,6 +93,7 @@ describe("Arbitrator", ()=> {
 
     function createTinyGame() {
         let game = new WGame(1);
+        WSequence.setCount(game, 1);
         let map = new WMap([{path:"./../images/maps/map.png", col:0, row:0}]);
         game.setMap(map);
         let arbitrator = new CBArbitrator();

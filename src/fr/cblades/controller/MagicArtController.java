@@ -12,6 +12,7 @@ import org.summer.annotation.REST.Method;
 import org.summer.controller.ControllerSunbeam;
 import org.summer.controller.Json;
 import org.summer.controller.SummerControllerException;
+import org.summer.controller.Verifier;
 import org.summer.data.DataSunbeam;
 import org.summer.data.SummerNotFoundException;
 import org.summer.platform.FileSunbeam;
@@ -137,7 +138,7 @@ public class MagicArtController implements InjectorSunbeam, DataSunbeam, Securit
 	public Json create(Map<String, Object> params, Json request) {
 		Ref<Json> result = new Ref<>();
 		inTransaction(em->{
-			MagicArt newMagicArt = writeToMagicArt(em, request, new MagicArt());
+			MagicArt newMagicArt = writeToMagicArt(em, request, new MagicArt(), true);
 			ifAuthorized(
 				user->{
 					try {
@@ -298,7 +299,7 @@ public class MagicArtController implements InjectorSunbeam, DataSunbeam, Securit
 			ifAuthorized(
 				user -> {
 					try {
-						writeToMagicArt(em, request, magicArt);
+						writeToMagicArt(em, request, magicArt, false);
 						storeMagicArtImages(params, magicArt);
 						flush(em);
 						result.set(readFromMagicArt(magicArt));
@@ -399,37 +400,48 @@ public class MagicArtController implements InjectorSunbeam, DataSunbeam, Securit
 		return magicArt;
 	}
 
-	MagicArt writeToMagicArt(EntityManager em, Json json, MagicArt magicArt) {
+	MagicArt writeToMagicArt(EntityManager em, Json json, MagicArt magicArt, boolean full) {
+		Verifier verifier = verify(json);
 		try {
-			verify(json)
-				.checkRequired("name").checkMinSize("name", 2).checkMaxSize("name", 200)
+			if (full) {
+				verifier
+					.checkRequired("name")
+					.checkRequired("illustration")
+					.checkRequired("description")
+					.each("sheets", cJson -> verify(cJson)
+						.checkRequired("version")
+						.checkRequired("ordinal")
+						.checkRequired("name")
+						.checkRequired("description")
+						.checkRequired("icon")
+						.checkRequired("path")
+					)
+					.each("comments", cJson -> verify(cJson)
+						.checkRequired("version")
+						.checkRequired("date")
+						.checkRequired("text")
+					);
+			}
+			verifier
+				.checkMinSize("name", 2).checkMaxSize("name", 200)
 				.checkPattern("name", "[\\d\\s\\w]+")
 				.check("status", ThemeStatus.byLabels().keySet())
-				.checkRequired("illustration")
 				.checkMinSize("illustration", 2).checkMaxSize("illustration", 200)
-				.checkRequired("description")
 				.checkMinSize("description", 2)
 				.checkMaxSize("description", 19995)
 				.each("sheets", cJson->verify(cJson)
-					.checkRequired("version")
-					.checkRequired("ordinal")
-					.checkRequired("name").checkMinSize("name", 2).checkMaxSize("name", 200)
+					.checkMinSize("name", 2).checkMaxSize("name", 200)
 					.checkPattern("name", "[\\d\\s\\w]+")
-					.checkRequired("description")
 					.checkMinSize("description", 2)
 					.checkMaxSize("description", 19995)
-					.checkRequired("icon")
 					.checkMinSize("icon", 2).checkMaxSize("icon", 200)
-					.checkRequired("path")
 					.checkMinSize("path", 2).checkMaxSize("path", 200)
 				)
 				.each("comments", cJson->verify(cJson)
-					.checkRequired("version")
-					.checkRequired("date")
-					.checkRequired("text")
 					.checkMinSize("text", 2)
 					.checkMaxSize("text", 19995)
-				)
+				);
+			verifier
 				.ensure();
 			sync(json, magicArt)
 				.write("version")

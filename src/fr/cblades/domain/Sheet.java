@@ -1,12 +1,8 @@
 package fr.cblades.domain;
 
-import org.summer.SummerException;
 import org.summer.data.BaseEntity;
 
 import javax.persistence.*;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 
 @Entity
 public class Sheet extends BaseEntity {

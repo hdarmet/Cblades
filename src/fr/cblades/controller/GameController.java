@@ -31,7 +31,7 @@ public class GameController implements InjectorSunbeam, DataSunbeam, SecuritySun
 		ifAuthorized(user->{
 			try {
 				inTransaction(em->{
-					Game newGame = writeToGame(em, request, new Game());
+					Game newGame = writeToGame(em, request, new Game(), true);
 					persist(em, newGame);
 					result.set(readFromGame(em, newGame));
 				});
@@ -122,7 +122,7 @@ public class GameController implements InjectorSunbeam, DataSunbeam, SecuritySun
 				inTransaction(em->{
 					String id = (String)params.get("id");
 					Game game = findGame(em, new Long(id));
-					writeToGame(em, request, game);
+					writeToGame(em, request, game, false);
 					flush(em);
 					result.set(readFromGame(em, game));
 				});
@@ -133,97 +133,167 @@ public class GameController implements InjectorSunbeam, DataSunbeam, SecuritySun
 		return result.get();
 	}
 
-	Game writeToGame(EntityManager em, Json json, Game game) {
+	Game writeToGame(EntityManager em, Json json, Game game, boolean full) {
+		Verifier verifier;
 		try {
-			verify(json)
-				.checkRequired("version")
-				.inspect("map", mJson -> verify(mJson)
+			verifier = verify(json);
+			if (full) {
+				verifier
 					.checkRequired("version")
-					.each("boards", bJson -> verify(bJson)
+					.inspect("map", mJson -> verify(mJson)
 						.checkRequired("version")
-						.checkRequired("col").checkMin("col", -1).checkMax("col", 200)
-						.checkRequired("row").checkMin("row", -1).checkMax("row", 200)
-						.checkRequired("path").checkMinSize("path", 2).checkMaxSize("path", 80)
-						.checkRequired("icon").checkMinSize("icon", 2).checkMaxSize("icon", 80)
-						.checkRequired("invert").checkBoolean("invert")
+						.each("boards", bJson -> verify(bJson)
+							.checkRequired("version")
+							.checkRequired("col")
+							.checkRequired("row")
+							.checkRequired("path")
+							.checkRequired("icon")
+							.checkRequired("invert")
+						)
+					)
+					.checkRequired("windDirection")
+					.checkRequired("fog")
+					.checkRequired("weather")
+					.checkRequired("currentPlayerIndex")
+					.checkRequired("currentTurn")
+					.each("players", pJson -> verify(pJson)
+						.checkRequired("version")
+						.inspect("identity", bJson -> verify(bJson)
+							.checkRequired("name")
+							.checkRequired("path")
+						)
+						.each("wings", wJson -> verify(wJson)
+							.checkRequired("version")
+							.inspect("banner", bJson -> verify(bJson)
+								.checkRequired("name")
+								.checkRequired("path")
+							)
+							.each("retreatZone", lJson -> verify(lJson)
+								.checkRequired("col")
+								.checkRequired("row")
+							)
+							.each("units", uJson -> verify(uJson)
+								.checkRequired("version")
+								.checkRequired("name")
+								.checkRequired("category")
+								.checkRequired("type")
+								.checkRequired("angle")
+								.checkRequired("positionCol")
+								.checkRequired("positionRow")
+								.checkRequired("steps")
+								.checkRequired("tiredness")
+								.checkRequired("ammunition")
+								.checkRequired("cohesion")
+								.checkRequired("charging")
+								.checkRequired("contact")
+								.checkRequired("orderGiven")
+								.checkRequired("played")
+							)
+							.checkRequired("moral")
+							.checkRequired("tiredness")
+							.checkMinSize("leader", 2)
+							.checkRequired("orderInstruction")
+						)
+					)
+					.each("locations", lJson -> verify(lJson)
+						.checkRequired("version")
+						.checkRequired("col")
+						.checkRequired("row")
+						.each("pieces", uJson -> verify(uJson)
+							.checkRequired("version")
+							.checkWhen(tJson -> tJson.get("type") != null, tJson ->
+								verify(tJson).checkEnum("angle", 0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330)
+									.checkWhen(eJson -> eJson.get("type").equals("smoke"), eJson ->
+										verify(eJson)
+											.checkRequired("played")
+										)
+										.checkWhen(eJson -> eJson.get("type").equals("fire"), eJson ->
+											verify(eJson)
+											.checkRequired("played")
+										)
+							)
+						)
+					);
+			}
+			verifier
+				.inspect("map", mJson -> verify(mJson)
+					.each("boards", bJson -> verify(bJson)
+						.checkMin("col", -1).checkMax("col", 200)
+						.checkMin("row", -1).checkMax("row", 200)
+						.checkMinSize("path", 2).checkMaxSize("path", 80)
+						.checkMinSize("icon", 2).checkMaxSize("icon", 80)
+						.checkBoolean("invert")
 					)
 				)
-				.checkRequired("windDirection").checkInteger("windDirection").checkMin("windDirection", 0).checkMax("windDirection", 300)
-				.checkRequired("fog").check("fog", FogType.byLabels().keySet())
-				.checkRequired("weather").check("weather", WeatherType.byLabels().keySet())
-				.checkRequired("currentPlayerIndex").checkInteger("currentPlayerIndex").checkMin("currentPlayerIndex", 0).checkMax("current", json.getJson("players").size())
-				.checkRequired("currentTurn").checkInteger("currentTurn").checkMin("currentTurn", 0)
+				.checkInteger("windDirection").checkMin("windDirection", 0).checkMax("windDirection", 300)
+				.check("fog", FogType.byLabels().keySet())
+				.check("weather", WeatherType.byLabels().keySet())
+				.checkInteger("currentPlayerIndex").checkMin("currentPlayerIndex", 0).checkMax("current", json.getJson("players").size())
+				.checkInteger("currentTurn").checkMin("currentTurn", 0)
 				.each("players", pJson -> verify(pJson)
-					.checkRequired("version")
 					.inspect("identity", bJson -> verify(bJson)
-						.checkRequired("name").checkMinSize("name", 2).checkMaxSize("name", 80)
-						.checkRequired("path").checkMinSize("path", 2).checkMaxSize("path", 80)
+						.checkMinSize("name", 2).checkMaxSize("name", 80)
+						.checkMinSize("path", 2).checkMaxSize("path", 80)
 					)
 					.each("wings", wJson -> verify(wJson)
-						.checkRequired("version")
 						.inspect("banner", bJson -> verify(bJson)
-							.checkRequired("name").checkMinSize("name", 2).checkMaxSize("name", 80)
-							.checkRequired("path").checkMinSize("path", 2).checkMaxSize("path", 80)
+							.checkMinSize("name", 2).checkMaxSize("name", 80)
+							.checkMinSize("path", 2).checkMaxSize("path", 80)
 						)
 						.each("retreatZone", lJson -> verify(lJson)
-							.checkRequired("col").checkMin("col", -1).checkMax("col", 200)
-							.checkRequired("row").checkMin("row", -1).checkMax("row", 200)
+							.checkMin("col", -1).checkMax("col", 200)
+							.checkMin("row", -1).checkMax("row", 200)
 						)
 						.each("units", uJson -> verify(uJson)
-							.checkRequired("version")
-							.checkRequired("name").checkMinSize("name", 2).checkMaxSize("name", 80)
-							.checkRequired("category").check("category", UnitCategory.byLabels().keySet())
-							.checkRequired("type").checkMinSize("type", 2).checkMaxSize("type", 80)
-							.checkRequired("angle").checkMin("angle", 0).checkMax("angle", 330)
-							.checkRequired("positionCol").checkMin("positionCol", 0).checkMax("positionCol", 100)
-							.checkRequired("positionRow").checkMin("positionRow", 0).checkMax("positionRow", 100)
+							.checkMinSize("name", 2).checkMaxSize("name", 80)
+							.check("category", UnitCategory.byLabels().keySet())
+							.checkMinSize("type", 2).checkMaxSize("type", 80)
+							.checkMin("angle", 0).checkMax("angle", 330)
+							.checkMin("positionCol", 0).checkMax("positionCol", 100)
+							.checkMin("positionRow", 0).checkMax("positionRow", 100)
 							.checkMin("positionAngle", 0).checkMax("positionAngle", 330)
-							.checkRequired("steps").checkMin("steps", 0).checkMax("steps", 12)
-							.checkRequired("tiredness").check("tiredness", Tiredness.byLabels().keySet())
-							.checkRequired("ammunition").check("ammunition", Ammunition.byLabels().keySet())
-							.checkRequired("cohesion").check("cohesion", Cohesion.byLabels().keySet())
-							.checkRequired("charging").checkBoolean("charging")
-							.checkRequired("contact").checkBoolean("contact")
-							.checkRequired("orderGiven").checkBoolean("orderGiven")
-							.checkRequired("played").checkBoolean("played")
+							.checkMin("steps", 0).checkMax("steps", 12)
+							.check("tiredness", Tiredness.byLabels().keySet())
+							.check("ammunition", Ammunition.byLabels().keySet())
+							.check("cohesion", Cohesion.byLabels().keySet())
+							.checkBoolean("charging")
+							.checkBoolean("contact")
+							.checkBoolean("orderGiven")
+							.checkBoolean("played")
 						)
-						.checkRequired("moral").checkInteger("moral").checkMin("moral", 4).checkMax("moral", 12)
-						.checkRequired("tiredness").checkInteger("tiredness").checkMin("tiredness", 4).checkMax("tiredness", 12)
+						.checkInteger("moral").checkMin("moral", 4).checkMax("moral", 12)
+						.checkInteger("tiredness").checkMin("tiredness", 4).checkMax("tiredness", 12)
 						.checkMinSize("leader", 2).checkMaxSize("leader", 80)
-						.checkRequired("orderInstruction").check("orderInstruction", OrderInstruction.byLabels().keySet())
+						.check("orderInstruction", OrderInstruction.byLabels().keySet())
 					)
 				)
 				.each("locations", lJson -> verify(lJson)
-					.checkRequired("version")
-					.checkRequired("col").checkMin("col", -1).checkMax("col", 200)
-					.checkRequired("row").checkMin("row", -1).checkMax("row", 200)
+					.checkMin("col", -1).checkMax("col", 200)
+					.checkMin("row", -1).checkMax("row", 200)
 					.each("pieces", uJson -> verify(uJson)
-						.checkRequired("version")
 						.checkWhen(tJson->tJson.get("type")!=null, tJson->
 							verify(tJson).checkEnum("angle", 0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330)
-							.checkWhen(eJson->eJson.get("type").equals("stakes"), eJson->
-								verify(eJson)
-							)
-							.checkWhen(eJson->eJson.get("type").equals("smoke"), eJson->
-								verify(eJson).checkEnum("density", Boolean.TRUE, Boolean.FALSE)
-									.checkRequired("played").checkBoolean("played")
-							)
-							.checkWhen(eJson->eJson.get("type").equals("fire"), eJson->
-								verify(eJson).checkEnum("fire", Boolean.TRUE, Boolean.FALSE)
-									.checkRequired("played").checkBoolean("played")
-							)
-							.checkWhen(eJson->eJson.get("name")!=null, eJson->
-								verify(eJson)
-									.checkMinSize("name", 2).checkMaxSize("name", 80)
-							)
+								.checkWhen(eJson->eJson.get("type").equals("smoke"), eJson->
+									verify(eJson).checkEnum("density", Boolean.TRUE, Boolean.FALSE)
+										.checkBoolean("played")
+									)
+									.checkWhen(eJson->eJson.get("type").equals("fire"), eJson->
+										verify(eJson).checkEnum("fire", Boolean.TRUE, Boolean.FALSE)
+										.checkBoolean("played")
+									)
+									.checkWhen(eJson->eJson.get("name")!=null, eJson->
+										verify(eJson)
+											.checkMinSize("name", 2).checkMaxSize("name", 80)
+									)
 						)
 					)
-				)
-				.ensure();
+				);
+				verifier.ensure();
 			sync(json, game)
 				.write("version")
 				.write("currentTurn")
 				.write("windDirection")
+				.write("currentPlayerIndex")
 				.write("weather", label -> WeatherType.byLabels().get(label))
 				.write("fog", label -> FogType.byLabels().get(label))
 				.writeLink("map", (pJson, map) -> sync(pJson, map)
@@ -312,8 +382,8 @@ public class GameController implements InjectorSunbeam, DataSunbeam, SecuritySun
 						)
 					)
 				);
-			game.setWindDirection(json.getInteger("windDirection"));
-			game.setCurrentPlayerIndex(json.getInteger("currentPlayerIndex"));
+			//ame.setWindDirection(json.getInteger("windDirection"));
+			//game.setCurrentPlayerIndex(json.getInteger("currentPlayerIndex"));
 			return game;
 		} catch (SummerNotFoundException snfe) {
 			throw new SummerControllerException(404, snfe.getMessage());

@@ -13,6 +13,7 @@ import org.summer.annotation.REST.Method;
 import org.summer.controller.ControllerSunbeam;
 import org.summer.controller.Json;
 import org.summer.controller.SummerControllerException;
+import org.summer.controller.Verifier;
 import org.summer.data.DataSunbeam;
 import org.summer.data.SummerNotFoundException;
 import org.summer.platform.FileSunbeam;
@@ -126,7 +127,8 @@ public class ScenarioController implements InjectorSunbeam, DataSunbeam, Securit
 					try {
 						Scenario newScenario = writeToScenario(em, request, new Scenario().setGame(
 								new Game().setMap(new fr.cblades.domain.Map())
-							)
+							),
+							true
 						);
 						persist(em, newScenario);
 						storeScenarioImages(params, newScenario);
@@ -278,7 +280,7 @@ public class ScenarioController implements InjectorSunbeam, DataSunbeam, Securit
 			ifAuthorized(
 				user -> {
 					try {
-						writeToScenario(em, request, scenario);
+						writeToScenario(em, request, scenario, false);
 						storeScenarioImages(params, scenario);
 						flush(em);
 						result.set(readFromScenario(scenario));
@@ -355,9 +357,24 @@ public class ScenarioController implements InjectorSunbeam, DataSunbeam, Securit
 		}
 	}
 
-	Scenario writeToScenario(EntityManager em, Json json, Scenario scenario) {
+	Scenario writeToScenario(EntityManager em, Json json, Scenario scenario, boolean full) {
+		Verifier verifier = verify(json);
 		try {
-			verify(json)
+			if (full) {
+				verifier
+					.checkRequired("title")
+					.checkRequired("story")
+					.checkRequired("setUp")
+					.checkRequired("victoryConditions")
+					.checkRequired("specialRules")
+					.checkRequired("illustration")
+					.each("comments", cJson -> verify(cJson)
+						.checkRequired("version")
+						.checkRequired("date")
+						.checkRequired("text")
+					);
+			}
+			verifier
 				.checkRequired("title").checkMinSize("title", 2).checkMaxSize("title", 200)
 				.checkPattern("title", "[\\d\\s\\w]+")
 				.checkRequired("story").checkMinSize("story", 2).checkMaxSize("story", 2000)
@@ -372,7 +389,8 @@ public class ScenarioController implements InjectorSunbeam, DataSunbeam, Securit
 					.checkRequired("text")
 					.checkMinSize("text", 2)
 					.checkMaxSize("text", 19995)
-				)
+				);
+			verifier
 				.ensure();
 			sync(json, scenario)
 				.write("version")

@@ -189,7 +189,7 @@ public class AnnouncementController implements InjectorSunbeam, DataSunbeam, Sec
 				inTransaction(em->{
 					String id = (String)params.get("id");
 					Announcement announcement = findAnnouncement(em, new Long(id));
-					writeToAnnouncementStatus(request, announcement);
+					writeToAnnouncementStatus(request, announcement, false);
 					flush(em);
 					result.set(readFromAnnouncement(announcement));
 				});
@@ -228,13 +228,18 @@ public class AnnouncementController implements InjectorSunbeam, DataSunbeam, Sec
 		return announcement;
 	}
 
-	Announcement writeToAnnouncementStatus(Json json, Announcement announcement) {
-		verify(json)
-				.checkRequired("id").checkInteger("id", "Not a valid id")
-				.check("status", AnnouncementStatus.byLabels().keySet())
-				.ensure();
+	Announcement writeToAnnouncementStatus(Json json, Announcement announcement, boolean full) {
+		Verifier verifier = verify(json);
+		if (full) {
+			verifier
+				.checkRequired("id").checkInteger("id", "Not a valid id");
+		}
+		verifier
+			.check("status", AnnouncementStatus.byLabels().keySet());
+		verifier
+			.ensure();
 		sync(json, announcement)
-				.write("status", label->AnnouncementStatus.byLabels().get(label));
+			.write("status", label->AnnouncementStatus.byLabels().get(label));
 		return announcement;
 	}
 

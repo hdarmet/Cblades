@@ -185,9 +185,8 @@ export class WSequenceElement {
     }
 
     equalsTo(element) {
-        if (this.type !== element.type) return false;
-        if (this.game !== element.game) return false;
-        return true;
+        if (!element) return false;
+        return this.toString() === element.toString();
     }
 
     toString() {

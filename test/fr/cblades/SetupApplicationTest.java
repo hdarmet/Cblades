@@ -39,7 +39,7 @@ public class SetupApplicationTest implements TestSeawave, CollectionSunbeam, Dat
 		Assert.assertEquals(org.postgresql.Driver.class, factory.jdbcDriverClass);
 		Assert.assertEquals("cblades", factory.user);
 		Assert.assertEquals("cblades", factory.password);
-		Assert.assertEquals("org.hibernate.dialect.PostgreSQL94Dialect", factory.properties.get("hibernate.dialect"));
+		Assert.assertEquals("org.summer.extension.postgresql.ExtendedPostgreSQLDialect", factory.properties.get("hibernate.dialect"));
 		Assert.assertEquals(true, factory.properties.get("hibernate.show_sql"));
 		Assert.assertEquals("create-drop", factory.properties.get("hibernate.hbm2ddl.auto"));
 	}
@@ -53,7 +53,7 @@ public class SetupApplicationTest implements TestSeawave, CollectionSunbeam, Dat
 		Assert.assertEquals(org.postgresql.Driver.class, factory.jdbcDriverClass);
 		Assert.assertEquals(null, factory.user);
 		Assert.assertEquals(null, factory.password);
-		Assert.assertEquals("org.hibernate.dialect.PostgreSQL94Dialect", factory.properties.get("hibernate.dialect"));
+		Assert.assertEquals("org.summer.extension.postgresql.ExtendedPostgreSQLDialect", factory.properties.get("hibernate.dialect"));
 		Assert.assertEquals(true, factory.properties.get("hibernate.show_sql"));
 		Assert.assertEquals("create-drop", factory.properties.get("hibernate.hbm2ddl.auto"));
 	}
@@ -118,12 +118,12 @@ public class SetupApplicationTest implements TestSeawave, CollectionSunbeam, Dat
 		dataManager.register("setParameter", null, null,"login", "admin");
 		dataManager.register("getResultList", arrayList(), null);
 		dataManager.register("persist", null, null, (Predicate) entity->{
-			if (!(entity instanceof Login)) return false;
-			Login login = (Login) entity;
-			if (!"admin".equals(login.getLogin())) return false;
-			if (!"21232f297a57a5a743894a0e4a801fc3".equals(login.getPassword())) return false;
-			if (!login.isAdministrator()) return false;
-			if (login.isTest()) return false;
+			if (!(entity instanceof Account)) return false;
+			Account account = (Account) entity;
+			if (!"admin".equals(account.getAccess().getLogin())) return false;
+			if (!"7aff46e73619488eee287d425a951baf".equals(account.getAccess().getPassword())) return false;
+			if (!account.getAccess().isAdministrator()) return false;
+			if (account.getAccess().isTest()) return false;
 			return true;
 		});
 		dataManager.register("flush", null, null);
@@ -131,12 +131,12 @@ public class SetupApplicationTest implements TestSeawave, CollectionSunbeam, Dat
 		dataManager.register("setParameter", null, null,"login", "test");
 		dataManager.register("getResultList", arrayList(), null);
 		dataManager.register("persist", null, null, (Predicate) entity->{
-			if (!(entity instanceof Login)) return false;
-			Login login = (Login) entity;
-			if (!"test".equals(login.getLogin())) return false;
-			if (!"098f6bcd4621d373cade4e832627b4f6".equals(login.getPassword())) return false;
-			if (login.isAdministrator()) return false;
-			if (!login.isTest()) return false;
+			if (!(entity instanceof Account)) return false;
+			Account account = (Account) entity;
+			if (!"test".equals(account.getAccess().getLogin())) return false;
+			if (!"0cbc6611f5540bd0809a388dc95a615b".equals(account.getAccess().getPassword())) return false;
+			if (account.getAccess().isAdministrator()) return false;
+			if (!account.getAccess().isTest()) return false;
 			return true;
 		});
 		dataManager.register("flush", null, null);

@@ -12,6 +12,7 @@ import org.summer.annotation.REST.Method;
 import org.summer.controller.ControllerSunbeam;
 import org.summer.controller.Json;
 import org.summer.controller.SummerControllerException;
+import org.summer.controller.Verifier;
 import org.summer.data.DataSunbeam;
 import org.summer.data.SummerNotFoundException;
 import org.summer.platform.FileSunbeam;
@@ -35,7 +36,7 @@ public class MessageModelController implements InjectorSunbeam, DataSunbeam, Sec
 	public Json create(Map<String, Object> params, Json request) {
 		Ref<Json> result = new Ref<>();
 		inTransaction(em->{
-			MessageModel newMessageModel = writeToMessageModel(em, request, new MessageModel());
+			MessageModel newMessageModel = writeToMessageModel(em, request, new MessageModel(), true);
 			ifAuthorized(
 				user->{
 					try {
@@ -202,7 +203,7 @@ public class MessageModelController implements InjectorSunbeam, DataSunbeam, Sec
 			ifAuthorized(
 				user -> {
 					try {
-						writeToMessageModel(em, request, messageModel);
+						writeToMessageModel(em, request, messageModel, false);
 						flush(em);
 						result.set(readFromMessageModelWithComments(messageModel));
 					} catch (PersistenceException pe) {
@@ -249,21 +250,30 @@ public class MessageModelController implements InjectorSunbeam, DataSunbeam, Sec
 		};
 	}
 
-	MessageModel writeToMessageModel(EntityManager em, Json json, MessageModel messageModel) {
+	MessageModel writeToMessageModel(EntityManager em, Json json, MessageModel messageModel, boolean full) {
+		Verifier verifier = verify(json);
 		try {
-			verify(json)
+			if (full) {
+				verifier
+					.checkRequired("title")
+					.checkRequired("text")
+					.each("comments", cJson -> verify(cJson)
+						.checkRequired("version")
+						.checkRequired("date")
+						.checkRequired("text")
+					);
+			}
+			verifier
 				.check("category", MessageModelCategory.byLabels().keySet())
-				.checkRequired("title").checkMinSize("title", 2).checkMaxSize("title", 200)
+				.checkMinSize("title", 2).checkMaxSize("title", 200)
 				.checkPattern("title", "[\\d\\s\\w]+")
-				.checkRequired("text").checkMinSize("text", 2).checkMaxSize("text", 5000)
+				.checkMinSize("text", 2).checkMaxSize("text", 5000)
 				.check("status", MessageModelStatus.byLabels().keySet())
 				.each("comments", cJson->verify(cJson)
-					.checkRequired("version")
-					.checkRequired("date")
-					.checkRequired("text")
 					.checkMinSize("text", 2)
 					.checkMaxSize("text", 19995)
-				)
+				);
+			verifier
 				.ensure();
 			sync(json, messageModel)
 				.write("version")

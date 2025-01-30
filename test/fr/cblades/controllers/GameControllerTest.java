@@ -32,49 +32,52 @@ public class GameControllerTest implements TestSeawave, CollectionSunbeam, DataM
 		securityManager = (MockSecurityManagerImpl)ApplicationManager.get().getSecurityManager();
 		securityManager.register(new MockSecurityManagerImpl.Credential("admin", "admin", StandardUsers.ADMIN));
 		securityManager.register(new MockSecurityManagerImpl.Credential("someone", "someone", StandardUsers.USER));
+		securityManager.register(new MockSecurityManagerImpl.Credential("someoneelse", "someoneelse", StandardUsers.USER));
 	}
 
 	static String SIMPLE_GAME_CREATION = "{\n" +
-			"	version:0, name:\"Test\",\n" +
-			"	map:{\n" +
-			"		version:0, " +
-			"		boards:[{\n" +
-			"			version:0, icon:\"/map/map1-icon.png\", path:\"/map/map1.png\", " +
-			"			col:4, row:5, invert:true\n" +
-			"		}],\n" +
-			"	},\n" +
-			"	players:[\n" +
-			"		{\n" +
-			"			version:0, " +
-			"			identity:{\n" +
-			"				name: \"Hector\"," +
-			"				path: \"/players/hector.png\"" +
-			"			},\n" +
-			"			wings:[\n" +
-			"		{\n" +
-			"			version:0, " +
-			"			banner:{\n" +
-			"				name: \"redbanner\"," +
-			"				path: \"/map/redbanner.png\"" +
-			"			},\n" +
-			"			units:[{\n" +
-			"				version:0, name:\"redbanner-0\", category:\"T\", type:\"unit\",\n" +
-			"				angle:120, positionCol:3, positionRow:4, positionAngle:0, steps:2,\n" +
-			"				tiredness:\"F\", ammunition:\"P\", cohesion:\"GO\", charging:false,\n" +
-			"				contact:false, orderGiven:false, played:false\n" +
-			"			}],\n" +
-			"			retreatZone:[\n" +
-			"				{version:0, col:3, row:4}\n" +
-			"			]\n" +
-			"		}],\n" +
-			"		locations:[\n" +
-			"			{version:0,col:3,row:4,units:[\"redbanner-0\"]}\n" +
-			"		]\n" +
-			"	}]\n" +
+			"version:0, name:\"Test\",\n" +
+			"currentTurn:0, currentPlayerIndex:0,\n" +
+			"weather:\"C\", fog:\"NF\", windDirection:1, " +
+			"map:{\n" +
+				"version:0, " +
+				"boards:[{\n" +
+					"version:0, icon:\"/map/map1-icon.png\", path:\"/map/map1.png\", " +
+					"col:4, row:5, invert:true\n" +
+				"}],\n" +
+			"},\n" +
+			"players:[\n" +
+				"{\n" +
+					"version:0, " +
+					"identity:{\n" +
+						"name: \"Hector\"," +
+						"path: \"/players/hector.png\"" +
+					"},\n" +
+					"wings:[{\n" +
+						"version:0, " +
+						"orderInstruction:\"D\", tiredness:11, moral:11, " +
+						"banner:{\n" +
+							"name: \"redbanner\"," +
+							"path: \"/map/redbanner.png\"" +
+						"},\n" +
+						"units:[{\n" +
+							"version:0, name:\"redbanner-0\", category:\"T\", type:\"unit\",\n" +
+							"angle:120, positionCol:3, positionRow:4, positionAngle:0, steps:2,\n" +
+							"tiredness:\"F\", ammunition:\"P\", cohesion:\"GO\", charging:false,\n" +
+							"contact:false, orderGiven:false, played:false\n" +
+						"}],\n" +
+						"retreatZone:[\n" +
+							"{version:0, col:3, row:4}\n" +
+						"]\n" +
+					"}],\n" +
+					"locations:[\n" +
+						"{version:0,col:3,row:4,units:[\"redbanner-0\"]}\n" +
+					"]\n" +
+				"}]\n" +
 			"}";
 
 	@Test
-	public void createNewBoard() {
+	public void createNewGame() {
 		dataManager.register("createQuery", null, null,
 				"select b from Board b where b.path = :path");
 		dataManager.register("setParameter", null, null,"path", "/map/map1.png");
@@ -141,61 +144,36 @@ public class GameControllerTest implements TestSeawave, CollectionSunbeam, DataM
 		dataManager.register("flush", null, null);
 		securityManager.doConnect("admin", 0);
 		Json response = gameController.create(params(), Json.createJsonFromString(SIMPLE_GAME_CREATION));
-		Assert.assertEquals(
-			"{" +
-				"\"players\":[" +
-				"{" +
-					"\"identity\":{" +
-						"\"path\":\"/players/hector.png\"," +
-						"\"name\":\"Hector\"" +
-					"},"+
-					"\"wings\":[" +
-					"{\"" +
-						"retreatZone\":[" +
-							"{\"col\":3,\"id\":0,\"row\":4,\"version\":0}" +
-						"]," +
-						"\"banner\":{" +
-							"\"path\":\"/red/redbanner.png\"," +
-							"\"name\":\"redbanner\"" +
-						"}," +
+		Assert.assertEquals("{" +
+				"\"currentTurn\":0,\"currentPlayerIndex\":0," +
+				"\"sequenceElements\":[]," +
+				"\"players\":[{" +
+					"\"identity\":{\"path\":\"/players/hector.png\",\"name\":\"Hector\"}," +
+					"\"wings\":[{" +
+						"\"retreatZone\":[{\"col\":3,\"id\":0,\"row\":4,\"version\":0}]," +
+						"\"tiredness\":11,\"orderInstruction\":\"D\"," +
+						"\"banner\":{\"path\":\"/red/redbanner.png\",\"name\":\"redbanner\"}," +
 						"\"id\":0," +
-						"\"units\":[" +
-						"{" +
-							"\"ammunition\":\"P\",\"tiredness\":\"F\"," +
-							"\"charging\":false,\"positionAngle\":0," +
-							"\"type\":\"unit\",\"version\":0,\"steps\":2," +
-							"\"played\":false,\"orderGiven\":false," +
-							"\"contact\":false,\"name\":\"redbanner-0\"," +
-							"\"angle\":120,\"positionCol\":3,\"id\":0," +
-							"\"cohesion\":\"GO\",\"category\":\"T\"," +
-							"\"positionRow\":4" +
-						"}" +
-						"]," +
-						"\"version\":0}]," +
-						"\"locations\":[" +
-						"{" +
-							"\"col\":3,\"id\":0,\"row\":4," +
-							"\"units\":[" +
-								"\"redbanner-0\"" +
-							"]," +
-							"\"version\":0" +
-						"}" +
-						"]," +
-					"\"id\":0,\"version\":0" +
-				"}" +
-				"]," +
-				"\"name\":\"Test\"," +
-				"\"id\":0,\"version\":0," +
-			"\"map\":{" +
-				"\"boards\":[{" +
-					"\"path\":\"/map/map1.png\"," +
-					"\"col\":4,\"invert\":true," +
-					"\"icon\":\"/map/map1-icon.png\"," +
-					"\"id\":0,\"row\":5,\"version\":0" +
-				"}]," +
-				"\"id\":0,\"version\":0" +
-			"}" +
-			"}",
+						"\"units\":[{" +
+							"\"ammunition\":\"P\",\"tiredness\":\"F\",\"charging\":false," +
+							"\"positionAngle\":0,\"type\":\"unit\",\"version\":0,\"steps\":2," +
+							"\"played\":false,\"engaging\":false,\"orderGiven\":false,\"contact\":false," +
+							"\"name\":\"redbanner-0\",\"angle\":120,\"positionCol\":3,\"id\":0," +
+							"\"cohesion\":\"GO\",\"category\":\"T\",\"positionRow\":4}],\"version\":0,\"moral\":11" +
+						"}]," +
+						"\"id\":0,\"version\":0" +
+					"}]," +
+					"\"weather\":\"C\"," +
+					"\"locations\":[]," +
+					"\"id\":0,\"windDirection\":1,\"version\":0," +
+					"\"map\":{" +
+						"\"boards\":[{" +
+							"\"path\":\"/map/map1.png\",\"col\":4,\"invert\":true,\"icon\":\"/map/map1-icon.png\"," +
+							"\"id\":0,\"row\":5,\"version\":0" +
+						"}]," +
+						"\"id\":0,\"version\":0" +
+					"},\"fog\":\"NF\"" +
+				"}",
 			response.toString()
 		);
 		dataManager.hasFinished();
@@ -231,7 +209,7 @@ public class GameControllerTest implements TestSeawave, CollectionSunbeam, DataM
 		}
 		catch (SummerControllerException sce) {
 			Assert.assertEquals(500, sce.getStatus());
-			Assert.assertEquals("Game with name (Test) already exists", sce.getMessage());
+			Assert.assertEquals("Entity already Exists", sce.getMessage());
 		}
 		dataManager.hasFinished();
 	}
@@ -249,8 +227,8 @@ public class GameControllerTest implements TestSeawave, CollectionSunbeam, DataM
 			Assert.fail("The request should fail");
 		}
 		catch (SummerControllerException sce) {
-			Assert.assertEquals(500, sce.getStatus());
-			Assert.assertEquals("Board not found for value: /map/map1.png", sce.getMessage());
+			Assert.assertEquals(404, sce.getStatus());
+			Assert.assertEquals("Unknown Board with path /map/map1.png", sce.getMessage());
 		}
 		dataManager.hasFinished();
 	}
@@ -273,8 +251,8 @@ public class GameControllerTest implements TestSeawave, CollectionSunbeam, DataM
 			Assert.fail("The request should fail");
 		}
 		catch (SummerControllerException sce) {
-			Assert.assertEquals(500, sce.getStatus());
-			Assert.assertEquals("PlayerIdentity not found for value: Hector", sce.getMessage());
+			Assert.assertEquals(404, sce.getStatus());
+			Assert.assertEquals("PlayerIdentity of name Hector not found", sce.getMessage());
 		}
 		dataManager.hasFinished();
 	}
@@ -328,8 +306,19 @@ public class GameControllerTest implements TestSeawave, CollectionSunbeam, DataM
 		dataManager.register("find", game,null, Game.class, 1L);
 		securityManager.doConnect("admin", 0);
 		Json result = gameController.getById(params("id", "1"), null);
-		Assert.assertEquals(result.toString(),
-			"{\"players\":[],\"id\":1,\"version\":0}"		);
+		Assert.assertEquals(
+		"{" +
+					"\"currentTurn\":0,\"currentPlayerIndex\":0," +
+					"\"sequenceElements\":[]," +
+					"\"players\":[]," +
+					"\"weather\":\"C\"," +
+					"\"locations\":[]," +
+					"\"id\":1," +
+					"\"windDirection\":0," +
+					"\"version\":0," +
+					"\"fog\":\"NF\"" +
+				"}",
+			result.toString());
 		dataManager.hasFinished();
 	}
 
@@ -352,14 +341,16 @@ public class GameControllerTest implements TestSeawave, CollectionSunbeam, DataM
 
 	@Test
 	public void tryToFindAGameWithBadCredentials() {
-		securityManager.doConnect("someone", 0);
+		//Game game = (Game)setEntityId(new Game(), 1);
+		//dataManager.register("find", game,null, Game.class, 1L);
+		//securityManager.doConnect("someoneelse", 0);
 		try {
 			gameController.getById(params("id", "1"), null);
 			Assert.fail("The request should fail");
 		}
 		catch (SummerControllerException sce) {
 			Assert.assertEquals(403, sce.getStatus());
-			Assert.assertEquals("Not authorized", sce.getMessage());
+			Assert.assertEquals("Not connected", sce.getMessage());
 		}
 		dataManager.hasFinished();
 	}
@@ -502,45 +493,29 @@ public class GameControllerTest implements TestSeawave, CollectionSunbeam, DataM
 		dataManager.register("flush", null, null);
 		securityManager.doConnect("admin", 0);
 		Json result = gameController.update(params("id", "101"), Json.createJsonFromString(SIMPLE_GAME_UPDATE));
-		Assert.assertEquals(
-			"{" +
+		Assert.assertEquals("{" +
+				"\"currentTurn\":0," +
+				"\"currentPlayerIndex\":0," +
+				"\"sequenceElements\":[]," +
 				"\"players\":[{" +
-					"\"identity\":{" +
-						"\"path\":\"/players/hector.png\"," +
-						"\"name\":\"Hector\"" +
-					"},"+
-					"\"wings\":[{\"" +
-						"retreatZone\":[" +
-							"{\"col\":3,\"id\":104,\"row\":4,\"version\":0}" +
-						"]," +
-						"\"banner\":{" +
-							"\"path\":\"/red/redbanner.png\"," +
-							"\"name\":\"redbanner\"" +
-						"}," +
-						"\"id\":103," +
+					"\"identity\":{\"path\":\"/players/hector.png\",\"name\":\"Hector\"}," +
+					"\"wings\":[{" +
+						"\"retreatZone\":[{\"col\":3,\"id\":104,\"row\":4,\"version\":0}]," +
+						"\"tiredness\":11," +
+						"\"banner\":{\"path\":\"/red/redbanner.png\",\"name\":\"redbanner\"},\"id\":103," +
 						"\"units\":[{" +
-							"\"ammunition\":\"S\",\"tiredness\":\"T\"," +
-							"\"charging\":true,\"positionAngle\":0," +
-							"\"type\":\"unit\",\"version\":0,\"steps\":1," +
-							"\"played\":true,\"orderGiven\":true," +
-							"\"contact\":true,\"name\":\"redbanner-0\"," +
-							"\"angle\":120,\"positionCol\":3,\"id\":105," +
-							"\"cohesion\":\"D\",\"category\":\"T\"," +
-							"\"positionRow\":4" +
+							"\"ammunition\":\"S\",\"tiredness\":\"T\",\"charging\":true,\"positionAngle\":0," +
+							"\"type\":\"unit\",\"version\":0,\"steps\":1,\"played\":true,\"engaging\":false," +
+							"\"orderGiven\":true,\"contact\":true,\"name\":\"redbanner-0\",\"angle\":120," +
+							"\"positionCol\":3,\"id\":105,\"cohesion\":\"D\",\"category\":\"T\",\"positionRow\":4" +
 						"}]," +
-						"\"version\":0}]," +
-						"\"locations\":[{" +
-							"\"col\":3,\"id\":106,\"row\":4," +
-							"\"units\":[" +
-								"\"redbanner-0\"" +
-							"]," +
-							"\"version\":0" +
-						"}]," +
-						"\"id\":102,\"version\":0" +
+						"\"version\":0,\"moral\":11" +
 					"}]," +
-					"\"name\":\"game\"," +
-					"\"id\":101,\"version\":0" +
-				"}",
+					"\"id\":102,\"version\":0" +
+				"}]," +
+				"\"weather\":\"C\"," +
+				"\"locations\":[],\"id\":101,\"windDirection\":0,\"version\":0,\"fog\":\"NF\"" +
+			"}",
 			result.toString()
 		);
 		dataManager.hasFinished();

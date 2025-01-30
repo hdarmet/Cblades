@@ -12,6 +12,7 @@ import org.summer.annotation.REST.Method;
 import org.summer.controller.ControllerSunbeam;
 import org.summer.controller.Json;
 import org.summer.controller.SummerControllerException;
+import org.summer.controller.Verifier;
 import org.summer.data.DataSunbeam;
 import org.summer.platform.FileSunbeam;
 import org.summer.platform.PlatformManager;
@@ -46,7 +47,7 @@ public class PlayerIdentityController implements InjectorSunbeam, DataSunbeam, S
 
 	void storePlayerIdentityImages(Map<String, Object> params, PlayerIdentity playerIdentity) {
 		FileSpecification[] files = (FileSpecification[]) params.get(MULTIPART_FILES);
-		if (files.length > 0) {
+		if (files!=null && files.length > 0) {
 			if (files.length!= 1) throw new SummerControllerException(400, "One player identity file must be loaded.");
 			String fileName = "playeridentity" + playerIdentity.getId() + "." + files[0].getExtension();
 			String webName = "playeridentity" + playerIdentity.getId() + "-" + System.currentTimeMillis() + "." + files[0].getExtension();
@@ -61,7 +62,7 @@ public class PlayerIdentityController implements InjectorSunbeam, DataSunbeam, S
 		ifAuthorized(user->{
 			try {
 				inTransaction(em->{
-					PlayerIdentity newPlayerIdentity = writeToPlayerIdentity(em, request, new PlayerIdentity());
+					PlayerIdentity newPlayerIdentity = writeToPlayerIdentity(em, request, new PlayerIdentity(), true);
 					persist(em, newPlayerIdentity);
 					storePlayerIdentityImages(params, newPlayerIdentity);
 					result.set(readFromPlayerIdentity(newPlayerIdentity));
@@ -189,7 +190,7 @@ public class PlayerIdentityController implements InjectorSunbeam, DataSunbeam, S
 				inTransaction(em->{
 					String id = (String)params.get("id");
 					PlayerIdentity playerIdentity = findPlayerIdentity(em, new Long(id));
-					writeToPlayerIdentity(em, request, playerIdentity);
+					writeToPlayerIdentity(em, request, playerIdentity, false);
 					storePlayerIdentityImages(params, playerIdentity);
 					flush(em);
 					result.set(readFromPlayerIdentity(playerIdentity));
@@ -233,20 +234,29 @@ public class PlayerIdentityController implements InjectorSunbeam, DataSunbeam, S
 		return playerIdentity;
 	}
 
-	PlayerIdentity writeToPlayerIdentity(EntityManager em, Json json, PlayerIdentity playerIdentity) {
-		verify(json)
-			.checkRequired("name").checkMinSize("name", 2).checkMaxSize("name", 20)
+	PlayerIdentity writeToPlayerIdentity(EntityManager em, Json json, PlayerIdentity playerIdentity, boolean full) {
+		Verifier verifier = verify(json);
+		if (full) {
+			verifier
+				.checkRequired("name")
+				.checkRequired("path")
+				.each("comments", cJson -> verify(cJson)
+					.checkRequired("version")
+					.checkRequired("date")
+					.checkRequired("text")
+				);
+		}
+		verifier
+			.checkMinSize("name", 2).checkMaxSize("name", 20)
 			.checkPattern("name", "[a-zA-Z0-9_\\-]+")
-			.checkRequired("path").checkMinSize("path", 2).checkMaxSize("path", 200)
+			.checkMinSize("path", 2).checkMaxSize("path", 200)
 			.checkMinSize("description", 2).checkMaxSize("description", 2000)
 			.check("status", PlayerIdentityStatus.byLabels().keySet())
 			.each("comments", cJson->verify(cJson)
-				.checkRequired("version")
-				.checkRequired("date")
-				.checkRequired("text")
 				.checkMinSize("text", 2)
 				.checkMaxSize("text", 19995)
-			)
+			);
+		verifier
 			.ensure();
 		sync(json, playerIdentity)
 			.write("version")

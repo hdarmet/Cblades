@@ -168,7 +168,7 @@ public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySu
 	public Json create(Map<String, Object> params, Json request) {
 		Ref<Json> result = new Ref<>();
 		inTransaction(em->{
-			Forum newForum = writeToForumWithComments(em, request, new Forum());
+			Forum newForum = writeToForumWithComments(em, request, new Forum(), true);
 			ifAuthorized(
 				user->{
 					try {
@@ -235,7 +235,7 @@ public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySu
 			ifAuthorized(
 				user -> {
 					try {
-						writeToForumWithComments(em, request, forum);
+						writeToForumWithComments(em, request, forum, false);
 						flush(em);
 						result.set(readFromForumWithComments(forum));
 					} catch (PersistenceException pe) {
@@ -305,7 +305,7 @@ public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySu
 	public Json createThread(Map<String, Object> params, Json request) {
 		Ref<Json> result = new Ref<>();
 		inTransaction(em->{
-			ForumThread newThread = writeToForumThreadWithComments(em, request, new ForumThread());
+			ForumThread newThread = writeToForumThreadWithComments(em, request, new ForumThread(), true);
 			ifAuthorized(
 				user->{
 					try {
@@ -399,7 +399,7 @@ public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySu
 			ifAuthorized(
 				user -> {
 					try {
-						writeToForumThreadWithComments(em, request, thread);
+						writeToForumThreadWithComments(em, request, thread, false);
 						flush(em);
 						result.set(readFromForumThreadWithComments(thread));
 					} catch (PersistenceException pe) {
@@ -510,42 +510,30 @@ public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySu
 		}
 	}
 
-	Forum writeToForum(EntityManager em, Json json, Forum forum) {
+	Forum writeToForumWithComments(EntityManager em, Json json, Forum forum, boolean full) {
+		Verifier verifier = verify(json);
 		try {
-			verify(json)
-				.checkRequired("title").checkMinSize("title", 2).checkMaxSize("title", 200)
+			if (full) {
+				verifier
+					.checkRequired("title")
+					.checkRequired("description")
+					.each("comments", cJson -> verify(cJson)
+						.checkRequired("version")
+						.checkRequired("date")
+						.checkRequired("text")
+					);
+			}
+			verifier
+				.checkMinSize("title", 2).checkMaxSize("title", 200)
 				.checkPattern("title", "[\\d\\s\\w]+")
-				.checkRequired("description")
-					.checkMinSize("description", 2).checkMaxSize("description", 2000)
-				.check("status", ForumStatus.byLabels().keySet())
-				.ensure();
-			sync(json, forum)
-				.write("version")
-				.write("title")
-				.write("description")
-				.write("status", label->ForumStatus.byLabels().get(label));
-			return forum;
-		} catch (SummerNotFoundException snfe) {
-			throw new SummerControllerException(404, snfe.getMessage());
-		}
-	}
-
-	Forum writeToForumWithComments(EntityManager em, Json json, Forum forum) {
-		try {
-			verify(json)
-				.checkRequired("title").checkMinSize("title", 2).checkMaxSize("title", 200)
-				.checkPattern("title", "[\\d\\s\\w]+")
-				.checkRequired("description")
-					.checkMinSize("description", 2).checkMaxSize("description", 2000)
+				.checkMinSize("description", 2).checkMaxSize("description", 2000)
 				.check("status", ForumStatus.byLabels().keySet())
 				.checkInteger("author", "Not a valid author id")
 				.each("comments", cJson->verify(cJson)
-					.checkRequired("version")
-					.checkRequired("date")
-					.checkRequired("text")
 					.checkMinSize("text", 2)
 					.checkMaxSize("text", 19995)
-				)
+				);
+			verifier
 				.ensure();
 			sync(json, forum)
 				.write("version")
@@ -564,24 +552,32 @@ public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySu
 		}
 	}
 
-	ForumThread writeToForumThreadWithComments(EntityManager em, Json json, ForumThread thread) {
+	ForumThread writeToForumThreadWithComments(EntityManager em, Json json, ForumThread thread, boolean full) {
+		Verifier verifier = verify(json);
 		try {
-			verify(json)
-				.checkRequired("title").checkMinSize("title", 2).checkMaxSize("title", 200)
+			if (full) {
+				verifier
+					.checkRequired("title")
+					.checkRequired("description")
+					.checkRequired("forum")
+					.each("comments", cJson -> verify(cJson)
+						.checkRequired("version")
+						.checkRequired("date")
+						.checkRequired("text")
+					);
+			}
+			verifier
+				.checkMinSize("title", 2).checkMaxSize("title", 200)
 				.checkPattern("title", "[\\d\\s\\w]+")
-				.checkRequired("description")
 				.checkMinSize("description", 2).checkMaxSize("description", 2000)
-				.checkRequired("forum")
 				.checkInteger("forum")
 				.check("status", ForumStatus.byLabels().keySet())
 				.checkInteger("author", "Not a valid author id")
 				.each("comments", cJson->verify(cJson)
-					.checkRequired("version")
-					.checkRequired("date")
-					.checkRequired("text")
 					.checkMinSize("text", 2)
 					.checkMaxSize("text", 19995)
-				)
+				);
+			verifier
 				.ensure();
 			sync(json, thread)
 				.write("version")
@@ -601,15 +597,21 @@ public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySu
 		}
 	}
 
-	ForumThread writeToProposedForumThread(EntityManager em, Json json, ForumThread thread) {
+	ForumThread writeToProposedForumThread(EntityManager em, Json json, ForumThread thread, boolean full) {
+		Verifier verifier = verify(json);
 		try {
-			verify(json)
-				.checkRequired("title").checkMinSize("title", 2).checkMaxSize("title", 200)
+			if (full) {
+				verifier
+					.checkRequired("title")
+					.checkRequired("description");
+			}
+			verifier
+				.checkMinSize("title", 2).checkMaxSize("title", 200)
 				.checkPattern("title", "[\\d\\s\\w]+")
-				.checkRequired("description")
-					.checkMinSize("description", 2).checkMaxSize("description", 2000)
+				.checkMinSize("description", 2).checkMaxSize("description", 2000)
 				.checkInteger("forum")
-				.check("status", ForumStatus.byLabels().keySet())
+				.check("status", ForumStatus.byLabels().keySet());
+			verifier
 				.ensure();
 			sync(json, thread)
 				.write("version")
@@ -915,7 +917,7 @@ public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySu
 	public Json propose(Map<String, Object> params, Json request) {
 		Ref<Json> result = new Ref<>();
 		inTransaction(em->{
-			ForumThread newThread = writeToProposedForumThread(em, request, new ForumThread());
+			ForumThread newThread = writeToProposedForumThread(em, request, new ForumThread(), true);
 			ifAuthorized(
 				user->{
 					try {
@@ -948,7 +950,7 @@ public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySu
 				user -> {
 					try {
 						Account author = Account.find(em, user);
-						writeToProposedForumThread(em, request, thread);
+						writeToProposedForumThread(em, request, thread, false);
 						flush(em);
 						result.set(readFromForumThread(thread));
 					} catch (PersistenceException pe) {

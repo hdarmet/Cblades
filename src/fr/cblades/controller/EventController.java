@@ -64,7 +64,7 @@ public class EventController implements InjectorSunbeam, DataSunbeam, SecuritySu
 		ifAuthorized(user->{
 			try {
 				inTransaction(em->{
-					Event newEvent = writeToEvent(em, request, new Event());
+					Event newEvent = writeToEvent(em, request, new Event(), true);
 					persist(em, newEvent);
 					storeIllustration(params, newEvent);
 					em.flush();
@@ -195,7 +195,7 @@ public class EventController implements InjectorSunbeam, DataSunbeam, SecuritySu
 				inTransaction(em->{
 					String id = (String)params.get("id");
 					Event event = findEvent(em, new Long(id));
-					writeToEvent(em, request, event);
+					writeToEvent(em, request, event, false);
 					storeIllustration(params, event);
 					flush(em);
 					result.set(readFromEvent(event));
@@ -236,14 +236,18 @@ public class EventController implements InjectorSunbeam, DataSunbeam, SecuritySu
 		return event;
 	}
 
-	Event writeToEvent(EntityManager em, Json json, Event event) {
+	Event writeToEvent(EntityManager em, Json json, Event event, boolean full) {
 		try {
-			Verifier verifier = verify(json)
-				.checkRequired("date")
-				.checkRequired("title")
+			Verifier verifier = verify(json);
+			if (full) {
+				verifier
+					.checkRequired("date")
+					.checkRequired("title")
+					.checkRequired("description");
+			}
+			verifier
 				.checkMinSize("title", 2)
 				.checkMaxSize("title", 19995)
-				.checkRequired("description")
 				.checkMinSize("description", 2)
 				.checkMaxSize("description", 19995)
 				.checkMinSize("illustration", 2)

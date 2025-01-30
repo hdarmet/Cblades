@@ -12,6 +12,7 @@ import org.summer.annotation.REST.Method;
 import org.summer.controller.ControllerSunbeam;
 import org.summer.controller.Json;
 import org.summer.controller.SummerControllerException;
+import org.summer.controller.Verifier;
 import org.summer.data.DataSunbeam;
 import org.summer.data.SummerNotFoundException;
 import org.summer.platform.FileSunbeam;
@@ -117,7 +118,7 @@ public class ThemeController implements InjectorSunbeam, DataSunbeam, SecuritySu
 	public Json create(Map<String, Object> params, Json request) {
 		Ref<Json> result = new Ref<>();
 		inTransaction(em->{
-			Theme newTheme = writeToTheme(em, request, new Theme());
+			Theme newTheme = writeToTheme(em, request, new Theme(), true);
 			ifAuthorized(
 				user->{
 					try {
@@ -292,7 +293,7 @@ public class ThemeController implements InjectorSunbeam, DataSunbeam, SecuritySu
 			ifAuthorized(
 				user -> {
 					try {
-						writeToTheme(em, request, theme);
+						writeToTheme(em, request, theme, false);
 						storeThemeImages(params, theme);
 						flush(em);
 						result.set(readFromTheme(theme));
@@ -365,22 +366,32 @@ public class ThemeController implements InjectorSunbeam, DataSunbeam, SecuritySu
 		}
 	}
 
-	Theme writeToTheme(EntityManager em, Json json, Theme theme) {
+	Theme writeToTheme(EntityManager em, Json json, Theme theme, boolean full) {
+		Verifier verifier = verify(json);
 		try {
-			verify(json)
+			if (full) {
+				verifier
+					.checkRequired("title")
+					.checkRequired("description")
+					.checkRequired("illustration")
+					.each("comments", cJson -> verify(cJson)
+						.checkRequired("version")
+						.checkRequired("date")
+						.checkRequired("text")
+					);
+			}
+			verifier
 				.check("category", ThemeCategory.byLabels().keySet())
-				.checkRequired("title").checkMinSize("title", 2).checkMaxSize("title", 200)
+				.checkMinSize("title", 2).checkMaxSize("title", 200)
 				.checkPattern("title", "[\\d\\s\\w]+")
-				.checkRequired("description").checkMinSize("description", 2).checkMaxSize("description", 1000)
-				.checkRequired("illustration").checkMinSize("illustration", 2).checkMaxSize("illustration", 200)
+				.checkMinSize("description", 2).checkMaxSize("description", 1000)
+				.checkMinSize("illustration", 2).checkMaxSize("illustration", 200)
 				.check("status", ThemeStatus.byLabels().keySet())
 				.each("comments", cJson->verify(cJson)
-					.checkRequired("version")
-					.checkRequired("date")
-					.checkRequired("text")
 					.checkMinSize("text", 2)
 					.checkMaxSize("text", 19995)
-				)
+				);
+			verifier
 				.ensure();
 			sync(json, theme)
 				.write("version")

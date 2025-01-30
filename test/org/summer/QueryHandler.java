@@ -23,6 +23,8 @@ class QueryHandler implements InvocationHandler {
     static Method setParameterMethod = TestUtils.getMethod(Query.class, "setParameter", String.class, Object.class);
     static Method getSingleResultMethod = TestUtils.getMethod(Query.class, "getSingleResult");
     static Method getResultListMethod = TestUtils.getMethod(Query.class, "getResultList");
+    static Method setFirstResultMethod = TestUtils.getMethod(Query.class, "setFirstResult", Integer.TYPE);
+    static Method setMaxResultsMethod = TestUtils.getMethod(Query.class, "setMaxResults", Integer.TYPE);
 
     @Override
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
@@ -30,6 +32,14 @@ class QueryHandler implements InvocationHandler {
             if (!parent.transaction.first.active) throw new SummerTestException("Transaction is not active");
             peekCall().invoke("setParameter", args);
             return proxy;
+        }
+        else if (method.equals(setFirstResultMethod)) {
+            if (!parent.transaction.first.active) throw new SummerTestException("Transaction is not active");
+            return peekCall().invoke("setFirstResult", args);
+        }
+        else if (method.equals(setMaxResultsMethod)) {
+            if (!parent.transaction.first.active) throw new SummerTestException("Transaction is not active");
+            return peekCall().invoke("setMaxResults", args);
         }
         else if (method.equals(getSingleResultMethod)) {
             if (!parent.transaction.first.active) throw new SummerTestException("Transaction is not active");

@@ -507,12 +507,12 @@ export function showDice(d1, d2, x, y) {
         "save()",
             `setTransform(1, 0, 0, 1, ${x}, ${y})`,
             "shadowColor = #00FFFF", "shadowBlur = 10",
-            `drawImage(./../images/dice/d${d1}.png, -50, -44.5, 100, 89)`,
+            `drawImage(./../images/dice/d6c-${d1}.png, -50, -48, 100, 96)`,
         "restore()",
         "save()",
             `setTransform(1, 0, 0, 1, ${x-60}, ${y+60})`,
             "shadowColor = #00FFFF", "shadowBlur = 10",
-            `drawImage(./../images/dice/d${d2}.png, -50, -44.5, 100, 89)`,
+            `drawImage(./../images/dice/d6c-${d2}.png, -50, -48, 100, 96)`,
         "restore()"
     ];
 }
@@ -522,12 +522,12 @@ export function showPlayedDice(d1, d2, x, y) {
         "save()",
             `setTransform(1, 0, 0, 1, ${x}, ${y})`,
             "shadowColor = #000000", "shadowBlur = 10",
-            `drawImage(./../images/dice/d${d1}.png, -50, -44.5, 100, 89)`,
+            `drawImage(./../images/dice/d6c-${d1}.png, -50, -48, 100, 96)`,
         "restore()",
         "save()",
             `setTransform(1, 0, 0, 1, ${x-60}, ${y+60})`,
             "shadowColor = #000000", "shadowBlur = 10",
-            `drawImage(./../images/dice/d${d2}.png, -50, -44.5, 100, 89)`,
+            `drawImage(./../images/dice/d6c-${d2}.png, -50, -48, 100, 96)`,
         "restore()"
     ];
 }
@@ -537,7 +537,7 @@ export function showDie(d1, x, y) {
         "save()",
             `setTransform(1, 0, 0, 1, ${x}, ${y})`,
             "shadowColor = #00FFFF", "shadowBlur = 10",
-            `drawImage(./../images/dice/d${d1}.png, -50, -44.5, 100, 89)`,
+            `drawImage(./../images/dice/d6c-${d1}.png, -50, -48, 100, 96)`,
         "restore()",
     ];
 }
@@ -547,7 +547,7 @@ export function showPlayedDie(d1, x, y) {
         "save()",
             `setTransform(1, 0, 0, 1, ${x}, ${y})`,
             "shadowColor = #000000", "shadowBlur = 10",
-            `drawImage(./../images/dice/d${d1}.png, -50, -44.5, 100, 89)`,
+            `drawImage(./../images/dice/d6c-${d1}.png, -50, -48, 100, 96)`,
         "restore()",
     ];
 }

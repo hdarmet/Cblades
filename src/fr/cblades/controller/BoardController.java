@@ -12,6 +12,7 @@ import org.summer.annotation.REST.Method;
 import org.summer.controller.ControllerSunbeam;
 import org.summer.controller.Json;
 import org.summer.controller.SummerControllerException;
+import org.summer.controller.Verifier;
 import org.summer.data.DataSunbeam;
 import org.summer.data.SummerNotFoundException;
 import org.summer.platform.FileSunbeam;
@@ -48,7 +49,7 @@ public class BoardController implements InjectorSunbeam, DataSunbeam, SecuritySu
 
 	void storeBoardImages(Map<String, Object> params, Board board) {
 		FileSpecification[] files = (FileSpecification[]) params.get(MULTIPART_FILES);
-		if (files.length > 0) {
+		if (files!= null && files.length > 0) {
 			if (files.length!= 2) throw new SummerControllerException(400, "Two board files must be loaded.");
 			String fileName = "board" + board.getId() + "." + files[0].getExtension();
 			String fileIconName = "boardicon" + board.getId() + "." + files[1].getExtension();
@@ -119,7 +120,7 @@ public class BoardController implements InjectorSunbeam, DataSunbeam, SecuritySu
 	public Json create(Map<String, Object> params, Json request) {
 		Ref<Json> result = new Ref<>();
 		inTransaction(em->{
-			Board newBoard = writeToBoard(em, request, new Board());
+			Board newBoard = writeToBoard(em, request, new Board(), true);
 			ifAuthorized(
 				user->{
 					try {
@@ -271,17 +272,16 @@ public class BoardController implements InjectorSunbeam, DataSunbeam, SecuritySu
 	public Json delete(Map<String, Object> params, Json request) {
 		inTransaction(em->{
 			String id = (String)params.get("id");
-			Board board = findBoard(em, new Long(id));
-			ifAuthorized(
-				user->{
-					try {
+			try {
+				Board board = findBoard(em, new Long(id));
+				ifAuthorized(user->{
 						remove(em, board);
-					} catch (PersistenceException pe) {
-						throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe);
-					}
-				},
-				verifyIfAdminOrOwner(board)
-			);
+					},
+					verifyIfAdminOrOwner(board)
+				);
+			} catch (PersistenceException pe) {
+				throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe);
+			}
 		});
 		return Json.createJsonObject().put("deleted", "ok");
 	}
@@ -289,45 +289,39 @@ public class BoardController implements InjectorSunbeam, DataSunbeam, SecuritySu
 	@REST(url="/api/board/update/:id", method=Method.POST)
 	public Json update(Map<String, Object> params, Json request) {
 		Ref<Json> result = new Ref<>();
-		inTransaction(em-> {
-			String id = (String) params.get("id");
-			Board board = findBoard(em, new Long(id));
-			ifAuthorized(
-				user -> {
-					try {
-						writeToBoard(em, request, board);
-						storeBoardImages(params, board);
-						flush(em);
-						result.set(readFromBoard(board));
-					} catch (PersistenceException pe) {
-						throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe);
-					}
-				},
-				ADMIN
-			);
-		});
+		try {
+			inTransaction(em-> {
+				String id = (String) params.get("id");
+				Board board = findBoard(em, new Long(id));
+				ifAuthorized(user -> {
+					writeToBoard(em, request, board, false);
+					storeBoardImages(params, board);
+					flush(em);
+					result.set(readFromBoard(board));
+				}, verifyIfAdminOrOwner(board));
+			});
+		} catch (PersistenceException pe) {
+			throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe);
+		}
 		return result.get();
 	}
 
 	@REST(url="/api/board/update-status/:id", method=Method.POST)
 	public Json updateStatus(Map<String, Object> params, Json request) {
 		Ref<Json> result = new Ref<>();
-		inTransaction(em-> {
-			String id = (String) params.get("id");
-			Board board = findBoard(em, new Long(id));
-			ifAuthorized(
-				user -> {
-					try {
-						writeToBoardStatus(request, board);
-						flush(em);
-						result.set(readFromBoard(board));
-					} catch (PersistenceException pe) {
-						throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe);
-					}
-				},
-				ADMIN
-			);
-		});
+		ifAuthorized(user -> {
+			try {
+				inTransaction(em-> {
+					String id = (String) params.get("id");
+					Board board = findBoard(em, new Long(id));
+					writeToBoardStatus(request, board);
+					flush(em);
+					result.set(readFromBoard(board));
+				});
+			} catch (PersistenceException pe) {
+				throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe);
+			}
+		}, ADMIN);
 		return result.get();
 	}
 
@@ -337,8 +331,7 @@ public class BoardController implements InjectorSunbeam, DataSunbeam, SecuritySu
 		inTransaction(em->{
 			String id = (String)params.get("id");
 			Board board = findBoard(em, new Long(id));
-			ifAuthorized(
-				user->{
+			ifAuthorized(user->{
 					try {
 						writeToBoardHexes(request, board);
 						flush(em);
@@ -390,23 +383,29 @@ public class BoardController implements InjectorSunbeam, DataSunbeam, SecuritySu
 		}
 	}
 
-	Board writeToBoard(EntityManager em, Json json, Board board) {
+	Board writeToBoard(EntityManager em, Json json, Board board, boolean full) {
+		Verifier verifier = verify(json);
 		try {
-			verify(json)
-				.checkRequired("name").checkMinSize("name", 2).checkMaxSize("name", 20)
+			if (full) {
+				verifier
+					.checkRequired("name").checkMinSize("name", 2).checkMaxSize("name", 20)
+					.checkRequired("description").checkMinSize("description", 2).checkMaxSize("description", 1000)
+					.checkRequired("path").checkMinSize("path", 2).checkMaxSize("path", 200)
+					.checkRequired("icon").checkMinSize("icon", 2).checkMaxSize("icon", 200)
+					.each("comments", cJson -> verify(cJson)
+							.checkRequired("version")
+							.checkRequired("date")
+							.checkRequired("text")
+					);
+			}
+			verifier
 				.checkPattern("name", "[\\d\\s\\w]+")
-				.checkRequired("description").checkMinSize("description", 2).checkMaxSize("description", 1000)
-				.checkRequired("path").checkMinSize("path", 2).checkMaxSize("path", 200)
-				.checkRequired("icon").checkMinSize("icon", 2).checkMaxSize("icon", 200)
 				.check("status", BoardStatus.byLabels().keySet())
 				.each("comments", cJson -> verify(cJson)
-					.checkRequired("version")
-					.checkRequired("date")
-					.checkRequired("text")
 					.checkMinSize("text", 2)
 					.checkMaxSize("text", 19995)
-				)
-				.ensure();
+				);
+			verifier.ensure();
 			sync(json, board)
 				.write("version")
 				.write("name")

@@ -13,6 +13,7 @@ import org.summer.annotation.REST.Method;
 import org.summer.controller.ControllerSunbeam;
 import org.summer.controller.Json;
 import org.summer.controller.SummerControllerException;
+import org.summer.controller.Verifier;
 import org.summer.data.DataSunbeam;
 import org.summer.data.SummerNotFoundException;
 import org.summer.data.SummerPersistenceException;
@@ -66,7 +67,7 @@ public class ArticleController implements InjectorSunbeam, DataSunbeam, Security
 	public Json propose(Map<String, Object> params, Json request) {
 		Ref<Json> result = new Ref<>();
 		inTransaction(em->{
-			Article newArticle = writeToProposedArticle(em, request, new Article());
+			Article newArticle = writeToProposedArticle(em, request, new Article(), true);
 			ifAuthorized(
 				user->{
 					try {
@@ -102,7 +103,7 @@ public class ArticleController implements InjectorSunbeam, DataSunbeam, Security
 				user -> {
 					try {
 						Account author = Account.find(em, user);
-						writeToProposedArticle(em, request, article);
+						writeToProposedArticle(em, request, article, false);
 						addComment(request, article, author);
 						storeArticleImages(params, article);
 						flush(em);
@@ -123,7 +124,7 @@ public class ArticleController implements InjectorSunbeam, DataSunbeam, Security
 	public Json create(Map<String, Object> params, Json request) {
 		Ref<Json> result = new Ref<>();
 		inTransaction(em->{
-			Article newArticle = writeToArticle(em, request, new Article());
+			Article newArticle = writeToArticle(em, request, new Article(), true);
 			newArticle.setPoll(new LikePoll().setLikes(0).setDislikes(0));
 			ifAuthorized(
 				user->{
@@ -336,7 +337,7 @@ public class ArticleController implements InjectorSunbeam, DataSunbeam, Security
 			ifAuthorized(
 				user -> {
 					try {
-						writeToArticle(em, request, article);
+						writeToArticle(em, request, article, false);
 						storeArticleImages(params, article);
 						flush(em);
 						result.set(readFromArticle(article));
@@ -362,27 +363,36 @@ public class ArticleController implements InjectorSunbeam, DataSunbeam, Security
 		};
 	}
 
-	Article writeToProposedArticle(EntityManager em, Json json, Article article) {
+	Article writeToProposedArticle(EntityManager em, Json json, Article article, boolean full) {
+		Verifier verifier = verify(json);
 		try {
-			verify(json)
-				.checkRequired("title").checkMinSize("title", 2).checkMaxSize("title", 200)
+			if (full) {
+				verifier
+					.checkRequired("title")
+					.each("themes", tJson -> verify(tJson)
+						.checkRequired("id").checkInteger("id", "Not a valid id")
+					)
+					.each("paragraphs", cJson -> verify(cJson)
+						.checkRequired("version")
+						.checkRequired("ordinal")
+						.checkRequired("title")
+						.checkRequired("illustration")
+						.checkRequired("text")
+					);
+			}
+			verifier
+				.checkMinSize("title", 2).checkMaxSize("title", 200)
 				.checkPattern("title", "[\\d\\s\\w]+")
-				.each("themes", tJson->verify(tJson)
-					.checkRequired("id").checkInteger("id", "Not a valid id")
-				)
 				.checkMinSize("newComment", 2).checkMaxSize("newComment", 200)
 				.each("paragraphs", cJson->verify(cJson)
-					.checkRequired("version")
-					.checkRequired("ordinal")
-					.checkRequired("title").checkMinSize("title", 2).checkMaxSize("title", 200)
+					.checkMinSize("title", 2).checkMaxSize("title", 200)
 					.checkPattern("title", "[\\d\\s\\w]+")
-					.checkRequired("illustration")
 					.checkMinSize("illustration", 2).checkMaxSize("illustration", 200)
 					.check("illustrationPosition",IllustrationPosition.byLabels().keySet())
-					.checkRequired("text")
 					.checkMinSize("text", 2)
 					.checkMaxSize("text", 19995)
-				)
+				);
+			verifier
 				.ensure();
 			sync(json, article)
 				.write("version")
@@ -421,34 +431,48 @@ public class ArticleController implements InjectorSunbeam, DataSunbeam, Security
 		return article;
 	}
 
-	Article writeToArticle(EntityManager em, Json json, Article article) {
+	Article writeToArticle(EntityManager em, Json json, Article article, boolean full) {
+		Verifier verifier = verify(json);
 		try {
-			verify(json)
-				.checkRequired("title").checkMinSize("title", 2).checkMaxSize("title", 200)
+			if (full) {
+				verifier
+					.checkRequired("title")
+					.each("themes", tJson -> verify(tJson)
+						.checkRequired("id")
+					)
+					.each("paragraphs", cJson -> verify(cJson)
+						.checkRequired("version")
+						.checkRequired("ordinal")
+						.checkRequired("title")
+						.checkRequired("illustration")
+						.checkRequired("text")
+						)
+						.each("comments", cJson -> verify(cJson)
+							.checkRequired("version")
+							.checkRequired("date")
+							.checkRequired("text")
+						);
+			}
+			verifier
+				.checkMinSize("title", 2).checkMaxSize("title", 200)
 				.checkPattern("title", "[\\d\\s\\w]+")
 				.each("themes", tJson->verify(tJson)
-						.checkRequired("id").checkInteger("id", "Not a valid id")
+					.checkInteger("id", "Not a valid id")
 				)
 				.check("status", ThemeStatus.byLabels().keySet())
 				.each("paragraphs", cJson->verify(cJson)
-					.checkRequired("version")
-					.checkRequired("ordinal")
-					.checkRequired("title").checkMinSize("title", 2).checkMaxSize("title", 200)
+					.checkMinSize("title", 2).checkMaxSize("title", 200)
 					.checkPattern("title", "[\\d\\s\\w]+")
-					.checkRequired("illustration")
 					.checkMinSize("illustration", 2).checkMaxSize("illustration", 200)
 					.check("illustrationPosition",IllustrationPosition.byLabels().keySet())
-					.checkRequired("text")
 					.checkMinSize("text", 2)
 					.checkMaxSize("text", 19995)
 				)
 				.each("comments", cJson->verify(cJson)
-					.checkRequired("version")
-					.checkRequired("date")
-					.checkRequired("text")
 					.checkMinSize("text", 2)
 					.checkMaxSize("text", 19995)
-				)
+				);
+			verifier
 				.ensure();
 			sync(json, article)
 				.write("version")

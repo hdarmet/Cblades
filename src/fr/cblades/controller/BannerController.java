@@ -43,8 +43,8 @@ public class BannerController implements InjectorSunbeam, DataSunbeam, SecurityS
 
 	void storeBannerImages(Map<String, Object> params, Banner banner) {
 		FileSpecification[] files = (FileSpecification[]) params.get(MULTIPART_FILES);
-		if (files.length > 0) {
-			if (files.length!= 1) throw new SummerControllerException(400, "One banner file must be loaded.");
+		if (files != null && files.length > 0) {
+			if (files.length!= 1) throw new SummerControllerException(400, "Only one banner file must be loaded.");
 			String fileName = "banner" + banner.getId() + "." + files[0].getExtension();
 			String webName = "banner" + banner.getId() + "-" + System.currentTimeMillis() + "." + files[0].getExtension();
 			copyStream(files[0].getStream(), PlatformManager.get().getOutputStream("/games/" + fileName));

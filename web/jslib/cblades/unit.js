@@ -705,7 +705,7 @@ export class CBUnit extends WUnit {
 
     finish() {
         super.finish();
-        WSequence.appendElement(this.game, new CBStateSequenceElement({game: this.game, unit: this}));
+        WSequence.appendElement(this.game, new CBFinishUnitSequenceElement({game: this.game, unit: this}));
     }
 
     _unselect() {
@@ -960,8 +960,9 @@ export class CBUnit extends WUnit {
             if (this._charging === CBCharge.CHARGING && charging === CBCharge.NONE) {
                 this.addOneTirednessLevel();
             }
-            this._engaging = engaged;
+            this._engaging =engaged;
             this._charging = charging;
+            WSequence.appendElement(this.game, new CBEngagingSequenceElement({game: this.game, unit: this}));
             this._updateEngagementArtifact(this.createMarkerArtifact, this.createActivableMarkerArtifact, this.deleteMarkerArtifact);
         }
     }
@@ -1467,19 +1468,21 @@ export class CBStateSequenceElement extends WSequenceElement {
         this.orderGiven = unit.hasReceivedOrder();
         this.movementPoints = unit.movementPoints;
         this.extendedMovementPoints = unit.extendedMovementPoints;
+        this._setUnitAction(unit);
+        this.played = unit.isPlayed();
+    }
+
+    _setUnitAction(unit) {
         if (unit.action && !unit.action.isFinished()) {
             this.actionType = unit.action.constructor.name;
             this.actionMode = unit.action.mode;
         }
-        this.played = unit.isPlayed();
     }
 
-    /*
     setState(state) {
-        Object.assign(state, this);
+        Object.assign(this, state);
         return this;
     }
-     */
 
     _toString() {
         let result = super._toString();
@@ -1493,8 +1496,8 @@ export class CBStateSequenceElement extends WSequenceElement {
         if (this.orderGiven !== undefined) result+=", OrderGiven: "+this.orderGiven;
         if (this.movementPoints !== undefined) result+=", MovementPoints: "+this.movementPoints;
         if (this.extendedMovementPoints !== undefined) result+=", ExtendedMovementPoints: "+this.extendedMovementPoints;
-        if (this.actionType !== undefined) result+=", ActionType: "+this.actionType;
-        if (this.actionMode !== undefined) result+=", ActionMode: "+this.actionMode;
+        if (this.actionType !== undefined && this.actionType !== null) result+=", ActionType: "+this.actionType;
+        if (this.actionMode !== undefined && this.actionMode !== null) result+=", ActionMode: "+this.actionMode;
         if (this.played !== undefined) result+=", Played: "+this.played;
         return result;
     }
@@ -1595,4 +1598,30 @@ export class CBStateSequenceElement extends WSequenceElement {
 
 }
 WSequence.register("state", CBStateSequenceElement);
+
+export class CBFinishUnitSequenceElement extends CBStateSequenceElement {
+
+    constructor({id, unit, game}) {
+        super({id, type:"finish-unit", unit, game});
+    }
+
+    _setUnitAction(unit) {
+    }
+
+    setUnit(unit) {
+        super.setUnit(unit);
+        this.played = true;
+    }
+
+}
+WSequence.register("state", CBFinishUnitSequenceElement);
+
+export class CBEngagingSequenceElement extends CBStateSequenceElement {
+
+    constructor({id, game, unit}) {
+        super({id, type: "engaging", game, unit});
+    }
+
+}
+WSequence.register("engaging", CBEngagingSequenceElement);
 

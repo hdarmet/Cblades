@@ -183,30 +183,32 @@ public class AccountController implements InjectorSunbeam, DataSunbeam, Security
 		return account;
 	}
 	
-	Account writeToAccount(Json json, Account account, boolean passwordRequired) {
-		Verifier verifier = verify(json)
-			.checkRequired("firstName")
+	Account writeToAccount(Json json, Account account, boolean full) {
+		Verifier verifier = verify(json);
+		if (full) {
+			verifier
+				.checkRequired("firstName")
+				.checkRequired("lastName")
+				.checkRequired("email")
+				.checkRequired("password")
+				.checkRequired("avatar")
+				.checkRequired("login");
+		}
+		verifier
 			.checkMinSize("firstName", 2)
 			.checkMaxSize("firstName", 100)
-			.checkRequired("lastName")
 			.checkMinSize("lastName", 2)
 			.checkMaxSize("lastName", 100)
-			.checkRequired("email")
 			.checkMinSize("email", 2)
 			.checkMaxSize("email", 100)
 			.checkMinSize("password", 4)
 			.checkMaxSize("password", 20)
-			.checkRequired("avatar")
 			.checkMinSize("avatar", 2)
 			.checkMaxSize("avatar", 100)
 			.check("status", AccountStatus.byLabels().keySet())
-			.checkRequired("login")
 			.checkMinSize("login", 2)
 			.checkMaxSize("login", 20)
 			.check("role", LoginRole.byLabels().keySet());
-		if (passwordRequired) {
-			verifier.checkRequired("password");
-		}
 		verifier.ensure();
 		Synchronizer synchronizer = sync(json, account)
 			.write("version")

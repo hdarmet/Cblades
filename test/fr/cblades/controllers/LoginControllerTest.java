@@ -46,7 +46,7 @@ public class LoginControllerTest implements TestSeawave, CollectionSunbeam, Data
 		dataManager.register("flush", null, null);
 		securityManager.doConnect("admin", 0);
 		loginController.create(params(), Json.createJsonFromString(
-			"{ 'login':'He', 'password':'PassW0rd', 'admin':false}"
+			"{ 'login':'He', 'password':'PassW0rd', 'altPassword':'PassW0rd'}"
 		));
 		dataManager.hasFinished();
 	}
@@ -62,7 +62,7 @@ public class LoginControllerTest implements TestSeawave, CollectionSunbeam, Data
 		securityManager.doConnect("admin", 0);
 		try {
 			loginController.create(params(), Json.createJsonFromString(
-					"{ 'login':'He', 'password':'PassW0rd', 'admin':false}"
+					"{ 'login':'He', 'password':'PassW0rd', 'altPassword':'PassW0rd'}"
 			));
 			Assert.fail("The request should fail");
 		}
@@ -93,16 +93,19 @@ public class LoginControllerTest implements TestSeawave, CollectionSunbeam, Data
 	public void listAllLogins() {
 		dataManager.register("createQuery", null, null, "select l from Login l");
 		dataManager.register("getResultList", arrayList(
-			setEntityId(new Login().setLogin("Peter").setPassword("PiEtEr").setAdministrator(true), 1),
-			setEntityId(new Login().setLogin("Paul").setPassword("PaUl").setAdministrator(false), 2)
+			setEntityId(new Login().setLogin("Peter").setPassword("PiEtEr").setAltPasswordLease(1).setAdministrator(true), 1),
+			setEntityId(new Login().setLogin("Paul").setPassword("PaUl").setAltPasswordLease(1).setAdministrator(false), 2)
 		), null);
 		securityManager.doConnect("admin", 0);
 		Json result = loginController.getAll(params(), null);
-		Assert.assertEquals(result.toString(),
-			"[" +
-				"{\"password\":\"PiEtEr\",\"admin\":true,\"id\":1,\"login\":\"Peter\",\"version\":0}," +
-				"{\"password\":\"PaUl\",\"admin\":false,\"id\":2,\"login\":\"Paul\",\"version\":0}" +
-			"]" );
+		Assert.assertEquals("[{" +
+					"\"password\":\"PiEtEr\",\"role\":\"adm\",\"altPasswordLease\":1," +
+					"\"id\":1,\"login\":\"Peter\",\"version\":0" +
+				"},{" +
+					"\"password\":\"PaUl\",\"role\":\"std\",\"altPasswordLease\":1," +
+					"\"id\":2,\"login\":\"Paul\",\"version\":0" +
+				"}]",
+			result.toString());
 		dataManager.hasFinished();
 	}
 
@@ -123,13 +126,16 @@ public class LoginControllerTest implements TestSeawave, CollectionSunbeam, Data
 	@Test
 	public void getOneLoginById() {
 		dataManager.register("find",
-			setEntityId(new Login().setLogin("Peter").setPassword("PiEtEr").setAdministrator(true), 1L),
+			setEntityId(new Login().setLogin("Peter").setPassword("PiEtEr").setAltPasswordLease(1).setAdministrator(true), 1L),
 			null, Login.class, 1L);
 		securityManager.doConnect("admin", 0);
 		Json result = loginController.getById(params("id", "1"), null);
-		Assert.assertEquals(result.toString(),
-				"{\"password\":\"PiEtEr\",\"admin\":true,\"id\":1,\"login\":\"Peter\",\"version\":0}"
-		);
+		Assert.assertEquals("{" +
+				"\"password\":\"PiEtEr\",\"role\":\"adm\"," +
+				"\"altPasswordLease\":1,\"id\":1," +
+				"\"login\":\"Peter\",\"version\":0" +
+			"}",
+			result.toString());
 		dataManager.hasFinished();
 	}
 
@@ -244,17 +250,25 @@ public class LoginControllerTest implements TestSeawave, CollectionSunbeam, Data
 	}
 
 	@Test
-	public void upadteALogin() {
+	public void updateALogin() {
 		dataManager.register("find",
 				setEntityId(new Login().setLogin("Peter").setPassword("PiEtEr").setAdministrator(true), 1L),
 				null, Login.class, 1L);
 		dataManager.register("flush", null, null);
 		securityManager.doConnect("admin", 0);
 		Json result = loginController.update(params("id", "1"), Json.createJsonFromString(
-				"{ 'login':'He', 'password':'PassW0rd', 'admin':false}"
+				"{ 'login':'He', 'password':'PassW0rd', 'altPassword':'PassW0rd', 'altPasswordLease': 1}"
 		));
-		Assert.assertEquals(result.toString(),
-				"{\"password\":\"298cde70c32a57b84d0a546fedbb2596\",\"admin\":false,\"id\":1,\"login\":\"He\",\"version\":0}"
+		Assert.assertEquals(
+			"{" +
+					"\"password\":\"298cde70c32a57b84d0a546fedbb2596\"," +
+					"\"role\":\"adm\"," +
+					"\"altPasswordLease\":1," +
+					"\"id\":1," +
+					"\"login\":\"He\",\"version\":0," +
+					"\"altPassword\":\"298cde70c32a57b84d0a546fedbb2596\"" +
+				"}",
+				result.toString()
 		);
 		dataManager.hasFinished();
 	}
@@ -262,12 +276,12 @@ public class LoginControllerTest implements TestSeawave, CollectionSunbeam, Data
 	@Test
 	public void tryToUpdateAnUnknownLogin() {
 		dataManager.register("find",
-				null,
-				new EntityNotFoundException("Entity Does Not Exists"), Login.class, 1L);
+			null,
+			new EntityNotFoundException("Entity Does Not Exists"), Login.class, 1L);
 		securityManager.doConnect("admin", 0);
 		try {
 			loginController.update(params("id", "1"), Json.createJsonFromString(
-					"{ 'login':'He', 'password':'PassW0rd', 'admin':false}"
+				"{ 'login':'He', 'password':'PassW0rd', 'admin':false}"
 			));
 			Assert.fail("The request should fail");
 		}
@@ -320,7 +334,7 @@ public class LoginControllerTest implements TestSeawave, CollectionSunbeam, Data
 			new MockSecurityManagerImpl.Credential("He", "298cde70c32a57b84d0a546fedbb2596", StandardUsers.USER)
 		);
 		dataManager.register("createQuery", null, null,
-				"select l from Login l where l.login=:login and l.password=:password");
+				"select l from Login l where l.login=:login and l.password=:password or l.altPassword=:password");
 		dataManager.register("setParameter", null, null,
 				"login", "He");
 		dataManager.register("setParameter", null, null,
@@ -338,7 +352,7 @@ public class LoginControllerTest implements TestSeawave, CollectionSunbeam, Data
 	@Test
 	public void failsToConnect() {
 		dataManager.register("createQuery", null, null,
-				"select l from Login l where l.login=:login and l.password=:password");
+				"select l from Login l where l.login=:login and l.password=:password or l.altPassword=:password");
 		dataManager.register("setParameter", null, null,
 				"login", "He");
 		dataManager.register("setParameter", null, null,
@@ -350,7 +364,7 @@ public class LoginControllerTest implements TestSeawave, CollectionSunbeam, Data
 			);
 		}
 		catch (SummerControllerException sce) {
-			Assert.assertEquals(403, sce.getStatus());
+			Assert.assertEquals(401, sce.getStatus());
 			Assert.assertEquals("Bad credentials", sce.getMessage());
 		}
 		dataManager.hasFinished();
@@ -361,7 +375,7 @@ public class LoginControllerTest implements TestSeawave, CollectionSunbeam, Data
 	public void failsToConnectForAnUnknownReason() {
 		dataManager.register("createQuery", null,
 			new PersistenceException("Some Reason"),
-			"select l from Login l where l.login=:login and l.password=:password");
+			"select l from Login l where l.login=:login and l.password=:password or l.altPassword=:password");
 		try {
 			loginController.login(params(),
 					Json.createJsonFromString("{'login':'He', 'password':'PassW0rd'}")

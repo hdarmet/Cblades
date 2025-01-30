@@ -1,16 +1,8 @@
 package fr.cblades.domain;
 
-import org.summer.SummerException;
-import org.summer.controller.SummerControllerException;
 import org.summer.data.BaseEntity;
-
 import javax.persistence.Entity;
 import javax.persistence.Enumerated;
-import javax.persistence.Index;
-import javax.persistence.Table;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.util.Objects;
 
 @Entity
 public class Hex extends BaseEntity {

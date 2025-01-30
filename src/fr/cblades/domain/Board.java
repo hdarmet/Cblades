@@ -2,6 +2,7 @@ package fr.cblades.domain;
 
 import org.summer.SummerException;
 import org.summer.data.BaseEntity;
+import org.summer.data.SummerNotFoundException;
 
 import javax.persistence.*;
 import java.util.ArrayList;
@@ -108,7 +109,7 @@ public class Board extends BaseEntity {
             return (Board)query.getSingleResult();
         }
         catch (NoResultException enf) {
-            throw new SummerException(
+            throw new SummerNotFoundException(
                 String.format("Unknown Board with path %s", path)
             );
         }
@@ -121,8 +122,8 @@ public class Board extends BaseEntity {
             return (Board)query.getSingleResult();
         }
         catch (NoResultException enf) {
-            throw new SummerException(
-                    String.format("Unknown Board with name %s", name)
+            throw new SummerNotFoundException(
+                String.format("Unknown Board with name %s", name)
             );
         }
     }

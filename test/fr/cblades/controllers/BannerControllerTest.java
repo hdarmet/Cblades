@@ -114,18 +114,27 @@ public class BannerControllerTest implements TestSeawave, CollectionSunbeam, Dat
 
 	@Test
 	public void listAllBanners() {
+		dataManager.register("createQuery", null, null, "select count(b) from Banner b");
+		dataManager.register("getSingleResult", 2L, null);
 		dataManager.register("createQuery", null, null, "select b from Banner b");
+		dataManager.register("setFirstResult", null, null, 0);
+		dataManager.register("setMaxResults", null, null, 16);
 		dataManager.register("getResultList", arrayList(
 			setEntityId(new Banner().setName("banner1").setPath("/there/where/banner1.png"), 1),
 				setEntityId(new Banner().setName("banner2").setPath("/there/where/banner2.png"), 2)
 		), null);
 		securityManager.doConnect("admin", 0);
-		Json result = bannerController.getAll(params(), null);
+		Json result = bannerController.getAll(params("page", "0"), null);
 		Assert.assertEquals(
-			"[" +
-				"{\"path\":\"/there/where/banner1.png\",\"name\":\"banner1\",\"id\":1,\"version\":0}," +
-				"{\"path\":\"/there/where/banner2.png\",\"name\":\"banner2\",\"id\":2,\"version\":0}" +
-			"]", result.toString());
+			"{" +
+					"\"count\":2," +
+					"\"pageSize\":16," +
+					"\"page\":0," +
+					"\"banners\":[" +
+						"{\"path\":\"/there/where/banner1.png\",\"comments\":[],\"name\":\"banner1\",\"id\":1,\"version\":0}," +
+						"{\"path\":\"/there/where/banner2.png\",\"comments\":[],\"name\":\"banner2\",\"id\":2,\"version\":0}" +
+					"]" +
+			"}", result.toString());
 		dataManager.hasFinished();
 	}
 
@@ -154,7 +163,7 @@ public class BannerControllerTest implements TestSeawave, CollectionSunbeam, Dat
 		securityManager.doConnect("admin", 0);
 		Json result = bannerController.getByName(params("name", "banner"), null);
 		Assert.assertEquals(
-			"{\"path\":\"/there/where/banner.png\",\"name\":\"banner\",\"id\":1,\"version\":0}",
+			"{\"path\":\"/there/where/banner.png\",\"comments\":[],\"name\":\"banner\",\"id\":1,\"version\":0}",
 			result.toString()
 		);
 		dataManager.hasFinished();
@@ -200,7 +209,7 @@ public class BannerControllerTest implements TestSeawave, CollectionSunbeam, Dat
 		securityManager.doConnect("admin", 0);
 		Json result = bannerController.getById(params("id", "1"), null);
 		Assert.assertEquals(
-			"{\"path\":\"/there/where/banner.png\",\"name\":\"banner\",\"id\":1,\"version\":0}",
+			"{\"path\":\"/there/where/banner.png\",\"comments\":[],\"name\":\"banner\",\"id\":1,\"version\":0}",
 			result.toString()
 		);
 		dataManager.hasFinished();
@@ -329,7 +338,7 @@ public class BannerControllerTest implements TestSeawave, CollectionSunbeam, Dat
 			"{ 'id':1, 'version':1, 'name':'banner2', 'path':'here/there/banner2.png' }"
 		));
 		Assert.assertEquals(
-		"{\"path\":\"here/there/banner2.png\",\"name\":\"banner2\",\"id\":1,\"version\":1}",
+		"{\"path\":\"here/there/banner2.png\",\"comments\":[],\"name\":\"banner2\",\"id\":1,\"version\":1}",
 			result.toString()
 		);
 		dataManager.hasFinished();

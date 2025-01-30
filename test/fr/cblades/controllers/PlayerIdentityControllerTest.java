@@ -115,18 +115,32 @@ public class PlayerIdentityControllerTest implements TestSeawave, CollectionSunb
 
 	@Test
 	public void listAllPlayerIdentities() {
+		dataManager.register("createQuery", null, null, "select count(pi) from PlayerIdentity pi");
+		dataManager.register("getSingleResult", 2L, null);
 		dataManager.register("createQuery", null, null, "select pi from PlayerIdentity pi");
+		dataManager.register("setFirstResult", null, null, 0);
+		dataManager.register("setMaxResults", null, null, 16);
 		dataManager.register("getResultList", arrayList(
 			setEntityId(new PlayerIdentity().setName("Hector").setPath("/there/where/hector.png"), 1),
 			setEntityId(new PlayerIdentity().setName("Achilles").setPath("/there/where/achilles.png"), 2)
 		), null);
 		securityManager.doConnect("admin", 0);
-		Json result = playerIdentityController.getAll(params(), null);
-		Assert.assertEquals(
-			"[" +
-				"{\"path\":\"/there/where/hector.png\",\"name\":\"Hector\",\"id\":1,\"version\":0}," +
-				"{\"path\":\"/there/where/achilles.png\",\"name\":\"Achilles\",\"id\":2,\"version\":0}" +
-			"]", result.toString());
+		Json result = playerIdentityController.getAll(params("page", "0"), null);
+		Assert.assertEquals("{" +
+				"\"playerIdentities\":[{" +
+					"\"path\":\"/there/where/hector.png\"," +
+					"\"comments\":[],\"name\":\"Hector\"," +
+					"\"id\":1,\"version\":0" +
+				"},{" +
+					"\"path\":\"/there/where/achilles.png\"," +
+					"\"comments\":[],\"name\":\"Achilles\"," +
+					"\"id\":2,\"version\":0" +
+				"}]," +
+				"\"count\":2," +
+				"\"pageSize\":16," +
+				"\"page\":0" +
+			"}",
+			result.toString());
 		dataManager.hasFinished();
 	}
 
@@ -154,9 +168,10 @@ public class PlayerIdentityControllerTest implements TestSeawave, CollectionSunb
 		null);
 		securityManager.doConnect("admin", 0);
 		Json result = playerIdentityController.getByName(params("name", "Hector"), null);
-		Assert.assertEquals(
-			"{\"path\":\"/there/where/hector.png\",\"name\":\"Hector\",\"id\":1,\"version\":0}",
-			result.toString()
+		Assert.assertEquals( "{" +
+				"\"path\":\"/there/where/hector.png\",\"comments\":[]," +
+				"\"name\":\"Hector\",\"id\":1,\"version\":0" +
+			"}", result.toString()
 		);
 		dataManager.hasFinished();
 	}
@@ -200,8 +215,10 @@ public class PlayerIdentityControllerTest implements TestSeawave, CollectionSunb
 			null, PlayerIdentity.class, 1L);
 		securityManager.doConnect("admin", 0);
 		Json result = playerIdentityController.getById(params("id", "1"), null);
-		Assert.assertEquals(
-			"{\"path\":\"/there/where/hector.png\",\"name\":\"Hector\",\"id\":1,\"version\":0}",
+		Assert.assertEquals( "{" +
+				"\"path\":\"/there/where/hector.png\",\"comments\":[]," +
+				"\"name\":\"Hector\",\"id\":1,\"version\":0" +
+			"}",
 			result.toString()
 		);
 		dataManager.hasFinished();
@@ -329,8 +346,10 @@ public class PlayerIdentityControllerTest implements TestSeawave, CollectionSunb
 		Json result = playerIdentityController.update(params("id", "1"), Json.createJsonFromString(
 			"{ 'id':1, 'version':1, 'name':'Achilles', 'path':'here/there/achilles.png' }"
 		));
-		Assert.assertEquals(
-		"{\"path\":\"here/there/achilles.png\",\"name\":\"Achilles\",\"id\":1,\"version\":1}",
+		Assert.assertEquals("{" +
+				"\"path\":\"here/there/achilles.png\",\"comments\":[]," +
+				"\"name\":\"Achilles\",\"id\":1,\"version\":1" +
+			"}",
 			result.toString()
 		);
 		dataManager.hasFinished();

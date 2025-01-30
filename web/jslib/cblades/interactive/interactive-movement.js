@@ -282,9 +282,9 @@ export class InteractiveAbstractMovementAction extends WAction {
         cost = this._updateTirednessForRotation(cost, start);
         this._checkActionProgession(cost.value);
         this.unit.rotate(angle, cost);
+        WSequence.appendElement(this.game, new CBRotateSequenceElement({game:this.game, unit: this.unit, angle}));
         let played = !this._continueAfterRotation();
         this._markUnitActivationAfterMovement(played);
-        WSequence.appendElement(this.game, new CBRotateSequenceElement({game:this.game, unit: this.unit, angle}));
     }
 
     _checkIfANonRoutedCrossedUnitLoseCohesion(crossedUnits, processing, cancellable) {
@@ -327,10 +327,10 @@ export class InteractiveAbstractMovementAction extends WAction {
         cost = this._updateTirednessForMovement(cost, start);
         this._checkActionProgession(cost.value);
         this.unit.move(hexLocation, cost, WStacking.BOTTOM);
-        this._continueAfterMove();
         WSequence.appendElement(this.game, new CBMoveSequenceElement({
             game:this.game, unit: this.unit, hexLocation, stacking: WStacking.BOTTOM
         }));
+        this._continueAfterMove();
     }
 
     _turnUnit(angle, start, cost) {
@@ -753,7 +753,6 @@ export class InteractiveMovementAction extends InteractiveAbstractMovementAction
         else {
             if (this.unit.charge !== CBCharge.NONE) {
                 this.unit.setCharging(CBCharge.NONE);
-                WSequence.appendElement(this.game, new CBStateSequenceElement({game:this.game, unit: this.unit}));
             }
         }
     }
@@ -781,7 +780,7 @@ export class InteractiveMovementAction extends InteractiveAbstractMovementAction
     }
 
     _checkAttackerEngagement(engaging, action) {
-        if (!engaging && this.game.arbitrator.isUnitEngaged(this.unit, false)) {
+        if (engaging && this.game.arbitrator.isUnitEngaged(this.unit, false)) {
             new CBAttackerEngagementChecking(this.game, this.unit).play(() => {
                 super.finalize(action);
                 this.game.validate();
@@ -839,8 +838,10 @@ export class InteractiveMovementAction extends InteractiveAbstractMovementAction
     }
 
     _finishMove() {
+
+        let doEngage = this.game.arbitrator.doesUnitEngage(this.unit)
         let mayCharge = this.game.arbitrator.mayUnitCharge(this.unit);
-        this.unit.checkEngagement(this.game.arbitrator.doesUnitEngage(this.unit), mayCharge);
+        this.unit.checkEngagement(doEngage, mayCharge);
         let played = !this._createMovementActuators(false);
         this._markUnitActivationAfterMovement(played);
     }
@@ -1242,10 +1243,10 @@ export class InteractiveMoveBackAction extends InteractiveAbstractMovementAction
         cost = this._updateTirednessForMovement(cost, start);
         this._checkActionProgession(cost.value);
         this.unit.move(hexLocation, cost, WStacking.TOP);
-        this._continueAfterMove();
         WSequence.appendElement(this.game, new CBMoveSequenceElement({
             game:this.game, unit: this.unit, hexLocation, stacking: WStacking.TOP
         }));
+        this._continueAfterMove();
     }
 
     _finishMove() {
@@ -2053,4 +2054,5 @@ export class CBCrossingSequenceElement extends WithDiceRoll(CBStateSequenceEleme
 
 }
 WSequence.register("crossing", CBCrossingSequenceElement);
+
 

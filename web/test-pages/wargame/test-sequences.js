@@ -603,18 +603,12 @@ describe("Sequences", ()=> {
             }
         when:
             WSequence.appendElement(
-                game, new WNextTurnSequenceElement(game)
+                game, new WNextTurnSequenceElement({game})
             );
         then:
             var element = WSequence.getElements(game)[0];
-            assert(element.equalsTo({
-                type: "next-turn",
-                game: new WGame(2)
-            })).isFalse();
-            assert(element.equalsTo({
-                type: "next-turn",
-                game: game
-            })).isTrue();
+            assert(element.equalsTo(new WSequenceElement({type:"other", game}))).isFalse();
+            assert(element.equalsTo(new WNextTurnSequenceElement({game}))).isTrue();
             assert(element.toString()).equalsTo(
                 "{ Type: next-turn, Game: Game }"
             );
@@ -625,21 +619,6 @@ describe("Sequences", ()=> {
         then:
             assert(game.currentPlayer).equalsTo(player2);
             assert(turnAnimation).isTrue();
-    });
-
-    it("Checks next turn segment equalsTo method", () => {
-        given:
-            var {game} = createTinyGame();
-        when:
-            var element = new WNextTurnSequenceElement({game});
-            var model = {
-                type: "next-turn",
-                game: game
-            }
-        then:
-            assert(element.equalsTo(model)).isTrue();
-            assert(element.equalsTo({...model, type:"Other"})).isFalse();
-            assert(element.equalsTo({...model, game:new WGame(2)})).isFalse();
     });
 
 });

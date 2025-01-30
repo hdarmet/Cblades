@@ -81,6 +81,7 @@ describe("Unit", ()=> {
     }
     function prepareTinyGame() {
         var game = new WGame(1);
+        WSequence.setCount(game, 1);
         var map = new WMap([{path:"./../images/maps/map.png", col:0, row:0}]);
         game.setMap(map);
         return {game, map};
@@ -772,7 +773,6 @@ describe("Unit", ()=> {
     it("Checks playing a unit", () => {
         given:
             var {game, unit} = createTinyGame();
-            WSequence.setCount(game, 0);
             var [markersLayer] = getLayers(game.board, "markers-0");
         when:
             unit.launchAction(new WAction(game, unit));
@@ -781,7 +781,7 @@ describe("Unit", ()=> {
         then:
             checkSequenceElement(game, {
                 "version":0,
-                "type":"state","content":{
+                "type":"finish-unit","content":{
                     "unit":"banner-0","steps":2,
                     "cohesion":"GO","tiredness":"F","ammunition":"P","charging":"N",
                     "engaging":false,"orderGiven":false,
@@ -830,7 +830,6 @@ describe("Unit", ()=> {
     it("Checks that playing an order replace (hide) 'order given' marker", () => {
         given:
             var {game, unit} = createTinyGame();
-            WSequence.setCount(game, 0);
             var [markersLayer] = getLayers(game.board, "markers-0");
             unit.receivesOrder(true);
             repaint(game);
@@ -847,7 +846,6 @@ describe("Unit", ()=> {
     it("Checks played marker appearance / disappearance when selection is changed or turn is changed", () => {
         given:
             var {game, player, unit1, unit2} = create2UnitsTinyGame();
-            WSequence.setCount(game, 0);
             var [markersLayer] = getLayers(game.board, "markers-0");
             player.canPlay = function() { return true; };
             player.launchPlayableAction = function(unit, point) {
@@ -863,7 +861,7 @@ describe("Unit", ()=> {
         then:
             checkSequenceElement(game, {
                 "version":0,
-                "type":"state","content":{
+                "type":"finish-unit","content":{
                     "unit":"banner-0","steps":2,
                     "cohesion":"GO","tiredness":"F","ammunition":"P","charging":"N",
                     "engaging":false,"orderGiven":false,
@@ -1097,6 +1095,7 @@ describe("Unit", ()=> {
             assert(unit.isEngaging()).isFalse();
             assert(unit.isCharging()).isFalse();
             assert(unit.hasReceivedOrder()).isTrue();
+            assert(unit.isFinished()).isFalse();
             assert(unit.isPlayed()).isFalse();
         when:
             unit.setState({
@@ -1124,6 +1123,7 @@ describe("Unit", ()=> {
             assert(unit.isCharging()).isFalse();
             assert(unit.hasReceivedOrder()).isFalse();
             assert(unit.isPlayed()).isTrue();
+            assert(unit.isFinished()).isTrue();
     });
 
     it("Checks mark unit as on contact", () => {
@@ -1321,7 +1321,6 @@ describe("Unit", ()=> {
     it("Checks that when a unit retracts, it also hides markers", () => {
         given:
             var {game, unit1, unit2} = create2UnitsTinyGame();
-            WSequence.setCount(game, 0);
             unit2.move(unit1.hexLocation);
             repaint(game);
             var [markersLayer] = getLayers(game.board, "markers-1");

@@ -18,7 +18,7 @@ import {
     Mechanisms, Memento
 } from "../../../jslib/board/mechanisms.js";
 import {
-    WAction
+    WAction, WStacking
 } from "../../../jslib/wargame/game.js";
 import {
     DBoard
@@ -44,7 +44,11 @@ import {
 } from "../game-examples.js";
 import {
     CBActionMenu,
+    CBDefenderEngagementSequenceElement,
     CBFogIndicator,
+    CBNeighborRoutCheckingSequenceElement,
+    CBRootNeighborsCohesionSequenceElement,
+    CBRoutCheckingSequenceElement,
     CBWeatherIndicator,
     CBWindDirectionIndicator,
     CBWingMoralIndicator,
@@ -57,9 +61,10 @@ import {
     Point2D
 } from "../../../jslib/board/geometry.js";
 import {
-    CBCharge
+    CBCharge, CBCohesion, CBEngagingSequenceElement, CBFinishUnitSequenceElement, CBTiredness
 } from "../../../jslib/cblades/unit.js";
 import {
+    WNextTurnSequenceElement,
     WSequence
 } from "../../../jslib/wargame/sequences.js";
 
@@ -75,8 +80,8 @@ describe("Interactive Player", ()=> {
         Memento.clear();
         WSequence.awaitedElements = [];
         WSequence.appendElement = function(game, element) {
-            let awaited = WSequence.awaitedElements.pop();
-            assert(element).equalsTo(awaited);
+            let awaited = WSequence.awaitedElements.shift();
+            assert(element.toString()).equalsTo(awaited.toString());
         }
         CBActionMenu.menuBuilders = [
             function createTestActionMenuItems(unit, actions) {
@@ -194,13 +199,16 @@ describe("Interactive Player", ()=> {
 
     it("Checks that a selected unit's started/finished action is finalized when a new unit is selected", () => {
         given:
-            var {game, unit1, unit2, player} = create2UnitsTinyGame();
-            player.changeSelection(unit1, dummyEvent);
+            var {game, unit1, unit2} = create2UnitsTinyGame();
+            game.changeSelection(unit1, dummyEvent);
             var action = new WAction(game, unit1);
             unit1.launchAction(action);
+            WSequence.awaitedElements.push(
+                new CBFinishUnitSequenceElement({unit:unit1, game})
+            );
             action.markAsFinished();
         when:
-            player.changeSelection(unit2, dummyEvent);
+            game.changeSelection(unit2, dummyEvent);
         then:
             assert(action.isFinalized()).isTrue();
     });
@@ -208,11 +216,11 @@ describe("Interactive Player", ()=> {
     it("Checks that a selected unit's action that was never started, is cancelled when a new unit is selected", () => {
         given:
             var {game, unit1, unit2, player} = create2UnitsTinyGame();
-            player.changeSelection(unit1, dummyEvent);
+            game.changeSelection(unit1, dummyEvent);
             var action = new WAction(game, unit1);
             unit1.launchAction(action);
         when:
-            player.changeSelection(unit2, dummyEvent);
+            game.changeSelection(unit2, dummyEvent);
         then:
             assert(action.isCancelled()).isTrue();
             assert(unit1.action).isNotDefined();
@@ -221,11 +229,15 @@ describe("Interactive Player", ()=> {
     it("Checks that a finalized unit action does not block selection/end of turn", () => {
         given:
             var {game, unit, player} = createTinyGame();
-            player.changeSelection(unit, dummyEvent);
+            game.changeSelection(unit, dummyEvent);
             unit.launchAction(new WAction(game, unit));
+            WSequence.awaitedElements.push(
+                new CBFinishUnitSequenceElement({unit, game})
+            );
             unit.action.markAsFinished();
             unit.action.finalize();
             var finished = false;
+            WSequence.awaitedElements.push(new WNextTurnSequenceElement({game}));
             player.finishTurn(()=>{finished=true;})
         then:
             assert(finished).isTrue();
@@ -233,10 +245,16 @@ describe("Interactive Player", ()=> {
 
     it("Checks that activation remove own contact marker ", () => {
         given:
-            var {game, map, player1, unit1} = create2PlayersTinyGame();
+            var {game, map, unit1, player1} = create2PlayersTinyGame();
+            WSequence.awaitedElements.push(
+                new CBEngagingSequenceElement({game, unit:unit1}).setState({engaging:true})
+            );
             unit1.hexLocation = map.getHex(5, 5);
             unit1.setEngaging(true);
         when:
+            WSequence.awaitedElements.push(
+                new CBEngagingSequenceElement({game, unit:unit1}).setState({engaging:false})
+            );
             player1.selectPlayable(unit1, dummyEvent);
         then:
             assert(unit1.isEngaging()).isFalse();
@@ -246,6 +264,9 @@ describe("Interactive Player", ()=> {
         unit1.move(map.getHex(2, 4), 0);
         unit2.move(map.getHex(2, 3), 0);
         unit2.rotate(180);
+        WSequence.awaitedElements.push(
+            new CBEngagingSequenceElement({game:map.game, unit:unit2}).setState({engaging:true})
+        );
         unit2.setEngaging(true);
         loadAllImages();
     }
@@ -253,7 +274,7 @@ describe("Interactive Player", ()=> {
     it("Checks defender engagement check appearance (and cancelling selection)", () => {
         given:
             var {game, map, player1, unit1, unit2} = create2PlayersTinyGame();
-            var [widgetsLayer, commandsLayer, itemsLayer] = getLayers(game.board,"widgets", "widget-commands","widget-items");
+            var [widgetsLayer, commandsLayer, itemsLayer] = getLayers(game.board,"widgets", "widget-commands", "widget-items");
             unit1IsEngagedByUnit2(map, unit1, unit2);
         when:
             resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
@@ -287,6 +308,11 @@ describe("Interactive Player", ()=> {
             unit1.disrupt();
             unit1.angle = 90;
             unit1IsEngagedByUnit2(map, unit1, unit2);
+            WSequence.awaitedElements.push(
+                new CBEngagingSequenceElement({game, unit:unit2}).setState({
+                    engaging:true, tiredness:CBTiredness.NONE, charging:CBCharge.CHARGING
+                })
+            );
             unit2.setCharging(CBCharge.CHARGING);
         when:
             resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
@@ -315,6 +341,11 @@ describe("Interactive Player", ()=> {
             var [widgetsLayer, commandsLayer, itemsLayer] = getLayers(game.board,"widgets", "widget-commands","widget-items");
             unit1IsEngagedByUnit2(map, leader1, leader2);
             leader1.angle = 180;
+            WSequence.awaitedElements.push(
+                new CBEngagingSequenceElement({game, unit:leader1}).setState({
+                    engaging:false, charging:CBCharge.CHARGING
+                })
+            );
             leader1.setCharging(CBCharge.CHARGING);
         when:
             resetDirectives(widgetsLayer, commandsLayer, itemsLayer);
@@ -348,6 +379,10 @@ describe("Interactive Player", ()=> {
         when:
             rollFor(1,2);
             clickOnDice(game);
+            WSequence.awaitedElements.push(
+                new CBDefenderEngagementSequenceElement({game, unit: unit1, dice: [1, 2]})
+                    .setState({played:false, actionType: null, actionMode: null})
+            );
             executeAllAnimations();
             resetDirectives(commandsLayer, itemsLayer);
             repaint(game);
@@ -376,6 +411,10 @@ describe("Interactive Player", ()=> {
         when:
             rollFor(5,6);
             clickOnDice(game);
+            WSequence.awaitedElements.push(
+                new CBDefenderEngagementSequenceElement({game, unit: unit1, dice: [5, 6]})
+                    .setState({played:false, actionType: null, actionMode: null, cohesion:CBCohesion.DISRUPTED})
+            );
             executeAllAnimations();
             resetDirectives(commandsLayer, itemsLayer);
             repaint(game);
@@ -438,7 +477,12 @@ describe("Interactive Player", ()=> {
             loadAllImages();
         when:
             rollFor(1,2);
-            clickOnDice(game);
+            clickOnDice(game)
+            WSequence.awaitedElements.push(
+                new CBRootNeighborsCohesionSequenceElement({unit:unit11, game, neighbors:[]}),
+                new CBNeighborRoutCheckingSequenceElement({game, unit:unit12, dice:[1, 2], neighbors:[]})
+                    .setState({cohesion: CBCohesion.GOOD_ORDER})
+            );
             executeAllAnimations();
             resetDirectives(commandsLayer, itemsLayer);
             repaint(game);
@@ -465,6 +509,11 @@ describe("Interactive Player", ()=> {
             player1.selectPlayable(unit11, dummyEvent)
             loadAllImages();
         when:
+            WSequence.awaitedElements.push(
+                new CBRootNeighborsCohesionSequenceElement({unit:unit11, game, neighbors:[]}),
+                new CBNeighborRoutCheckingSequenceElement({game, unit:unit12, dice:[5, 6], neighbors:[]})
+                    .setState({cohesion: CBCohesion.DISRUPTED})
+            );
             rollFor(5, 6);
             clickOnDice(game);
             executeAllAnimations();
@@ -544,6 +593,9 @@ describe("Interactive Player", ()=> {
             player1.selectPlayable(unit12, dummyEvent)
             loadAllImages();
         when:
+            WSequence.awaitedElements.push(
+                new CBRoutCheckingSequenceElement({game, unit:unit12, dice:[1, 2]})
+            );
             rollFor(1,2);
             clickOnDice(game);
             executeAllAnimations();
@@ -572,6 +624,10 @@ describe("Interactive Player", ()=> {
             player1.selectPlayable(unit12, dummyEvent)
             loadAllImages();
         when:
+            WSequence.awaitedElements.push(
+                new CBRoutCheckingSequenceElement({game, unit:unit12, dice:[5, 6]})
+                    .setState({cohesion: CBCohesion.DISRUPTED})
+            );
             rollFor(5, 6);
             clickOnDice(game);
             executeAllAnimations();
@@ -620,6 +676,10 @@ describe("Interactive Player", ()=> {
             skipDirectives(widgetsLayer, 4);
             assertDirectives(widgetsLayer, showMask());
         when:
+            WSequence.awaitedElements.push(
+                new CBRootNeighborsCohesionSequenceElement({game, unit:unit11, neighbors:[]}),
+                new CBNeighborRoutCheckingSequenceElement({unit:unit12, game, dice:[1, 2], neighbors:[]})
+            );
             rollFor(1,2);
             clickOnDice(game);
             executeAllAnimations();
@@ -757,9 +817,16 @@ describe("Interactive Player", ()=> {
     it("Checks that a selected unit's action is finalized when there is an end of turn", () => {
         given:
             var {game, unit, player} = createTinyGame();
-            player.changeSelection(unit, dummyEvent);
+            game.changeSelection(unit, dummyEvent);
             var action = new WAction(game, unit);
             unit.launchAction(action);
+        when:
+
+            WSequence.awaitedElements.push(
+                new CBFinishUnitSequenceElement({unit, game}),
+                new WNextTurnSequenceElement({game})
+            );
+
             action.markAsFinished();
         then:
             assert(game.turnIsFinishable()).isTrue();

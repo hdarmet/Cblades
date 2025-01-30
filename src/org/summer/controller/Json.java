@@ -133,8 +133,7 @@ public class Json implements Iterable {
 	}
 
 	public Integer getInteger(String name, String... aliases) {
-		Integer value = get(name, aliases);
-		return value==null ? null : new Integer(value);
+		return get(name, aliases);
 	}
 
 	public Json getJson(String name, String... aliases) {

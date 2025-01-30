@@ -265,11 +265,14 @@ export class WAction {
     finalize(action) {
         console.assert(this._status >= WAction.STARTED);
         if (this._status < WAction.FINALIZED) {
+            let finished = this.isFinished();
             Memento.register(this);
             this._status = WAction.FINALIZED;
             this._game.closeWidgets();
             action && action();
-            this.playable.finish();
+            if (!finished) {
+                this.playable.finish();
+            }
             if (this.playable === this.game.focusedPlayable) {
                 this.game.setFocusedPlayable(null);
             }
@@ -1447,6 +1450,10 @@ export function PlayableMixin(clazz) {
 
         isPlayed() {
             return this._action ? this._action.isPlayed() : false;
+        }
+
+        isFinished() {
+            return this._action ? this._action.isFinished() : false;
         }
 
         isActivated() {
