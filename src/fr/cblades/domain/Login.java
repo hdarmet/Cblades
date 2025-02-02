@@ -1,5 +1,6 @@
 package fr.cblades.domain;
 
+import org.summer.SummerException;
 import org.summer.controller.SummerControllerException;
 import org.summer.data.BaseEntity;
 import org.summer.data.DataSunbeam;
@@ -111,7 +112,7 @@ public class Login extends BaseEntity {
         }
         catch (NoSuchAlgorithmException e)
         {
-            throw new SummerControllerException(403, "Unexpected issue. Please report : %s", e);
+            throw new SummerException(String.format("Unexpected issue. Please report : %s", e.getMessage()), e);
         }
     }
 

@@ -28,4 +28,8 @@ public enum LikeVoteOption {
         return byLabels;
     }
 
+    public static LikeVoteOption byLabel(String label) {
+        return byLabels().get(label);
+    }
+
 }

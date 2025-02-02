@@ -29,4 +29,8 @@ public enum Charging {
         return byLabels;
     }
 
+    public static Charging byLabel(String label) {
+        return byLabels().get(label);
+    }
+
 }

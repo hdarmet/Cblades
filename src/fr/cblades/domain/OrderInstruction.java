@@ -29,4 +29,8 @@ public enum OrderInstruction {
         return byLabels;
     }
 
+    public static OrderInstruction byLabel(String label) {
+        return byLabels().get(label);
+    }
+
 }

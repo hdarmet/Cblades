@@ -50,7 +50,7 @@ public class Paragraph extends BaseEntity {
     public IllustrationPosition getIllustrationPosition() {
         return this.illustrationPosition;
     }
-    public Paragraph setIllustration(IllustrationPosition illustrationPosition) {
+    public Paragraph setIllustrationPosition(IllustrationPosition illustrationPosition) {
         this.illustrationPosition = illustrationPosition;
         return this;
     }
