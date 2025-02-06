@@ -33,7 +33,6 @@ public class Unit extends Piece implements Playable {
     public String getName() {
         return this.name;
     }
-
     public Unit setName(String name) {
         this.name = name;
         if (wing!=null) wing.unitsByName = null;

@@ -136,7 +136,7 @@ public class Wing extends BaseEntity {
             .setParameter("unit", unit).getSingleResult();
         if (wing==null) {
             throw new SummerNotFoundException(
-                String.format("No Wing contains unit of %d", unit.getId())
+                String.format("No Wing contains unit of id: %d", unit.getId())
             );
         }
         return wing;

@@ -41,7 +41,7 @@ public class SequenceController implements InjectorSunbeam, CollectionSunbeam, D
 							);
 						}
 						if (gameMatch.getCurrentTurn() > 0) {
-							gameMatch.getGame().advancePlayerTurns(em, 1);
+							gameMatch.getGame().validatePlayerTurnAdvance(em, 1);
 						}
 						gameMatch.advanceOnePlayerTurn();
 					}

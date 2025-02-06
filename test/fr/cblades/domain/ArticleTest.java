@@ -135,6 +135,19 @@ public class ArticleTest implements DataSunbeam {
     }
 
     @Test
+    public void fillLikeVote() {
+        Account account = new Account().setAccess(new Login()).setLogin("adebrie");
+        LikePoll likePoll = new LikePoll();
+        LikeVote likeVote = new LikeVote()
+            .setPoll(likePoll)
+            .setVoter(account)
+            .setOption(LikeVoteOption.LIKE);
+        Assert.assertEquals(likePoll, likeVote.getPoll());
+        Assert.assertEquals(account, likeVote.getVoter());
+        Assert.assertEquals(LikeVoteOption.LIKE, likeVote.getOption());
+    }
+
+    @Test
     public void findLikePollById() {
         LikePoll likePoll = new LikePoll();
         dataManager.register("find", likePoll, null, LikePoll.class, 1L);

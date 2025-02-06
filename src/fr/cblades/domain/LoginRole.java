@@ -29,4 +29,7 @@ public enum LoginRole {
         return byLabels;
     }
 
+    public static LoginRole byLabel(String label) {
+        return byLabels().get(label);
+    }
 }

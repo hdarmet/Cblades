@@ -46,10 +46,10 @@ public class BoardPlacement extends BaseEntity {
         BoardPlacement boardPlacement = (BoardPlacement)duplications.get(this);
         if (boardPlacement == null) {
             boardPlacement = new BoardPlacement()
-                    .setBoard(board)
-                    .setCol(col)
-                    .setRow(row)
-                    .setInvert(invert);
+                .setBoard(board)
+                .setCol(col)
+                .setRow(row)
+                .setInvert(invert);
             duplications.put(this, boardPlacement);
             em.persist(boardPlacement);
         }

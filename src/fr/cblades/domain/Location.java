@@ -103,7 +103,6 @@ public class Location extends BaseEntity {
         return new LocationId(this.getCol(), this.getRow());
     }
     public static void addPieceToLocation(Game game, Map context, Location location, Piece piece, Stacking stacking) {
-        LocationId locationId = location.getLocationId();
         location.addPiece(piece, stacking);
     }
 

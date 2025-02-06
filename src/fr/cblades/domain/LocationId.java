@@ -27,6 +27,11 @@ public class LocationId {
         return Objects.hash(col, row);
     }
 
+    @Override
+    public String toString() {
+        return "location(" +  this.col + ", " + this.row +")";
+    }
+
     public static int findNearCol(int col, int row, int angle) {
         if (angle == 0 || angle == 180) {
             return col;

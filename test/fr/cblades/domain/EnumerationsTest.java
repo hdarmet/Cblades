@@ -8,6 +8,22 @@ import java.util.HashMap;
 public class EnumerationsTest {
 
     @Test
+    public void testLoginRole() {
+        Assert.assertEquals(LoginRole.STANDARD.getLabel(), "std");
+        Assert.assertEquals(LoginRole.TEST.getLabel(), "tst");
+        Assert.assertEquals(LoginRole.CONTRIBUTOR.getLabel(), "cnt");
+        Assert.assertEquals(LoginRole.ADMINISTRATOR.getLabel(), "adm");
+        Assert.assertTrue((new HashMap<String, LoginRole>() {{
+            put(LoginRole.STANDARD.getLabel(), LoginRole.STANDARD);
+            put(LoginRole.TEST.getLabel(), LoginRole.TEST);
+            put(LoginRole.CONTRIBUTOR.getLabel(), LoginRole.CONTRIBUTOR);
+            put(LoginRole.ADMINISTRATOR.getLabel(), LoginRole.ADMINISTRATOR);
+        }}).equals(LoginRole.byLabels()));
+        Assert.assertEquals(LoginRole.byLabel(LoginRole.CONTRIBUTOR.getLabel()), LoginRole.CONTRIBUTOR);
+        Assert.assertNull(LoginRole.byLabel("dummy"));
+    }
+
+    @Test
     public void testAccountRatingLevel() {
         Assert.assertEquals(AccountRatingLevel.SQUIRE.getMinRating(), 0);
         Assert.assertEquals(AccountRatingLevel.SQUIRE.getMaxRating(), 99);
@@ -523,4 +539,17 @@ public class EnumerationsTest {
         Assert.assertNull(WeatherType.byLabel("dummy"));
     }
 
+    @Test
+    public void testIllustrationPosition() {
+        Assert.assertEquals(IllustrationPosition.LEFT.getLabel(), "left");
+        Assert.assertEquals(IllustrationPosition.CENTER.getLabel(), "center");
+        Assert.assertEquals(IllustrationPosition.RIGHT.getLabel(), "right");
+        Assert.assertTrue((new HashMap<String, IllustrationPosition>() {{
+            put(IllustrationPosition.LEFT.getLabel(), IllustrationPosition.LEFT);
+            put(IllustrationPosition.CENTER.getLabel(), IllustrationPosition.CENTER);
+            put(IllustrationPosition.RIGHT.getLabel(), IllustrationPosition.RIGHT);
+        }}).equals(IllustrationPosition.byLabels()));
+        Assert.assertEquals(IllustrationPosition.byLabel(IllustrationPosition.CENTER.getLabel()), IllustrationPosition.CENTER);
+        Assert.assertNull(IllustrationPosition.byLabel("dummy"));
+    }
 }

@@ -20,7 +20,6 @@ public class Game extends BaseEntity {
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "game_id")
     List<Location> locations = new ArrayList<>();
-
     int windDirection = 0;
     FogType fog = FogType.NO_FOG;
     WeatherType weather = WeatherType.CLEAR;
@@ -36,6 +35,9 @@ public class Game extends BaseEntity {
         return this;
     }
     public Game removePlayer(Player player) {
+        if (this.getCurrentPlayer() == player) {
+            this.setCurrentPlayer(null);
+        }
         this.players.remove(player);
         return this;
     }
@@ -108,11 +110,27 @@ public class Game extends BaseEntity {
     }
 
     public Player getCurrentPlayer() {
-        return this.players.get(this.currentPlayerIndex);
+        return this.currentPlayerIndex == -1 ? null : this.players.get(this.currentPlayerIndex);
     }
     public Game setCurrentPlayer(Player currentPlayer) {
-        this.currentPlayerIndex = this.players.indexOf(currentPlayer);
+        this.currentPlayerIndex = currentPlayer == null ? -1 : this.players.indexOf(currentPlayer);
         return this;
+    }
+
+    public Collection<Piece> getPieces() {
+        Set<Piece> pieces = new HashSet<>();
+        for (Location location : this.locations) {
+            pieces.addAll(location.getPieces());
+        }
+        return pieces;
+    }
+
+    public Unit getUnitByName(String name) {
+        for (Player player : this.getPlayers()) {
+            Unit unit = player.getUnit(name);
+            if (unit!=null) return unit;
+        }
+        return null;
     }
 
     public Game duplicate(EntityManager em, java.util.Map<BaseEntity, BaseEntity> duplications) {
@@ -144,7 +162,21 @@ public class Game extends BaseEntity {
         return this;
     }
 
-    public long advancePlayerTurns(EntityManager em, int turns) {
+    public List<SequenceElement> getSequenceElements() {
+        return Collections.unmodifiableList(this.sequenceElements);
+    }
+
+    public Game addSequenceElements(List<SequenceElement> elements) {
+        this.sequenceElements.addAll(elements);
+        return this;
+    }
+
+    public Game resetSequenceElements() {
+        this.sequenceElements.clear();
+        return this;
+    }
+
+    public long validatePlayerTurnAdvance(EntityManager em, int turns) {
         Query query = em.createQuery(
             "select s from Sequence s left outer join fetch s.elements where s.game = :game and s.currentTurn < 0")
                 .setParameter("game", this.getId());
@@ -168,36 +200,6 @@ public class Game extends BaseEntity {
                 (s1, s2) -> (int) (s1.getCount() - s2.getCount())
         );
         return sequenceList;
-    }
-
-    public Collection<Piece> getPieces() {
-        Set<Piece> pieces = new HashSet<>();
-        for (Location location : this.locations) {
-            pieces.addAll(location.getPieces());
-        }
-        return pieces;
-    }
-
-    public List<SequenceElement> getSequenceElements() {
-        return Collections.unmodifiableList(this.sequenceElements);
-    }
-
-    public Game addSequenceElements(List<SequenceElement> elements) {
-        this.sequenceElements.addAll(elements);
-        return this;
-    }
-
-    public Game resetSequenceElements() {
-        this.sequenceElements.clear();
-        return this;
-    }
-
-    public Unit getUnitByName(String name) {
-        for (Player player : this.getPlayers()) {
-            Unit unit = player.getUnit(name);
-            if (unit!=null) return unit;
-        }
-        return null;
     }
 
     static public Game find(EntityManager em, long id) {

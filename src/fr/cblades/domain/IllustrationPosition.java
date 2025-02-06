@@ -28,4 +28,7 @@ public enum IllustrationPosition {
         return byLabels;
     }
 
+    public static IllustrationPosition byLabel(String label) {
+        return byLabels().get(label);
+    }
 }

@@ -16,11 +16,8 @@ public class SequenceElement extends BaseEntity {
     @Column(length = 2000)
     String content;
 
-    public String getType() {
-        return this.type;
-    }
-
-    public SequenceElement setStory(String type) {
+    public String getType() {return this.type;}
+    public SequenceElement setType(String type) {
         this.type = type;
         return this;
     }
@@ -114,11 +111,6 @@ public class SequenceElement extends BaseEntity {
     public Object getAttr(String path) {
         if (this.attributes == null) this.attributes = buildAttributes();
         return getAttr(this.attributes, path);
-    }
-
-    public SequenceElement setAttr(String path, Object value) {
-        setAttr(this.attributes, path, value);
-        return this;
     }
 
     public boolean isTurnClosed() {

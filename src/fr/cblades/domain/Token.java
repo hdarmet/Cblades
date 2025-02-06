@@ -99,6 +99,7 @@ public class Token extends Piece implements Playable {
     protected Token copy(Token token) {
         super.copy(token);
         this
+            .setPlayed(token.isPlayed())
             .setLevel(token.getLevel())
             .setFire(token.getFire())
             .setDensity(token.getDensity())

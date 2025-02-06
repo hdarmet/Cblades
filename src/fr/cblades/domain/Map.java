@@ -33,6 +33,7 @@ public class Map extends BaseEntity {
                 map.addBoardPlacement(boardPlacement.duplicate(em, duplications));
             }
             duplications.put(this, map);
+            em.persist(map);
         }
         return map;
     }
