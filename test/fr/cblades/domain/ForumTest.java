@@ -64,11 +64,16 @@ public class ForumTest implements DataSunbeam {
         Assert.assertEquals(425, forum.getMessageCount());
         Assert.assertEquals(forumMessage, forum.getLastMessage());
         Assert.assertEquals(account, forum.getAuthor());
+    }
+
+    @Test
+    public void manageCommentsInRuleSet() {
+        Forum forum = new Forum();
         Comment comment1 = new Comment().setText("My first comment.");
         Comment comment2 = new Comment().setText("My second comment.");
         Assert.assertEquals(forum, forum
-                .addComment(comment1)
-                .addComment(comment2)
+            .addComment(comment1)
+            .addComment(comment2)
         );
         Assert.assertEquals(new ArrayList<Comment>() {{
             add(comment1);
@@ -104,6 +109,11 @@ public class ForumTest implements DataSunbeam {
         Assert.assertEquals("Discussion about new magic feature", forumThread.getDescription());
         Assert.assertEquals(ForumThreadStatus.LIVE, forumThread.getStatus());
         Assert.assertEquals(account, forumThread.getAuthor());
+    }
+
+    @Test
+    public void manageCommentsInForumThread() {
+        ForumThread forumThread = new ForumThread();
         Comment comment1 = new Comment().setText("My first comment.");
         Comment comment2 = new Comment().setText("My second comment.");
         Assert.assertEquals(forumThread, forumThread

@@ -50,6 +50,11 @@ public class DownloadableTest implements DataSunbeam {
         Assert.assertEquals("roughneck.png", faction.getIllustration());
         Assert.assertEquals(account, faction.getAuthor());
         Assert.assertEquals(FactionStatus.LIVE, faction.getStatus());
+    }
+
+    @Test
+    public void manageSheetsInFaction() {
+        Faction faction = new Faction();
         Sheet sheet1 = new Sheet().setName("unit-1").setOrdinal(0);
         Sheet sheet2 = new Sheet().setName("unit-2").setOrdinal(1);
         Assert.assertEquals(faction, faction
@@ -68,6 +73,11 @@ public class DownloadableTest implements DataSunbeam {
         }}, faction.getSheets());
         Assert.assertEquals(faction, faction.setFirstSheet(sheet1));
         Assert.assertEquals(sheet1, faction.getFirstSheet());
+    }
+
+    @Test
+    public void manageCommentsInFaction() {
+        Faction faction = new Faction();
         Comment comment1 = new Comment().setText("My first comment.");
         Comment comment2 = new Comment().setText("My second comment.");
         Assert.assertEquals(faction, faction
@@ -119,6 +129,11 @@ public class DownloadableTest implements DataSunbeam {
         Assert.assertEquals("roughneck.png", magicArt.getIllustration());
         Assert.assertEquals(account, magicArt.getAuthor());
         Assert.assertEquals(MagicArtStatus.LIVE, magicArt.getStatus());
+    }
+
+    @Test
+    public void manageSheetsInMagicArt() {
+        MagicArt magicArt = new MagicArt();
         Sheet sheet1 = new Sheet().setName("unit-1").setOrdinal(0);
         Sheet sheet2 = new Sheet().setName("unit-2").setOrdinal(1);
         Assert.assertEquals(magicArt, magicArt
@@ -137,6 +152,11 @@ public class DownloadableTest implements DataSunbeam {
         }}, magicArt.getSheets());
         Assert.assertEquals(magicArt, magicArt.setFirstSheet(sheet1));
         Assert.assertEquals(sheet1, magicArt.getFirstSheet());
+    }
+
+    @Test
+    public void manageCommentsInMagicArt() {
+        MagicArt magicArt = new MagicArt();
         Comment comment1 = new Comment().setText("My first comment.");
         Comment comment2 = new Comment().setText("My second comment.");
         Assert.assertEquals(magicArt, magicArt
@@ -177,12 +197,17 @@ public class DownloadableTest implements DataSunbeam {
     @Test
     public void fillRuleSet() {
         RuleSet ruleSet = new RuleSet()
-            .setRuleSetVersion("1.01")
-            .setPublished(true)
-            .setCategory("Rules");
+                .setRuleSetVersion("1.01")
+                .setPublished(true)
+                .setCategory("Rules");
         Assert.assertEquals("1.01", ruleSet.getRuleSetVersion());
         Assert.assertTrue(ruleSet.isPublished());
         Assert.assertEquals("Rules", ruleSet.getCategory());
+    }
+
+    @Test
+    public void manageSheetsInRuleSet() {
+        RuleSet ruleSet = new RuleSet();
         Sheet sheet1 = new Sheet().setName("unit-1").setOrdinal(0);
         Sheet sheet2 = new Sheet().setName("unit-2").setOrdinal(1);
         Assert.assertEquals(ruleSet, ruleSet

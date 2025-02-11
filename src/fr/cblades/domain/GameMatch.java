@@ -96,12 +96,13 @@ public class GameMatch extends BaseEntity {
         return this;
     }
 
-    public void advanceOnePlayerTurn() {
+    public GameMatch advanceOnePlayerTurn() {
         this.currentPlayerIndex++;
         if (this.currentPlayerIndex==this.playerMatches.size()) {
             this.currentPlayerIndex=0;
             this.currentTurn++;
         }
+        return this;
     }
 
     static public GameMatch find(EntityManager em, long id) {

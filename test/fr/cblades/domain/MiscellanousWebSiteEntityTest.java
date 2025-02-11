@@ -38,12 +38,12 @@ public class MiscellanousWebSiteEntityTest  implements DataSunbeam {
         Account account = new Account().setAccess(new Login()).setLogin("adebrie");
         Date now = new Date();
         Event event = new Event()
-                .setTitle("New event")
-                .setDate(now)
-                .setTarget(account)
-                .setIllustration("event.png")
-                .setStatus(EventStatus.COMING_SOON)
-                .setDescription("An exciting event !");
+            .setTitle("New event")
+            .setDate(now)
+            .setTarget(account)
+            .setIllustration("event.png")
+            .setStatus(EventStatus.COMING_SOON)
+            .setDescription("An exciting event !");
         Assert.assertEquals("New event", event.getTitle());
         Assert.assertEquals(now, event.getDate());
         Assert.assertEquals(account, event.getTarget());
@@ -66,6 +66,11 @@ public class MiscellanousWebSiteEntityTest  implements DataSunbeam {
         Assert.assertEquals(MessageModelCategory.MESSAGE_AUTHOR, messageModel.getCategory());
         Assert.assertEquals(MessageModelStatus.PENDING, messageModel.getStatus());
         Assert.assertEquals("The text of the message model", messageModel.getText());
+    }
+
+    @Test
+    public void fillMap() {
+        MessageModel messageModel = new MessageModel();
         Comment comment1 = new Comment().setText("My first comment.");
         Comment comment2 = new Comment().setText("My second comment.");
         Assert.assertEquals(messageModel, messageModel
@@ -131,6 +136,5 @@ public class MiscellanousWebSiteEntityTest  implements DataSunbeam {
         Assert.assertEquals("History", presentation.getCategory());
         Assert.assertEquals("The greatest battles in History.", presentation.getText());
     }
-
 
 }

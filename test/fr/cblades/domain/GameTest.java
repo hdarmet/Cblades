@@ -1,11 +1,10 @@
 package fr.cblades.domain;
 
+import fr.cblades.game.SequenceApplyer;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.summer.ApplicationManager;
-import org.summer.ApplicationManagerForTestImpl;
-import org.summer.MockDataManagerImpl;
+import org.summer.*;
 import org.summer.data.BaseEntity;
 import org.summer.data.DataSunbeam;
 import org.summer.data.SummerNotFoundException;
@@ -14,7 +13,7 @@ import javax.persistence.NoResultException;
 import java.util.*;
 import java.util.function.Predicate;
 
-public class GameTest implements DataSunbeam {
+public class GameTest implements DataSunbeam, CollectionSunbeam, TestSeawave {
 
     MockDataManagerImpl dataManager;
 
@@ -39,6 +38,11 @@ public class GameTest implements DataSunbeam {
         Assert.assertEquals("babenborg.png", playerIdentity.getPath());
         Assert.assertEquals(PlayerIdentityStatus.LIVE, playerIdentity.getStatus());
         Assert.assertEquals(account, playerIdentity.getAuthor());
+    }
+
+    @Test
+    public void manageCommentsInPlayerIdentity() {
+        PlayerIdentity playerIdentity = new PlayerIdentity();
         Comment comment1 = new Comment().setText("My first comment.");
         Comment comment2 = new Comment().setText("My second comment.");
         Assert.assertEquals(playerIdentity, playerIdentity
@@ -58,9 +62,9 @@ public class GameTest implements DataSunbeam {
     @Test
     public void findPlayerIdentityByName() {
         PlayerIdentity playerIdentity = new PlayerIdentity()
-                .setName("Jurgen Dan Babenberg");
+            .setName("Jurgen Dan Babenberg");
         dataManager.register("createQuery", null, null,
-                "select pi from PlayerIdentity pi where pi.name = :name");
+            "select pi from PlayerIdentity pi where pi.name = :name");
         dataManager.register("setParameter", null, null,"name", "Jurgen Dan Babenberg");
         dataManager.register("getSingleResult", playerIdentity, null);
         inTransaction(em->{
@@ -71,7 +75,7 @@ public class GameTest implements DataSunbeam {
     @Test
     public void tryToFindAnUnknownPlayerIdentityByName() {
         dataManager.register("createQuery", null, null,
-                "select pi from PlayerIdentity pi where pi.name = :name");
+            "select pi from PlayerIdentity pi where pi.name = :name");
         dataManager.register("setParameter", null, null,"name", "Jurgen Dan Babenberg");
         dataManager.register("getSingleResult", null, new NoResultException());
         inTransaction(em->{
@@ -93,6 +97,11 @@ public class GameTest implements DataSunbeam {
             .setIdentity(playerIdentity);
         Assert.assertEquals(playerIdentity, player.getIdentity());
         Assert.assertEquals("Jurgen Dan Babenberg", player.getName());
+    }
+
+    @Test
+    public void manageWingsInPlayer() {
+        Player player = new Player();
         Unit goblin1 = new Unit().setName("goblin1");
         Wing wing1 = new Wing()
             .setBanner(new Banner().setName("Black Orcs"))
@@ -337,8 +346,8 @@ public class GameTest implements DataSunbeam {
         sequenceElement.accept(new SequenceElement.SequenceVisitor() {
             @Override
             public void visit(SequenceElement element) {
-                SequenceElement.SequenceVisitor.super.visit(element);
-                passed[0] = true;
+            SequenceElement.SequenceVisitor.super.visit(element);
+            passed[0] = true;
             }
         });
         Assert.assertTrue(passed[0]);
@@ -346,13 +355,7 @@ public class GameTest implements DataSunbeam {
 
     @Test
     public void fillSequence() {
-        Player player1 = new Player()
-            .setIdentity(new PlayerIdentity().setName("Orc Chief"));
-        Player player2 = new Player()
-            .setIdentity(new PlayerIdentity().setName("Roughneck Captain"));
-        Game game = new Game()
-            .addPlayer(player1)
-            .addPlayer(player2);
+        Game game = new Game();
         Sequence sequence = new Sequence()
             .setGame(101L)
             .setCount(2)
@@ -363,9 +366,14 @@ public class GameTest implements DataSunbeam {
         Assert.assertEquals(3, sequence.getCurrentTurn());
         Assert.assertEquals(1, sequence.getCurrentPlayerIndex());
         dataManager.register("find", game, null, Game.class, 101L);
-        inTransaction(em->{
+        inTransaction(em -> {
             Assert.assertEquals(game, sequence.getGame(em));
         });
+    }
+
+    @Test
+    public void manageSequenceElementInSequence() {
+        Sequence sequence = new Sequence();
         SequenceElement sequenceElement1 = new SequenceElement().setType("MOVE");
         SequenceElement sequenceElement2 = new SequenceElement().setType("MOVE");
         Assert.assertEquals(sequence, sequence
@@ -385,6 +393,24 @@ public class GameTest implements DataSunbeam {
         Assert.assertFalse(sequence.isTurnClosed());
         sequenceElement2.setType(SequenceElement.TYPE_NEXT_TURN);
         Assert.assertTrue(sequence.isTurnClosed());
+    }
+
+    @Test
+    public void manageLastSequenceElementInSequence() {
+        Player player1 = new Player()
+            .setIdentity(new PlayerIdentity().setName("Orc Chief"));
+        Player player2 = new Player()
+            .setIdentity(new PlayerIdentity().setName("Roughneck Captain"));
+        Game game = new Game()
+            .addPlayer(player1)
+            .addPlayer(player2);
+        SequenceElement sequenceElement1 = new SequenceElement().setType("MOVE");
+        SequenceElement sequenceElement2 = new SequenceElement().setType("MOVE");
+        Sequence sequence = new Sequence()
+            .setGame(101L)
+            .addElement(sequenceElement1)
+            .addElement(sequenceElement2)
+            .setCurrentPlayerIndex(1);;
         dataManager.register("find", game, null, Game.class, 101L);
         inTransaction(em->{
             Assert.assertEquals(player2, sequence.getPlayer(em));
@@ -398,18 +424,23 @@ public class GameTest implements DataSunbeam {
     public void fillGame() {
         Map map = new Map();
         Game game = new Game()
-                .setMap(map)
-                .setFog(FogType.DENSE_MIST)
-                .setWeather(WeatherType.RAIN)
-                .setWindDirection(60)
-                .setCurrentPlayerIndex(1)
-                .setCurrentTurn(2);
+            .setMap(map)
+            .setFog(FogType.DENSE_MIST)
+            .setWeather(WeatherType.RAIN)
+            .setWindDirection(60)
+            .setCurrentPlayerIndex(1)
+            .setCurrentTurn(2);
         Assert.assertEquals(map, game.getMap());
         Assert.assertEquals(FogType.DENSE_MIST, game.getFog());
         Assert.assertEquals(WeatherType.RAIN, game.getWeather());
         Assert.assertEquals(60, game.getWindDirection());
         Assert.assertEquals(1, game.getCurrentPlayerIndex());
         Assert.assertEquals(2, game.getCurrentTurn());
+    }
+
+    @Test
+    public void managePlayerInGame() {
+        Game game = new Game();
         Player player1 = new Player()
                 .setIdentity(new PlayerIdentity().setName("Orc Chief"));
         Player player2 = new Player()
@@ -516,6 +547,111 @@ public class GameTest implements DataSunbeam {
         Assert.assertEquals(game, game.advanceToNextPlayerTurn());
         Assert.assertEquals(1, game.getCurrentTurn());
         Assert.assertEquals(player1, game.getCurrentPlayer());
+    }
+
+    @Test
+    public void manageSequenceElementInGame() {
+        SequenceElement sequenceElement1 = new SequenceElement().setType("MOVE");
+        SequenceElement sequenceElement2 = new SequenceElement().setType("MOVE");
+        List<SequenceElement> elements = new ArrayList<SequenceElement>() {{
+            add(sequenceElement1);
+            add(sequenceElement2);
+        }};
+        Game game = new Game();
+        Assert.assertEquals(game, game.addSequenceElements(elements));
+        Assert.assertEquals(elements, game.getSequenceElements());
+        Assert.assertEquals(game, game.resetSequenceElements());
+        Assert.assertEquals(0, game.getSequenceElements().size());
+    }
+
+    @Test
+    public void findGameById() {
+        Game game = new Game();
+        dataManager.register("find", game, null, Game.class, 1L);
+        inTransaction(em->{
+            Assert.assertEquals(game, Game.find(em, 1L));
+        });
+    }
+
+    @Test
+    public void tryToFindUnknownGameById() {
+        dataManager.register("find", null, null, Game.class, 1L);
+        inTransaction(em->{
+            try {
+                Game.find(em, 1L);
+                Assert.fail("A Not Found exception should be raised at this point");
+            }
+            catch(SummerNotFoundException snfe) {
+                Assert.assertEquals("Unknown Game with id 1", snfe.getMessage());
+            }
+        });
+    }
+
+    @Test
+    public void validatePlayerTurnAdvanceInGame() {
+        dataManager.register("createQuery", null, null, "select s from Sequence s left outer join fetch s.elements where s.game = :game and s.currentTurn < 0");
+        dataManager.register("setParameter", null, null,"game", 101L);
+        List<Integer> visited  = new ArrayList<Integer>();
+        dataManager.register("getResultList", arrayList(
+            new Sequence().setCount(2).addElement(
+                new SequenceElement() {
+                    @Override
+                    public void accept(SequenceVisitor visitor) {
+                        Assert.assertEquals(SequenceApplyer.class, visitor.getClass());
+                        visited.add(2);
+                    }
+                }.setType("MOVE")
+            ),
+            new Sequence().setCount(1).addElement(
+                new SequenceElement() {
+                    @Override
+                    public void accept(SequenceVisitor visitor) {
+                        Assert.assertEquals(SequenceApplyer.class, visitor.getClass());
+                        visited.add(1);
+                    }
+                }.setType("MOVE")
+            ),
+            new Sequence().setCount(3).addElement(
+                new SequenceElement() {
+                    @Override
+                    public void accept(SequenceVisitor visitor) {
+                        Assert.assertEquals(SequenceApplyer.class, visitor.getClass());
+                        visited.add(3);
+                    }
+                }.setType("MOVE")
+            )
+        ), null);
+        Game game = new Game();
+        setId(game, 101L);
+        inTransaction(em->{
+            game.validatePlayerTurnAdvance(em, 2);
+        });
+        Assert.assertEquals(arrayList(1, 2, 3), visited);
+    }
+
+    @Test
+    public void applySequencesUntilThresholdInGame() {
+        dataManager.register("createQuery", null, null, "select s from Sequence s left outer join fetch s.elements where s.game = :game and s.currentTurn = -1 and s.count <= :count");
+        dataManager.register("setParameter", null, null,"game", 101L);
+        dataManager.register("setParameter", null, null,"count", 2L);
+        boolean[] visited  = new boolean[] {false};
+        dataManager.register("getResultList", arrayList(
+            new Sequence().addElement(
+                new SequenceElement() {
+                    @Override
+                    public void accept(SequenceVisitor visitor) {
+                        Assert.assertEquals(SequenceApplyer.class, visitor.getClass());
+                        visited[0] = true;
+                    }
+                }
+            )
+        ), null);
+        Game game = new Game();
+        setId(game, 101L);
+        inTransaction(em->{
+            game.applySequencesUntil(em, 2);
+        });
+        Assert.assertTrue(visited[0]);
     }
 
 }

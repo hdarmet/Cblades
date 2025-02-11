@@ -41,18 +41,23 @@ public class ArticleTest implements DataSunbeam {
     public void fillTheme() {
         Account account = new Account().setAccess(new Login()).setLogin("adebrie");
         Theme theme = new Theme()
-            .setTitle("Magic")
-            .setDescription("Description of Magic")
-            .setIllustration("magic.png")
-            .setStatus(ThemeStatus.LIVE)
-            .setCategory(ThemeCategory.LEGEND)
-            .setAuthor(account);
+                .setTitle("Magic")
+                .setDescription("Description of Magic")
+                .setIllustration("magic.png")
+                .setStatus(ThemeStatus.LIVE)
+                .setCategory(ThemeCategory.LEGEND)
+                .setAuthor(account);
         Assert.assertEquals("Magic", theme.getTitle());
         Assert.assertEquals("Description of Magic", theme.getDescription());
         Assert.assertEquals("magic.png", theme.getIllustration());
         Assert.assertEquals(ThemeStatus.LIVE, theme.getStatus());
         Assert.assertEquals(ThemeCategory.LEGEND, theme.getCategory());
         Assert.assertEquals(account, theme.getAuthor());
+    }
+
+    @Test
+    public void manageCommentsInTheme() {
+        Theme theme = new Theme();
         Comment comment1 = new Comment().setText("My first comment.");
         Comment comment2 = new Comment().setText("My second comment.");
         Assert.assertEquals(theme, theme
@@ -200,6 +205,11 @@ public class ArticleTest implements DataSunbeam {
         Assert.assertEquals(account, article.getAuthor());
         Assert.assertTrue(article.getRecent());
         Assert.assertEquals(ArticleStatus.LIVE, article.getStatus());
+    }
+
+    @Test
+    public void manageThemesInArticle() {
+        Article article = new Article();
         Theme theme1 = new Theme().setTitle("Magic");
         Theme theme2 = new Theme().setTitle("History");
         Assert.assertEquals(article, article
@@ -214,6 +224,11 @@ public class ArticleTest implements DataSunbeam {
         Assert.assertEquals(new ArrayList<Theme>() {{
             add(theme2);
         }}, article.getThemes());
+    }
+
+    @Test
+    public void manageCommentsInArticle() {
+        Article article = new Article();
         Comment comment1 = new Comment().setText("My first comment.");
         Comment comment2 = new Comment().setText("My second comment.");
         Assert.assertEquals(article, article
@@ -228,6 +243,11 @@ public class ArticleTest implements DataSunbeam {
         Assert.assertEquals(article, article
             .addComment(comment2)
         );
+    }
+
+    @Test
+    public void manageParagraphsInArticle() {
+        Article article = new Article();
         Paragraph paragraph1 = new Paragraph().setTitle("At start...")
             .setText("Once upon a time...").setOrdinal(0);
         Paragraph paragraph2 = new Paragraph().setTitle("And then...")

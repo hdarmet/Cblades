@@ -29,15 +29,15 @@ public class PieceTest implements DataSunbeam {
     @Test
     public void fillPiece() {
         Piece piece = new Piece() {
-                @Override
-                public String getName() { return null; }
-                public Piece duplicate(EntityManager em, java.util.Map<BaseEntity, BaseEntity> duplications) { return null; }
-            }
-            .setAngle(30)
-            .setPositionAngle(60)
-            .setPositionCol(2)
-            .setPositionRow(3)
-            .setType("Unit");
+            @Override
+            public String getName() { return null; }
+            public Piece duplicate(EntityManager em, java.util.Map<BaseEntity, BaseEntity> duplications) { return null; }
+        }
+        .setAngle(30)
+        .setPositionAngle(60)
+        .setPositionCol(2)
+        .setPositionRow(3)
+        .setType("Unit");
         Assert.assertEquals(30, piece.getAngle());
         Assert.assertEquals(60L, (long)piece.getPositionAngle());
         Assert.assertEquals(2, piece.getPositionCol());
@@ -73,7 +73,7 @@ public class PieceTest implements DataSunbeam {
     @Test
     public void fillBanner() {
         Account account = new Account().setAccess(new Login()).setLogin("adebrie");
-        Banner banner  = new Banner()
+        Banner banner = new Banner()
             .setPath("redflag.png")
             .setStatus(BannerStatus.PENDING)
             .setName("Red Kingdom")
@@ -84,6 +84,11 @@ public class PieceTest implements DataSunbeam {
         Assert.assertEquals("Red Kingdom", banner.getName());
         Assert.assertEquals("Strong fire faction's flag", banner.getDescription());
         Assert.assertEquals(account, banner.getAuthor());
+    }
+
+    @Test
+    public void manageCommentsInBanner() {
+        Banner banner = new Banner();
         Comment comment1 = new Comment().setText("My first comment.");
         Comment comment2 = new Comment().setText("My second comment.");
         Assert.assertEquals(banner, banner
@@ -303,7 +308,7 @@ public class PieceTest implements DataSunbeam {
     @Test
     public void fillWing() {
         Unit leader = new Unit().setName("Orc-chief");
-        Banner banner  = new Banner().setName("Red Kingdom");
+        Banner banner = new Banner().setName("Red Kingdom");
         Wing wing = new Wing()
             .setLeader(leader)
             .setBanner(banner)
@@ -315,6 +320,11 @@ public class PieceTest implements DataSunbeam {
         Assert.assertEquals(OrderInstruction.DEFEND, wing.getOrderInstruction());
         Assert.assertEquals(11, wing.getMoral());
         Assert.assertEquals(10, wing.getTiredness());
+    }
+
+    @Test
+    public void manageTargetHexesInWing() {
+        Wing wing = new Wing();
         TargetHex targetHex1 = new TargetHex().setCol(0).setRow(1);
         TargetHex targetHex2 = new TargetHex().setCol(0).setRow(2);
         Assert.assertEquals(wing, wing

@@ -59,20 +59,30 @@ public class MapTest  implements DataSunbeam {
         Assert.assertEquals(BoardStatus.LIVE, board.getStatus());
         Assert.assertEquals(account, board.getAuthor());
         Assert.assertEquals("A dense dark forest.", board.getDescription());
+    }
+
+    @Test
+    public void manageCommentsInBoard() {
+        Board board = new Board();
         Comment comment1 = new Comment().setText("My first comment.");
         Comment comment2 = new Comment().setText("My second comment.");
         Assert.assertEquals(board, board
-            .addComment(comment1)
-            .addComment(comment2)
+                .addComment(comment1)
+                .addComment(comment2)
         );
         Assert.assertEquals(new ArrayList<Comment>() {{
             add(comment1);
             add(comment2);
         }}, board.getComments());
         Assert.assertEquals(board, board.removeComment(comment1));
-        Assert.assertEquals(board, board
-            .addComment(comment2)
-        );
+        Assert.assertEquals(new ArrayList<Comment>() {{
+            add(comment2);
+        }}, board.getComments());
+    }
+
+    @Test
+    public void manageHexesInBoard() {
+        Board board = new Board();
         Hex hex1 = new Hex().setCol(1).setRow(2).setHeight(0);
         Hex hex2 = new Hex().setCol(2).setRow(2).setHeight(0);
         Assert.assertEquals(board, board
@@ -84,9 +94,9 @@ public class MapTest  implements DataSunbeam {
             add(hex2);
         }}, board.getHexes());
         Assert.assertEquals(board, board.removeHex(hex1));
-        Assert.assertEquals(board, board
-            .addHex(hex2)
-        );
+        Assert.assertEquals(new ArrayList<Hex>() {{
+            add(hex2);
+        }}, board.getHexes());
     }
 
     @Test
@@ -123,10 +133,10 @@ public class MapTest  implements DataSunbeam {
     @Test
     public void findBoardByPath() {
         Board board = new Board()
-                .setName("Forest 1")
-                .setPath("forest1.png");
+            .setName("Forest 1")
+            .setPath("forest1.png");
         dataManager.register("createQuery", null, null,
-                "select b from Board b where b.path = :path");
+            "select b from Board b where b.path = :path");
         dataManager.register("setParameter", null, null,"path", "forest1.png");
         dataManager.register("getSingleResult", board, null);
         inTransaction(em->{
@@ -153,7 +163,6 @@ public class MapTest  implements DataSunbeam {
 
     @Test
     public void fillBoardPlacement() {
-        Account account = new Account().setAccess(new Login()).setLogin("adebrie");
         Board board = new Board()
             .setName("Forest 1")
             .setPath("forest1.png");
