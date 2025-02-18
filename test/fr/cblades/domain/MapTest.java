@@ -111,6 +111,7 @@ public class MapTest  implements DataSunbeam {
         inTransaction(em->{
             Assert.assertEquals(board, Board.getByName(em, "Forest 1"));
         });
+        dataManager.hasFinished();
     }
 
     @Test
@@ -128,6 +129,7 @@ public class MapTest  implements DataSunbeam {
                 Assert.assertEquals("Unknown Board with name Forest 1", snfe.getMessage());
             }
         });
+        dataManager.hasFinished();
     }
 
     @Test
@@ -142,6 +144,7 @@ public class MapTest  implements DataSunbeam {
         inTransaction(em->{
             Assert.assertEquals(board, Board.getByPath(em, "forest1.png"));
         });
+        dataManager.hasFinished();
     }
 
     @Test
@@ -159,6 +162,7 @@ public class MapTest  implements DataSunbeam {
                 Assert.assertEquals("Unknown Board with path forest1.png", snfe.getMessage());
             }
         });
+        dataManager.hasFinished();
     }
 
     @Test
@@ -189,6 +193,7 @@ public class MapTest  implements DataSunbeam {
             Assert.assertNotNull(copy[0]);
             Assert.assertEquals(copy[0], duplications.get(boardPlacement));
         });
+        dataManager.hasFinished();
     }
 
     @Test
@@ -197,8 +202,8 @@ public class MapTest  implements DataSunbeam {
         BoardPlacement boardPlacement1 = new BoardPlacement();
         BoardPlacement boardPlacement2 = new BoardPlacement();
         Assert.assertEquals(map, map
-                .addBoardPlacement(boardPlacement1)
-                .addBoardPlacement(boardPlacement2)
+            .addBoardPlacement(boardPlacement1)
+            .addBoardPlacement(boardPlacement2)
         );
         Assert.assertEquals(new ArrayList<BoardPlacement>() {{
             add(boardPlacement1);
@@ -237,6 +242,7 @@ public class MapTest  implements DataSunbeam {
             Assert.assertNotNull(copy[1]);
             Assert.assertEquals(copy[1], duplications.get(boardPlacement2));
         });
+        dataManager.hasFinished();
     }
 
 }

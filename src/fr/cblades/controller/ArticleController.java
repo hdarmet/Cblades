@@ -17,49 +17,54 @@ import org.summer.controller.Verifier;
 import org.summer.data.DataSunbeam;
 import org.summer.data.SummerNotFoundException;
 import org.summer.data.SummerPersistenceException;
+import org.summer.data.Synchronizer;
 import org.summer.platform.FileSunbeam;
 import org.summer.platform.PlatformManager;
 import org.summer.security.SecuritySunbeam;
 
+import javax.persistence.EntityExistsException;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceException;
 import javax.persistence.Query;
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 import java.util.Map;
 import java.util.function.BiPredicate;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 @Controller
-public class ArticleController implements InjectorSunbeam, DataSunbeam, SecuritySunbeam, ControllerSunbeam, FileSunbeam, StandardUsers {
+public class ArticleController
+	implements InjectorSunbeam, DataSunbeam, SecuritySunbeam, ControllerSunbeam,
+		FileSunbeam, StandardUsers, CommonEntities {
 	static final Logger log = Logger.getLogger("summer");
 
 	@MIME(url="/api/article/images/:imagename")
 	public FileSpecification getImage(Map<String, Object> params) {
-		try {
-			String webName = (String)params.get("imagename");
-			int minusPos = webName.indexOf('-');
-			int pointPos = webName.indexOf('.');
-			String imageName = webName.substring(0, minusPos)+webName.substring(pointPos);
-			return new FileSpecification()
-				.setName(imageName)
-				.setStream(PlatformManager.get().getInputStream("/articles/"+imageName));
-		} catch (PersistenceException pe) {
-			throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe);
-		}
+		return this.getImage(params, "imagename", "/articles/");
 	}
 
 	void storeArticleImages(Map<String, Object> params, Article article) {
 		FileSpecification[] files = (FileSpecification[]) params.get(MULTIPART_FILES);
-		for (FileSpecification file : files) {
-			int ordinal = Integer.parseInt(file.getName().substring(file.getName().indexOf("-")+1));
-			String fileName = "paragraph" + article.getId() + "_" + ordinal + "." + files[0].getExtension();
-			String webName = "paragraph" + article.getId() + "_" + ordinal + "-" + System.currentTimeMillis() + "." + files[0].getExtension();
-			copyStream(file.getStream(), PlatformManager.get().getOutputStream("/articles/" + fileName));
-			log.info("Save: " + "/articles/" + fileName + " for: " + "/api/article/images/" + webName);
-			article.getParagraph(ordinal).setIllustration("/api/article/images/" + webName);
+		if (files != null) {
+			Map<Integer, FileSpecification> fileMap = new HashMap<>();
+			for (FileSpecification file : files) {
+				int ordinal = Integer.parseInt(file.getName().substring(file.getName().indexOf("-") + 1));
+				if (fileMap.get(ordinal) != null) {
+					throw new SummerControllerException(400, "Only one illustration file may be loaded for a paragraph.");
+				}
+				fileMap.put(ordinal, file);
+			}
+			for (Map.Entry<Integer, FileSpecification> fileEntry : fileMap.entrySet()) {
+				int ordinal = fileEntry.getKey();
+				FileSpecification file = fileEntry.getValue();
+				String fileName = "paragraph" + article.getId() + "_" + ordinal + "." + files[0].getExtension();
+				String webName = "paragraph" + article.getId() + "_" + ordinal + "-" + PlatformManager.get().now() + "." + files[0].getExtension();
+				copyStream(file.getStream(), PlatformManager.get().getOutputStream("/articles/" + fileName));
+				log.info("Save: " + "/articles/" + fileName + " for: " + "/api/article/images/" + webName);
+				Paragraph paragraph = article.getParagraph(ordinal);
+				if (paragraph == null) throw new SummerControllerException(404, "No paragraph for image : " + ordinal);
+				article.getParagraph(ordinal).setIllustration("/api/article/images/" + webName);
+			}
 		}
 	}
 
@@ -67,10 +72,11 @@ public class ArticleController implements InjectorSunbeam, DataSunbeam, Security
 	public Json propose(Map<String, Object> params, Json request) {
 		Ref<Json> result = new Ref<>();
 		inTransaction(em->{
-			Article newArticle = writeToProposedArticle(em, request, new Article(), true);
 			ifAuthorized(
 				user->{
 					try {
+						checkJson(request, Usage.PROPOSE);
+						Article newArticle = writeToArticle(em, request, new Article(), Usage.PROPOSE);
 						Account author = Account.find(em, user);
 						addComment(request, newArticle, author);
 						newArticle.setStatus(ArticleStatus.PROPOSED);
@@ -78,6 +84,7 @@ public class ArticleController implements InjectorSunbeam, DataSunbeam, Security
 						newArticle.setPoll(new LikePoll().setLikes(0).setDislikes(0));
 						persist(em, newArticle);
 						storeArticleImages(params, newArticle);
+						flush(em);
 						result.set(readFromArticle(newArticle));
 					} catch (PersistenceException pe) {
 						throw new SummerControllerException(409,
@@ -102,8 +109,9 @@ public class ArticleController implements InjectorSunbeam, DataSunbeam, Security
 			ifAuthorized(
 				user -> {
 					try {
+						checkJson(request, Usage.AMEND);
 						Account author = Account.find(em, user);
-						writeToProposedArticle(em, request, article, false);
+						writeToArticle(em, request, article, Usage.AMEND);
 						addComment(request, article, author);
 						storeArticleImages(params, article);
 						flush(em);
@@ -124,19 +132,46 @@ public class ArticleController implements InjectorSunbeam, DataSunbeam, Security
 	public Json create(Map<String, Object> params, Json request) {
 		Ref<Json> result = new Ref<>();
 		inTransaction(em->{
-			Article newArticle = writeToArticle(em, request, new Article(), true);
-			newArticle.setPoll(new LikePoll().setLikes(0).setDislikes(0));
 			ifAuthorized(
 				user->{
 					try {
+						checkJson(request, Usage.CREATE);
+						Article newArticle = writeToArticle(em, request, new Article(), Usage.CREATE);
+						newArticle.setPoll(new LikePoll().setLikes(0).setDislikes(0));
 						persist(em, newArticle);
 						storeArticleImages(params, newArticle);
+						flush(em);
 						result.set(readFromArticle(newArticle));
 					} catch (PersistenceException pe) {
 						throw new SummerControllerException(409,
 							"Article with title (%s) already exists",
 							request.get("title"), null
 						);
+					}
+				},
+				ADMIN
+			);
+		});
+		return result.get();
+	}
+
+
+	@REST(url="/api/article/update/:id", method=Method.POST)
+	public Json update(Map<String, Object> params, Json request) {
+		Ref<Json> result = new Ref<>();
+		inTransaction(em-> {
+			ifAuthorized(
+				user -> {
+					try {
+						String id = (String) params.get("id");
+						Article article = findArticle(em, new Long(id));
+						checkJson(request, Usage.UPDATE);
+						writeToArticle(em, request, article, Usage.UPDATE);
+						storeArticleImages(params, article);
+						flush(em);
+						result.set(readFromArticle(article));
+					} catch (PersistenceException pe) {
+						throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe);
 					}
 				},
 				ADMIN
@@ -310,35 +345,12 @@ public class ArticleController implements InjectorSunbeam, DataSunbeam, Security
 	public Json updateStatus(Map<String, Object> params, Json request) {
 		Ref<Json> result = new Ref<>();
 		inTransaction(em-> {
-			String id = (String) params.get("id");
-			Article article = findArticle(em, new Long(id));
 			ifAuthorized(
 				user -> {
 					try {
+						String id = (String) params.get("id");
+						Article article = findArticle(em, new Long(id));
 						writeToArticleStatus(em, request, article);
-						flush(em);
-						result.set(readFromArticle(article));
-					} catch (PersistenceException pe) {
-						throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe);
-					}
-				},
-				ADMIN
-			);
-		});
-		return result.get();
-	}
-
-	@REST(url="/api/article/update/:id", method=Method.POST)
-	public Json update(Map<String, Object> params, Json request) {
-		Ref<Json> result = new Ref<>();
-		inTransaction(em-> {
-			String id = (String) params.get("id");
-			Article article = findArticle(em, new Long(id));
-			ifAuthorized(
-				user -> {
-					try {
-						writeToArticle(em, request, article, false);
-						storeArticleImages(params, article);
 						flush(em);
 						result.set(readFromArticle(article));
 					} catch (PersistenceException pe) {
@@ -363,55 +375,55 @@ public class ArticleController implements InjectorSunbeam, DataSunbeam, Security
 		};
 	}
 
-	Article writeToProposedArticle(EntityManager em, Json json, Article article, boolean full) {
+	enum Usage {
+		CREATE(true, false),
+		UPDATE(false, false),
+		PROPOSE(true, true),
+		AMEND(true, false);
+
+		final boolean creation;
+		final boolean propose;
+
+		Usage(boolean creation, boolean propose) {
+			this.creation = creation;
+			this.propose = propose;
+		}
+	}
+
+	void checkJson(Json json, Usage usage) {
 		Verifier verifier = verify(json);
-		try {
-			if (full) {
-				verifier
-					.checkRequired("title")
-					.each("themes", tJson -> verify(tJson)
-						.checkRequired("id").checkInteger("id", "Not a valid id")
-					)
-					.each("paragraphs", cJson -> verify(cJson)
-						.checkRequired("version")
-						.checkRequired("ordinal")
-						.checkRequired("title")
-						.checkRequired("illustration")
-						.checkRequired("text")
-					);
-			}
+		if (usage.creation) {
 			verifier
+				.checkRequired("title");
+		}
+		verifier
+			.checkMinSize("title", 2).checkMaxSize("title", 200)
+			.checkPattern("title", "[\\d\\s\\w]+")
+			.each("themes", tJson -> verify(tJson)
+				.checkRequired("id")
+				.checkInteger("id", "Not a valid id")
+			)
+			.each("paragraphs", cJson -> verify(cJson)
+				.checkRequired("version")
+				.checkRequired("ordinal")
+				.checkRequired("title")
 				.checkMinSize("title", 2).checkMaxSize("title", 200)
 				.checkPattern("title", "[\\d\\s\\w]+")
-				.checkMinSize("newComment", 2).checkMaxSize("newComment", 200)
-				.each("paragraphs", cJson->verify(cJson)
-					.checkMinSize("title", 2).checkMaxSize("title", 200)
-					.checkPattern("title", "[\\d\\s\\w]+")
-					.checkMinSize("illustration", 2).checkMaxSize("illustration", 200)
-					.check("illustrationPosition",IllustrationPosition.byLabels().keySet())
-					.checkMinSize("text", 2)
-					.checkMaxSize("text", 19995)
-				);
-			verifier
-				.ensure();
-			sync(json, article)
-				.write("version")
-				.write("title")
-				.syncEach("themes", (Json jsonTheme)-> Theme.find(em, jsonTheme.getLong("id")))
-				.syncEach("paragraphs", (cJson, comment)->sync(cJson, comment)
-					.write("version")
-					.write("ordinal")
-					.write("title")
-					.write("illustration")
-					.write("illustrationPosition", label->IllustrationPosition.byLabels().get(label))
-					.write("text")
-				);
-			article.setFirstParagraph(article.getParagraph(0));
-			article.buildDocument();
-			return article;
-		} catch (SummerNotFoundException snfe) {
-			throw new SummerControllerException(404, snfe.getMessage());
+				.checkRequired("illustration")
+				.checkMinSize("illustration", 2).checkMaxSize("illustration", 200)
+				.check("illustrationPosition", IllustrationPosition.byLabels().keySet())
+				.checkRequired("text")
+				.checkMinSize("text", 2)
+				.checkMaxSize("text", 19995)
+			);
+		if (usage.propose) {
+			verifier.checkMinSize("newComment", 2).checkMaxSize("newComment", 200);
 		}
+		else {
+			verifier.check("status", ThemeStatus.byLabels().keySet());
+			checkComments(verifier, usage.creation);
+		}
+		verifier.ensure();
 	}
 
 	void addComment(Json json, Article article, Account author) {
@@ -431,55 +443,12 @@ public class ArticleController implements InjectorSunbeam, DataSunbeam, Security
 		return article;
 	}
 
-	Article writeToArticle(EntityManager em, Json json, Article article, boolean full) {
-		Verifier verifier = verify(json);
+	Article writeToArticle(EntityManager em, Json json, Article article, Usage usage) {
 		try {
-			if (full) {
-				verifier
-					.checkRequired("title")
-					.each("themes", tJson -> verify(tJson)
-						.checkRequired("id")
-					)
-					.each("paragraphs", cJson -> verify(cJson)
-						.checkRequired("version")
-						.checkRequired("ordinal")
-						.checkRequired("title")
-						.checkRequired("illustration")
-						.checkRequired("text")
-						)
-						.each("comments", cJson -> verify(cJson)
-							.checkRequired("version")
-							.checkRequired("date")
-							.checkRequired("text")
-						);
-			}
-			verifier
-				.checkMinSize("title", 2).checkMaxSize("title", 200)
-				.checkPattern("title", "[\\d\\s\\w]+")
-				.each("themes", tJson->verify(tJson)
-					.checkInteger("id", "Not a valid id")
-				)
-				.check("status", ThemeStatus.byLabels().keySet())
-				.each("paragraphs", cJson->verify(cJson)
-					.checkMinSize("title", 2).checkMaxSize("title", 200)
-					.checkPattern("title", "[\\d\\s\\w]+")
-					.checkMinSize("illustration", 2).checkMaxSize("illustration", 200)
-					.check("illustrationPosition",IllustrationPosition.byLabels().keySet())
-					.checkMinSize("text", 2)
-					.checkMaxSize("text", 19995)
-				)
-				.each("comments", cJson->verify(cJson)
-					.checkMinSize("text", 2)
-					.checkMaxSize("text", 19995)
-				);
-			verifier
-				.ensure();
-			sync(json, article)
+			Synchronizer synchronizer = sync(json, article)
 				.write("version")
 				.write("title")
 				.syncEach("themes", (Json jsonTheme)-> Theme.find(em, jsonTheme.getLong("id")))
-				.writeRef("author.id", "author", (Integer id)-> Account.find(em, id))
-				.write("status", label->ArticleStatus.byLabels().get(label))
 				.syncEach("paragraphs", (cJson, comment)->sync(cJson, comment)
 					.write("version")
 					.write("ordinal")
@@ -487,14 +456,18 @@ public class ArticleController implements InjectorSunbeam, DataSunbeam, Security
 					.write("illustration")
 					.write("illustrationPosition", label->IllustrationPosition.byLabels().get(label))
 					.write("text")
-				)
-				.syncEach("comments", (cJson, comment)->sync(cJson, comment)
-					.write("version")
-					.writeDate("date")
-					.write("text")
 				);
 			article.setFirstParagraph(article.getParagraph(0));
 			article.buildDocument();
+			if (usage.propose) {
+				synchronizer
+						.writeRef("author.id", "author", (Integer id) -> Account.find(em, id));
+			}
+			else {
+				synchronizer
+					.write("status", label -> ArticleStatus.byLabels().get(label));
+				writeComments(synchronizer);
+			}
 			return article;
 		} catch (SummerNotFoundException snfe) {
 			throw new SummerControllerException(404, snfe.getMessage());
@@ -503,7 +476,7 @@ public class ArticleController implements InjectorSunbeam, DataSunbeam, Security
 
 	Json readFromArticleSummary(Article article) {
 		Json json = Json.createJsonObject();
-		sync(json, article)
+		Synchronizer synchronizer = sync(json, article)
 			.read("id")
 			.read("version")
 			.readEach("themes", (tJson, account)->sync(tJson, account)
@@ -517,20 +490,14 @@ public class ArticleController implements InjectorSunbeam, DataSunbeam, Security
 				.read("illustration")
 				.read("illustrationPosition", IllustrationPosition::getLabel)
 				.read("text")
-			)
-			.readLink("author", (pJson, account)->sync(pJson, account)
-				.read("id")
-				.read("login", "access.login")
-				.read("firstName")
-				.read("lastName")
-				.read("avatar")
 			);
+		readAuthor(synchronizer);
 		return json;
 	}
 
 	Json readFromArticle(Article article) {
 		Json json = Json.createJsonObject();
-		sync(json, article)
+		Synchronizer synchronizer = sync(json, article)
 			.read("id")
 			.read("version")
 			.readEach("themes", (tJson, account)->sync(tJson, account)
@@ -546,26 +513,15 @@ public class ArticleController implements InjectorSunbeam, DataSunbeam, Security
 				.read("illustration")
 				.read("illustrationPosition", IllustrationPosition::getLabel)
 				.read("text")
-			)
-			.readLink("author", (pJson, account)->sync(pJson, account)
-				.read("id")
-				.read("login", "access.login")
-				.read("firstName")
-				.read("lastName")
-				.read("avatar")
-			)
-			.readEach("comments", (hJson, hex)->sync(hJson, hex)
-				.read("id")
-				.read("version")
-				.readDate("date")
-				.read("text")
 			);
+		readAuthor(synchronizer);
+		readComments(synchronizer);
 		return json;
 	}
 
 	Json readFromPublishedArticle(Article article) {
 		Json json = Json.createJsonObject();
-		sync(json, article)
+		Synchronizer synchronizer = sync(json, article)
 			.read("id")
 			.read("title")
 			.readEach("paragraphs", (pJson, paragraph)->sync(pJson, paragraph)
@@ -574,14 +530,9 @@ public class ArticleController implements InjectorSunbeam, DataSunbeam, Security
 				.read("illustration")
 				.read("illustrationPosition", IllustrationPosition::getLabel)
 				.read("text")
-			)
-			.readLink("author", (pJson, account)->sync(pJson, account)
-				.read("id")
-				.read("login", "access.login")
-				.read("firstName")
-				.read("lastName")
-				.read("avatar")
-			).readLink("poll", (pJson, poll)->sync(pJson, poll)
+			);
+		readAuthor(synchronizer);
+		synchronizer.readLink("poll", (pJson, poll)->sync(pJson, poll)
 				.read("id")
 				.read("likes")
 				.read("dislikes")

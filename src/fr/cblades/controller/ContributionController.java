@@ -12,6 +12,7 @@ import org.summer.controller.SummerControllerException;
 import org.summer.data.BaseEntity;
 import org.summer.data.DataSunbeam;
 import org.summer.platform.FileSunbeam;
+import org.summer.platform.PlatformManager;
 import org.summer.security.SecuritySunbeam;
 
 import javax.persistence.EntityManager;
@@ -27,7 +28,7 @@ public class ContributionController implements InjectorSunbeam, DataSunbeam, Sec
 	@REST(url="/api/contributions/personal", method=Method.GET)
 	public Json getContributions(Map<String, Object> params, Json request) {
 		long age = getLongParam(params, "age", "The requested Age is invalid (%s)");
-		long timestamp = (age==0) ? System.currentTimeMillis() : age;
+		long timestamp = (age==0) ? PlatformManager.get().now() : age;
 		String search = (String)params.get("search");
 		List<BaseEntity> contributions = new ArrayList<>();
 		Json result = Json.createJsonArray();

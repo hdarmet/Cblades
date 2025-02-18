@@ -53,8 +53,8 @@ public class BoardController implements InjectorSunbeam, DataSunbeam, SecuritySu
 			if (files.length!= 2) throw new SummerControllerException(400, "Two board files must be loaded.");
 			String fileName = "board" + board.getId() + "." + files[0].getExtension();
 			String fileIconName = "boardicon" + board.getId() + "." + files[1].getExtension();
-			String webName = "board" + board.getId() + "-" + System.currentTimeMillis() + "." + files[0].getExtension();
-			String webIconName = "boardicon" + board.getId() + "-" + System.currentTimeMillis() + "." + files[1].getExtension();
+			String webName = "board" + board.getId() + "-" + PlatformManager.get().now() + "." + files[0].getExtension();
+			String webIconName = "boardicon" + board.getId() + "-" + PlatformManager.get().now() + "." + files[1].getExtension();
 			copyStream(files[0].getStream(), PlatformManager.get().getOutputStream("/boards/" + fileName));
 			copyStream(files[1].getStream(), PlatformManager.get().getOutputStream("/boards/" + fileIconName));
 			board.setPath("/api/board/images/" + webName);

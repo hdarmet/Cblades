@@ -12,7 +12,9 @@ import org.summer.annotation.REST.Method;
 import org.summer.controller.ControllerSunbeam;
 import org.summer.controller.Json;
 import org.summer.controller.SummerControllerException;
+import org.summer.controller.Verifier;
 import org.summer.data.DataSunbeam;
+import org.summer.data.Synchronizer;
 import org.summer.platform.FileSunbeam;
 import org.summer.platform.PlatformManager;
 import org.summer.security.SecuritySunbeam;
@@ -24,21 +26,13 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @Controller
-public class BannerController implements InjectorSunbeam, DataSunbeam, SecuritySunbeam, ControllerSunbeam, StandardUsers, FileSunbeam {
+public class BannerController
+		implements InjectorSunbeam, DataSunbeam, SecuritySunbeam, ControllerSunbeam, StandardUsers, FileSunbeam, CommonEntities
+{
 
 	@MIME(url="/api/banner/images/:imagename")
 	public FileSpecification getImage(Map<String, Object> params) {
-		try {
-			String webName = (String)params.get("imagename");
-			int minusPos = webName.indexOf('-');
-			int pointPos = webName.indexOf('.');
-			String imageName = webName.substring(0, minusPos)+webName.substring(pointPos);
-			return new FileSpecification()
-				.setName(imageName)
-				.setStream(PlatformManager.get().getInputStream("/games/"+imageName));
-		} catch (PersistenceException pe) {
-			throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe);
-		}
+		return this.getImage(params, "imagename", "/games/");
 	}
 
 	void storeBannerImages(Map<String, Object> params, Banner banner) {
@@ -46,7 +40,7 @@ public class BannerController implements InjectorSunbeam, DataSunbeam, SecurityS
 		if (files != null && files.length > 0) {
 			if (files.length!= 1) throw new SummerControllerException(400, "Only one banner file must be loaded.");
 			String fileName = "banner" + banner.getId() + "." + files[0].getExtension();
-			String webName = "banner" + banner.getId() + "-" + System.currentTimeMillis() + "." + files[0].getExtension();
+			String webName = "banner" + banner.getId() + "-" + PlatformManager.get().now() + "." + files[0].getExtension();
 			copyStream(files[0].getStream(), PlatformManager.get().getOutputStream("/games/" + fileName));
 			banner.setPath("/api/banner/images/" + webName);
 		}
@@ -58,14 +52,16 @@ public class BannerController implements InjectorSunbeam, DataSunbeam, SecurityS
 		ifAuthorized(user->{
 			try {
 				inTransaction(em->{
+					checkJson(em, request, true);
 					Banner newBanner = writeToBanner(em, request, new Banner());
 					persist(em, newBanner);
 					storeBannerImages(params, newBanner);
+					em.flush();
 					result.set(readFromBanner(newBanner));
 				});
 			}
 			catch (EntityExistsException pe) {
-				throw new SummerControllerException(500,
+				throw new SummerControllerException(409,
 					"Banner with name (%s) already exists",
 					request.get("name"), null
 				);
@@ -185,6 +181,7 @@ public class BannerController implements InjectorSunbeam, DataSunbeam, SecurityS
 			try {
 				inTransaction(em->{
 					String id = (String)params.get("id");
+					checkJson(em, request, false);
 					Banner banner = findBanner(em, new Long(id));
 					writeToBanner(em, request, banner);
 					storeBannerImages(params, banner);
@@ -223,65 +220,53 @@ public class BannerController implements InjectorSunbeam, DataSunbeam, SecurityS
 	Banner writeToBannerStatus(Json json, Banner banner) {
 		verify(json)
 			.checkRequired("id").checkInteger("id", "Not a valid id")
-			.check("status", BannerStatus.byLabels().keySet())
+			.checkRequired("status").check("status", BannerStatus.byLabels().keySet())
 			.ensure();
 		sync(json, banner)
 			.write("status", label->BannerStatus.byLabels().get(label));
 		return banner;
 	}
 
-	Banner writeToBanner(EntityManager em, Json json, Banner banner) {
-		verify(json)
-			.checkRequired("name").checkMinSize("name", 2).checkMaxSize("name", 20)
+	void checkJson(EntityManager em, Json json,boolean full) {
+		Verifier verifier = verify(json);
+		if (full) {
+			verifier
+				.checkRequired("name")
+				.checkRequired("path");
+		}
+		verifier
+			.checkMinSize("name", 2).checkMaxSize("name", 20)
+			.checkMinSize("path", 2).checkMaxSize("path", 200)
 			.checkPattern("name", "[a-zA-Z0-9_\\-]+")
-			.checkRequired("path").checkMinSize("path", 2).checkMaxSize("path", 200)
 			.checkMinSize("description", 2).checkMaxSize("description", 2000)
-			.check("status", BannerStatus.byLabels().keySet())
-			.each("comments", cJson->verify(cJson)
-				.checkRequired("version")
-				.checkRequired("date")
-				.checkRequired("text")
-				.checkMinSize("text", 2)
-				.checkMaxSize("text", 19995)
-			)
-			.ensure();
-		sync(json, banner)
+			.check("status", BannerStatus.byLabels().keySet());
+		checkComments(verifier, full);
+		verifier.ensure();
+	}
+
+	Banner writeToBanner(EntityManager em, Json json, Banner banner) {
+		Synchronizer synchronizer = sync(json, banner)
 			.write("version")
 			.write("name")
 			.write("path")
 			.write("description")
 			.write("status", label->BannerStatus.byLabels().get(label))
-			.writeRef("author.id", "author", (Integer id)-> Account.find(em, id))
-			.syncEach("comments", (cJson, comment)->sync(cJson, comment)
-				.write("version")
-				.writeDate("date")
-				.write("text")
-			);
+			.writeRef("author.id", "author", (Integer id)-> Account.find(em, id));
+		writeComments(synchronizer);
 		return banner;
 	}
 
 	Json readFromBanner(Banner banner) {
 		Json json = Json.createJsonObject();
-		sync(json, banner)
+		Synchronizer synchronizer = sync(json, banner)
 			.read("id")
 			.read("version")
 			.read("name")
 			.read("path")
 			.read("description")
-			.read("status", BannerStatus::getLabel)
-			.readLink("author", (pJson, account)->sync(pJson, account)
-				.read("id")
-				.read("login", "access.login")
-				.read("firstName")
-				.read("lastName")
-				.read("avatar")
-			)
-			.readEach("comments", (hJson, hex)->sync(hJson, hex)
-				.read("id")
-				.read("version")
-				.readDate("date")
-				.read("text")
-			);
+			.read("status", BannerStatus::getLabel);
+		readAuthor(synchronizer);
+		readComments(synchronizer);
 		return json;
 	}
 

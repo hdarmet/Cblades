@@ -20,6 +20,7 @@ import org.summer.platform.PlatformManager;
 import org.summer.security.SecuritySunbeam;
 import org.summer.util.StringReplacer;
 
+import javax.persistence.EntityExistsException;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceException;
 import javax.persistence.Query;
@@ -29,29 +30,21 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @Controller
-public class AccountController implements InjectorSunbeam, DataSunbeam, SecuritySunbeam, ControllerSunbeam, FileSunbeam, StandardUsers {
+public class AccountController implements
+		InjectorSunbeam, DataSunbeam, SecuritySunbeam, ControllerSunbeam,
+		FileSunbeam, StandardUsers, CommonEntities {
 
 	@MIME(url="/api/account/images/:imagename")
 	public FileSpecification getImage(Map<String, Object> params) {
-		try {
-			String webName = (String)params.get("imagename");
-			int minusPos = webName.indexOf('-');
-			int pointPos = webName.indexOf('.');
-			String imageName = webName.substring(0, minusPos)+webName.substring(pointPos);
-			return new FileSpecification()
-			    .setName(imageName)
-				.setStream(PlatformManager.get().getInputStream("/avatars/"+imageName));
-		} catch (PersistenceException pe) {
-			throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe);
-		}
+		return this.getImage(params, "imagename", "/avatars/");
 	}
 
 	void storeAvatar (Map<String, Object> params, Account account) {
 		FileSpecification[] files = (FileSpecification[])params.get(MULTIPART_FILES);
-		if (files.length>0) {
+		if (files!=null && files.length>0) {
 			if (files.length>1) throw new SummerControllerException(400, "Only one avatar file may be loaded.");
 			String fileName = "avatar"+account.getId()+"."+files[0].getExtension();
-			String webName = "avatar"+account.getId()+"-"+System.currentTimeMillis()+"."+files[0].getExtension();
+			String webName = "avatar"+account.getId()+"-"+PlatformManager.get().now()+"."+files[0].getExtension();
 			copyStream(files[0].getStream(), PlatformManager.get().getOutputStream("/avatars/"+fileName));
 			account.setAvatar("/api/account/images/" + webName);
 		}
@@ -62,18 +55,23 @@ public class AccountController implements InjectorSunbeam, DataSunbeam, Security
 		Ref<Json> result = new Ref<>();
 		ifAuthorized(user->{
 			try {
-				inTransaction(em->{
-					Account newAccount = writeToAccount(request, new Account().setAccess(new Login()), true);
+				inTransaction(em -> {
+					checkJson(request, true);
+					Account newAccount = writeToAccount(request, new Account().setAccess(new Login()));
 					persist(em, newAccount);
 					storeAvatar(params, newAccount);
 					em.flush();
 					result.set(readFromAccount(newAccount));
 				});
-			} catch (PersistenceException pe) {
-				throw new SummerControllerException(409, 
+			}
+			catch (EntityExistsException pe) {
+				throw new SummerControllerException(409,
 					"Account with this login (%s) or email (%s) already exists",
 					request.get("login"), request.get("email"), null
 				);
+			}
+			catch (PersistenceException pe) {
+				throw new SummerControllerException(500, pe.getMessage());
 			}
 		}, ADMIN);
 		return result.get();
@@ -134,11 +132,11 @@ public class AccountController implements InjectorSunbeam, DataSunbeam, Security
 	}
 	
 	@REST(url="/api/account/delete/:id", method=Method.GET)
-	public Json delete(Map<String, String> params, Json request) {
+	public Json delete(Map<String, Object> params, Json request) {
 		ifAuthorized(user->{
 			try {
 				inTransaction(em->{
-					String id = params.get("id");
+					String id = (String)params.get("id");
 					Account account = findAccount(em, new Long(id));
 					executeUpdate(em, "delete from Event e where e.target = :account",
 						"account", account);
@@ -160,8 +158,9 @@ public class AccountController implements InjectorSunbeam, DataSunbeam, Security
 			try {
 				inTransaction(em->{
 					String id = (String)params.get("id");
+					checkJson(request, false);
 					Account account = findAccount(em, new Long(id));
-					writeToAccount(request, account, false);
+					writeToAccount(request, account);
 					storeAvatar(params, account);
 					flush(em);
 					result.set(readFromAccount(account));
@@ -183,7 +182,7 @@ public class AccountController implements InjectorSunbeam, DataSunbeam, Security
 		return account;
 	}
 	
-	Account writeToAccount(Json json, Account account, boolean full) {
+	void checkJson(Json json, boolean full) {
 		Verifier verifier = verify(json);
 		if (full) {
 			verifier
@@ -210,6 +209,9 @@ public class AccountController implements InjectorSunbeam, DataSunbeam, Security
 			.checkMaxSize("login", 20)
 			.check("role", LoginRole.byLabels().keySet());
 		verifier.ensure();
+	}
+
+	Account writeToAccount(Json json, Account account) {
 		Synchronizer synchronizer = sync(json, account)
 			.write("version")
 			.write("firstName")

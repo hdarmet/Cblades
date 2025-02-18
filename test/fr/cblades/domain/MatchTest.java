@@ -72,6 +72,7 @@ public class MatchTest implements DataSunbeam, CollectionSunbeam, TestSeawave {
         inTransaction(em->{
             Assert.assertEquals(scenario, Scenario.find(em, 1L));
         });
+        dataManager.hasFinished();
     }
 
     @Test
@@ -86,6 +87,7 @@ public class MatchTest implements DataSunbeam, CollectionSunbeam, TestSeawave {
                 Assert.assertEquals("Unknown Scenario with id 1", snfe.getMessage());
             }
         });
+        dataManager.hasFinished();
     }
 
     @Test
@@ -183,6 +185,7 @@ public class MatchTest implements DataSunbeam, CollectionSunbeam, TestSeawave {
         inTransaction(em->{
             Assert.assertEquals(gameMatch, GameMatch.find(em, 1L));
         });
+        dataManager.hasFinished();
     }
 
     @Test
@@ -210,6 +213,7 @@ public class MatchTest implements DataSunbeam, CollectionSunbeam, TestSeawave {
         inTransaction(em->{
             Assert.assertEquals(gameMatch, GameMatch.getByGame(em, 101L));
         });
+        dataManager.hasFinished();
     }
 
     @Test
@@ -221,6 +225,7 @@ public class MatchTest implements DataSunbeam, CollectionSunbeam, TestSeawave {
         inTransaction(em->{
             Assert.assertNull(GameMatch.getByGame(em, 101L));
         });
+        dataManager.hasFinished();
     }
 
 }

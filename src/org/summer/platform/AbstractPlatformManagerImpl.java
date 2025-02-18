@@ -43,7 +43,7 @@ public abstract class AbstractPlatformManagerImpl implements PlatformManager {
     @Override
     public void doScheduleTaskAt(Method jobMethod, long time) {
         assert(scheduledService!=null);
-        scheduledService.schedule(getJobConsumer(jobMethod), time-System.currentTimeMillis(), TimeUnit.MILLISECONDS);
+        scheduledService.schedule(getJobConsumer(jobMethod), time-this.now(), TimeUnit.MILLISECONDS);
     }
 
     @Override
@@ -55,7 +55,7 @@ public abstract class AbstractPlatformManagerImpl implements PlatformManager {
     @Override
     public void doScheduleJob(Method jobMethod, long time, long delay) {
         assert(scheduledService!=null);
-        scheduledService.scheduleAtFixedRate(getJobConsumer(jobMethod), time-System.currentTimeMillis(), delay, TimeUnit.MILLISECONDS);
+        scheduledService.scheduleAtFixedRate(getJobConsumer(jobMethod), time-this.now(), delay, TimeUnit.MILLISECONDS);
     }
 
 }

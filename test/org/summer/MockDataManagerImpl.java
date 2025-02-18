@@ -7,7 +7,7 @@ import javax.persistence.EntityManagerFactory;
 import java.lang.reflect.Proxy;
 import java.util.*;
 
-public class MockDataManagerImpl implements DataManager {
+public class MockDataManagerImpl implements Mockable, DataManager {
 
 	public class Factory {
 		EntityManagerFactory creator;
@@ -41,7 +41,13 @@ public class MockDataManagerImpl implements DataManager {
 		}
 	}
 
-	List<DataCallRecord> calls = new ArrayList<>();
+	List<CallRecord> calls = new ArrayList<>();
+
+	@Override
+	public List<CallRecord> getCalls() {
+		return this.calls;
+	}
+
 	Collection<Class<?>> entityClasses = new ArrayList<>();
 	Map<String, Factory> emFactories =  Collections.synchronizedMap(new HashMap<>());
 
@@ -72,29 +78,6 @@ public class MockDataManagerImpl implements DataManager {
     public Factory getFactory(String persistenceUnitName) {
 		return emFactories.get(persistenceUnitName);
 	}
-
-    public void register(
-    	String functionName,
-    	Object returnValue,
-    	Throwable exception,
-		Object ... parameters)
-    {
-        calls.add(new DataCallRecord(functionName, returnValue, exception, parameters));
-    }
-
-    public DataCallRecord expects(String functionName) {
-    	DataCallRecord record = new DataCallRecord(functionName, null, null, null);
-        calls.add(record);
-        return record;
-    }
-
-    public void hasFinished() {
-        if (!calls.isEmpty()) throw new SummerTestException("Data request(s) still pending");
-    }
-
-    public void clear() {
-        calls.clear();
-    }
 
 	@Override
 	public void executeInTransaction(String persistenceUnitName, Executor executor) {

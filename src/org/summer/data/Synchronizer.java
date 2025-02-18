@@ -264,15 +264,17 @@ public class Synchronizer implements DataSunbeam {
 		Function<J, E> entityGetter)
 	{
 		Json dtos = this.json.search(jsonCollName);
-		Collection<E> targetEntities = new ArrayList<>();
-		for (Object value : dtos) {
-			targetEntities.add(entityGetter.apply((J)value));
+		if (dtos != null) {
+			Collection<E> targetEntities = new ArrayList<>();
+			for (Object value : dtos) {
+				targetEntities.add(entityGetter.apply((J) value));
+			}
+			Collection<E> entities = ReflectUtil.get(this.target, targetCollName);
+			syncPersistentCollection(
+				() -> entities, () -> targetEntities,
+				entity -> relationshipWave.add(this.target, targetCollName, entity),
+				entity -> relationshipWave.remove(this.target, targetCollName, entity));
 		}
-		Collection<E> entities = ReflectUtil.get(this.target, targetCollName);
-		syncPersistentCollection(
-			()->entities, ()->targetEntities,
-			entity->relationshipWave.add(this.target, targetCollName, entity),
-			entity->relationshipWave.remove(this.target, targetCollName, entity));
 		return this;
 	}
 

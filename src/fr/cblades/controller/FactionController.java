@@ -55,7 +55,7 @@ public class FactionController implements InjectorSunbeam, DataSunbeam, Security
 			int ordinalIdx = file.getName().indexOf("-");
 			if (ordinalIdx<0) {
 				String factionFileName = "faction" + faction.getId() + "." + file.getExtension();
-				String factionWebName = "faction" + faction.getId() + "-" + System.currentTimeMillis() + "." + file.getExtension();
+				String factionWebName = "faction" + faction.getId() + "-" + PlatformManager.get().now() + "." + file.getExtension();
 				copyStream(file.getStream(), PlatformManager.get().getOutputStream("/factions/" + factionFileName));
 				faction.setIllustration("/api/faction/documents/" + factionWebName);
 			}
@@ -64,13 +64,13 @@ public class FactionController implements InjectorSunbeam, DataSunbeam, Security
 				int ordinal = Integer.parseInt(file.getName().substring(ordinalIdx+1));
 				if (isIcon) {
 					String sheetFileIconName = "sheeticon" + faction.getId() + "_" + ordinal + "." + file.getExtension();
-					String sheetWebIconName = "sheeticon" + faction.getId() + "_" + ordinal + "-" + System.currentTimeMillis() + "." + file.getExtension();
+					String sheetWebIconName = "sheeticon" + faction.getId() + "_" + ordinal + "-" + PlatformManager.get().now() + "." + file.getExtension();
 					copyStream(file.getStream(), PlatformManager.get().getOutputStream("/factions/" + sheetFileIconName));
 					faction.getSheet(ordinal).setIcon("/api/faction/documents/" + sheetWebIconName);
 				}
 				else {
 					String sheetFileName = "sheet" + faction.getId() + "_" + ordinal + "." + file.getExtension();
-					String sheetWebName = "sheet" + faction.getId() + "_" + ordinal + "-" + System.currentTimeMillis() + "." + file.getExtension();
+					String sheetWebName = "sheet" + faction.getId() + "_" + ordinal + "-" +PlatformManager.get().now() + "." + file.getExtension();
 					copyStream(file.getStream(), PlatformManager.get().getOutputStream("/factions/" + sheetFileName));
 					faction.getSheet(ordinal).setPath("/api/faction/documents/" + sheetWebName);
 				}

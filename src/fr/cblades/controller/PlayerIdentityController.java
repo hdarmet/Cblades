@@ -14,6 +14,7 @@ import org.summer.controller.Json;
 import org.summer.controller.SummerControllerException;
 import org.summer.controller.Verifier;
 import org.summer.data.DataSunbeam;
+import org.summer.data.Synchronizer;
 import org.summer.platform.FileSunbeam;
 import org.summer.platform.PlatformManager;
 import org.summer.security.SecuritySunbeam;
@@ -28,7 +29,8 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @Controller
-public class PlayerIdentityController implements InjectorSunbeam, DataSunbeam, SecuritySunbeam, ControllerSunbeam, StandardUsers, FileSunbeam {
+public class PlayerIdentityController
+		implements InjectorSunbeam, DataSunbeam, SecuritySunbeam, ControllerSunbeam, StandardUsers, FileSunbeam, CommonEntities {
 
 	@MIME(url="/api/player-identity/images/:imagename")
 	public FileSpecification getImage(Map<String, Object> params) {
@@ -50,7 +52,7 @@ public class PlayerIdentityController implements InjectorSunbeam, DataSunbeam, S
 		if (files!=null && files.length > 0) {
 			if (files.length!= 1) throw new SummerControllerException(400, "One player identity file must be loaded.");
 			String fileName = "playeridentity" + playerIdentity.getId() + "." + files[0].getExtension();
-			String webName = "playeridentity" + playerIdentity.getId() + "-" + System.currentTimeMillis() + "." + files[0].getExtension();
+			String webName = "playeridentity" + playerIdentity.getId() + "-" + PlatformManager.get().now() + "." + files[0].getExtension();
 			copyStream(files[0].getStream(), PlatformManager.get().getOutputStream("/games/" + fileName));
 			playerIdentity.setPath("/api/player-identity/images/" + webName);
 		}
@@ -227,10 +229,10 @@ public class PlayerIdentityController implements InjectorSunbeam, DataSunbeam, S
 	PlayerIdentity writeToPlayerIdentityStatus(Json json, PlayerIdentity playerIdentity) {
 		verify(json)
 			.checkRequired("id").checkInteger("id", "Not a valid id")
-			.check("status", BannerStatus.byLabels().keySet())
+			.checkRequired("status").check("status", PlayerIdentityStatus.byLabels().keySet())
 			.ensure();
 		sync(json, playerIdentity)
-			.write("status", label->BannerStatus.byLabels().get(label));
+			.write("status", label->PlayerIdentityStatus.byLabels().get(label));
 		return playerIdentity;
 	}
 
@@ -239,62 +241,39 @@ public class PlayerIdentityController implements InjectorSunbeam, DataSunbeam, S
 		if (full) {
 			verifier
 				.checkRequired("name")
-				.checkRequired("path")
-				.each("comments", cJson -> verify(cJson)
-					.checkRequired("version")
-					.checkRequired("date")
-					.checkRequired("text")
-				);
+				.checkRequired("path");
+			checkComments(verifier, true);
 		}
 		verifier
 			.checkMinSize("name", 2).checkMaxSize("name", 20)
 			.checkPattern("name", "[a-zA-Z0-9_\\-]+")
 			.checkMinSize("path", 2).checkMaxSize("path", 200)
 			.checkMinSize("description", 2).checkMaxSize("description", 2000)
-			.check("status", PlayerIdentityStatus.byLabels().keySet())
-			.each("comments", cJson->verify(cJson)
-				.checkMinSize("text", 2)
-				.checkMaxSize("text", 19995)
-			);
+			.check("status", PlayerIdentityStatus.byLabels().keySet());
 		verifier
 			.ensure();
-		sync(json, playerIdentity)
+		Synchronizer synchronizer = sync(json, playerIdentity)
 			.write("version")
 			.write("name")
 			.write("path")
 			.write("description")
 			.write("status", label-> PlayerIdentityStatus.byLabels().get(label))
-			.writeRef("author.id", "author", (Integer id)-> Account.find(em, id))
-			.syncEach("comments", (cJson, comment)->sync(cJson, comment)
-				.write("version")
-				.writeDate("date")
-				.write("text")
-			);
+			.writeRef("author.id", "author", (Integer id)-> Account.find(em, id));
+		writeComments(synchronizer);
 		return playerIdentity;
 	}
 
 	Json readFromPlayerIdentity(PlayerIdentity playerIdentity) {
 		Json json = Json.createJsonObject();
-		sync(json, playerIdentity)
+		Synchronizer synchronizer = sync(json, playerIdentity)
 			.read("id")
 			.read("version")
 			.read("name")
 			.read("path")
 			.read("description")
-			.read("status", PlayerIdentityStatus::getLabel)
-			.readLink("author", (pJson, account)->sync(pJson, account)
-				.read("id")
-				.read("login", "access.login")
-				.read("firstName")
-				.read("lastName")
-				.read("avatar")
-			)
-			.readEach("comments", (hJson, hex)->sync(hJson, hex)
-				.read("id")
-				.read("version")
-				.readDate("date")
-				.read("text")
-			);
+			.read("status", PlayerIdentityStatus::getLabel);
+		readAuthor(synchronizer);
+		readComments(synchronizer);
 		return json;
 	}
 

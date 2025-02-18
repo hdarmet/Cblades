@@ -112,8 +112,10 @@ public class LoginController implements InjectorSunbeam, DataSunbeam, SecuritySu
 		try {
 			verify(request)
 				.checkRequired("login")
+				.checkMinSize("login", 4)
 				.checkMaxSize("login", 20)
 				.checkRequired("password")
+				.checkMinSize("password", 4)
 				.checkMaxSize("password", 20)
 				.ensure();
 			inTransaction(em->{
@@ -127,7 +129,8 @@ public class LoginController implements InjectorSunbeam, DataSunbeam, SecuritySu
 				}
 				else {
 					Login me = logins.iterator().next();
-					if (!me.getPassword().equals(Login.encrypt(password)) && me.getAltPasswordLease()<PlatformManager.get().now()) {
+					if (!me.getPassword().equals(Login.encrypt(password)) &&
+						me.getAltPasswordLease()<PlatformManager.get().now()) {
 						throw new SummerControllerException(401, "Bad credentials");
 					}
 					connect(login, 30*60*1000);
@@ -153,6 +156,7 @@ public class LoginController implements InjectorSunbeam, DataSunbeam, SecuritySu
 		try {
 			verify(params)
 				.checkRequired("login")
+				.checkMinSize("login", 4)
 				.checkMaxSize("login", 20)
 				.ensure();
 			inTransaction(em->{

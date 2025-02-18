@@ -51,13 +51,13 @@ public class RuleSetController implements InjectorSunbeam, DataSunbeam, Security
 			int ordinal = Integer.parseInt(file.getName().substring(ordinalIdx+1));
 			if (isIcon) {
 				String sheetFileIconName = "sheeticon" + ruleSet.getId() + "_" + ordinal + "." + file.getExtension();
-				String sheetWebIconName = "sheeticon" + ruleSet.getId() + "_" + ordinal + "-" + System.currentTimeMillis() + "." + file.getExtension();
+				String sheetWebIconName = "sheeticon" + ruleSet.getId() + "_" + ordinal + "-" + PlatformManager.get().now() + "." + file.getExtension();
 				copyStream(file.getStream(), PlatformManager.get().getOutputStream("/rules/" + sheetFileIconName));
 				ruleSet.getSheet(ordinal).setIcon("/api/ruleset/documents/" + sheetWebIconName);
 			}
 			else {
 				String sheetFileName = "sheet" + ruleSet.getId() + "_" + ordinal + "." + file.getExtension();
-				String sheetWebName = "sheet" + ruleSet.getId() + "_" + ordinal + "-" + System.currentTimeMillis() + "." + file.getExtension();
+				String sheetWebName = "sheet" + ruleSet.getId() + "_" + ordinal + "-" + PlatformManager.get().now() + "." + file.getExtension();
 				copyStream(file.getStream(), PlatformManager.get().getOutputStream("/rules/" + sheetFileName));
 				ruleSet.getSheet(ordinal).setPath("/api/ruleset/documents/" + sheetWebName);
 			}

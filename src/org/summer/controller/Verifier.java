@@ -1,9 +1,12 @@
 package org.summer.controller;
 
+import org.summer.ReflectUtil;
+
 import java.lang.reflect.Array;
-import java.util.Arrays;
-import java.util.Map;
-import java.util.Set;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -13,7 +16,9 @@ public class Verifier {
 
 	Json json;
 	Json result;
-	
+
+	List<String> levels = new ArrayList<String>();
+
 	public Verifier(Json json) {
 		this.json = json;
 		this.result = null;
@@ -50,6 +55,7 @@ public class Verifier {
 	
 	public Verifier each(String field, Function<Json, Verifier> verifyBuilder) {
 		Json jarray = (Json)this.json.get(field);
+		this.levels.add(field);
 		if (jarray!=null) {
 			jarray.forEach(value->{
 				Json json = value instanceof Json ? (Json)value : Json.createJsonObject().put("_", value);
@@ -58,10 +64,17 @@ public class Verifier {
 					if (this.result==null) {
 						this.result = Json.createJsonObject();
 					}
-					this.result.putAll(verifier.result);
+					String path = "";
+					for (String level : this.levels) {
+						path += level + "-";
+					}
+					for (String key : verifier.result.keys()) {
+						this.result.put(path+key, verifier.result.get(key));
+					}
 				}
 			});
 		}
+		this.levels.remove(this.levels.size()-1);
 		return this;
 	}
 	
@@ -170,9 +183,23 @@ public class Verifier {
 				(((Number)json.get(field)).doubleValue()<=max.doubleValue()), field, message);
 	}
 
+	public Verifier checkDate(String field, String message) {
+		return check(json->{
+			if (json.get(field)==null) return true;
+			if (!(json.get(field) instanceof String)) return false;
+			try {
+				new SimpleDateFormat("yyyy-MM-dd").parse((String)json.get(field));
+			} catch (ParseException e) {
+				return false;
+			}
+			return true;
+		}, field, message);
+	}
+
 	public Verifier checkInteger(String field, String message) {
 		return check(json->json.get(field)==null||
-			(json.get(field) instanceof Integer), field, message);
+			(json.get(field) instanceof Integer),
+			field, message);
 	}
 
 	public Verifier checkString(String field, String message) {
@@ -197,6 +224,10 @@ public class Verifier {
 
 	public Verifier checkInteger(String field) {
 		return checkInteger(field, "not a valid integer");
+	}
+
+	public Verifier checkDate(String field) {
+		return checkDate(field, "not a valid date");
 	}
 
 	public Verifier checkFloat(String field) {
@@ -249,6 +280,5 @@ public class Verifier {
 	public Verifier checkEnum(String field, Object ...values) {
 		return checkEnum(field, "not a valid value: [%s]", values);
 	}
-
 
 }

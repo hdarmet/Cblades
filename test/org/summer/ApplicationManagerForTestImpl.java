@@ -11,7 +11,7 @@ public class ApplicationManagerForTestImpl extends ApplicationManager {
 	Injector injector = new InjectorForTest();
 
 	DataManager dataManager = new MockDataManagerImpl();
-	PlatformManager platformManager;
+	PlatformManager platformManager = new MockPlatformManagerImpl();
 	org.summer.security.SecurityManager securityManager = new MockSecurityManagerImpl();
 
 	@Override

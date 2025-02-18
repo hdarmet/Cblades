@@ -10,6 +10,7 @@ import org.summer.*;
 import org.summer.controller.Json;
 import org.summer.controller.SummerControllerException;
 import org.summer.data.DataManipulatorSunbeam;
+import org.summer.platform.PlatformManager;
 
 import javax.persistence.EntityNotFoundException;
 import javax.persistence.PersistenceException;
@@ -20,6 +21,7 @@ public class LoginControllerTest implements TestSeawave, CollectionSunbeam, Data
 	
 	LoginController loginController;
 	MockDataManagerImpl dataManager;
+	MockPlatformManagerImpl platformManager;
 	MockSecurityManagerImpl securityManager;
 	
 	@Before
@@ -28,9 +30,55 @@ public class LoginControllerTest implements TestSeawave, CollectionSunbeam, Data
 		loginController = new LoginController();
 		dataManager = (MockDataManagerImpl)ApplicationManager.get().getDataManager();
 		dataManager.openPersistenceUnit("default");
+		platformManager = (MockPlatformManagerImpl)ApplicationManager.get().getPlatformManager();
 		securityManager = (MockSecurityManagerImpl)ApplicationManager.get().getSecurityManager();
 		securityManager.register(new MockSecurityManagerImpl.Credential("admin", "admin", StandardUsers.ADMIN));
 		securityManager.register(new MockSecurityManagerImpl.Credential("someone", "someone", StandardUsers.USER));
+	}
+
+	@Test
+	public void ensureThatRequestedFieldsAreValid() {
+		securityManager.doConnect("admin", 0);
+		try {
+			loginController.create(params(), Json.createJsonFromString(
+				"{}"
+			));
+			Assert.fail("At this point a exception should be raised.");
+		}
+		catch (SummerControllerException sce) {
+			Assert.assertEquals("{\"password\":\"required\",\"login\":\"required\",\"altPassword\":\"required\"}", sce.getMessage());
+		}
+		try {
+			loginController.create(params(), Json.createJsonFromString(
+			"{ 'login':'a', " +
+					"'password':'a', " +
+					"'altPassword':'a'}"
+			));
+			Assert.fail("At this point a exception should be raised.");
+		}
+		catch (SummerControllerException sce) {
+			Assert.assertEquals(
+			"{\"password\":\"must be greater of equals to 4\"," +
+					"\"login\":\"must be greater of equals to 2\"," +
+					"\"altPassword\":\"must be greater of equals to 4\"}",
+				sce.getMessage());
+		}
+		try {
+			loginController.create(params(), Json.createJsonFromString(
+				"{ 'login':'A too long login to be accepted her', " +
+						"'password':'A too long password to be accepted here', " +
+						"'altPassword':'A too long password to be accepted here'}"
+			));
+			Assert.fail("At this point a exception should be raised.");
+		}
+		catch (SummerControllerException sce) {
+			Assert.assertEquals(
+		"{\"password\":\"must not be greater than 20\"," +
+				"\"login\":\"must not be greater than 20\"," +
+				"\"altPassword\":\"must not be greater than 20\"}",
+			sce.getMessage());
+		}
+
 	}
 
 	@Test
@@ -328,39 +376,102 @@ public class LoginControllerTest implements TestSeawave, CollectionSunbeam, Data
 	}
 
 	@Test
-	public void connectSuccessfully() {
-		Login userHe = (Login)setEntityId(new Login().setLogin("He").setPassword("298cde70c32a57b84d0a546fedbb2596").setAdministrator(false), 1);
+	public void connectSuccessfullyUsingThePassword() {
+		Login userHe = (Login)setEntityId(new Login()
+				.setLogin("John")
+				.setPassword("298cde70c32a57b84d0a546fedbb2596")
+				.setAdministrator(false), 1);
 		securityManager.register(
-			new MockSecurityManagerImpl.Credential("He", "298cde70c32a57b84d0a546fedbb2596", StandardUsers.USER)
+			new MockSecurityManagerImpl.Credential("John", "298cde70c32a57b84d0a546fedbb2596", StandardUsers.USER)
 		);
 		dataManager.register("createQuery", null, null,
 				"select l from Login l where l.login=:login and l.password=:password or l.altPassword=:password");
 		dataManager.register("setParameter", null, null,
-				"login", "He");
+				"login", "John");
 		dataManager.register("setParameter", null, null,
 				"password", "298cde70c32a57b84d0a546fedbb2596");
 		dataManager.register("getResultList", arrayList(
 				userHe
 		), null);
 		loginController.login(params(),
-				Json.createJsonFromString("{'login':'He', 'password':'PassW0rd'}")
+				Json.createJsonFromString("{'login':'John', 'password':'PassW0rd'}")
 		);
-		Assert.assertEquals(securityManager.getConnection().getId(), "He");
+		Assert.assertEquals(securityManager.getConnection().getId(), "John");
 		dataManager.hasFinished();
 	}
 
 	@Test
-	public void failsToConnect() {
+	public void connectSuccessfullyUsingTheAlternativePassword() {
+		Login userHe = (Login)setEntityId(new Login()
+				.setLogin("John")
+				.setAltPassword("298cde70c32a57b84d0a546fedbb2596")
+				.setAltPasswordLease(101101L)
+				.setAdministrator(false), 1);
+		platformManager.setTime(100101L);
+		securityManager.register(
+				new MockSecurityManagerImpl.Credential("John", "298cde70c32a57b84d0a546fedbb2596", StandardUsers.USER)
+		);
 		dataManager.register("createQuery", null, null,
 				"select l from Login l where l.login=:login and l.password=:password or l.altPassword=:password");
 		dataManager.register("setParameter", null, null,
-				"login", "He");
+				"login", "John");
+		dataManager.register("setParameter", null, null,
+				"password", "298cde70c32a57b84d0a546fedbb2596");
+		dataManager.register("getResultList", arrayList(
+				userHe
+		), null);
+		loginController.login(params(),
+				Json.createJsonFromString("{'login':'John', 'password':'PassW0rd'}")
+		);
+		Assert.assertEquals(securityManager.getConnection().getId(), "John");
+		dataManager.hasFinished();
+	}
+
+	@Test
+	public void failsToConnectBecauseLoginOrPasswordIsWrong() {
+		dataManager.register("createQuery", null, null,
+				"select l from Login l where l.login=:login and l.password=:password or l.altPassword=:password");
+		dataManager.register("setParameter", null, null,
+				"login", "John");
 		dataManager.register("setParameter", null, null,
 				"password", "298cde70c32a57b84d0a546fedbb2596");
 		dataManager.register("getResultList", arrayList(), null);
 		try {
 			loginController.login(params(),
-					Json.createJsonFromString("{'login':'He', 'password':'PassW0rd'}")
+					Json.createJsonFromString("{'login':'John', 'password':'PassW0rd'}")
+			);
+		}
+		catch (SummerControllerException sce) {
+			Assert.assertEquals(401, sce.getStatus());
+			Assert.assertEquals("Bad credentials", sce.getMessage());
+		}
+		dataManager.hasFinished();
+		Assert.assertNull(securityManager.getConnection());
+	}
+
+	@Test
+	public void failToConnectBecauseTheAlternativePasswordIsTooOld() {
+		Login userHe = (Login)setEntityId(new Login()
+				.setLogin("John")
+				.setAltPassword("298cde70c32a57b84d0a546fedbb2596")
+				.setAltPasswordLease(101101L)
+				.setAdministrator(false), 1);
+		platformManager.setTime(102101L);
+		securityManager.register(
+				new MockSecurityManagerImpl.Credential("John", "298cde70c32a57b84d0a546fedbb2596", StandardUsers.USER)
+		);
+		dataManager.register("createQuery", null, null,
+				"select l from Login l where l.login=:login and l.password=:password or l.altPassword=:password");
+		dataManager.register("setParameter", null, null,
+				"login", "John");
+		dataManager.register("setParameter", null, null,
+				"password", "298cde70c32a57b84d0a546fedbb2596");
+		dataManager.register("getResultList", arrayList(
+				userHe
+		), null);
+		try {
+			loginController.login(params(),
+					Json.createJsonFromString("{'login':'John', 'password':'PassW0rd'}")
 			);
 		}
 		catch (SummerControllerException sce) {
@@ -378,7 +489,7 @@ public class LoginControllerTest implements TestSeawave, CollectionSunbeam, Data
 			"select l from Login l where l.login=:login and l.password=:password or l.altPassword=:password");
 		try {
 			loginController.login(params(),
-					Json.createJsonFromString("{'login':'He', 'password':'PassW0rd'}")
+					Json.createJsonFromString("{'login':'John', 'password':'PassW0rd'}")
 			);
 		}
 		catch (SummerControllerException sce) {
@@ -416,6 +527,14 @@ public class LoginControllerTest implements TestSeawave, CollectionSunbeam, Data
 			//Assert.assertEquals(403, sce.getStatus());
 			Assert.assertEquals("Unexpected issue. Please report : m5d MessageDigest not available", sce.getMessage());
 		}
+	}
+
+	@Test
+	public void checkPasswordEncryption() {
+		for (int index=0; index<14; index++) {
+			platformManager.addRandom(index*0.02f);
+		}
+		Assert.assertEquals("F0!aAHIJLM", LoginController.generateRandomPassword());
 	}
 
 }

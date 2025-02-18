@@ -53,7 +53,7 @@ public class ScenarioController implements InjectorSunbeam, DataSunbeam, Securit
 		if (files.length > 0) {
 			if (files.length!= 1) throw new SummerControllerException(400, "One Scenario file must be loaded.");
 			String fileName = "scenario" + scenario.getId() + "." + files[0].getExtension();
-			String webName = "scenario" + scenario.getId() + "-" + System.currentTimeMillis() + "." + files[0].getExtension();
+			String webName = "scenario" + scenario.getId() + "-" + PlatformManager.get().now() + "." + files[0].getExtension();
 			copyStream(files[0].getStream(), PlatformManager.get().getOutputStream("/scenarios/" + fileName));
 			scenario.setIllustration("/api/scenario/images/" + webName);
 		}

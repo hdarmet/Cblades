@@ -2,12 +2,12 @@ package fr.cblades.controllers;
 
 import fr.cblades.StandardUsers;
 import fr.cblades.controller.BannerController;
-import fr.cblades.controller.BoardController;
 import fr.cblades.domain.*;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.summer.*;
+import org.summer.controller.ControllerSunbeam;
 import org.summer.controller.Json;
 import org.summer.controller.SummerControllerException;
 import org.summer.data.DataManipulatorSunbeam;
@@ -15,6 +15,9 @@ import org.summer.data.DataManipulatorSunbeam;
 import javax.persistence.EntityExistsException;
 import javax.persistence.EntityNotFoundException;
 import javax.persistence.PersistenceException;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.OutputStream;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
@@ -22,6 +25,7 @@ public class BannerControllerTest implements TestSeawave, CollectionSunbeam, Dat
 	
 	BannerController bannerController;
 	MockDataManagerImpl dataManager;
+	MockPlatformManagerImpl platformManager;
 	MockSecurityManagerImpl securityManager;
 	
 	@Before
@@ -30,25 +34,104 @@ public class BannerControllerTest implements TestSeawave, CollectionSunbeam, Dat
 		bannerController = new BannerController();
 		dataManager = (MockDataManagerImpl)ApplicationManager.get().getDataManager();
 		dataManager.openPersistenceUnit("default");
+		platformManager = (MockPlatformManagerImpl)ApplicationManager.get().getPlatformManager();
 		securityManager = (MockSecurityManagerImpl)ApplicationManager.get().getSecurityManager();
 		securityManager.register(new MockSecurityManagerImpl.Credential("admin", "admin", StandardUsers.ADMIN));
 		securityManager.register(new MockSecurityManagerImpl.Credential("someone", "someone", StandardUsers.USER));
 	}
 
 	@Test
+	public void checkRequiredFieldsForBannerCreation() {
+		securityManager.doConnect("admin", 0);
+		try {
+			bannerController.create(params(), Json.createJsonFromString(
+					"{}"
+			));
+		}
+		catch (SummerControllerException sce) {
+			Assert.assertEquals(400, sce.getStatus());
+			Assert.assertEquals("{\"path\":\"required\",\"name\":\"required\"}", sce.getMessage());
+		}
+	}
+
+	@Test
+	public void checkMinFieldSizesForBannerCreation() {
+		securityManager.doConnect("admin", 0);
+		try {
+			bannerController.create(params(), Json.createJsonFromString(
+				"{ 'name':'b', 'path':'t', 'description':'d' }"
+			));
+		}
+		catch (SummerControllerException sce) {
+			Assert.assertEquals(400, sce.getStatus());
+			Assert.assertEquals("{" +
+				"\"path\":\"must be greater of equals to 2\"," +
+				"\"name\":\"must be greater of equals to 2\"," +
+				"\"description\":\"must be greater of equals to 2\"" +
+				"}", sce.getMessage());
+		}
+	}
+
+	@Test
+	public void checkMaxFieldSizesForBannerCreation() {
+		securityManager.doConnect("admin", 0);
+		try {
+			bannerController.create(params(), Json.createJsonFromString(
+			"{ 'name':'" + generateText("a", 21) + "'," +
+					" 'path':'" + generateText("t", 201) + "'," +
+					" 'description':'" + generateText("d", 2001) + "' }"
+			));
+		}
+		catch (SummerControllerException sce) {
+			Assert.assertEquals(400, sce.getStatus());
+			Assert.assertEquals("{" +
+				"\"path\":\"must not be greater than 200\"," +
+				"\"name\":\"must not be greater than 20\"," +
+				"\"description\":\"must not be greater than 2000\"" +
+				"}", sce.getMessage());
+		}
+	}
+
+	@Test
+	public void checkFieldValidityForBannerCreation() {
+		securityManager.doConnect("admin", 0);
+		try {
+			bannerController.create(params(), Json.createJsonFromString(
+					"{ 'name':'...', 'path':'...', 'status':'???' }"
+			));
+		}
+		catch (SummerControllerException sce) {
+			Assert.assertEquals(400, sce.getStatus());
+			Assert.assertEquals("{" +
+				"\"name\":\"must matches '[a-zA-Z0-9_\\\\-]+'\"," +
+				"\"status\":\"??? must matches one of [pnd, live, prp]\"}", sce.getMessage());
+		}
+	}
+
+	@Test
 	public void createNewBanner() {
 		dataManager.register("persist", null, null, (Predicate) entity->{
-			if (!(entity instanceof Banner)) return false;
+			Assert.assertTrue(entity instanceof Banner);
 			Banner banner = (Banner) entity;
-			if (!"banner".equals(banner.getName())) return false;
-			if (!"here/there/banner.png".equals(banner.getPath())) return false;
+			Assert.assertEquals("banner", banner.getName());
+			Assert.assertEquals("here/there/banner.png",banner.getPath());
 			return true;
 		});
+		OutputStream outputStream = new ByteArrayOutputStream();
+		platformManager.register("getOutputStream", outputStream, null);
+		dataManager.register("flush", null, null);
 		dataManager.register("flush", null, null);
 		securityManager.doConnect("admin", 0);
-		bannerController.create(params(), Json.createJsonFromString(
-			"{ 'version':0, 'name':'banner', 'path':'here/there/banner.png' }"
+		bannerController.create(params(
+			ControllerSunbeam.MULTIPART_FILES, new FileSpecification[] {
+				new FileSpecification("banner-elf", "banner-elf.png", "png",
+					new ByteArrayInputStream(("Content of /games/elf.png").getBytes()))
+			}
+		), Json.createJsonFromString(
+		"{ 'version':0, 'name':'banner', 'path':'here/there/banner.png' }"
 		));
+		Assert.assertEquals("Content of /games/elf.png", outputStreamToString(outputStream));
+		platformManager.hasFinished();
 		dataManager.hasFinished();
 	}
 
@@ -68,7 +151,7 @@ public class BannerControllerTest implements TestSeawave, CollectionSunbeam, Dat
 			Assert.fail("The request should fail");
 		}
 		catch (SummerControllerException sce) {
-			Assert.assertEquals(500, sce.getStatus());
+			Assert.assertEquals(409, sce.getStatus());
 			Assert.assertEquals("Banner with name (banner) already exists", sce.getMessage());
 		}
 		dataManager.hasFinished();
@@ -86,6 +169,33 @@ public class BannerControllerTest implements TestSeawave, CollectionSunbeam, Dat
 		catch (SummerControllerException sce) {
 			Assert.assertEquals(403, sce.getStatus());
 			Assert.assertEquals("Not authorized", sce.getMessage());
+		}
+		dataManager.hasFinished();
+	}
+
+	@Test
+	public void failToCreateABannerBecauseMoreThanOneImageFile() {
+		dataManager.register("persist", null, null, (Predicate) entity->{
+			return true;
+		});
+		dataManager.register("flush", null, null, null);
+		securityManager.doConnect("admin", 0);
+		try {
+			bannerController.create(params(
+				ControllerSunbeam.MULTIPART_FILES, new FileSpecification[] {
+					new FileSpecification("banner-elf1", "banner-elf1.png", "png",
+						new ByteArrayInputStream(("Content of /games/elf1.png").getBytes())),
+					new FileSpecification("banner-elf2", "banner-elf2.png", "png",
+						new ByteArrayInputStream(("Content of /games/elf2.png").getBytes()))
+				}
+			), Json.createJsonFromString(
+					"{ 'version':0, 'name':'banner', 'path':'here/there/banner.png' }"
+			));
+			Assert.fail("The request should fail");
+		}
+		catch (SummerControllerException sce) {
+			Assert.assertEquals(400, sce.getStatus());
+			Assert.assertEquals("Only one banner file must be loaded.", sce.getMessage());
 		}
 		dataManager.hasFinished();
 	}
@@ -139,6 +249,41 @@ public class BannerControllerTest implements TestSeawave, CollectionSunbeam, Dat
 	}
 
 	@Test
+	public void listBannersWithASearchPattern() {
+		dataManager.register("createQuery", null, null,
+			"select count(b) from Banner b where " +
+					"fts('pg_catalog.english', b.name||' '||b.description ||' '||b.status, :search) = true");
+		dataManager.register("setParameter", null, null,"search", "elf");
+		dataManager.register("getSingleResult", 2L, null);
+		dataManager.register("createQuery", null, null,
+			"select b from Banner b where " +
+					"fts('pg_catalog.english', b.name||' '||b.description ||' '||b.status, :search) = true");
+		dataManager.register("setParameter", null, null,"search", "elf");
+		dataManager.register("setFirstResult", null, null, 0);
+		dataManager.register("setMaxResults", null, null, 16);
+		dataManager.register("getResultList", arrayList(
+			setEntityId(new Banner().setName("banner1").setPath("/there/where/banner1.png"), 1),
+			setEntityId(new Banner().setName("banner2").setPath("/there/where/banner2.png"), 2)
+		), null);
+		securityManager.doConnect("admin", 0);
+		Json result = bannerController.getAll(params("page", "0", "search", "elf"), null);
+		dataManager.hasFinished();
+	}
+
+	@Test
+	public void getLiveBanners() {
+		dataManager.register("createQuery", null, null,
+				"select b from Banner b where b.status = :status");
+		dataManager.register("setParameter", null, null, "status", BannerStatus.LIVE);
+		dataManager.register("getResultList", arrayList(
+			setEntityId(new Banner().setName("banner1").setPath("/there/where/banner1.png"), 1),
+			setEntityId(new Banner().setName("banner2").setPath("/there/where/banner2.png"), 2)
+		), null);
+		Json result = bannerController.getLive(params(), null);
+		dataManager.hasFinished();
+	}
+
+	@Test
 	public void tryToListAllBannersWithBadCredentials() {
 		securityManager.doConnect("someone", 0);
 		try {
@@ -151,6 +296,8 @@ public class BannerControllerTest implements TestSeawave, CollectionSunbeam, Dat
 		}
 		dataManager.hasFinished();
 	}
+
+	/////
 
 	@Test
 	public void getOneBannerByName() {
@@ -327,6 +474,87 @@ public class BannerControllerTest implements TestSeawave, CollectionSunbeam, Dat
 	}
 
 	@Test
+	public void checkRequiredFieldsForBannerUpdate() {
+		dataManager.register("find",
+			setEntityId(new Banner().setName("banner1")
+				.setPath("/there/where/banner1.png"), 1L),
+		null, Banner.class, 1L);
+		dataManager.register("flush", null, null);
+		securityManager.doConnect("admin", 0);
+		bannerController.update(params("id", "1"), Json.createJsonFromString(
+				"{}"
+		));
+		dataManager.hasFinished();
+	}
+
+	@Test
+	public void checkMinFieldSizesForBannerUpdate() {
+		dataManager.register("find",
+			setEntityId(new Banner().setName("banner1")
+				.setPath("/there/where/banner1.png"), 1L),
+		null, Banner.class, 1L);
+		securityManager.doConnect("admin", 0);
+		try {
+			bannerController.update(params("id", "1"), Json.createJsonFromString(
+					"{ 'name':'b', 'path':'t', 'description':'d' }"
+			));
+		}
+		catch (SummerControllerException sce) {
+			Assert.assertEquals(400, sce.getStatus());
+			Assert.assertEquals("{" +
+				"\"path\":\"must be greater of equals to 2\"," +
+				"\"name\":\"must be greater of equals to 2\"," +
+				"\"description\":\"must be greater of equals to 2\"" +
+				"}", sce.getMessage());
+		}
+	}
+
+	@Test
+	public void checkMaxFieldSizesForBannerUpdate() {
+		dataManager.register("find",
+			setEntityId(new Banner().setName("banner1")
+				.setPath("/there/where/banner1.png"), 1L),
+		null, Banner.class, 1L);
+		securityManager.doConnect("admin", 0);
+		try {
+			bannerController.update(params("id", "1"), Json.createJsonFromString(
+			"{ 'name':'" + generateText("a", 21) + "'," +
+					" 'path':'" + generateText("t", 201) + "'," +
+					" 'description':'" + generateText("d", 2001) + "' }"
+			));
+		}
+		catch (SummerControllerException sce) {
+			Assert.assertEquals(400, sce.getStatus());
+			Assert.assertEquals("{" +
+				"\"path\":\"must not be greater than 200\"," +
+				"\"name\":\"must not be greater than 20\"," +
+				"\"description\":\"must not be greater than 2000\"" +
+				"}", sce.getMessage());
+		}
+	}
+
+	@Test
+	public void checkFieldValidityForBannerUpdate() {
+		dataManager.register("find",
+			setEntityId(new Banner().setName("banner1")
+				.setPath("/there/where/banner1.png"), 1L),
+				null, Banner.class, 1L);
+		securityManager.doConnect("admin", 0);
+		try {
+			bannerController.update(params("id", "1"), Json.createJsonFromString(
+			"{ 'name':'...'," +
+					" 'status':'???' }"
+			));
+		}
+		catch (SummerControllerException sce) {
+			Assert.assertEquals(400, sce.getStatus());
+			Assert.assertEquals("{" +
+				"\"name\":\"must matches '[a-zA-Z0-9_\\\\-]+'\"," +
+				"\"status\":\"??? must matches one of [pnd, live, prp]\"}", sce.getMessage());
+		}
+	}
+
+	@Test
 	public void upadteABanner() {
 		dataManager.register("find",
 			setEntityId(new Banner().setName("banner1")
@@ -399,10 +627,128 @@ public class BannerControllerTest implements TestSeawave, CollectionSunbeam, Dat
 	}
 
 	@Test
-	public void checkBannerEntity() {
-		Banner banner = new Banner().setName("banner").setPath("/there/where/banner.png");
-		Assert.assertEquals(banner.getName(), "banner");
-		Assert.assertEquals(banner.getPath(), "/there/where/banner.png");
+	public void checkRequestedFieldsForAnUpadteABannersStatus() {
+		dataManager.register("find",
+				setEntityId(new Banner().setName("banner1")
+						.setPath("/there/where/banner1.png"), 1L),
+				null, Banner.class, 1L);
+		securityManager.doConnect("admin", 0);
+		try {
+			bannerController.updateStatus(params("id", "1"), Json.createJsonFromString(
+					"{}"
+			));
+		}
+		catch (SummerControllerException sce) {
+			Assert.assertEquals(400, sce.getStatus());
+			Assert.assertEquals("{\"id\":\"required\",\"status\":\"required\"}", sce.getMessage());
+		}
+	}
+
+	@Test
+	public void checkFieldValidationsForAnUpadteABannersStatus() {
+		dataManager.register("find",
+				setEntityId(new Banner().setName("banner1")
+						.setPath("/there/where/banner1.png"), 1L),
+				null, Banner.class, 1L);
+		securityManager.doConnect("admin", 0);
+		try {
+			bannerController.updateStatus(params("id", "1"), Json.createJsonFromString(
+					"{ 'id':'1234', 'status':'???'}"
+			));
+		}
+		catch (SummerControllerException sce) {
+			Assert.assertEquals(400, sce.getStatus());
+			Assert.assertEquals("{\"id\":\"Not a valid id\",\"status\":\"??? must matches one of [pnd, live, prp]\"}", sce.getMessage());
+		}
+	}
+
+	@Test
+	public void upadteABannersStatus() {
+		dataManager.register("find",
+				setEntityId(new Banner().setName("banner1")
+						.setPath("/there/where/banner1.png"), 1L),
+				null, Banner.class, 1L);
+		dataManager.register("flush", null, null);
+		securityManager.doConnect("admin", 0);
+		Json result = bannerController.updateStatus(params("id", "1"), Json.createJsonFromString(
+				"{ 'id':1, 'status': 'live' }"
+		));
+		Assert.assertEquals(
+				"{\"path\":\"/there/where/banner1.png\",\"comments\":[],\"name\":\"banner1\",\"id\":1,\"version\":0,\"status\":\"live\"}",
+				result.toString()
+		);
+		dataManager.hasFinished();
+	}
+
+	@Test
+	public void tryToUpadteABannersStatusWithBadCredential() {
+		dataManager.register("find",
+				setEntityId(new Banner().setName("banner1")
+						.setPath("/there/where/banner1.png"), 1L),
+				null, Banner.class, 1L);
+		securityManager.doConnect("someone", 0);
+		try {
+			bannerController.updateStatus(params("id", "1"), Json.createJsonFromString(
+					"{ 'id':1, 'status': 'live' }"
+			));
+			Assert.fail("The request should fail");
+		}
+		catch (SummerControllerException sce) {
+			Assert.assertEquals(403, sce.getStatus());
+			Assert.assertEquals("Not authorized", sce.getMessage());
+		}
+		dataManager.hasFinished();
+	}
+
+	@Test
+	public void failToUpdateABannersStatusForUnknownReason() {
+		dataManager.register("find",
+			setEntityId(new Banner().setName("banner1")
+				.setPath("/there/where/banner1.png"), 1L),
+		null, Banner.class, 1L);
+		dataManager.register("flush", null,
+			new PersistenceException("Some reason"), null
+		);
+		securityManager.doConnect("admin", 0);
+		try {
+			bannerController.updateStatus(params("id", "1"), Json.createJsonFromString(
+					"{ 'id':1, 'status': 'live' }"
+			));
+			Assert.fail("The request should fail");
+		}
+		catch (SummerControllerException sce) {
+			Assert.assertEquals(409, sce.getStatus());
+			Assert.assertEquals("Unexpected issue. Please report : Some reason", sce.getMessage());
+		}
+		dataManager.hasFinished();
+	}
+
+	@Test
+	public void chargeBannerImage() {
+		platformManager.register("getInputStream",
+				new ByteArrayInputStream(("Content of /games/elf.png").getBytes()),
+				null,  "/games/elf.png");
+		FileSpecification image = bannerController.getImage(params("imagename", "elf-10123456.png"));
+		Assert.assertEquals("elf.png", image.getName());
+		Assert.assertEquals("image/png", image.getType());
+		Assert.assertEquals("elf.png", image.getFileName());
+		Assert.assertEquals("Content of /games/elf.png", inputStreamToString(image.getStream()));
+		Assert.assertEquals("png", image.getExtension());
+		platformManager.hasFinished();
+	}
+
+	@Test
+	public void failChargeBannerImage() {
+		platformManager.register("getInputStream", null,
+				new PersistenceException("For Any Reason..."),  "/games/elf.png");
+		try {
+			bannerController.getImage(params("imagename", "elf-10123456.png"));
+		}
+		catch (SummerControllerException sce) {
+			Assert.assertEquals(409, sce.getStatus());
+			Assert.assertEquals("Unexpected issue. Please report : For Any Reason...", sce.getMessage());
+		}
+		platformManager.hasFinished();
 	}
 
 }

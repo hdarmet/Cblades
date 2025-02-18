@@ -116,6 +116,7 @@ public class PieceTest implements DataSunbeam {
         inTransaction(em->{
             Assert.assertEquals(banner, Banner.getByName(em, "Red Kingdom"));
         });
+        dataManager.hasFinished();
     }
 
     @Test
@@ -127,6 +128,7 @@ public class PieceTest implements DataSunbeam {
         inTransaction(em->{
             Assert.assertNull(Banner.getByName(em, "Red Kingdom"));
         });
+        dataManager.hasFinished();
     }
 
     @Test
@@ -226,6 +228,7 @@ public class PieceTest implements DataSunbeam {
            Assert.assertNotNull(copy[0]);
            Assert.assertEquals(copy[0], duplications.get(unit));
         });
+        dataManager.hasFinished();
     }
 
     @Test
@@ -296,6 +299,7 @@ public class PieceTest implements DataSunbeam {
             Assert.assertNotNull(copy[0]);
             Assert.assertEquals(copy[0], duplications.get(token));
         });
+        dataManager.hasFinished();
     }
 
     @Test
@@ -403,6 +407,7 @@ public class PieceTest implements DataSunbeam {
             Assert.assertNotNull(copy[4]);
             Assert.assertEquals(copy[4], duplications.get(wing));
         });
+        dataManager.hasFinished();
     }
 
     @Test
@@ -416,6 +421,7 @@ public class PieceTest implements DataSunbeam {
         inTransaction(em->{
             Assert.assertEquals(wing, Wing.findWing(em, unit1));
         });
+        dataManager.hasFinished();
     }
 
     @Test
@@ -434,6 +440,7 @@ public class PieceTest implements DataSunbeam {
                 Assert.assertEquals("No Wing contains unit of id: 0", snfe.getMessage());
             }
         });
+        dataManager.hasFinished();
     }
 
     @Test

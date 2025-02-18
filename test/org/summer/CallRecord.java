@@ -2,12 +2,11 @@ package org.summer;
 
 import org.junit.Assert;
 
-import java.awt.image.ImageProducer;
 import java.util.function.Supplier;
 
-public class DataCallRecord {
+public class CallRecord {
 
-	public DataCallRecord(
+	public CallRecord(
 		String functionName,
 		Object returnValue,
 		Throwable exception,
@@ -46,17 +45,17 @@ public class DataCallRecord {
         return valueReturned(this.returnValue);
     }
     
-    public DataCallRecord withParameters(Object ... parameters) {
+    public CallRecord withParameters(Object ... parameters) {
         this.parameters = parameters;
         return this;
     }
     
-    public DataCallRecord returning(Object returnValue) {
+    public CallRecord returning(Object returnValue) {
         this.returnValue = returnValue;
         return this;
     }
     
-    DataCallRecord throwing(Throwable exception) {
+    CallRecord throwing(Throwable exception) {
         this.exception = exception;
         return this;
     }

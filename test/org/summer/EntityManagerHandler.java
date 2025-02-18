@@ -35,13 +35,8 @@ public class EntityManagerHandler implements InvocationHandler {
 	        	handler));
     }
     
-    private DataCallRecord peekCall() {
-        if (!manager.calls.isEmpty()) {
-        	return manager.calls.remove(0);
-        }
-        else {
-        	throw new SummerTestException("No data request available");
-        }
+    private CallRecord peekCall() {
+        return manager.peekCall();
     }
 
     private Pair<QueryHandler, Query> mockQuery(EntityManagerHandler parentHandler) {

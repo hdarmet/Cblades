@@ -41,12 +41,12 @@ public class ArticleTest implements DataSunbeam {
     public void fillTheme() {
         Account account = new Account().setAccess(new Login()).setLogin("adebrie");
         Theme theme = new Theme()
-                .setTitle("Magic")
-                .setDescription("Description of Magic")
-                .setIllustration("magic.png")
-                .setStatus(ThemeStatus.LIVE)
-                .setCategory(ThemeCategory.LEGEND)
-                .setAuthor(account);
+            .setTitle("Magic")
+            .setDescription("Description of Magic")
+            .setIllustration("magic.png")
+            .setStatus(ThemeStatus.LIVE)
+            .setCategory(ThemeCategory.LEGEND)
+            .setAuthor(account);
         Assert.assertEquals("Magic", theme.getTitle());
         Assert.assertEquals("Description of Magic", theme.getDescription());
         Assert.assertEquals("magic.png", theme.getIllustration());
@@ -77,11 +77,12 @@ public class ArticleTest implements DataSunbeam {
     @Test
     public void findThemeById() {
         Theme theme = new Theme()
-                .setTitle("Magic");
+            .setTitle("Magic");
         dataManager.register("find", theme, null, Theme.class, 1L);
         inTransaction(em->{
             Assert.assertEquals(theme, Theme.find(em, 1L));
         });
+        dataManager.hasFinished();
     }
 
     @Test
@@ -96,6 +97,7 @@ public class ArticleTest implements DataSunbeam {
                 Assert.assertEquals("Unknown Theme with id 1", snfe.getMessage());
             }
         });
+        dataManager.hasFinished();
     }
 
     @Test
@@ -109,6 +111,7 @@ public class ArticleTest implements DataSunbeam {
         inTransaction(em->{
             Assert.assertEquals(theme, Theme.getByTitle(em, "Magic"));
         });
+        dataManager.hasFinished();
     }
 
     @Test
@@ -120,6 +123,7 @@ public class ArticleTest implements DataSunbeam {
         inTransaction(em->{
             Assert.assertNull(Theme.getByTitle(em, "Magic"));
         });
+        dataManager.hasFinished();
     }
 
     @Test
@@ -159,6 +163,7 @@ public class ArticleTest implements DataSunbeam {
         inTransaction(em->{
             Assert.assertEquals(likePoll, LikePoll.find(em, 1L));
         });
+        dataManager.hasFinished();
     }
 
     @Test
@@ -173,6 +178,7 @@ public class ArticleTest implements DataSunbeam {
                 Assert.assertEquals("Unknown Poll with id 1", snfe.getMessage());
             }
         });
+        dataManager.hasFinished();
     }
 
     @Test

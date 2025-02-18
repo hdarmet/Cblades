@@ -1,6 +1,5 @@
 package org.summer;
 
-import javax.persistence.EntityTransaction;
 import javax.persistence.Query;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
@@ -13,7 +12,7 @@ class QueryHandler implements InvocationHandler {
 		this.parent = parent;
 	}
 	
-    private DataCallRecord peekCall() {
+    private CallRecord peekCall() {
         if (!parent.manager.calls.isEmpty()) {
         	return parent.manager.calls.remove(0);
         }
@@ -25,6 +24,8 @@ class QueryHandler implements InvocationHandler {
     static Method getResultListMethod = TestUtils.getMethod(Query.class, "getResultList");
     static Method setFirstResultMethod = TestUtils.getMethod(Query.class, "setFirstResult", Integer.TYPE);
     static Method setMaxResultsMethod = TestUtils.getMethod(Query.class, "setMaxResults", Integer.TYPE);
+    static Method executeUpdate = TestUtils.getMethod(Query.class, "executeUpdate");
+
 
     @Override
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
@@ -48,6 +49,10 @@ class QueryHandler implements InvocationHandler {
         else if (method.equals(getResultListMethod)) {
             if (!parent.transaction.first.active) throw new SummerTestException("Transaction is not active");
             return peekCall().invoke("getResultList", args);
+        }
+        else if (method.equals(executeUpdate)) {
+            if (!parent.transaction.first.active) throw new SummerTestException("Transaction is not active");
+            return peekCall().invoke("executeUpdate", args);
         }
         else {
         	throw new SummerTestException(method+" not supported yet");

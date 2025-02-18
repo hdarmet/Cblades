@@ -237,6 +237,7 @@ public class DownloadableTest implements DataSunbeam {
         inTransaction(em->{
             Assert.assertEquals(ruleSet, RuleSet.findByCategory(em, "General"));
         });
+        dataManager.hasFinished();
     }
 
     @Test
@@ -248,5 +249,6 @@ public class DownloadableTest implements DataSunbeam {
         inTransaction(em->{
             Assert.assertNull(RuleSet.findByCategory(em, "General"));
         });
+        dataManager.hasFinished();
     }
 }

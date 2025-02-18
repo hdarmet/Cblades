@@ -55,7 +55,7 @@ public class MagicArtController implements InjectorSunbeam, DataSunbeam, Securit
 			int ordinalIdx = file.getName().indexOf("-");
 			if (ordinalIdx<0) {
 				String magicArtFileName = "magicart" + magicArt.getId() + "." + file.getExtension();
-				String magicArtWebName = "magicart" + magicArt.getId() + "-" + System.currentTimeMillis() + "." + file.getExtension();
+				String magicArtWebName = "magicart" + magicArt.getId() + "-" + PlatformManager.get().now() + "." + file.getExtension();
 				copyStream(file.getStream(), PlatformManager.get().getOutputStream("/magics/" + magicArtFileName));
 				magicArt.setIllustration("/api/magicart/documents/" +magicArtWebName);
 			}
@@ -64,13 +64,13 @@ public class MagicArtController implements InjectorSunbeam, DataSunbeam, Securit
 				int ordinal = Integer.parseInt(file.getName().substring(ordinalIdx+1));
 				if (isIcon) {
 					String sheetFileIconName = "sheeticon" + magicArt.getId() + "_" + ordinal + "." + file.getExtension();
-					String sheetWebIconName = "sheeticon" + magicArt.getId() + "_" + ordinal + "-" + System.currentTimeMillis() + "." + file.getExtension();
+					String sheetWebIconName = "sheeticon" + magicArt.getId() + "_" + ordinal + "-" + PlatformManager.get().now() + "." + file.getExtension();
 					copyStream(file.getStream(), PlatformManager.get().getOutputStream("/magics/" + sheetFileIconName));
 					magicArt.getSheet(ordinal).setIcon("/api/magicart/documents/" + sheetWebIconName);
 				}
 				else {
 					String sheetFileName = "sheet" + magicArt.getId() + "_" + ordinal + "." + file.getExtension();
-					String sheetWebName = "sheet" + magicArt.getId() + "_" + ordinal + "-" + System.currentTimeMillis() + "." + file.getExtension();
+					String sheetWebName = "sheet" + magicArt.getId() + "_" + ordinal + "-" + PlatformManager.get().now() + "." + file.getExtension();
 					copyStream(file.getStream(), PlatformManager.get().getOutputStream("/magics/" + sheetFileName));
 					magicArt.getSheet(ordinal).setPath("/api/magicart/documents/" + sheetWebName);
 				}

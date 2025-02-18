@@ -70,6 +70,7 @@ public class GameTest implements DataSunbeam, CollectionSunbeam, TestSeawave {
         inTransaction(em->{
             Assert.assertEquals(playerIdentity, PlayerIdentity.getByName(em, "Jurgen Dan Babenberg"));
         });
+        dataManager.hasFinished();
     }
 
     @Test
@@ -87,6 +88,7 @@ public class GameTest implements DataSunbeam, CollectionSunbeam, TestSeawave {
                 Assert.assertEquals("PlayerIdentity of name Jurgen Dan Babenberg not found", snfe.getMessage());
             }
         });
+        dataManager.hasFinished();
     }
 
     @Test
@@ -159,6 +161,7 @@ public class GameTest implements DataSunbeam, CollectionSunbeam, TestSeawave {
             Assert.assertNotNull(copy[2]);
             Assert.assertEquals(copy[2], duplications.get(player));
         });
+        dataManager.hasFinished();
     }
 
     @Test
@@ -285,6 +288,7 @@ public class GameTest implements DataSunbeam, CollectionSunbeam, TestSeawave {
             location.duplicate(em, duplications);
             Assert.assertEquals(copy[1], duplications.get(location));
         });
+        dataManager.hasFinished();
     }
 
     @Test
@@ -369,6 +373,7 @@ public class GameTest implements DataSunbeam, CollectionSunbeam, TestSeawave {
         inTransaction(em -> {
             Assert.assertEquals(game, sequence.getGame(em));
         });
+        dataManager.hasFinished();
     }
 
     @Test
@@ -498,6 +503,7 @@ public class GameTest implements DataSunbeam, CollectionSunbeam, TestSeawave {
             Assert.assertNotNull(copy[3]);
             Assert.assertEquals(copy[3], duplications.get(game));
         });
+        dataManager.hasFinished();
     }
 
     @Test
@@ -571,6 +577,7 @@ public class GameTest implements DataSunbeam, CollectionSunbeam, TestSeawave {
         inTransaction(em->{
             Assert.assertEquals(game, Game.find(em, 1L));
         });
+        dataManager.hasFinished();
     }
 
     @Test
@@ -585,6 +592,7 @@ public class GameTest implements DataSunbeam, CollectionSunbeam, TestSeawave {
                 Assert.assertEquals("Unknown Game with id 1", snfe.getMessage());
             }
         });
+        dataManager.hasFinished();
     }
 
     @Test
@@ -627,6 +635,7 @@ public class GameTest implements DataSunbeam, CollectionSunbeam, TestSeawave {
             game.validatePlayerTurnAdvance(em, 2);
         });
         Assert.assertEquals(arrayList(1, 2, 3), visited);
+        dataManager.hasFinished();
     }
 
     @Test
@@ -652,6 +661,7 @@ public class GameTest implements DataSunbeam, CollectionSunbeam, TestSeawave {
             game.applySequencesUntil(em, 2);
         });
         Assert.assertTrue(visited[0]);
+        dataManager.hasFinished();
     }
 
 }

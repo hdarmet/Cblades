@@ -52,7 +52,7 @@ public class ThemeController implements InjectorSunbeam, DataSunbeam, SecuritySu
 		if (files.length > 0) {
 			if (files.length!= 1) throw new SummerControllerException(400, "One Theme file must be loaded.");
 			String fileName = "theme" + theme.getId() + "." + files[0].getExtension();
-			String webName = "theme" + theme.getId() + "-" + System.currentTimeMillis() + "." + files[0].getExtension();
+			String webName = "theme" + theme.getId() + "-" + PlatformManager.get().now() + "." + files[0].getExtension();
 			copyStream(files[0].getStream(), PlatformManager.get().getOutputStream("/themes/" + fileName));
 			theme.setIllustration("/api/theme/images/" + webName);
 		}

@@ -52,7 +52,7 @@ public class EventController implements InjectorSunbeam, DataSunbeam, SecuritySu
 		if (files.length>0) {
 			if (files.length>1) throw new SummerControllerException(400, "Only one illustration file may be loaded.");
 			String fileName = "illustration"+event.getId()+"."+files[0].getExtension();
-			String webName = "illustration"+event.getId()+"-"+System.currentTimeMillis()+"."+files[0].getExtension();
+			String webName = "illustration"+event.getId()+"-"+PlatformManager.get().now()+"."+files[0].getExtension();
 			copyStream(files[0].getStream(), PlatformManager.get().getOutputStream("/events/"+fileName));
 			event.setIllustration("/api/event/images/" + webName);
 		}

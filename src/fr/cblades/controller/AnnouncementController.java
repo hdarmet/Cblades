@@ -20,6 +20,7 @@ import org.summer.platform.PlatformManager;
 import org.summer.security.SecuritySunbeam;
 import org.summer.util.StringReplacer;
 
+import javax.persistence.EntityExistsException;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceException;
 import javax.persistence.Query;
@@ -29,29 +30,22 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @Controller
-public class AnnouncementController implements InjectorSunbeam, DataSunbeam, SecuritySunbeam, ControllerSunbeam, FileSunbeam, StandardUsers {
+public class AnnouncementController implements
+		InjectorSunbeam, DataSunbeam, SecuritySunbeam, ControllerSunbeam,
+		FileSunbeam, StandardUsers, CommonEntities
+{
 
 	@MIME(url="/api/announcement/images/:imagename")
 	public FileSpecification getImage(Map<String, Object> params) {
-		try {
-			String webName = (String)params.get("imagename");
-			int minusPos = webName.indexOf('-');
-			int pointPos = webName.indexOf('.');
-			String imageName = webName.substring(0, minusPos)+webName.substring(pointPos);
-			return new FileSpecification()
-			    .setName(imageName)
-				.setStream(PlatformManager.get().getInputStream("/announcements/"+imageName));
-		} catch (PersistenceException pe) {
-			throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe);
-		}
+		return this.getImage(params, "imagename", "/announcements/");
 	}
 
 	void storeIllustration (Map<String, Object> params, Announcement announcement) {
 		FileSpecification[] files = (FileSpecification[])params.get(MULTIPART_FILES);
-		if (files.length>0) {
+		if (files!= null && files.length>0) {
 			if (files.length>1) throw new SummerControllerException(400, "Only one illustration file may be loaded.");
 			String fileName = "illustration"+announcement.getId()+"."+files[0].getExtension();
-			String webName = "illustration"+announcement.getId()+"-"+System.currentTimeMillis()+"."+files[0].getExtension();
+			String webName = "illustration"+announcement.getId()+"-"+PlatformManager.get().now()+"."+files[0].getExtension();
 			copyStream(files[0].getStream(), PlatformManager.get().getOutputStream("/announcements/"+fileName));
 			announcement.setIllustration("/api/event/images/" + webName);
 		}
@@ -62,17 +56,17 @@ public class AnnouncementController implements InjectorSunbeam, DataSunbeam, Sec
 		Ref<Json> result = new Ref<>();
 		ifAuthorized(user->{
 			try {
-				inTransaction(em->{
+				inTransaction(em -> {
+					checkJson(request, true);
 					Announcement newAnnouncement = writeToAnnouncement(request, new Announcement());
 					persist(em, newAnnouncement);
 					storeIllustration(params, newAnnouncement);
 					em.flush();
 					result.set(readFromAnnouncement(newAnnouncement));
 				});
-			} catch (PersistenceException pe) {
-				throw new SummerControllerException(409, 
-					"Unable to create the announcement"
-				);
+			}
+			catch (PersistenceException pe) {
+				throw new SummerControllerException(500, pe.getMessage());
 			}
 		}, ADMIN);
 		return result.get();
@@ -168,6 +162,7 @@ public class AnnouncementController implements InjectorSunbeam, DataSunbeam, Sec
 			try {
 				inTransaction(em->{
 					String id = (String)params.get("id");
+					checkJson(request, false);
 					Announcement announcement = findAnnouncement(em, new Long(id));
 					writeToAnnouncement(request, announcement);
 					storeIllustration(params, announcement);
@@ -189,7 +184,7 @@ public class AnnouncementController implements InjectorSunbeam, DataSunbeam, Sec
 				inTransaction(em->{
 					String id = (String)params.get("id");
 					Announcement announcement = findAnnouncement(em, new Long(id));
-					writeToAnnouncementStatus(request, announcement, false);
+					writeToAnnouncementStatus(request, announcement);
 					flush(em);
 					result.set(readFromAnnouncement(announcement));
 				});
@@ -210,16 +205,23 @@ public class AnnouncementController implements InjectorSunbeam, DataSunbeam, Sec
 		return announcement;
 	}
 	
-	Announcement writeToAnnouncement(Json json, Announcement announcement) {
-		Verifier verifier = verify(json)
-			.checkRequired("description")
+	void checkJson(Json json, boolean full) {
+		Verifier verifier = verify(json);
+		if (full) {
+			verifier
+				.checkRequired("description")
+				.checkRequired("illustration");
+		}
+		verifier
 			.checkMinSize("description", 2)
 			.checkMaxSize("description", 19995)
-			.checkRequired("illustration")
 			.checkMinSize("illustration", 2)
 			.checkMaxSize("illustration", 100)
 			.check("status", AnnouncementStatus.byLabels().keySet());
 		verifier.ensure();
+	}
+
+	Announcement writeToAnnouncement(Json json, Announcement announcement) {
 		Synchronizer synchronizer = sync(json, announcement)
 			.write("version")
 			.write("description")
@@ -228,15 +230,10 @@ public class AnnouncementController implements InjectorSunbeam, DataSunbeam, Sec
 		return announcement;
 	}
 
-	Announcement writeToAnnouncementStatus(Json json, Announcement announcement, boolean full) {
-		Verifier verifier = verify(json);
-		if (full) {
-			verifier
-				.checkRequired("id").checkInteger("id", "Not a valid id");
-		}
-		verifier
-			.check("status", AnnouncementStatus.byLabels().keySet());
-		verifier
+	Announcement writeToAnnouncementStatus(Json json, Announcement announcement) {
+		verify(json)
+			.checkRequired("id").checkInteger("id", "Not a valid id")
+			.checkRequired("status").check("status", AnnouncementStatus.byLabels().keySet())
 			.ensure();
 		sync(json, announcement)
 			.write("status", label->AnnouncementStatus.byLabels().get(label));

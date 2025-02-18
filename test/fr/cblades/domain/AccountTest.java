@@ -73,6 +73,7 @@ public class AccountTest implements DataSunbeam {
         inTransaction(em->{
             Assert.assertEquals(account, Login.findAccountByLogin(em, "adebrie"));
         });
+        dataManager.hasFinished();
     }
 
     @Test
@@ -83,6 +84,7 @@ public class AccountTest implements DataSunbeam {
         inTransaction(em->{
             Assert.assertNull(Login.findAccountByLogin(em, "adebrie"));
         });
+        dataManager.hasFinished();
     }
 
     @Test
@@ -125,6 +127,7 @@ public class AccountTest implements DataSunbeam {
         inTransaction(em->{
             Assert.assertEquals(account, Account.find(em, 1L));
         });
+        dataManager.hasFinished();
     }
 
     @Test
@@ -139,6 +142,7 @@ public class AccountTest implements DataSunbeam {
                 Assert.assertEquals("Unknown Account with id 1", snfe.getMessage());
             }
         });
+        dataManager.hasFinished();
     }
 
     @Test
@@ -152,6 +156,7 @@ public class AccountTest implements DataSunbeam {
         inTransaction(em->{
             Assert.assertEquals(account, Account.find(em, "adebrie"));
         });
+        dataManager.hasFinished();
     }
 
     @Test
@@ -168,6 +173,7 @@ public class AccountTest implements DataSunbeam {
                 Assert.assertEquals("Unknown Account with Login name adebrie", snfe.getMessage());
             }
         });
+        dataManager.hasFinished();
     }
 
     @Test

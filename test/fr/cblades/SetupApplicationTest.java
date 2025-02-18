@@ -83,6 +83,7 @@ public class SetupApplicationTest implements TestSeawave, CollectionSunbeam, Dat
 				setEntityId(new Login().setLogin("test").setPassword("tEsT").setTest(true), 3), null);
 		roles = rolesFinder.find("test");
 		Assert.assertArrayEquals(new String[]{StandardUsers.TEST}, roles);
+		dataManager.hasFinished();
 	}
 
 	@Test
@@ -110,6 +111,7 @@ public class SetupApplicationTest implements TestSeawave, CollectionSunbeam, Dat
 				setEntityId(new Login().setLogin("test").setPassword("tEsT").setTest(true), 3), null);
 		roles = rolesFinder.find("test");
 		Assert.assertArrayEquals(new String[]{StandardUsers.TEST}, roles);
+		dataManager.hasFinished();
 	}
 
 	@Test
@@ -141,6 +143,7 @@ public class SetupApplicationTest implements TestSeawave, CollectionSunbeam, Dat
 		});
 		dataManager.register("flush", null, null);
 		SetupApplication.declareStandardUsers();
+		dataManager.hasFinished();
 	}
 
 	@Test

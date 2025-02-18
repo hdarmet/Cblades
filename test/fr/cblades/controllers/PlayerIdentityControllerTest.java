@@ -3,12 +3,12 @@ package fr.cblades.controllers;
 import fr.cblades.StandardUsers;
 import fr.cblades.controller.BannerController;
 import fr.cblades.controller.PlayerIdentityController;
-import fr.cblades.domain.Banner;
-import fr.cblades.domain.PlayerIdentity;
+import fr.cblades.domain.*;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.summer.*;
+import org.summer.controller.ControllerSunbeam;
 import org.summer.controller.Json;
 import org.summer.controller.SummerControllerException;
 import org.summer.data.DataManipulatorSunbeam;
@@ -16,6 +16,9 @@ import org.summer.data.DataManipulatorSunbeam;
 import javax.persistence.EntityExistsException;
 import javax.persistence.EntityNotFoundException;
 import javax.persistence.PersistenceException;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.OutputStream;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
@@ -23,14 +26,16 @@ public class PlayerIdentityControllerTest implements TestSeawave, CollectionSunb
 	
 	PlayerIdentityController playerIdentityController;
 	MockDataManagerImpl dataManager;
+	MockPlatformManagerImpl platformManager;
 	MockSecurityManagerImpl securityManager;
-	
+
 	@Before
 	public void before() {
 		ApplicationManager.set(new ApplicationManagerForTestImpl());
 		playerIdentityController = new PlayerIdentityController();
 		dataManager = (MockDataManagerImpl)ApplicationManager.get().getDataManager();
 		dataManager.openPersistenceUnit("default");
+		platformManager = (MockPlatformManagerImpl)ApplicationManager.get().getPlatformManager();
 		securityManager = (MockSecurityManagerImpl)ApplicationManager.get().getSecurityManager();
 		securityManager.register(new MockSecurityManagerImpl.Credential("admin", "admin", StandardUsers.ADMIN));
 		securityManager.register(new MockSecurityManagerImpl.Credential("someone", "someone", StandardUsers.USER));
@@ -46,10 +51,17 @@ public class PlayerIdentityControllerTest implements TestSeawave, CollectionSunb
 			return true;
 		});
 		dataManager.register("flush", null, null);
+		OutputStream outputStream = new ByteArrayOutputStream();
+		platformManager.register("getOutputStream", outputStream, null);
 		securityManager.doConnect("admin", 0);
-		playerIdentityController.create(params(), Json.createJsonFromString(
+		playerIdentityController.create(params(			ControllerSunbeam.MULTIPART_FILES, new FileSpecification[] {
+				new FileSpecification("wurst", "wurst.png", "png",
+						new ByteArrayInputStream(("Content of /games/wurst.png").getBytes()))
+		}), Json.createJsonFromString(
 			"{ 'version':0, 'name':'Hector', 'path':'here/there/hector.png' }"
 		));
+		Assert.assertEquals("Content of /games/wurst.png", outputStreamToString(outputStream));
+		platformManager.hasFinished();
 		dataManager.hasFinished();
 	}
 
@@ -126,6 +138,43 @@ public class PlayerIdentityControllerTest implements TestSeawave, CollectionSunb
 		), null);
 		securityManager.doConnect("admin", 0);
 		Json result = playerIdentityController.getAll(params("page", "0"), null);
+		Assert.assertEquals("{" +
+				"\"playerIdentities\":[{" +
+					"\"path\":\"/there/where/hector.png\"," +
+					"\"comments\":[],\"name\":\"Hector\"," +
+					"\"id\":1,\"version\":0" +
+				"},{" +
+					"\"path\":\"/there/where/achilles.png\"," +
+					"\"comments\":[],\"name\":\"Achilles\"," +
+					"\"id\":2,\"version\":0" +
+				"}]," +
+				"\"count\":2," +
+				"\"pageSize\":16," +
+				"\"page\":0" +
+			"}",
+			result.toString());
+		dataManager.hasFinished();
+	}
+
+	@Test
+	public void listPlayerIdentitiesWithASearchPattern() {
+		dataManager.register("createQuery", null, null,
+			"select count(pi) from PlayerIdentity pi " +
+					"where fts('pg_catalog.english', pi.name||' '||pi.description ||' '||pi.status, :search) = true");
+		dataManager.register("setParameter", null, null,"search", "wurst");
+		dataManager.register("getSingleResult", 2L, null);
+		dataManager.register("createQuery", null, null,
+				"select pi from PlayerIdentity pi " +
+						"where fts('pg_catalog.english', pi.name||' '||pi.description ||' '||pi.status, :search) = true");
+		dataManager.register("setParameter", null, null,"search", "wurst");
+		dataManager.register("setFirstResult", null, null, 0);
+		dataManager.register("setMaxResults", null, null, 16);
+		dataManager.register("getResultList", arrayList(
+				setEntityId(new PlayerIdentity().setName("Hector").setPath("/there/where/hector.png"), 1),
+				setEntityId(new PlayerIdentity().setName("Achilles").setPath("/there/where/achilles.png"), 2)
+		), null);
+		securityManager.doConnect("admin", 0);
+		Json result = playerIdentityController.getAll(params("page", "0", "search", "wurst"), null);
 		Assert.assertEquals("{" +
 				"\"playerIdentities\":[{" +
 					"\"path\":\"/there/where/hector.png\"," +
@@ -225,7 +274,7 @@ public class PlayerIdentityControllerTest implements TestSeawave, CollectionSunb
 	}
 
 	@Test
-	public void tryToFindAnUnknownBanner() {
+	public void tryToFindAnUnknownPlayerIdentity() {
 		dataManager.register("find",
 			null,
 			new EntityNotFoundException("Entity Does Not Exists"), PlayerIdentity.class, 1L);
@@ -410,10 +459,156 @@ public class PlayerIdentityControllerTest implements TestSeawave, CollectionSunb
 	}
 
 	@Test
-	public void checkPlayerIdentityEntity() {
-		PlayerIdentity playerIdentity = new PlayerIdentity().setName("Achilles").setPath("/there/where/achilles.png");
-		Assert.assertEquals(playerIdentity.getName(), "Achilles");
-		Assert.assertEquals(playerIdentity.getPath(), "/there/where/achilles.png");
+	public void getLivePlayerIdentities() {
+		dataManager.register("createQuery", null, null,
+				"select pi from PlayerIdentity pi where pi.status = :status");
+		dataManager.register("setParameter", null, null, "status", PlayerIdentityStatus.LIVE);
+		dataManager.register("getResultList", arrayList(
+				setEntityId(new PlayerIdentity().setName("Hector").setPath("/there/where/hector.png"), 1),
+				setEntityId(new PlayerIdentity().setName("Achilles").setPath("/there/where/achilles.png"), 2)
+		), null);
+		Json result = playerIdentityController.getLive(params(), null);
+		dataManager.hasFinished();
+	}
+
+//////////////////////////////
+
+
+	@Test
+	public void checkRequestedFieldsForAnUpadteAPlayerIdentitysStatus() {
+		dataManager.register("find",
+				setEntityId(new PlayerIdentity().setName("Achilles")
+						.setPath("/there/where/achilles.png"), 1L),
+				null, PlayerIdentity.class, 1L);
+		securityManager.doConnect("admin", 0);
+		try {
+			playerIdentityController.updateStatus(params("id", "1"), Json.createJsonFromString(
+					"{}"
+			));
+		}
+		catch (SummerControllerException sce) {
+			Assert.assertEquals(400, sce.getStatus());
+			Assert.assertEquals("{\"id\":\"required\",\"status\":\"required\"}", sce.getMessage());
+		}
+	}
+
+	@Test
+	public void checkFieldValidationsForAnUpadteAPlayerIdentitysStatus() {
+		dataManager.register("find",
+				setEntityId(new PlayerIdentity().setName("Achilles")
+						.setPath("/there/where/achilles.png"), 1L),
+				null, PlayerIdentity.class, 1L);
+		securityManager.doConnect("admin", 0);
+		try {
+			playerIdentityController.updateStatus(params("id", "1"), Json.createJsonFromString(
+					"{ 'id':'1234', 'status':'???'}"
+			));
+		}
+		catch (SummerControllerException sce) {
+			Assert.assertEquals(400, sce.getStatus());
+			Assert.assertEquals("{\"id\":\"Not a valid id\",\"status\":\"??? must matches one of [pnd, live, prp]\"}", sce.getMessage());
+		}
+	}
+
+	@Test
+	public void upadteAPlayerIdentitysStatus() {
+		dataManager.register("find",
+				setEntityId(new PlayerIdentity().setName("Achilles")
+						.setPath("/there/where/achilles.png"), 1L),
+				null, PlayerIdentity.class, 1L);
+		dataManager.register("flush", null, null);
+		securityManager.doConnect("admin", 0);
+		Json result = playerIdentityController.updateStatus(params("id", "1"), Json.createJsonFromString(
+				"{ 'id':1, 'status': 'live' }"
+		));
+		Assert.assertEquals("{" +
+				"\"path\":\"/there/where/achilles.png\"," +
+				"\"comments\":[]," +
+				"\"name\":\"Achilles\"," +
+				"\"id\":1,\"version\":0," +
+				"\"status\":\"live\"" +
+			"}",
+			result.toString()
+		);
+		dataManager.hasFinished();
+	}
+
+	@Test
+	public void tryToUpadteAPlayerIdentitysStatusWithBadCredential() {
+		dataManager.register("find",
+				setEntityId(new PlayerIdentity().setName("Achilles")
+						.setPath("/there/where/achilles.png"), 1L),
+				null, PlayerIdentity.class, 1L);
+		securityManager.doConnect("someone", 0);
+		try {
+			playerIdentityController.updateStatus(params("id", "1"), Json.createJsonFromString(
+					"{ 'id':1, 'status': 'live' }"
+			));
+			Assert.fail("The request should fail");
+		}
+		catch (SummerControllerException sce) {
+			Assert.assertEquals(403, sce.getStatus());
+			Assert.assertEquals("Not authorized", sce.getMessage());
+		}
+		dataManager.hasFinished();
+	}
+
+	@Test
+	public void failToUpdateAPlayerIdentitysStatusForUnknownReason() {
+		dataManager.register("find",
+				setEntityId(new PlayerIdentity().setName("Achilles")
+						.setPath("/there/where/achilles.png"), 1L),
+				null, PlayerIdentity.class, 1L);
+		dataManager.register("flush", null,
+				new PersistenceException("Some reason"), null
+		);
+		securityManager.doConnect("admin", 0);
+		try {
+			playerIdentityController.updateStatus(params("id", "1"), Json.createJsonFromString(
+					"{ 'id':1, 'status': 'live' }"
+			));
+			Assert.fail("The request should fail");
+		}
+		catch (SummerControllerException sce) {
+			Assert.assertEquals(409, sce.getStatus());
+			Assert.assertEquals("Unexpected issue. Please report : Some reason", sce.getMessage());
+		}
+		dataManager.hasFinished();
+	}
+
+
+
+
+
+
+
+
+	@Test
+	public void loadPlayerIdentityImage() {
+		platformManager.register("getInputStream",
+				new ByteArrayInputStream(("Content of /games/wurst.png").getBytes()),
+				null,  "/games/wurst.png");
+		FileSpecification image = playerIdentityController.getImage(params("imagename", "wurst-10123456.png"));
+		Assert.assertEquals("wurst.png", image.getName());
+		Assert.assertEquals("image/png", image.getType());
+		Assert.assertEquals("wurst.png", image.getFileName());
+		Assert.assertEquals("Content of /games/wurst.png", inputStreamToString(image.getStream()));
+		Assert.assertEquals("png", image.getExtension());
+		platformManager.hasFinished();
+	}
+
+	@Test
+	public void failLoadPlayerIdentityImage() {
+		platformManager.register("getInputStream", null,
+				new PersistenceException("For Any Reason..."),  "/games/wurst.png");
+		try {
+			playerIdentityController.getImage(params("imagename", "wurst-10123456.png"));
+		}
+		catch (SummerControllerException sce) {
+			Assert.assertEquals(409, sce.getStatus());
+			Assert.assertEquals("Unexpected issue. Please report : For Any Reason...", sce.getMessage());
+		}
+		platformManager.hasFinished();
 	}
 
 }

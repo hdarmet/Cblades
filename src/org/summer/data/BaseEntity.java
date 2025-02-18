@@ -1,6 +1,7 @@
 package org.summer.data;
 
 import fr.cblades.domain.Board;
+import org.summer.platform.PlatformManager;
 
 import javax.persistence.*;
 
@@ -34,7 +35,7 @@ public class BaseEntity implements RelationshipOwnerSeawave {
 
 	@PrePersist @PreUpdate
 	void updateTimestamp() {
-		this.updateTimestamp = System.currentTimeMillis();
+		this.updateTimestamp = PlatformManager.get().now();
 	}
 
 }
