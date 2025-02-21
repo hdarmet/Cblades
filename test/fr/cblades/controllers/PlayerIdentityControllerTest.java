@@ -126,6 +126,20 @@ public class PlayerIdentityControllerTest implements TestSeawave, CollectionSunb
 	}
 
 	@Test
+	public void tryToGetAllPlayerIdentitiesWithoutGivingParameters() {
+		securityManager.doConnect("admin", 0);
+		try {
+			playerIdentityController.getAll(params(), null);
+			Assert.fail("The request should fail");
+		}
+		catch (SummerControllerException sce) {
+			Assert.assertEquals(400, sce.getStatus());
+			Assert.assertEquals("The requested Page Number is invalid (null)", sce.getMessage());
+		}
+		dataManager.hasFinished();
+	}
+
+	@Test
 	public void listAllPlayerIdentities() {
 		dataManager.register("createQuery", null, null, "select count(pi) from PlayerIdentity pi");
 		dataManager.register("getSingleResult", 2L, null);
@@ -208,6 +222,20 @@ public class PlayerIdentityControllerTest implements TestSeawave, CollectionSunb
 	}
 
 	@Test
+	public void tryToUGetAPlayerIdentityWithoutGivingTheName() {
+		securityManager.doConnect("admin", 0);
+		try {
+			playerIdentityController.getByName(params(), null);
+			Assert.fail("The request should fail");
+		}
+		catch (SummerControllerException sce) {
+			Assert.assertEquals(400, sce.getStatus());
+			Assert.assertEquals("The Player Identity name is missing or invalid (null)", sce.getMessage());
+		}
+		dataManager.hasFinished();
+	}
+
+	@Test
 	public void getOnePlayerIdentityByName() {
 		dataManager.register("createQuery", null, null, "select pi from PlayerIdentity pi where pi.name = :name");
 		dataManager.register("setParameter", null, null,"name", "Hector");
@@ -257,6 +285,20 @@ public class PlayerIdentityControllerTest implements TestSeawave, CollectionSunb
 	}
 
 	@Test
+	public void tryToGetAPlayerIdentityWithoutGivingItsID() {
+		securityManager.doConnect("admin", 0);
+		try {
+			playerIdentityController.getById(params(), null);
+			Assert.fail("The request should fail");
+		}
+		catch (SummerControllerException sce) {
+			Assert.assertEquals(400, sce.getStatus());
+			Assert.assertEquals("The Player Identity ID is missing or invalid (null)", sce.getMessage());
+		}
+		dataManager.hasFinished();
+	}
+
+	@Test
 	public void getOnePlayerIdentityById() {
 		dataManager.register("find",
 				setEntityId(new PlayerIdentity().setName("Hector")
@@ -300,6 +342,20 @@ public class PlayerIdentityControllerTest implements TestSeawave, CollectionSunb
 		catch (SummerControllerException sce) {
 			Assert.assertEquals(403, sce.getStatus());
 			Assert.assertEquals("Not authorized", sce.getMessage());
+		}
+		dataManager.hasFinished();
+	}
+
+	@Test
+	public void tryToDeleteAPlayerIdentityWithoutGivingItsID() {
+		securityManager.doConnect("admin", 0);
+		try {
+			playerIdentityController.delete(params(), null);
+			Assert.fail("The request should fail");
+		}
+		catch (SummerControllerException sce) {
+			Assert.assertEquals(400, sce.getStatus());
+			Assert.assertEquals("The Player Identity ID is missing or invalid (null)", sce.getMessage());
 		}
 		dataManager.hasFinished();
 	}
@@ -380,6 +436,20 @@ public class PlayerIdentityControllerTest implements TestSeawave, CollectionSunb
 		catch (SummerControllerException sce) {
 			Assert.assertEquals(403, sce.getStatus());
 			Assert.assertEquals("Not authorized", sce.getMessage());
+		}
+		dataManager.hasFinished();
+	}
+
+	@Test
+	public void tryToUpdateAPlayerIdentityWithoutGivingItsID() {
+		securityManager.doConnect("admin", 0);
+		try {
+			playerIdentityController.update(params(), null);
+			Assert.fail("The request should fail");
+		}
+		catch (SummerControllerException sce) {
+			Assert.assertEquals(400, sce.getStatus());
+			Assert.assertEquals("The Player Identity ID is missing or invalid (null)", sce.getMessage());
 		}
 		dataManager.hasFinished();
 	}
@@ -471,11 +541,22 @@ public class PlayerIdentityControllerTest implements TestSeawave, CollectionSunb
 		dataManager.hasFinished();
 	}
 
-//////////////////////////////
-
+	@Test
+	public void tryToUpdateAPlayerIdentitsStatusWithoutGivingItsID() {
+		securityManager.doConnect("admin", 0);
+		try {
+			playerIdentityController.updateStatus(params(), null);
+			Assert.fail("The request should fail");
+		}
+		catch (SummerControllerException sce) {
+			Assert.assertEquals(400, sce.getStatus());
+			Assert.assertEquals("The Player Identity ID is missing or invalid (null)", sce.getMessage());
+		}
+		dataManager.hasFinished();
+	}
 
 	@Test
-	public void checkRequestedFieldsForAnUpadteAPlayerIdentitysStatus() {
+	public void checkRequestedFieldsForUpdatingAPlayerIdentitySStatus() {
 		dataManager.register("find",
 				setEntityId(new PlayerIdentity().setName("Achilles")
 						.setPath("/there/where/achilles.png"), 1L),
@@ -493,7 +574,7 @@ public class PlayerIdentityControllerTest implements TestSeawave, CollectionSunb
 	}
 
 	@Test
-	public void checkFieldValidationsForAnUpadteAPlayerIdentitysStatus() {
+	public void checkFieldValidationsForUpdatingAPlayerIdentitysStatus() {
 		dataManager.register("find",
 				setEntityId(new PlayerIdentity().setName("Achilles")
 						.setPath("/there/where/achilles.png"), 1L),
@@ -511,7 +592,7 @@ public class PlayerIdentityControllerTest implements TestSeawave, CollectionSunb
 	}
 
 	@Test
-	public void upadteAPlayerIdentitysStatus() {
+	public void updateAPlayerIdentitysStatus() {
 		dataManager.register("find",
 				setEntityId(new PlayerIdentity().setName("Achilles")
 						.setPath("/there/where/achilles.png"), 1L),
@@ -534,7 +615,7 @@ public class PlayerIdentityControllerTest implements TestSeawave, CollectionSunb
 	}
 
 	@Test
-	public void tryToUpadteAPlayerIdentitysStatusWithBadCredential() {
+	public void tryToUpdateAPlayerIdentitysStatusWithBadCredential() {
 		dataManager.register("find",
 				setEntityId(new PlayerIdentity().setName("Achilles")
 						.setPath("/there/where/achilles.png"), 1L),
@@ -575,13 +656,6 @@ public class PlayerIdentityControllerTest implements TestSeawave, CollectionSunb
 		}
 		dataManager.hasFinished();
 	}
-
-
-
-
-
-
-
 
 	@Test
 	public void loadPlayerIdentityImage() {

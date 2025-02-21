@@ -102,10 +102,10 @@ public class ArticleController
 
 	@REST(url="/api/article/amend/:id", method=Method.POST)
 	public Json amend(Map<String, Object> params, Json request) {
+		long id = getLongParam(params, "id", "The Article ID is missing or invalid (%s)");
 		Ref<Json> result = new Ref<>();
 		inTransaction(em-> {
-			String id = (String) params.get("id");
-			Article article = findArticle(em, new Long(id));
+			Article article = findArticle(em, id);
 			ifAuthorized(
 				user -> {
 					try {
@@ -158,13 +158,13 @@ public class ArticleController
 
 	@REST(url="/api/article/update/:id", method=Method.POST)
 	public Json update(Map<String, Object> params, Json request) {
+		long id = getLongParam(params, "id", "The Article ID is missing or invalid (%s)");
 		Ref<Json> result = new Ref<>();
 		inTransaction(em-> {
 			ifAuthorized(
 				user -> {
 					try {
-						String id = (String) params.get("id");
-						Article article = findArticle(em, new Long(id));
+						Article article = findArticle(em, id);
 						checkJson(request, Usage.UPDATE);
 						writeToArticle(em, request, article, Usage.UPDATE);
 						storeArticleImages(params, article);
@@ -266,8 +266,8 @@ public class ArticleController
 					"where a.status=:status and :theme member of a.themes";
 			if (search!=null) {
 				String whereClause =" and fts('pg_catalog.english', " +
-						"a.title||' '||" +
-						"a.document.text, :search) = true";
+					"a.title||' '||" +
+					"a.document.text, :search) = true";
 				queryString+=whereClause;
 			}
 			Collection<Article> articles = findPagedArticles(
@@ -284,9 +284,9 @@ public class ArticleController
 
 	@REST(url="/api/article/by-title/:title", method=Method.GET)
 	public Json getByTitle(Map<String, Object> params, Json request) {
+		String title = getStringParam(params, "title", null, "The Title of the Article is missing (%s)");
 		Ref<Json> result = new Ref<>();
 		inReadTransaction(em->{
-			String title = (String)params.get("title");
 			Article article = getSingleResult(em,
 				"select a from Article a " +
 					"join fetch a.firstParagraph " +
@@ -324,32 +324,32 @@ public class ArticleController
 
 	@REST(url="/api/article/delete/:id", method=Method.GET)
 	public Json delete(Map<String, Object> params, Json request) {
+		long id = getLongParam(params, "id", "The Article ID is missing or invalid (%s)");
 		inTransaction(em->{
-			String id = (String)params.get("id");
-			Article article = findArticle(em, new Long(id));
-			ifAuthorized(
-				user->{
-					try {
+			try {
+				Article article = findArticle(em, id);
+				ifAuthorized(
+					user->{
 						remove(em, article);
-					} catch (PersistenceException pe) {
-						throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe);
-					}
-				},
-				verifyIfAdminOrOwner(article)
-			);
+					},
+					verifyIfAdminOrOwner(article)
+				);
+			} catch (PersistenceException pe) {
+				throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe);
+			}
 		});
 		return Json.createJsonObject().put("deleted", "ok");
 	}
 
 	@REST(url="/api/article/update-status/:id", method=Method.POST)
 	public Json updateStatus(Map<String, Object> params, Json request) {
+		long id = getLongParam(params, "id", "The Article ID is missing or invalid (%s)");
 		Ref<Json> result = new Ref<>();
 		inTransaction(em-> {
 			ifAuthorized(
 				user -> {
 					try {
-						String id = (String) params.get("id");
-						Article article = findArticle(em, new Long(id));
+						Article article = findArticle(em, id);
 						writeToArticleStatus(em, request, article);
 						flush(em);
 						result.set(readFromArticle(article));
@@ -436,7 +436,7 @@ public class ArticleController
 	Article writeToArticleStatus(EntityManager em, Json json, Article article) {
 		verify(json)
 			.checkRequired("id").checkInteger("id", "Not a valid id")
-			.check("status", ArticleStatus.byLabels().keySet())
+			.checkRequired("status").check("status", ArticleStatus.byLabels().keySet())
 			.ensure();
 		sync(json, article)
 			.write("status", label->ArticleStatus.byLabels().get(label));
@@ -548,12 +548,6 @@ public class ArticleController
 			);
 		}
 		return article;
-	}
-
-	Collection<Article> findArticles(Query query, Object... params) {
-		setParams(query, params);
-		List<Article> articles = getResultList(query);
-		return articles.stream().distinct().collect(Collectors.toList());
 	}
 
 	Collection<Article> findPagedArticles(Query query, int page, Object... params) {

@@ -79,16 +79,14 @@ public class AccountController implements
 	
 	@REST(url="/api/account/all", method=Method.GET)
 	public Json getAll(Map<String, Object> params, Json request) {
+		int pageNo = getIntegerParam(params, "page", "The requested Page Number is invalid (%s)");
+		String search = (String)params.get("search");
 		Ref<Json> result = new Ref<>();
 		ifAuthorized(user->{
 			inReadTransaction(em->{
-				int pageNo = getIntegerParam(params, "page", "The requested Page Number is invalid (%s)");
-				String search = (String)params.get("search");
 				String countQuery = "select count(a) from Account a";
 				String queryString = "select a from Account a left outer join fetch a.access";
 				if (search!=null) {
-					search = StringReplacer.replace(search,
-						"tester", "test");
 					String whereClause =" where fts('pg_catalog.english', " +
 						"a.access.login||' '||" +
 						"a.access.role||' '||" +
@@ -121,10 +119,10 @@ public class AccountController implements
 	@REST(url="/api/account/find/:id", method=Method.POST)
 	public Json getById(Map<String, Object> params, Json request) {
 		Ref<Json> result = new Ref<>();
+		long id = getLongParam(params, "id", "The Account ID is missing or invalid (%s)");
 		ifAuthorized(user->{
 			inReadTransaction(em->{
-				String id = (String)params.get("id");
-				Account account = findAccount(em, new Long(id));
+				Account account = findAccount(em, id);
 				result.set(readFromAccount(account));
 			});
 		}, ADMIN);
@@ -133,11 +131,11 @@ public class AccountController implements
 	
 	@REST(url="/api/account/delete/:id", method=Method.GET)
 	public Json delete(Map<String, Object> params, Json request) {
+		long id = getLongParam(params, "id", "The Account ID is missing or invalid (%s)");
 		ifAuthorized(user->{
 			try {
 				inTransaction(em->{
-					String id = (String)params.get("id");
-					Account account = findAccount(em, new Long(id));
+					Account account = findAccount(em, id);
 					executeUpdate(em, "delete from Event e where e.target = :account",
 						"account", account);
 					executeUpdate(em, "update from Board b set b.author = null where b.author = :account",
@@ -153,13 +151,13 @@ public class AccountController implements
 	
 	@REST(url="/api/account/update/:id", method=Method.POST)
 	public Json update(Map<String, Object> params, Json request) {
+		long id = getLongParam(params, "id", "The Account ID is missing or invalid (%s)");
 		Ref<Json> result = new Ref<>();
 		ifAuthorized(user->{
 			try {
 				inTransaction(em->{
-					String id = (String)params.get("id");
 					checkJson(request, false);
-					Account account = findAccount(em, new Long(id));
+					Account account = findAccount(em, id);
 					writeToAccount(request, account);
 					storeAvatar(params, account);
 					flush(em);

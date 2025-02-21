@@ -306,10 +306,24 @@ public class AccountControllerTest  implements TestSeawave, CollectionSunbeam, D
     }
 
     @Test
+    public void tryToListAllAccountsWithoutGivingParameters() {
+        securityManager.doConnect("admin", 0);
+        try {
+            accountController.getAll(params(), null);
+            Assert.fail("The request should fail");
+        }
+        catch (SummerControllerException sce) {
+            Assert.assertEquals(400, sce.getStatus());
+            Assert.assertEquals("The requested Page Number is invalid (null)", sce.getMessage());
+        }
+        dataManager.hasFinished();
+    }
+
+    @Test
     public void tryToListAllAccountsWithBadCredentials() {
         securityManager.doConnect("someone", 0);
         try {
-            accountController.getAll(params(), null);
+            accountController.getAll(params("page", "0"), null);
             Assert.fail("The request should fail");
         }
         catch (SummerControllerException sce) {
@@ -338,6 +352,20 @@ public class AccountControllerTest  implements TestSeawave, CollectionSunbeam, D
             "}",
             result.toString()
         );
+        dataManager.hasFinished();
+    }
+
+    @Test
+    public void tryToFindAnAccountWithoutGivingItsID() {
+        securityManager.doConnect("admin", 0);
+        try {
+            accountController.getById(params(), null);
+            Assert.fail("The request should fail");
+        }
+        catch (SummerControllerException sce) {
+            Assert.assertEquals(400, sce.getStatus());
+            Assert.assertEquals("The Account ID is missing or invalid (null)", sce.getMessage());
+        }
         dataManager.hasFinished();
     }
 
@@ -434,6 +462,20 @@ public class AccountControllerTest  implements TestSeawave, CollectionSunbeam, D
         catch (SummerControllerException sce) {
             Assert.assertEquals(404, sce.getStatus());
             Assert.assertEquals("Unknown Account with id 1", sce.getMessage());
+        }
+        dataManager.hasFinished();
+    }
+
+    @Test
+    public void tryToDeleteAnAccountWithoutGivingItsID() {
+        securityManager.doConnect("admin", 0);
+        try {
+            accountController.delete(params(), null);
+            Assert.fail("The request should fail");
+        }
+        catch (SummerControllerException sce) {
+            Assert.assertEquals(400, sce.getStatus());
+            Assert.assertEquals("The Account ID is missing or invalid (null)", sce.getMessage());
         }
         dataManager.hasFinished();
     }
@@ -576,6 +618,20 @@ public class AccountControllerTest  implements TestSeawave, CollectionSunbeam, D
             "\"email\":\"Jcook@gmail.com\"" +
         "}",
         result.toString());
+        dataManager.hasFinished();
+    }
+
+    @Test
+    public void tryToUpdateAnAccountWithoutGivingItsID() {
+        securityManager.doConnect("admin", 0);
+        try {
+            accountController.update(params(), null);
+            Assert.fail("The request should fail");
+        }
+        catch (SummerControllerException sce) {
+            Assert.assertEquals(400, sce.getStatus());
+            Assert.assertEquals("The Account ID is missing or invalid (null)", sce.getMessage());
+        }
         dataManager.hasFinished();
     }
 

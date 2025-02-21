@@ -232,6 +232,20 @@ public class AnnouncementControllerTest implements TestSeawave, CollectionSunbea
     }
 
     @Test
+    public void tryToListAllAnnouncementsWithoutGivingParameters() {
+        securityManager.doConnect("admin", 0);
+        try {
+            announcementController.getAll(params(), null);
+            Assert.fail("The request should fail");
+        }
+        catch (SummerControllerException sce) {
+            Assert.assertEquals(400, sce.getStatus());
+            Assert.assertEquals("The requested Page Number is invalid (null)", sce.getMessage());
+        }
+        dataManager.hasFinished();
+    }
+
+    @Test
     public void tryToListAllAnnouncementsWithBadCredentials() {
         securityManager.doConnect("someone", 0);
         try {
@@ -269,6 +283,20 @@ public class AnnouncementControllerTest implements TestSeawave, CollectionSunbea
                 "{\"description\":\"First news\",\"illustration\":\"/there/where/news1.png\",\"id\":1,\"version\":0}",
                 result.toString()
         );
+        dataManager.hasFinished();
+    }
+
+    @Test
+    public void tryToFindAnAnnouncementWithoutGivingItsID() {
+        securityManager.doConnect("admin", 0);
+        try {
+            announcementController.getById(params(), null);
+            Assert.fail("The request should fail");
+        }
+        catch (SummerControllerException sce) {
+            Assert.assertEquals(400, sce.getStatus());
+            Assert.assertEquals("The Announcement ID is missing or invalid (null)", sce.getMessage());
+        }
         dataManager.hasFinished();
     }
 
@@ -330,6 +358,20 @@ public class AnnouncementControllerTest implements TestSeawave, CollectionSunbea
         Assert.assertEquals(result.toString(),
                 "{\"deleted\":\"ok\"}"
         );
+        dataManager.hasFinished();
+    }
+
+    @Test
+    public void tryToDeleteAnAnnouncementWithoutGivingItsID() {
+        securityManager.doConnect("admin", 0);
+        try {
+            announcementController.delete(params(), null);
+            Assert.fail("The request should fail");
+        }
+        catch (SummerControllerException sce) {
+            Assert.assertEquals(400, sce.getStatus());
+            Assert.assertEquals("The Announcement ID is missing or invalid (null)", sce.getMessage());
+        }
         dataManager.hasFinished();
     }
 
@@ -436,6 +478,20 @@ public class AnnouncementControllerTest implements TestSeawave, CollectionSunbea
     }
 
     @Test
+    public void tryToUpdateAnAnnouncementWithoutGivingItsID() {
+        securityManager.doConnect("admin", 0);
+        try {
+            announcementController.update(params(), null);
+            Assert.fail("The request should fail");
+        }
+        catch (SummerControllerException sce) {
+            Assert.assertEquals(400, sce.getStatus());
+            Assert.assertEquals("The Announcement ID is missing or invalid (null)", sce.getMessage());
+        }
+        dataManager.hasFinished();
+    }
+
+    @Test
     public void upadteAnAnnouncement() {
         dataManager.register("find",
                 setEntityId(new Announcement().setDescription("First news").setIllustration("/there/where/news1.png"), 1L),
@@ -510,7 +566,7 @@ public class AnnouncementControllerTest implements TestSeawave, CollectionSunbea
     }
 
     @Test
-    public void checkRequestedFieldsForAnUpadteAnAnnoucementsStatus() {
+    public void checkRequestedFieldsForAAnnoucementsStatusUpdate() {
         dataManager.register("find",
                 setEntityId(new Announcement().setDescription("First news").setIllustration("/there/where/news1.png"), 1L),
                 null, Announcement.class, 1L);
@@ -527,7 +583,21 @@ public class AnnouncementControllerTest implements TestSeawave, CollectionSunbea
     }
 
     @Test
-    public void checkFieldValidationsForAnUpadteAnAnnouncementsStatus() {
+    public void tryToUpdateAnAnnouncementStatusWithoutGivingItsID() {
+        securityManager.doConnect("admin", 0);
+        try {
+            announcementController.updateStatus(params(), null);
+            Assert.fail("The request should fail");
+        }
+        catch (SummerControllerException sce) {
+            Assert.assertEquals(400, sce.getStatus());
+            Assert.assertEquals("The Announcement ID is missing or invalid (null)", sce.getMessage());
+        }
+        dataManager.hasFinished();
+    }
+
+    @Test
+    public void checkFieldValidationsForAnnouncementsStatusUpdate() {
         dataManager.register("find",
                 setEntityId(new Announcement().setDescription("First news").setIllustration("/there/where/news1.png"), 1L),
                 null, Announcement.class, 1L);
@@ -580,7 +650,7 @@ public class AnnouncementControllerTest implements TestSeawave, CollectionSunbea
     }
 
     @Test
-    public void failToUpdateABannersStatusForUnknownReason() {
+    public void failToUpdateAnAnnouncementStatusForUnknownReason() {
         dataManager.register("find",
                 setEntityId(new Announcement().setDescription("First news").setIllustration("/there/where/news1.png"), 1L),
                 null, Announcement.class, 1L);

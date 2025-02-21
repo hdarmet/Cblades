@@ -223,6 +223,20 @@ public class BannerControllerTest implements TestSeawave, CollectionSunbeam, Dat
 	}
 
 	@Test
+	public void tryToGetBannersWithoutGivingParameters() {
+		securityManager.doConnect("admin", 0);
+		try {
+			bannerController.getAll(params(), null);
+			Assert.fail("The request should fail");
+		}
+		catch (SummerControllerException sce) {
+			Assert.assertEquals(400, sce.getStatus());
+			Assert.assertEquals("The requested Page Number is invalid (null)", sce.getMessage());
+		}
+		dataManager.hasFinished();
+	}
+
+	@Test
 	public void listAllBanners() {
 		dataManager.register("createQuery", null, null, "select count(b) from Banner b");
 		dataManager.register("getSingleResult", 2L, null);
@@ -297,7 +311,19 @@ public class BannerControllerTest implements TestSeawave, CollectionSunbeam, Dat
 		dataManager.hasFinished();
 	}
 
-	/////
+	@Test
+	public void tryToGetABannerWithoutGivingTheName() {
+		securityManager.doConnect("admin", 0);
+		try {
+			bannerController.getByName(params(), null);
+			Assert.fail("The request should fail");
+		}
+		catch (SummerControllerException sce) {
+			Assert.assertEquals(400, sce.getStatus());
+			Assert.assertEquals("The Announcement ID is missing or invalid (null)", sce.getMessage());
+		}
+		dataManager.hasFinished();
+	}
 
 	@Test
 	public void getOneBannerByName() {
@@ -348,6 +374,20 @@ public class BannerControllerTest implements TestSeawave, CollectionSunbeam, Dat
 	}
 
 	@Test
+	public void tryToGetABannerWithoutGivingItsID() {
+		securityManager.doConnect("admin", 0);
+		try {
+			bannerController.getById(params(), null);
+			Assert.fail("The request should fail");
+		}
+		catch (SummerControllerException sce) {
+			Assert.assertEquals(400, sce.getStatus());
+			Assert.assertEquals("The Banner ID is missing or invalid (null)", sce.getMessage());
+		}
+		dataManager.hasFinished();
+	}
+
+	@Test
 	public void getOneBannerById() {
 		dataManager.register("find",
 				setEntityId(new Banner().setName("banner")
@@ -389,6 +429,20 @@ public class BannerControllerTest implements TestSeawave, CollectionSunbeam, Dat
 		catch (SummerControllerException sce) {
 			Assert.assertEquals(403, sce.getStatus());
 			Assert.assertEquals("Not authorized", sce.getMessage());
+		}
+		dataManager.hasFinished();
+	}
+
+	@Test
+	public void tryToDeleteABannerWithoutGivingItsID() {
+		securityManager.doConnect("admin", 0);
+		try {
+			bannerController.delete(params(), null);
+			Assert.fail("The request should fail");
+		}
+		catch (SummerControllerException sce) {
+			Assert.assertEquals(400, sce.getStatus());
+			Assert.assertEquals("The Banner ID is missing or invalid (null)", sce.getMessage());
 		}
 		dataManager.hasFinished();
 	}
@@ -469,6 +523,20 @@ public class BannerControllerTest implements TestSeawave, CollectionSunbeam, Dat
 		catch (SummerControllerException sce) {
 			Assert.assertEquals(403, sce.getStatus());
 			Assert.assertEquals("Not authorized", sce.getMessage());
+		}
+		dataManager.hasFinished();
+	}
+
+	@Test
+	public void tryToUpdateABannerWithoutGivingItsID() {
+		securityManager.doConnect("admin", 0);
+		try {
+			bannerController.update(params(), null);
+			Assert.fail("The request should fail");
+		}
+		catch (SummerControllerException sce) {
+			Assert.assertEquals(400, sce.getStatus());
+			Assert.assertEquals("The Banner ID is missing or invalid (null)", sce.getMessage());
 		}
 		dataManager.hasFinished();
 	}
@@ -555,7 +623,7 @@ public class BannerControllerTest implements TestSeawave, CollectionSunbeam, Dat
 	}
 
 	@Test
-	public void upadteABanner() {
+	public void updateABanner() {
 		dataManager.register("find",
 			setEntityId(new Banner().setName("banner1")
 				.setPath("/there/where/banner1.png"), 1L),

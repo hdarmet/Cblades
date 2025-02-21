@@ -3,6 +3,8 @@ package fr.cblades.controllers;
 import fr.cblades.StandardUsers;
 import fr.cblades.controller.ArticleController;
 import fr.cblades.domain.*;
+import fr.cblades.services.LikeVoteService;
+import fr.cblades.services.LikeVoteServiceImpl;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -12,14 +14,13 @@ import org.summer.controller.Json;
 import org.summer.controller.SummerControllerException;
 import org.summer.data.DataManipulatorSunbeam;
 
-import javax.persistence.EntityExistsException;
-import javax.persistence.NoResultException;
-import javax.persistence.PersistenceException;
+import javax.persistence.*;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 
 public class ArticleControllerTest implements TestSeawave, CollectionSunbeam, DataManipulatorSunbeam {
 
@@ -28,9 +29,18 @@ public class ArticleControllerTest implements TestSeawave, CollectionSunbeam, Da
     MockPlatformManagerImpl platformManager;
     MockSecurityManagerImpl securityManager;
 
+    InjectorForTest injector;
+
+    Account someone;
+
     @Before
     public void before() {
         ApplicationManager.set(new ApplicationManagerForTestImpl());
+        someone = new Account().setAccess(
+                new Login().setLogin("someone").setPassword("someone")
+        );
+        injector = (InjectorForTest)ApplicationManager.get().getInjector();
+        injector.addComponent(LikeVoteService.class, new LikeVoteServiceImpl());
         articleController = new ArticleController();
         dataManager = (MockDataManagerImpl) ApplicationManager.get().getDataManager();
         dataManager.openPersistenceUnit("default");
@@ -38,6 +48,35 @@ public class ArticleControllerTest implements TestSeawave, CollectionSunbeam, Da
         securityManager = (MockSecurityManagerImpl) ApplicationManager.get().getSecurityManager();
         securityManager.register(new MockSecurityManagerImpl.Credential("admin", "admin", StandardUsers.ADMIN));
         securityManager.register(new MockSecurityManagerImpl.Credential("someone", "someone", StandardUsers.USER));
+        securityManager.register(new MockSecurityManagerImpl.Credential("someoneelse", "someoneelse", StandardUsers.USER));
+    }
+
+    Article article1() {
+        Theme magicTheme = new Theme().setTitle("Magic");
+        Paragraph paragraph = new Paragraph().setTitle("What is Magic Power")
+            .setText("Here we describe the power of Magic")
+            .setIllustration("power-magin.png")
+            .setIllustrationPosition(IllustrationPosition.CENTER);
+        return setEntityId(
+            new Article().setTitle("Power of Magic").setStatus(ArticleStatus.PROPOSED)
+                .addTheme(magicTheme)
+                .addParagraph(paragraph)
+                .setFirstParagraph(paragraph)
+                .setPoll(
+                    new LikePoll().setLikes(10).setDislikes(2)
+                ), 1);
+    }
+
+    Article tinyArticle1() {
+        Theme magicTheme = new Theme().setTitle("Magic");
+        return (Article)setEntityId(new Article().setTitle("The power of Magic").setStatus(ArticleStatus.LIVE)
+                .addTheme(magicTheme), 2);
+    }
+
+    Article tintArticle2() {
+        Theme magicTheme = new Theme().setTitle("Magic");
+        return (Article)setEntityId(new Article().setTitle("Danger of Magic").setStatus(ArticleStatus.LIVE)
+            .addTheme(magicTheme), 2);
     }
 
     @Test
@@ -490,10 +529,23 @@ public class ArticleControllerTest implements TestSeawave, CollectionSunbeam, Da
     }
 
     @Test
+    public void tryToUpdateAnArticleWithoutGivingItsID() {
+        securityManager.doConnect("admin", 0);
+        try {
+            articleController.update(params(), null);
+            Assert.fail("The request should fail");
+        }
+        catch (SummerControllerException sce) {
+            Assert.assertEquals(400, sce.getStatus());
+            Assert.assertEquals("The Article ID is missing or invalid (null)", sce.getMessage());
+        }
+        dataManager.hasFinished();
+    }
+
+    @Test
     public void checkRequiredFieldsForArticleUpdate() {
         dataManager.register("find",
-                setEntityId(new Article().setTitle("The power of Magic"), 1L),
-                null, Article.class, 1L);
+                tinyArticle1(),  null, Article.class, 1L);
         securityManager.doConnect("admin", 0);
         try {
             articleController.update(params("id", "1"), Json.createJsonFromString(
@@ -515,8 +567,7 @@ public class ArticleControllerTest implements TestSeawave, CollectionSunbeam, Da
     @Test
     public void checkMinFieldSizesForArticleUpdate() {
         dataManager.register("find",
-                setEntityId(new Article().setTitle("The power of Magic"), 1L),
-                null, Article.class, 1L);
+                tinyArticle1(),  null, Article.class, 1L);
         securityManager.doConnect("admin", 0);
         try {
             articleController.update(params("id", "1"), Json.createJsonFromString("{ " +
@@ -693,19 +744,37 @@ public class ArticleControllerTest implements TestSeawave, CollectionSunbeam, Da
     }
 
     @Test
+    public void tryToAmendAnArticleWithoutGivingItsID() {
+        securityManager.doConnect("admin", 0);
+        try {
+            articleController.amend(params(), null);
+            Assert.fail("The request should fail");
+        }
+        catch (SummerControllerException sce) {
+            Assert.assertEquals(400, sce.getStatus());
+            Assert.assertEquals("The Article ID is missing or invalid (null)", sce.getMessage());
+        }
+        dataManager.hasFinished();
+    }
+
+    Article articleBelongingToSomeone() {
+        return setEntityId(
+            new Article()
+                .setTitle("The power of Magic")
+                .setAuthor(
+                    new Account()
+                        .setAccess(
+                            new Login()
+                                .setLogin("someone")
+                        )
+                ),
+            1L);
+    }
+
+    @Test
     public void checkRequiredFieldsForArticleAmend() {
         dataManager.register("find",
-            setEntityId(
-                new Article()
-                    .setTitle("The power of Magic")
-                    .setAuthor(
-                        new Account()
-                            .setAccess(
-                                new Login()
-                                    .setLogin("someone")
-                            )
-                    ),
-        1L),
+            articleBelongingToSomeone(),
             null, Article.class, 1L);
         securityManager.doConnect("someone", 0);
         try {
@@ -729,17 +798,7 @@ public class ArticleControllerTest implements TestSeawave, CollectionSunbeam, Da
     @Test
     public void checkMinFieldSizesForArticleAmend() {
         dataManager.register("find",
-            setEntityId(
-                new Article()
-                    .setTitle("The power of Magic")
-                    .setAuthor(
-                        new Account()
-                            .setAccess(
-                                new Login()
-                                    .setLogin("someone")
-                            )
-                    ),
-                1L),
+                articleBelongingToSomeone(),
             null, Article.class, 1L);
         securityManager.doConnect("someone", 0);
         try {
@@ -768,17 +827,7 @@ public class ArticleControllerTest implements TestSeawave, CollectionSunbeam, Da
     @Test
     public void checkMaxFieldSizesForArticleAmend() {
         dataManager.register("find",
-            setEntityId(
-                new Article()
-                    .setTitle("The power of Magic")
-                    .setAuthor(
-                        new Account()
-                            .setAccess(
-                                new Login()
-                                    .setLogin("someone")
-                            )
-                    ),
-                1L),
+                articleBelongingToSomeone(),
             null, Article.class, 1L);
         dataManager.register("flush", null, null);
         securityManager.doConnect("someone", 0);
@@ -807,17 +856,7 @@ public class ArticleControllerTest implements TestSeawave, CollectionSunbeam, Da
 
     @Test
     public void amendAnArticle() {
-        Article article = (Article)setEntityId(
-            new Article()
-                .setTitle("The power of Magic")
-                .setAuthor(
-                    new Account()
-                        .setAccess(
-                            new Login()
-                                .setLogin("someone")
-                        )
-                ),
-            1L);
+        Article article = articleBelongingToSomeone();
         dataManager.register("find", article, null, Article.class, 1L);
         Account account = new Account().setAccess(new Login().setLogin("someone"));
         dataManager.register("createQuery", null, null,
@@ -893,17 +932,7 @@ public class ArticleControllerTest implements TestSeawave, CollectionSunbeam, Da
 
     @Test
     public void tryToAmendAnArticleAndFailPourAnUnknownReason() {
-        Article article =  (Article)setEntityId(
-            new Article()
-                .setTitle("The power of Magic")
-                .setAuthor(
-                    new Account()
-                        .setAccess(
-                            new Login()
-                                .setLogin("someone")
-                        )
-                ),
-            1L);
+        Article article = articleBelongingToSomeone();
         dataManager.register("find", article, null, Article.class, 1L);
         Account account = new Account().setAccess(new Login().setLogin("someone"));
         dataManager.register("createQuery", null, null,
@@ -929,17 +958,7 @@ public class ArticleControllerTest implements TestSeawave, CollectionSunbeam, Da
 
     @Test
     public void tryToAmendAnArticleByAnUnknownAccount() {
-        Article article =  (Article)setEntityId(
-            new Article()
-                .setTitle("The power of Magic")
-                .setAuthor(
-                    new Account()
-                        .setAccess(
-                            new Login()
-                                .setLogin("someone")
-                        )
-                ),
-            1L);
+        Article article = articleBelongingToSomeone();
         dataManager.register("find", article, null, Article.class, 1L);
         Account account = new Account().setAccess(new Login().setLogin("someone"));
         dataManager.register("createQuery", null, null,
@@ -993,6 +1012,20 @@ public class ArticleControllerTest implements TestSeawave, CollectionSunbeam, Da
     }
 
     @Test
+    public void tryToListArticlesWithoutGivingParameters() {
+        securityManager.doConnect("admin", 0);
+        try {
+            articleController.getAll(params(), null);
+            Assert.fail("The request should fail");
+        }
+        catch (SummerControllerException sce) {
+            Assert.assertEquals(400, sce.getStatus());
+            Assert.assertEquals("The requested Page Number is invalid (null)", sce.getMessage());
+        }
+        dataManager.hasFinished();
+    }
+
+    @Test
     public void listAllArticles() {
         dataManager.register("createQuery", null, null,
             "select count(a) from Article a");
@@ -1005,17 +1038,28 @@ public class ArticleControllerTest implements TestSeawave, CollectionSunbeam, Da
         dataManager.register("setFirstResult", null, null, 0);
         dataManager.register("setMaxResults", null, null, 10);
         dataManager.register("getResultList", arrayList(
-            setEntityId(new Article().setTitle("Power of Magic"), 1),
-            setEntityId(new Article().setTitle("Danger of Magic"), 2)
+            article1(), tintArticle2()
         ), null);
         securityManager.doConnect("admin", 0);
         Json result = articleController.getAll(params("page", "0"), null);
         Assert.assertEquals("{" +
             "\"count\":2,\"pageSize\":10,\"page\":0," +
-            "\"articles\":[" +
-                "{\"themes\":[],\"id\":1,\"title\":\"Power of Magic\",\"version\":0}," +
-                "{\"themes\":[],\"id\":2,\"title\":\"Danger of Magic\",\"version\":0}" +
-            "]}", result.toString());
+            "\"articles\":[{" +
+                "\"themes\":[{\"id\":0,\"title\":\"Magic\"}]," +
+                "\"firstParagraph\":{" +
+                    "\"illustration\":\"power-magin.png\"," +
+                    "\"text\":\"Here we describe the power of Magic\"," +
+                    "\"title\":\"What is Magic Power\"," +
+                    "\"illustrationPosition\":\"center\"" +
+                "}," +
+                "\"id\":1,\"title\":\"Power of Magic\"," +
+                "\"version\":0,\"status\":\"prp\"" +
+            "},{" +
+                "\"themes\":[{\"id\":0,\"title\":\"Magic\"}]," +
+                "\"id\":2,\"title\":\"Danger of Magic\"," +
+                "\"version\":0,\"status\":\"live\"" +
+            "}]" +
+        "}", result.toString());
         dataManager.hasFinished();
     }
 
@@ -1035,17 +1079,30 @@ public class ArticleControllerTest implements TestSeawave, CollectionSunbeam, Da
         dataManager.register("setParameter", null, null,"search", "Magic");
         dataManager.register("setFirstResult", null, null, 0);
         dataManager.register("setMaxResults", null, null, 10);
+        Theme magicTheme = new Theme().setTitle("Magic");
         dataManager.register("getResultList", arrayList(
-            setEntityId(new Article().setTitle("Power of Magic"), 1),
-            setEntityId(new Article().setTitle("Danger of Magic"), 2)
+            article1(), tintArticle2()
         ), null);
         securityManager.doConnect("admin", 0);
         Json result = articleController.getAll(params("page", "0", "search", "Magic"), null);
         Assert.assertEquals("{" +
-        "\"count\":2,\"pageSize\":10,\"page\":0," +
-        "\"articles\":[" +
-            "{\"themes\":[],\"id\":1,\"title\":\"Power of Magic\",\"version\":0}," +
-            "{\"themes\":[],\"id\":2,\"title\":\"Danger of Magic\",\"version\":0}" +
+            "\"count\":2,\"pageSize\":10,\"page\":0," +
+            "\"articles\":[{" +
+                "\"themes\":[{\"id\":0,\"title\":\"Magic\"}]," +
+                "\"firstParagraph\":{" +
+                    "\"illustration\":\"power-magin.png\"," +
+                    "\"text\":\"Here we describe the power of Magic\"," +
+                    "\"title\":\"What is Magic Power\"," +
+                    "\"illustrationPosition\":\"center\"" +
+                "}," +
+                "\"id\":1,\"title\":\"Power of Magic\"," +
+                "\"version\":0," +
+                "\"status\":\"prp\"" +
+            "},{" +
+                "\"themes\":[{\"id\":0,\"title\":\"Magic\"}]," +
+                "\"id\":2,\"title\":\"Danger of Magic\"," +
+                "\"version\":0,\"status\":\"live\"" +
+            "}" +
         "]}", result.toString());
         dataManager.hasFinished();
     }
@@ -1065,6 +1122,19 @@ public class ArticleControllerTest implements TestSeawave, CollectionSunbeam, Da
     }
 
     @Test
+    public void tryToListNewArticlesWithoutGivingParameters() {
+        securityManager.doConnect("admin", 0);
+        try {
+            articleController.getLiveNew(params(), null);
+            Assert.fail("The request should fail");
+        }
+        catch (SummerControllerException sce) {
+            Assert.assertEquals(400, sce.getStatus());
+            Assert.assertEquals("The requested Page Number is invalid (null)", sce.getMessage());
+        }
+    }
+
+    @Test
     public void listRecentArticles() {
         dataManager.register("createQuery", null, null,
         "select a from Article a join fetch a.paragraphs join " +
@@ -1074,16 +1144,28 @@ public class ArticleControllerTest implements TestSeawave, CollectionSunbeam, Da
         dataManager.register("setParameter", null, null, "recent", true);
         dataManager.register("setFirstResult", null, null, 0);
         dataManager.register("setMaxResults", null, null, 10);
+        Theme magicTheme = new Theme().setTitle("Magic");
         dataManager.register("getResultList", arrayList(
-                setEntityId(new Article().setTitle("Power of Magic"), 1),
-                setEntityId(new Article().setTitle("Danger of Magic"), 2)
+            article1(), tintArticle2()
         ), null);
         securityManager.doConnect("admin", 0);
         Json result = articleController.getLiveNew(params("page", "0"), null);
-        Assert.assertEquals("[" +
-            "{\"id\":1,\"title\":\"Power of Magic\",\"paragraphs\":[]}," +
-            "{\"id\":2,\"title\":\"Danger of Magic\",\"paragraphs\":[]}" +
-        "]", result.toString());
+        Assert.assertEquals("[{" +
+                "\"id\":1," +
+                "\"poll\":{\"dislikes\":2,\"id\":0,\"likes\":10}," +
+                "\"title\":\"Power of Magic\"," +
+                "\"paragraphs\":[{" +
+                    "\"illustration\":\"power-magin.png\"," +
+                    "\"id\":0," +
+                    "\"text\":\"Here we describe the power of Magic\"," +
+                    "\"title\":\"What is Magic Power\"," +
+                    "\"illustrationPosition\":\"center\"" +
+                "}]" +
+            "},{" +
+                "\"id\":2," +
+                "\"title\":\"Danger of Magic\"," +
+                "\"paragraphs\":[]" +
+            "}]", result.toString());
         dataManager.hasFinished();
     }
 
@@ -1100,26 +1182,504 @@ public class ArticleControllerTest implements TestSeawave, CollectionSunbeam, Da
         dataManager.register("setFirstResult", null, null, 0);
         dataManager.register("setMaxResults", null, null, 10);
         dataManager.register("getResultList", arrayList(
-                setEntityId(new Article().setTitle("Power of Magic"), 1),
-                setEntityId(new Article().setTitle("Danger of Magic"), 2)
+                article1(), tintArticle2()
         ), null);
         securityManager.doConnect("admin", 0);
         Json result = articleController.getLiveNew(params("page", "0", "search", "Magic"), null);
         Assert.assertEquals("[" +
-            "{\"id\":1,\"title\":\"Power of Magic\",\"paragraphs\":[]}," +
+            "{\"id\":1," +
+                "\"poll\":{\"dislikes\":2,\"id\":0,\"likes\":10}," +
+                "\"title\":\"Power of Magic\"," +
+                "\"paragraphs\":[{" +
+                    "\"illustration\":\"power-magin.png\",\"id\":0," +
+                    "\"text\":\"Here we describe the power of Magic\"," +
+                    "\"title\":\"What is Magic Power\",\"illustrationPosition\":\"center\"" +
+                "}]" +
+            "}," +
             "{\"id\":2,\"title\":\"Danger of Magic\",\"paragraphs\":[]}" +
-            "]", result.toString());
+        "]", result.toString());
+        dataManager.hasFinished();
+    }
+
+    @Test
+    public void tryToListArticlesByThemeWithoutGivingParameters() {
+        securityManager.doConnect("admin", 0);
+        try {
+            articleController.getLiveByTheme(params(), null);
+            Assert.fail("The request should fail");
+        }
+        catch (SummerControllerException sce) {
+            Assert.assertEquals(400, sce.getStatus());
+            Assert.assertEquals("The requested Page Number is invalid (null)", sce.getMessage());
+        }
+        try {
+            articleController.getLiveByTheme(params("page", "0"), null);
+            Assert.fail("The request should fail");
+        }
+        catch (SummerControllerException sce) {
+            Assert.assertEquals(400, sce.getStatus());
+            Assert.assertEquals("The requested Theme Id is invalid (null)", sce.getMessage());
+        }
+    }
+
+    @Test
+    public void listArticlesByTheme() {
+        dataManager.register("createQuery", null, null,
+            "select a from Article a join fetch a.paragraphs " +
+                    "join fetch a.author " +
+                    "join fetch a.poll " +
+                    "where a.status=:status and :theme member of a.themes");
+        Theme theme = (Theme)setEntityId(new Theme().setTitle("Power of Magic"), 101);
+        dataManager.register("find", theme, null, Theme.class, 101L);
+        dataManager.register("setParameter", null, null, "status", ArticleStatus.LIVE);
+        dataManager.register("setParameter", null, null, "theme", theme);
+        dataManager.register("setFirstResult", null, null, 0);
+        dataManager.register("setMaxResults", null, null, 10);
+        Theme magicTheme = new Theme().setTitle("Magic");
+        dataManager.register("getResultList", arrayList(
+            article1(), tintArticle2()
+        ), null);
+        securityManager.doConnect("admin", 0);
+        Json result = articleController.getLiveByTheme(params("page", "0", "theme", "101"), null);
+        Assert.assertEquals("[{" +
+                    "\"id\":1," +
+                    "\"poll\":{\"dislikes\":2,\"id\":0,\"likes\":10}," +
+                    "\"title\":\"Power of Magic\"," +
+                    "\"paragraphs\":[{" +
+                        "\"illustration\":\"power-magin.png\"," +
+                        "\"id\":0," +
+                        "\"text\":\"Here we describe the power of Magic\"," +
+                        "\"title\":\"What is Magic Power\"," +
+                        "\"illustrationPosition\":\"center\"" +
+                    "}]" +
+                "},{" +
+                    "\"id\":2," +
+                    "\"title\":\"Danger of Magic\"," +
+                "\"paragraphs\":[]" +
+            "}]", result.toString());
+        dataManager.hasFinished();
+    }
+
+    @Test
+    public void listArticlesByThemeAndASearchPattern() {
+        dataManager.register("createQuery", null, null,
+            "select a from Article a " +
+                "join fetch a.paragraphs " +
+                "join fetch a.author " +
+                "join fetch a.poll " +
+                "where a.status=:status and :theme member of a.themes and " +
+                "fts('pg_catalog.english', a.title||' '||a.document.text, :search) = true");
+        dataManager.register("setParameter", null, null,"search", "Magic");
+        Theme theme = (Theme)setEntityId(new Theme().setTitle("Power of Magic"), 101);
+        dataManager.register("find", theme, null, Theme.class, 101L);
+        dataManager.register("setParameter", null, null, "status", ArticleStatus.LIVE);
+        dataManager.register("setParameter", null, null, "theme", theme);
+        dataManager.register("setFirstResult", null, null, 0);
+        dataManager.register("setMaxResults", null, null, 10);
+        dataManager.register("getResultList", arrayList(
+            article1(), tintArticle2()
+        ), null);
+        securityManager.doConnect("admin", 0);
+        Json result = articleController.getLiveByTheme(params("page", "0", "theme", "101", "search", "Magic"), null);
+        Assert.assertEquals("[{" +
+                "\"id\":1," +
+                "\"poll\":{\"dislikes\":2,\"id\":0,\"likes\":10}," +
+                "\"title\":\"Power of Magic\"," +
+                "\"paragraphs\":[{" +
+                    "\"illustration\":\"power-magin.png\"," +
+                    "\"id\":0,\"text\":\"Here we describe the power of Magic\"," +
+                    "\"title\":\"What is Magic Power\"," +
+                    "\"illustrationPosition\":\"center\"" +
+                "}]" +
+            "},{" +
+                "\"id\":2," +
+                "\"title\":\"Danger of Magic\",\"paragraphs\":[]" +
+            "}]", result.toString());
+        dataManager.hasFinished();
+    }
+
+    @Test
+    public void tryToGetAnArticleByTitleWithoutGivingTheTitle() {
+        securityManager.doConnect("admin", 0);
+        try {
+            articleController.getByTitle(params(), null);
+            Assert.fail("The request should fail");
+        }
+        catch (SummerControllerException sce) {
+            Assert.assertEquals(400, sce.getStatus());
+            Assert.assertEquals("The Title of the Article is missing (null)", sce.getMessage());
+        }
+        dataManager.hasFinished();
+    }
+
+    @Test
+    public void getOneArticleByTitle() {
+        dataManager.register("createQuery", null, null,
+            "select a from Article a " +
+                "join fetch a.firstParagraph " +
+                "join fetch a.themes " +
+                "join fetch a.author w " +
+                "join fetch w.access " +
+                "where a.title=:title");
+        dataManager.register("setParameter", null, null,"title", "The power of Magic");
+        dataManager.register("getSingleResult",
+                article1(), null);
+        securityManager.doConnect("admin", 0);
+        Json result = articleController.getByTitle(params("title", "The power of Magic"), null);
+        Assert.assertEquals("{" +
+                "\"themes\":[{\"id\":0,\"title\":\"Magic\"}]," +
+                "\"comments\":[]," +
+                "\"id\":1,\"title\":\"Power of Magic\"," +
+                "\"paragraphs\":[{" +
+                    "\"illustration\":\"power-magin.png\"," +
+                    "\"id\":0,\"text\":\"Here we describe the power of Magic\"," +
+                    "\"title\":\"What is Magic Power\"," +
+                    "\"illustrationPosition\":\"center\",\"version\":0" +
+                "}]," +
+                "\"version\":0,\"status\":\"prp\"" +
+            "}",
+            result.toString()
+        );
+        dataManager.hasFinished();
+    }
+
+    @Test
+    public void tryToFindByTitleAnUnknownArticle() {
+        dataManager.register("createQuery", null, null,
+            "select a from Article a " +
+                "join fetch a.firstParagraph " +
+                "join fetch a.themes " +
+                "join fetch a.author w " +
+                "join fetch w.access " +
+                "where a.title=:title");
+        dataManager.register("setParameter", null, null,"title", "The power of Magic");
+        dataManager.register("getSingleResult", null, null);
+        securityManager.doConnect("admin", 0);
+        try {
+            articleController.getByTitle(params("title", "The power of Magic"), null);
+            Assert.fail("The request should fail");
+        }
+        catch (SummerControllerException sce) {
+            Assert.assertEquals(404, sce.getStatus());
+            Assert.assertEquals("Unknown Article with title The power of Magic", sce.getMessage());
+        }
+        dataManager.hasFinished();
+    }
+
+    @Test
+    public void tryToFindByTitleAnArticleWithBadCredentials() {
+        dataManager.register("createQuery", null, null,
+        "select a from Article a " +
+                "join fetch a.firstParagraph " +
+                "join fetch a.themes " +
+                "join fetch a.author w " +
+                "join fetch w.access " +
+                "where a.title=:title");
+        dataManager.register("setParameter", null, null,"title", "The power of Magic");
+        dataManager.register("getSingleResult",
+                article1(), null);
+        securityManager.doConnect("someoneelse", 0);
+        try {
+            articleController.getByTitle(params("title", "The power of Magic"), null);
+            Assert.fail("The request should fail");
+        }
+        catch (SummerControllerException sce) {
+            Assert.assertEquals(403, sce.getStatus());
+            Assert.assertEquals("Not authorized", sce.getMessage());
+        }
+        dataManager.hasFinished();
+    }
+
+    @Test
+    public void tryToGetAnArticleWithoutGivingItsID() {
+        securityManager.doConnect("admin", 0);
+        try {
+            articleController.update(params(), null);
+            Assert.fail("The request should fail");
+        }
+        catch (SummerControllerException sce) {
+            Assert.assertEquals(400, sce.getStatus());
+            Assert.assertEquals("The Article ID is missing or invalid (null)", sce.getMessage());
+        }
+        dataManager.hasFinished();
+    }
+
+    @Test
+    public void getOneArticleById() {
+        dataManager.register("find",
+                article1(), null, Article.class, 1L);
+        securityManager.doConnect("admin", 0);
+        Json result = articleController.getArticleWithComments(params("id", "1"), null);
+        Assert.assertEquals("{" +
+                "\"themes\":[{\"id\":0,\"title\":\"Magic\"}]," +
+                "\"comments\":[]," +
+                "\"id\":1,\"title\":\"Power of Magic\"," +
+                "\"paragraphs\":[{" +
+                    "\"illustration\":\"power-magin.png\"," +
+                    "\"id\":0," +
+                    "\"text\":\"Here we describe the power of Magic\"," +
+                    "\"title\":\"What is Magic Power\"," +
+                    "\"illustrationPosition\":\"center\"," +
+                    "\"version\":0" +
+                "}]," +
+                "\"version\":0,\"status\":\"prp\"" +
+            "}",
+            result.toString()
+        );
+        dataManager.hasFinished();
+    }
+
+    @Test
+    public void tryToFindAnUnknownArticle() {
+        dataManager.register("find", null,
+            new EntityNotFoundException("Entity Does Not Exists"), Article.class, 1L);
+        securityManager.doConnect("admin", 0);
+        try {
+            articleController.getArticleWithComments(params("id", "1"), null);
+            Assert.fail("The request should fail");
+        }
+        catch (SummerControllerException sce) {
+            Assert.assertEquals(404, sce.getStatus());
+            Assert.assertEquals("Unknown Article with id 1", sce.getMessage());
+        }
+        dataManager.hasFinished();
+    }
+
+    @Test
+    public void tryToFindAnArticleWithBadCredentials() {
+        dataManager.register("find",
+                article1(), null, Article.class, 1L);
+        securityManager.doConnect("someoneelse", 0);
+        try {
+            articleController.getArticleWithComments(params("id", "1"), null);
+            Assert.fail("The request should fail");
+        }
+        catch (SummerControllerException sce) {
+            Assert.assertEquals(403, sce.getStatus());
+            Assert.assertEquals("Not authorized", sce.getMessage());
+        }
+        dataManager.hasFinished();
+    }
+
+    @Test
+    public void tryToDeleteAnArticleWithoutGivingItsID() {
+        securityManager.doConnect("admin", 0);
+        try {
+            articleController.delete(params(), null);
+            Assert.fail("The request should fail");
+        }
+        catch (SummerControllerException sce) {
+            Assert.assertEquals(400, sce.getStatus());
+            Assert.assertEquals("The Article ID is missing or invalid (null)", sce.getMessage());
+        }
+        dataManager.hasFinished();
+    }
+
+    @Test
+    public void deleteAnArticle() {
+        dataManager.register("find", article1(), null, Article.class, 1L);
+        Ref<Article> rArticle = new Ref<>();
+        dataManager.register("merge", (Supplier)()->rArticle.get(), null,
+            (Predicate) entity->{
+                if (!(entity instanceof Article)) return false;
+                rArticle.set((Article) entity);
+                if (rArticle.get().getId() != 1L) return false;
+                return true;
+            }
+        );
+        dataManager.register("remove", null, null,
+            (Predicate) entity->{
+                if (!(entity instanceof Article)) return false;
+                Article article = (Article) entity;
+                if (article.getId() != 1L) return false;
+                return true;
+            }
+        );
+        dataManager.register("flush", null, null);
+        securityManager.doConnect("admin", 0);
+        Json result = articleController.delete(params("id", "1"), null);
+        Assert.assertEquals(result.toString(),
+                "{\"deleted\":\"ok\"}"
+        );
+        dataManager.hasFinished();
+    }
+
+    @Test
+    public void tryToDeleteAnUnknownArticle() {
+        dataManager.register("find", null,
+            new EntityNotFoundException("Entity Does Not Exists"), Article.class, 1L);
+        securityManager.doConnect("admin", 0);
+        try {
+            articleController.delete(params("id", "1"), null);
+            Assert.fail("The request should fail");
+        }
+        catch (SummerControllerException sce) {
+            Assert.assertEquals(404, sce.getStatus());
+            Assert.assertEquals("Unknown Article with id 1", sce.getMessage());
+        }
+        dataManager.hasFinished();
+    }
+
+    @Test
+    public void tryToDeleteAnArticleAndFailsForAnUnknownReason() {
+        dataManager.register("find", null,
+            new PersistenceException("Some Reason"), Article.class, 1L);
+        securityManager.doConnect("admin", 0);
+        try {
+            articleController.delete(params("id", "1"), null);
+            Assert.fail("The request should fail");
+        }
+        catch (SummerControllerException sce) {
+            Assert.assertEquals(409, sce.getStatus());
+            Assert.assertEquals("Unexpected issue. Please report : Some Reason", sce.getMessage());
+        }
+        dataManager.hasFinished();
+    }
+
+    @Test
+    public void tryToDeleteAnArticleWithBadCredentials() {
+        dataManager.register("find",
+            article1(),null);
+        securityManager.doConnect("someoneelse", 0);
+        try {
+            articleController.delete(params("id", "1"), null);
+            Assert.fail("The request should fail");
+        }
+        catch (SummerControllerException sce) {
+            Assert.assertEquals(403, sce.getStatus());
+            Assert.assertEquals("Not authorized", sce.getMessage());
+        }
+        dataManager.hasFinished();
+    }
+/////////////////////////////////
+
+    @Test
+    public void checkRequestedFieldsForAnArticleStatusUpdate() {
+        dataManager.register("find",
+                article1(), null, Article.class, 1L);
+        securityManager.doConnect("admin", 0);
+        try {
+            articleController.updateStatus(params("id", "1"), Json.createJsonFromString(
+                    "{}"
+            ));
+        }
+        catch (SummerControllerException sce) {
+            Assert.assertEquals(400, sce.getStatus());
+            Assert.assertEquals("{\"id\":\"required\",\"status\":\"required\"}", sce.getMessage());
+        }
+    }
+
+    @Test
+    public void checkFieldValidationsForAnArticleSStatusUpdate() {
+        dataManager.register("find",
+                article1(),null, Article.class, 1L);
+        securityManager.doConnect("admin", 0);
+        try {
+            articleController.updateStatus(params("id", "1"), Json.createJsonFromString(
+                    "{ 'id':'1234', 'status':'???'}"
+            ));
+        }
+        catch (SummerControllerException sce) {
+            Assert.assertEquals(400, sce.getStatus());
+            Assert.assertEquals("{" +
+                "\"id\":\"Not a valid id\"," +
+                "\"status\":\"??? must matches one of [pnd, live, prp]\"" +
+            "}", sce.getMessage());
+        }
+    }
+
+    @Test
+    public void upadteAnArticleSStatus() {
+        dataManager.register("find",
+                article1(),
+                null, Article.class, 1L);
+        dataManager.register("flush", null, null);
+        securityManager.doConnect("admin", 0);
+        Json result = articleController.updateStatus(params("id", "1"), Json.createJsonFromString(
+                "{ 'id':1, 'status': 'live' }"
+        ));
+        Assert.assertEquals("{" +
+                    "\"themes\":[{\"id\":0,\"title\":\"Magic\"}]," +
+                    "\"comments\":[]," +
+                    "\"id\":1," +
+                    "\"title\":\"Power of Magic\"," +
+                    "\"paragraphs\":[{" +
+                        "\"illustration\":\"power-magin.png\"," +
+                        "\"id\":0,\"text\":\"Here we describe the power of Magic\"," +
+                        "\"title\":\"What is Magic Power\"," +
+                        "\"illustrationPosition\":\"center\",\"version\":0" +
+                    "}]," +
+                    "\"version\":0,\"status\":\"live\"" +
+                "}",
+                result.toString()
+        );
+        dataManager.hasFinished();
+    }
+
+    @Test
+    public void tryToUpadteAnArticleSStatusWithBadCredential() {
+        securityManager.doConnect("someone", 0);
+        try {
+            articleController.updateStatus(params("id", "1"), Json.createJsonFromString(
+                    "{ 'id':1, 'status': 'live' }"
+            ));
+            Assert.fail("The request should fail");
+        }
+        catch (SummerControllerException sce) {
+            Assert.assertEquals(403, sce.getStatus());
+            Assert.assertEquals("Not authorized", sce.getMessage());
+        }
+        dataManager.hasFinished();
+    }
+
+    @Test
+    public void failToUpdateAnArticleStatusForUnknownReason() {
+        dataManager.register("find",
+                article1(), null, Article.class, 1L);
+        dataManager.register("flush", null,
+                new PersistenceException("Some reason"), null
+        );
+        securityManager.doConnect("admin", 0);
+        try {
+            articleController.updateStatus(params("id", "1"), Json.createJsonFromString(
+                    "{ 'id':1, 'status': 'live' }"
+            ));
+            Assert.fail("The request should fail");
+        }
+        catch (SummerControllerException sce) {
+            Assert.assertEquals(409, sce.getStatus());
+            Assert.assertEquals("Unexpected issue. Please report : Some reason", sce.getMessage());
+        }
+        dataManager.hasFinished();
+    }
+
+    @Test
+    public void tryToGetVote() {
+        securityManager.doConnect("someone", 0);
+        try {
+            articleController.getVote(params(), null);
+            Assert.fail("The request should fail");
+        }
+        catch (SummerControllerException sce) {
+            Assert.assertEquals(400, sce.getStatus());
+            Assert.assertEquals("A valid Poll Id must be provided.", sce.getMessage());
+        }
+        dataManager.hasFinished();
+    }
+
+    @Test
+    public void getVote() {
+        dataManager.register("find",
+            article1(), null, Article.class, 1L);
+        securityManager.doConnect("someone", 0);
+        Json result = articleController.getVote(params("poll", "101"), null);
+        Assert.assertEquals("{}",
+            result.toString());
         dataManager.hasFinished();
     }
 
 
-
-
-
-
-
-////////////////////////////
-
+//////////////////////////////////
     @Test
     public void chargeArticleImage() {
         platformManager.register("getInputStream",

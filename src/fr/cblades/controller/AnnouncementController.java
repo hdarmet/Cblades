@@ -128,11 +128,11 @@ public class AnnouncementController implements
 
 	@REST(url="/api/announcement/find/:id", method=Method.POST)
 	public Json getById(Map<String, Object> params, Json request) {
+		long id = getLongParam(params, "id", "The Announcement ID is missing or invalid (%s)");
 		Ref<Json> result = new Ref<>();
 		ifAuthorized(user->{
 			inReadTransaction(em->{
-				String id = (String)params.get("id");
-				Announcement announcement = findAnnouncement(em, new Long(id));
+				Announcement announcement = findAnnouncement(em, id);
 				result.set(readFromAnnouncement(announcement));
 			});
 		}, ADMIN);
@@ -141,11 +141,11 @@ public class AnnouncementController implements
 	
 	@REST(url="/api/announcement/delete/:id", method=Method.GET)
 	public Json delete(Map<String, Object> params, Json request) {
+		long id = getLongParam(params, "id", "The Announcement ID is missing or invalid (%s)");
 		ifAuthorized(user->{
 			try {
 				inTransaction(em->{
-					String id = (String)params.get("id");
-					Announcement announcement= findAnnouncement(em, new Long(id));
+					Announcement announcement= findAnnouncement(em, id);
 					remove(em, announcement);
 				});
 			} catch (PersistenceException pe) {
@@ -157,13 +157,13 @@ public class AnnouncementController implements
 	
 	@REST(url="/api/announcement/update/:id", method=Method.POST)
 	public Json update(Map<String, Object> params, Json request) {
+		long id = getLongParam(params, "id", "The Announcement ID is missing or invalid (%s)");
 		Ref<Json> result = new Ref<>();
 		ifAuthorized(user->{
 			try {
 				inTransaction(em->{
-					String id = (String)params.get("id");
 					checkJson(request, false);
-					Announcement announcement = findAnnouncement(em, new Long(id));
+					Announcement announcement = findAnnouncement(em, id);
 					writeToAnnouncement(request, announcement);
 					storeIllustration(params, announcement);
 					flush(em);
@@ -178,12 +178,12 @@ public class AnnouncementController implements
 
 	@REST(url="/api/announcement/update-status/:id", method=Method.POST)
 	public Json updateStatus(Map<String, Object> params, Json request) {
+		long id = getLongParam(params, "id", "The Announcement ID is missing or invalid (%s)");
 		Ref<Json> result = new Ref<>();
 		ifAuthorized(user->{
 			try {
 				inTransaction(em->{
-					String id = (String)params.get("id");
-					Announcement announcement = findAnnouncement(em, new Long(id));
+					Announcement announcement = findAnnouncement(em, id);
 					writeToAnnouncementStatus(request, announcement);
 					flush(em);
 					result.set(readFromAnnouncement(announcement));

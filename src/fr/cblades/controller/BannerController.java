@@ -127,10 +127,10 @@ public class BannerController
 
 	@REST(url="/api/banner/by-name/:name", method=Method.POST)
 	public Json getByName(Map<String, Object> params, Json request) {
+		String name = getStringParam(params, "name", null,"The Announcement ID is missing or invalid (%s)");
 		Ref<Json> result = new Ref<>();
 		ifAuthorized(user->{
 			inReadTransaction(em->{
-				String name = (String)params.get("name");
 				Banner banner = getSingleResult(em,
 						"select b from Banner b where b.name = :name",
 						"name", name);
@@ -147,11 +147,11 @@ public class BannerController
 
 	@REST(url="/api/banner/load/:id", method=Method.GET)
 	public Json getById(Map<String, Object> params, Json request) {
+		long id = getLongParam(params, "id", "The Banner ID is missing or invalid (%s)");
 		Ref<Json> result = new Ref<>();
 		ifAuthorized(user->{
 			inReadTransaction(em->{
-				String id = (String)params.get("id");
-				Banner banner = findBanner(em, new Long(id));
+				Banner banner = findBanner(em, id);
 				result.set(readFromBanner(banner));
 			});
 		}, ADMIN);
@@ -160,11 +160,11 @@ public class BannerController
 
 	@REST(url="/api/banner/delete/:id", method=Method.GET)
 	public Json delete(Map<String, Object> params, Json request) {
+		long id = getLongParam(params, "id", "The Banner ID is missing or invalid (%s)");
 		ifAuthorized(user->{
 			try {
 				inTransaction(em->{
-					String id = (String)params.get("id");
-					Banner banner = findBanner(em, new Long(id));
+					Banner banner = findBanner(em, id);
 					remove(em, banner);
 				});
 			} catch (PersistenceException pe) {
@@ -176,13 +176,13 @@ public class BannerController
 
 	@REST(url="/api/banner/update/:id", method=Method.POST)
 	public Json update(Map<String, Object> params, Json request) {
+		long id = getLongParam(params, "id", "The Banner ID is missing or invalid (%s)");
 		Ref<Json> result = new Ref<>();
 		ifAuthorized(user->{
 			try {
 				inTransaction(em->{
-					String id = (String)params.get("id");
 					checkJson(em, request, false);
-					Banner banner = findBanner(em, new Long(id));
+					Banner banner = findBanner(em, id);
 					writeToBanner(em, request, banner);
 					storeBannerImages(params, banner);
 					flush(em);

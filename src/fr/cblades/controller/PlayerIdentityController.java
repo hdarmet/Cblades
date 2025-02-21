@@ -137,10 +137,10 @@ public class PlayerIdentityController
 
 	@REST(url="/api/player-identity/by-name/:name", method=Method.POST)
 	public Json getByName(Map<String, Object> params, Json request) {
+		String name = getStringParam(params, "name", null,"The Player Identity name is missing or invalid (%s)");
 		Ref<Json> result = new Ref<>();
 		ifAuthorized(user->{
 			inReadTransaction(em->{
-				String name = (String)params.get("name");
 				PlayerIdentity playerIdentity = getSingleResult(em,
 						"select pi from PlayerIdentity pi where pi.name = :name",
 						"name", name);
@@ -157,11 +157,11 @@ public class PlayerIdentityController
 
 	@REST(url="/api/player-identity/load/:id", method=Method.GET)
 	public Json getById(Map<String, Object> params, Json request) {
+		long id = getLongParam(params, "id", "The Player Identity ID is missing or invalid (%s)");
 		Ref<Json> result = new Ref<>();
 		ifAuthorized(user->{
 			inReadTransaction(em->{
-				String id = (String)params.get("id");
-				PlayerIdentity playerIdentity = findPlayerIdentity(em, new Long(id));
+				PlayerIdentity playerIdentity = findPlayerIdentity(em, id);
 				result.set(readFromPlayerIdentity(playerIdentity));
 			});
 		}, ADMIN);
@@ -170,11 +170,11 @@ public class PlayerIdentityController
 
 	@REST(url="/api/player-identity/delete/:id", method=Method.GET)
 	public Json delete(Map<String, Object> params, Json request) {
+		long id = getLongParam(params, "id", "The Player Identity ID is missing or invalid (%s)");
 		ifAuthorized(user->{
 			try {
 				inTransaction(em->{
-					String id = (String)params.get("id");
-					PlayerIdentity playerIdentity = findPlayerIdentity(em, new Long(id));
+					PlayerIdentity playerIdentity = findPlayerIdentity(em, id);
 					remove(em, playerIdentity);
 				});
 			} catch (PersistenceException pe) {
@@ -186,12 +186,12 @@ public class PlayerIdentityController
 
 	@REST(url="/api/player-identity/update/:id", method=Method.POST)
 	public Json update(Map<String, Object> params, Json request) {
+		long id = getLongParam(params, "id", "The Player Identity ID is missing or invalid (%s)");
 		Ref<Json> result = new Ref<>();
 		ifAuthorized(user->{
 			try {
 				inTransaction(em->{
-					String id = (String)params.get("id");
-					PlayerIdentity playerIdentity = findPlayerIdentity(em, new Long(id));
+					PlayerIdentity playerIdentity = findPlayerIdentity(em, id);
 					writeToPlayerIdentity(em, request, playerIdentity, false);
 					storePlayerIdentityImages(params, playerIdentity);
 					flush(em);
@@ -206,10 +206,10 @@ public class PlayerIdentityController
 
 	@REST(url="/api/player-identity/update-status/:id", method=Method.POST)
 	public Json updateStatus(Map<String, Object> params, Json request) {
+		long id = getLongParam(params, "id", "The Player Identity ID is missing or invalid (%s)");
 		Ref<Json> result = new Ref<>();
 		inTransaction(em-> {
-			String id = (String) params.get("id");
-			PlayerIdentity playerIdentity = findPlayerIdentity(em, new Long(id));
+			PlayerIdentity playerIdentity = findPlayerIdentity(em, id);
 			ifAuthorized(
 				user -> {
 					try {

@@ -73,18 +73,6 @@ public class InjectorForTest implements Injector {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public <T> Set<T> getAllComponents(Class<T> serviceClass) {
-		Set<T> result = new HashSet<>();
-		for(ComponentFactory<?> factory : factories) {
-			if (factory.matches(serviceClass, null)) {
-				result.add((T)factory.getComponent());
-			}
-		}
-		return result;
-	}
-
-	@SuppressWarnings("unchecked")
-	@Override
 	public <T> T getComponent(String profile, Class<T> serviceClass) {
 		for(ComponentFactory<?> factory : factories) {
 			if (factory.matches(serviceClass, profile)) {
@@ -92,18 +80,6 @@ public class InjectorForTest implements Injector {
 			}
 		}
 		return null;
-	}
-
-	@SuppressWarnings("unchecked")
-	@Override
-	public <T> Set<T> getAllComponents(String profile, Class<T> serviceClass) {
-		Set<T> result = new HashSet<>();
-		for(ComponentFactory<?> factory : factories) {
-			if (factory.matches(serviceClass, profile)) {
-				result.add((T)factory.getComponent());
-			}
-		}
-		return result;
 	}
 
 	Map<String, List<Object>> values = new HashMap<String, List<Object>>();
@@ -117,41 +93,6 @@ public class InjectorForTest implements Injector {
 			throw new SummerException("Ambiguious values for : "+valueName);
 		}
 		return (T)values.get(0);
-	}
-
-	@SuppressWarnings("unchecked")
-	@Override
-	public <T> Collection<T> getValues(String valueName) {
-		List<Object> values = this.values.get(valueName);
-		if (values==null || values.size()==0) return Collections.emptyList();
-		return Collections.unmodifiableList((List<T>)values);
-	}
-
-	@SuppressWarnings("unchecked")
-	@Override
-	synchronized public <T> Injector setValue(String valueName, T value) {
-		List<T> values = (List<T>)this.values.get(valueName);
-		if (values==null) {
-			values = new ArrayList<T>();
-			this.values.put(valueName,  (List<Object>)values);
-		}
-		else {
-			values.clear();
-		}
-		values.add(value);
-		return this;
-	}
-
-	@SuppressWarnings("unchecked")
-	@Override
-	synchronized public <T> Injector putValue(String valueName, T value) {
-		List<T> values = (List<T>)this.values.get(valueName);
-		if (values==null) {
-			values = new ArrayList<T>();
-			this.values.put(valueName,  (List<Object>)values);
-		}
-		values.add(value);
-		return this;
 	}
 
 	@Override
