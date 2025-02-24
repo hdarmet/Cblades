@@ -29,9 +29,18 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+/**
+ * Controleur permettant de manipuler des évènements
+ */
 @Controller
 public class EventController implements InjectorSunbeam, DataSunbeam, SecuritySunbeam, ControllerSunbeam, FileSunbeam, StandardUsers {
 
+	/**
+	 * Endpoint (accessible via "/api/event/images/:imagename") permettant de télécharger depuis le navigateur
+	 * une image associée à un évènement.
+	 * @param params paramètres de l'URL (on utilisera le paraètre "imagename" qui donne le nom de l'image.
+	 * @return une spécification de fichier que Summer exploitera pour retourner l'image au navigateur.
+	 */
 	@MIME(url="/api/event/images/:imagename")
 	public FileSpecification getImage(Map<String, Object> params) {
 		try {
@@ -47,6 +56,17 @@ public class EventController implements InjectorSunbeam, DataSunbeam, SecuritySu
 		}
 	}
 
+	/**
+	 * Stocke sur le système de fichiers/blob Cloud, l'image associée à un évènement (il ne peut y en avoir qu'une) et
+	 * l'associe à l'évènement (en précisant l'URL de l'image dans le champ "illustration" de l'évènement). Le contenu
+	 * de l'image a été, au préalable, extrait du message HTTP (par Summer) et passé dans le paramètre params sous
+	 * l'étiquette MULTIPART_FILES (un tableau qui ne doit contenir au plus qu'un élément)<br>
+	 * L'image sera stockée dans le sous répertoire/blob nommé "/events" sous un nom qui est la concaténation de
+	 * "illustration" et l'ID de l'évènement.
+	 * @param params paramètres d'appel HTTP (l'image a stocker si elle existe, est accessible via l'étiquette
+	 *               MULTIPART_FILES)
+	 * @param event évènement auquel il faut associer l'image.
+	 */
 	void storeIllustration (Map<String, Object> params, Event event) {
 		FileSpecification[] files = (FileSpecification[])params.get(MULTIPART_FILES);
 		if (files.length>0) {

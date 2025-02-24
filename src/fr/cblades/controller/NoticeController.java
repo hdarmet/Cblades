@@ -19,6 +19,9 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Controleur permettant de manipuler les notes.
+ */
 @Controller
 public class NoticeController implements InjectorSunbeam, DataSunbeam, SecuritySunbeam, ControllerSunbeam, StandardUsers {
 	

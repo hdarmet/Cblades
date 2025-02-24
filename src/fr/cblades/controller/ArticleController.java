@@ -32,17 +32,38 @@ import java.util.function.BiPredicate;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
+/**
+ * Controleur permettant de manipuler des articles (et tous les objets dont ils sont composés: paragraphes et
+ * votes)
+ */
 @Controller
 public class ArticleController
 	implements InjectorSunbeam, DataSunbeam, SecuritySunbeam, ControllerSunbeam,
 		FileSunbeam, StandardUsers, CommonEntities {
 	static final Logger log = Logger.getLogger("summer");
 
+	/**
+	 * Endpoint (accessible via "/api/article/images/:imagename") permettant de télécharger depuis le navigateur
+	 * une image associée à un article (à un des paragraphes de l'article pour être précis).
+	 * @param params paramètres de l'URL (on utilisera le paraètre "imagename" qui donne le nom de l'image).
+	 * @return une spécification de fichier que Summer exploitera pour retourner l'image au navigateur.
+	 */
 	@MIME(url="/api/article/images/:imagename")
 	public FileSpecification getImage(Map<String, Object> params) {
 		return this.getImage(params, "imagename", "/articles/");
 	}
 
+	/**
+	 * Stocke sur le système de fichiers/blob Cloud, les images associées aux paragraphes d'un article (chaque paragraphe
+	 * doit avoir une et une seule image) et les associe à leur paragraphes respectifs (en précisant l'URL de
+	 * l'image dans le champ "illustration" du paragraphe). Le contenu des ces images a été, au préalable, extrait du
+	 * message HTTP (par Summer) et passé dans le paramètre params sous l'étiquette MULTIPART_FILES (un tableau).
+	 * L'ordre dans ce tableau doit respecter l'ordre des paragraphes.<br>
+	 * Les images seront stockées dans le sous répertoire/blob nommé "/articles" sous des noms qui sont la concaténation
+	 * de "paragraph", du numéro de paragraphe et l'ID de l'article.
+	 * @param params paramètres d'appel HTTP (les images à stocker sont accessibles via l'étiquette MULTIPART_FILES)
+	 * @param article article détenteur des paragraphes auxquels il faut associer les images.
+	 */
 	void storeArticleImages(Map<String, Object> params, Article article) {
 		FileSpecification[] files = (FileSpecification[]) params.get(MULTIPART_FILES);
 		if (files != null) {
@@ -104,7 +125,7 @@ public class ArticleController
 	public Json amend(Map<String, Object> params, Json request) {
 		long id = getLongParam(params, "id", "The Article ID is missing or invalid (%s)");
 		Ref<Json> result = new Ref<>();
-		inTransaction(em-> {
+		inTransactionUntilSuccessful(em-> {
 			Article article = findArticle(em, id);
 			ifAuthorized(
 				user -> {
@@ -325,7 +346,7 @@ public class ArticleController
 	@REST(url="/api/article/delete/:id", method=Method.GET)
 	public Json delete(Map<String, Object> params, Json request) {
 		long id = getLongParam(params, "id", "The Article ID is missing or invalid (%s)");
-		inTransaction(em->{
+		inTransactionUntilSuccessful(em->{
 			try {
 				Article article = findArticle(em, id);
 				ifAuthorized(
@@ -345,7 +366,7 @@ public class ArticleController
 	public Json updateStatus(Map<String, Object> params, Json request) {
 		long id = getLongParam(params, "id", "The Article ID is missing or invalid (%s)");
 		Ref<Json> result = new Ref<>();
-		inTransaction(em-> {
+		inTransactionUntilSuccessful(em-> {
 			ifAuthorized(
 				user -> {
 					try {
@@ -409,8 +430,6 @@ public class ArticleController
 				.checkRequired("title")
 				.checkMinSize("title", 2).checkMaxSize("title", 200)
 				.checkPattern("title", "[\\d\\s\\w]+")
-				.checkRequired("illustration")
-				.checkMinSize("illustration", 2).checkMaxSize("illustration", 200)
 				.check("illustrationPosition", IllustrationPosition.byLabels().keySet())
 				.checkRequired("text")
 				.checkMinSize("text", 2)
@@ -453,7 +472,6 @@ public class ArticleController
 					.write("version")
 					.write("ordinal")
 					.write("title")
-					.write("illustration")
 					.write("illustrationPosition", label->IllustrationPosition.byLabels().get(label))
 					.write("text")
 				);
@@ -461,7 +479,7 @@ public class ArticleController
 			article.buildDocument();
 			if (usage.propose) {
 				synchronizer
-						.writeRef("author.id", "author", (Integer id) -> Account.find(em, id));
+					.writeRef("author.id", "author", (Integer id) -> Account.find(em, id));
 			}
 			else {
 				synchronizer
@@ -582,7 +600,7 @@ public class ArticleController
 						Json response = readFromPoll(votation);
 						result.set(response);
 					} catch (SummerPersistenceException pe) {
-						throw new SummerControllerException(409, pe.getMessage());
+						throw new SummerControllerException(409, "Unexpected exception: %s.", pe.getMessage());
 					} catch (SummerNotFoundException snfe) {
 						throw new SummerControllerException(404, snfe.getMessage());
 					}
@@ -597,20 +615,20 @@ public class ArticleController
 		Ref<Json> result = new Ref<>();
 		long pollId = getIntegerParam(params, "poll", "A valid Poll Id must be provided.");
 		String option = request.get("option");
-		if (!"like".equals(option) && !"dislike".equals(option) && !"none".equals(option)) {
-			throw new SummerControllerException(400, "Vote option must be one of these: 'like', 'dislike' or 'none'");
+		if (!"like".equals(option) && !"dislike".equals(option)) {
+			throw new SummerControllerException(400, "Vote option must be one of these: 'like' or 'dislike'.");
 		}
 		use(LikeVoteService.class, likeVoteService -> {
 			ifAuthorized(
 				user -> {
 					try {
 						LikeVoteService.Votation votation = likeVoteService.vote(pollId,
-								option.equals("like") ? LikeVoteOption.LIKE : LikeVoteOption.DISLIKE,
-								user);
+							option.equals("like")?LikeVoteOption.LIKE:LikeVoteOption.DISLIKE,
+							user);
 						Json response = readFromPoll(votation);
 						result.set(response);
 					} catch (SummerPersistenceException pe) {
-						throw new SummerControllerException(409, pe.getMessage());
+						throw new SummerControllerException(409, "Unexpected exception: %s.", pe.getMessage());
 					} catch (SummerNotFoundException snfe) {
 						throw new SummerControllerException(404, snfe.getMessage());
 					}

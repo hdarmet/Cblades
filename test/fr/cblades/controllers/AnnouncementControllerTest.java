@@ -47,10 +47,13 @@ public class AnnouncementControllerTest implements TestSeawave, CollectionSunbea
             announcementController.create(params(), Json.createJsonFromString(
                 "{}"
             ));
+            Assert.fail("The request should fail");
         }
         catch (SummerControllerException sce) {
             Assert.assertEquals(400, sce.getStatus());
-            Assert.assertEquals("{\"description\":\"required\",\"illustration\":\"required\"}", sce.getMessage());
+            Assert.assertEquals("{" +
+                "\"description\":\"required\"" +
+            "}", sce.getMessage());
         }
     }
 
@@ -61,12 +64,12 @@ public class AnnouncementControllerTest implements TestSeawave, CollectionSunbea
             announcementController.create(params(), Json.createJsonFromString(
                 "{ 'description':'d', 'illustration':'i' }"
             ));
+            Assert.fail("The request should fail");
         }
         catch (SummerControllerException sce) {
             Assert.assertEquals(400, sce.getStatus());
             Assert.assertEquals("{" +
-                "\"description\":\"must be greater of equals to 2\"," +
-                "\"illustration\":\"must be greater of equals to 2\"" +
+                "\"description\":\"must be greater of equals to 2\"" +
                 "}", sce.getMessage());
         }
     }
@@ -79,13 +82,13 @@ public class AnnouncementControllerTest implements TestSeawave, CollectionSunbea
                 " 'description':'" + generateText("a", 20000) + "'," +
                 " 'illustration':'" + generateText("d", 101) + "' }"
             ));
+            Assert.fail("The request should fail");
         }
         catch (SummerControllerException sce) {
             Assert.assertEquals(400, sce.getStatus());
             Assert.assertEquals("{" +
-                "\"description\":\"must not be greater than 19995\"," +
-                "\"illustration\":\"must not be greater than 100\"" +
-                "}", sce.getMessage());
+                "\"description\":\"must not be greater than 19995\"" +
+            "}", sce.getMessage());
         }
     }
 
@@ -95,7 +98,6 @@ public class AnnouncementControllerTest implements TestSeawave, CollectionSunbea
             Assert.assertTrue(entity instanceof Announcement);
             Announcement announcement = (Announcement) entity;
             Assert.assertEquals("A very interesting new !", announcement.getDescription());
-            Assert.assertEquals("here/there/announcement.png", announcement.getIllustration());
             return true;
         });
         OutputStream outputStream = new ByteArrayOutputStream();
@@ -103,14 +105,21 @@ public class AnnouncementControllerTest implements TestSeawave, CollectionSunbea
         dataManager.register("flush", null, null);
         dataManager.register("flush", null, null);
         securityManager.doConnect("admin", 0);
-        announcementController.create(params(
+        Json result = announcementController.create(params(
             ControllerSunbeam.MULTIPART_FILES, new FileSpecification[] {
                 new FileSpecification("news", "news.png", "png",
                     new ByteArrayInputStream(("Content of /announcement/news.png").getBytes()))
             }
-        ), Json.createJsonFromString(
-            "{ 'version':0, 'description':'A very interesting new !', 'illustration':'here/there/announcement.png' }"
+        ), Json.createJsonFromString("{ " +
+                "'version':0, " +
+                "'description':'A very interesting new !'" +
+            "}"
         ));
+        Assert.assertEquals("{" +
+            "\"description\":\"A very interesting new !\"," +
+            "\"illustration\":\"/api/announcement/images/illustration0-0.png\"," +
+            "\"id\":0,\"version\":0" +
+        "}", result.toString());
         Assert.assertEquals("Content of /announcement/news.png", outputStreamToString(outputStream));
         platformManager.hasFinished();
         dataManager.hasFinished();
@@ -121,7 +130,10 @@ public class AnnouncementControllerTest implements TestSeawave, CollectionSunbea
         securityManager.doConnect("someone", 0);
         try {
             announcementController.create(params(), Json.createJsonFromString(
-                "{ 'version':0, 'description':'A very interesting new !', 'illustration':'here/there/announcement.png' }"
+            "{ " +
+                    "'version':0, " +
+                    "'description':'A very interesting new !'" +
+                "}"
             ));
             Assert.fail("The request should fail");
         }
@@ -148,13 +160,16 @@ public class AnnouncementControllerTest implements TestSeawave, CollectionSunbea
                         new ByteArrayInputStream(("Content of /announcements/elf2.png").getBytes()))
                 }
             ), Json.createJsonFromString(
-                "{ 'version':0, 'description':'A very interesting new !', 'illustration':'here/there/announcement.png' }"
+                "{ " +
+                    "'version':0, " +
+                    "'description':'A very interesting new !'" +
+                "}"
             ));
             Assert.fail("The request should fail");
         }
         catch (SummerControllerException sce) {
             Assert.assertEquals(400, sce.getStatus());
-            Assert.assertEquals("Only one illustration file may be loaded.", sce.getMessage());
+            Assert.assertEquals("One and only one illustration file may be loaded.", sce.getMessage());
         }
         dataManager.hasFinished();
     }
@@ -170,7 +185,10 @@ public class AnnouncementControllerTest implements TestSeawave, CollectionSunbea
         securityManager.doConnect("admin", 0);
         try {
             announcementController.create(params(), Json.createJsonFromString(
-                "{ 'version':0, 'description':'A very interesting new !', 'illustration':'here/there/announcement.png' }"
+                "{ " +
+                    "'version':0, " +
+                    "'description':'A very interesting new !'" +
+                "}"
             ));
             Assert.fail("The request should fail");
         }
@@ -446,13 +464,13 @@ public class AnnouncementControllerTest implements TestSeawave, CollectionSunbea
             announcementController.update(params("id", "1"), Json.createJsonFromString(
                     "{ 'description':'d', 'illustration':'i' }"
             ));
+            Assert.fail("The request should fail");
         }
         catch (SummerControllerException sce) {
             Assert.assertEquals(400, sce.getStatus());
             Assert.assertEquals("{" +
-                    "\"description\":\"must be greater of equals to 2\"," +
-                    "\"illustration\":\"must be greater of equals to 2\"" +
-                    "}", sce.getMessage());
+                "\"description\":\"must be greater of equals to 2\"" +
+            "}", sce.getMessage());
         }
     }
 
@@ -467,12 +485,12 @@ public class AnnouncementControllerTest implements TestSeawave, CollectionSunbea
                 " 'description':'" + generateText("a", 20000) + "'," +
                 " 'illustration':'" + generateText("d", 101) + "' }"
             ));
+            Assert.fail("The request should fail");
         }
         catch (SummerControllerException sce) {
             Assert.assertEquals(400, sce.getStatus());
             Assert.assertEquals("{" +
-                "\"description\":\"must not be greater than 19995\"," +
-                "\"illustration\":\"must not be greater than 100\"" +
+                "\"description\":\"must not be greater than 19995\"" +
                 "}", sce.getMessage());
         }
     }
@@ -499,11 +517,11 @@ public class AnnouncementControllerTest implements TestSeawave, CollectionSunbea
         dataManager.register("flush", null, null);
         securityManager.doConnect("admin", 0);
         Json result = announcementController.update(params("id", "1"), Json.createJsonFromString(
-                "{ 'version':0, 'description':'A very interesting new !', 'illustration':'here/there/announcement.png' }"
+                "{ 'version':0, 'description':'A very interesting new !' }"
         ));
         Assert.assertEquals("{" +
             "\"description\":\"A very interesting new !\"," +
-            "\"illustration\":\"here/there/announcement.png\"," +
+            "\"illustration\":\"/there/where/news1.png\"," +
             "\"id\":1,\"version\":0" +
             "}",
             result.toString()
@@ -519,7 +537,7 @@ public class AnnouncementControllerTest implements TestSeawave, CollectionSunbea
         securityManager.doConnect("admin", 0);
         try {
             announcementController.update(params("id", "1"), Json.createJsonFromString(
-                "{ 'version':0, 'description':'A very interesting new !', 'illustration':'here/there/announcement.png' }"
+                "{ 'version':0, 'description':'A very interesting new !' }"
             ));
             Assert.fail("The request should fail");
         }
@@ -538,7 +556,7 @@ public class AnnouncementControllerTest implements TestSeawave, CollectionSunbea
         securityManager.doConnect("admin", 0);
         try {
             announcementController.update(params("id", "1"), Json.createJsonFromString(
-                "{ 'version':0, 'description':'A very interesting new !', 'illustration':'here/there/announcement.png' }"
+                "{ 'version':0, 'description':'A very interesting new !' }"
             ));
             Assert.fail("The request should fail");
         }
@@ -554,7 +572,7 @@ public class AnnouncementControllerTest implements TestSeawave, CollectionSunbea
         securityManager.doConnect("someone", 0);
         try {
             announcementController.update(params("id", "1"), Json.createJsonFromString(
-                    "{ 'version':0, 'description':'A very interesting new !', 'illustration':'here/there/announcement.png' }"
+                    "{ 'version':0, 'description':'A very interesting new !' }"
             ));
             Assert.fail("The request should fail");
         }
@@ -575,6 +593,7 @@ public class AnnouncementControllerTest implements TestSeawave, CollectionSunbea
             announcementController.updateStatus(params("id", "1"), Json.createJsonFromString(
                     "{}"
             ));
+            Assert.fail("The request should fail");
         }
         catch (SummerControllerException sce) {
             Assert.assertEquals(400, sce.getStatus());
@@ -606,6 +625,7 @@ public class AnnouncementControllerTest implements TestSeawave, CollectionSunbea
             announcementController.updateStatus(params("id", "1"), Json.createJsonFromString(
                     "{ 'id':'1234', 'status':'???'}"
             ));
+            Assert.fail("The request should fail");
         }
         catch (SummerControllerException sce) {
             Assert.assertEquals(400, sce.getStatus());
@@ -691,6 +711,7 @@ public class AnnouncementControllerTest implements TestSeawave, CollectionSunbea
                 new PersistenceException("For Any Reason..."),  "/announcements/news.png");
         try {
             announcementController.getImage(params("imagename", "news-10123456.png"));
+            Assert.fail("The request should fail");
         }
         catch (SummerControllerException sce) {
             Assert.assertEquals(409, sce.getStatus());

@@ -43,7 +43,7 @@ public class LikePoll extends BaseEntity {
         LikePoll likePoll = em.find(LikePoll.class, id);
         if (likePoll==null) {
             throw new SummerNotFoundException(
-                String.format("Unknown Poll with id %d", id)
+                String.format("Unknown Poll with id %d.", id)
             );
         }
         return likePoll;

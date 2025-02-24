@@ -29,9 +29,18 @@ import java.util.Map;
 import java.util.function.BiPredicate;
 import java.util.stream.Collectors;
 
+/**
+ * Controleur permettant de manipuler des thèmes
+ */
 @Controller
 public class ThemeController implements InjectorSunbeam, DataSunbeam, SecuritySunbeam, ControllerSunbeam, FileSunbeam, StandardUsers {
 
+	/**
+	 * Endpoint (accessible via "/api/theme/images/:imagename") permettant de télécharger depuis le navigateur
+	 * une image associée à un thème.
+	 * @param params paramètres de l'URL (on utilisera le paraètre "imagename" qui donne le nom de l'image.
+	 * @return une spécification de fichier que Summer exploitera pour retourner l'image au navigateur.
+	 */
 	@MIME(url="/api/theme/images/:imagename")
 	public FileSpecification getImage(Map<String, Object> params) {
 		try {
@@ -47,9 +56,20 @@ public class ThemeController implements InjectorSunbeam, DataSunbeam, SecuritySu
 		}
 	}
 
+	/**
+	 * Stocke sur le système de fichiers/blob Cloud, l'image associée à un thème (il ne peut y en avoir qu'une) et
+	 * l'associe au thème (en précisant l'URL de l'image dans le champ "illustration" du thème). Le contenu de l'image
+	 * a été, au préalable, extrait du message HTTP (par Summer) et passé dans le paramètre params sous l'étiquette
+	 * MULTIPART_FILES (un tableau qui ne doit contenir au plus qu'un élément)<br>
+	 * L'image sera stockée dans le sous répertoire/blob nommé "/themes" sous un nom qui est la concaténation
+	 * de "theme" et l'ID du thème.
+	 * @param params paramètres d'appel HTTP (l'image a stocker si elle existe, est accessible via l'étiquette
+	 *               MULTIPART_FILES)
+	 * @param theme thème auquel il faut associer l'image.
+	 */
 	void storeThemeImages(Map<String, Object> params, Theme theme) {
 		FileSpecification[] files = (FileSpecification[]) params.get(MULTIPART_FILES);
-		if (files.length > 0) {
+		if (files!=null && files.length > 0) {
 			if (files.length!= 1) throw new SummerControllerException(400, "One Theme file must be loaded.");
 			String fileName = "theme" + theme.getId() + "." + files[0].getExtension();
 			String webName = "theme" + theme.getId() + "-" + PlatformManager.get().now() + "." + files[0].getExtension();
@@ -90,7 +110,7 @@ public class ThemeController implements InjectorSunbeam, DataSunbeam, SecuritySu
 	@REST(url="/api/theme/amend/:id", method=Method.POST)
 	public Json amend(Map<String, Object> params, Json request) {
 		Ref<Json> result = new Ref<>();
-		inTransaction(em-> {
+		inTransactionUntilSuccessful(em-> {
 			String id = (String) params.get("id");
 			Theme theme = findTheme(em, new Long(id));
 			ifAuthorized(
@@ -267,7 +287,7 @@ public class ThemeController implements InjectorSunbeam, DataSunbeam, SecuritySu
 
 	@REST(url="/api/theme/delete/:id", method=Method.GET)
 	public Json delete(Map<String, Object> params, Json request) {
-		inTransaction(em->{
+		inTransactionUntilSuccessful(em->{
 			String id = (String)params.get("id");
 			Theme theme = findTheme(em, new Long(id));
 			ifAuthorized(
@@ -310,7 +330,7 @@ public class ThemeController implements InjectorSunbeam, DataSunbeam, SecuritySu
 	@REST(url="/api/theme/update-status/:id", method=Method.POST)
 	public Json updateStatus(Map<String, Object> params, Json request) {
 		Ref<Json> result = new Ref<>();
-		inTransaction(em-> {
+		inTransactionUntilSuccessful(em-> {
 			String id = (String) params.get("id");
 			Theme theme = findTheme(em, new Long(id));
 			ifAuthorized(

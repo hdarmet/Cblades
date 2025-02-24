@@ -47,10 +47,13 @@ public class BannerControllerTest implements TestSeawave, CollectionSunbeam, Dat
 			bannerController.create(params(), Json.createJsonFromString(
 					"{}"
 			));
+			Assert.fail("The request should fail");
 		}
 		catch (SummerControllerException sce) {
 			Assert.assertEquals(400, sce.getStatus());
-			Assert.assertEquals("{\"path\":\"required\",\"name\":\"required\"}", sce.getMessage());
+			Assert.assertEquals("{" +
+				"\"name\":\"required\"" +
+			"}", sce.getMessage());
 		}
 	}
 
@@ -61,14 +64,14 @@ public class BannerControllerTest implements TestSeawave, CollectionSunbeam, Dat
 			bannerController.create(params(), Json.createJsonFromString(
 				"{ 'name':'b', 'path':'t', 'description':'d' }"
 			));
+			Assert.fail("The request should fail");
 		}
 		catch (SummerControllerException sce) {
 			Assert.assertEquals(400, sce.getStatus());
 			Assert.assertEquals("{" +
-				"\"path\":\"must be greater of equals to 2\"," +
 				"\"name\":\"must be greater of equals to 2\"," +
 				"\"description\":\"must be greater of equals to 2\"" +
-				"}", sce.getMessage());
+			"}", sce.getMessage());
 		}
 	}
 
@@ -78,17 +81,17 @@ public class BannerControllerTest implements TestSeawave, CollectionSunbeam, Dat
 		try {
 			bannerController.create(params(), Json.createJsonFromString(
 			"{ 'name':'" + generateText("a", 21) + "'," +
-					" 'path':'" + generateText("t", 201) + "'," +
-					" 'description':'" + generateText("d", 2001) + "' }"
+					" 'description':'" + generateText("d", 2001) + "' " +
+				"}"
 			));
+			Assert.fail("The request should fail");
 		}
 		catch (SummerControllerException sce) {
 			Assert.assertEquals(400, sce.getStatus());
 			Assert.assertEquals("{" +
-				"\"path\":\"must not be greater than 200\"," +
 				"\"name\":\"must not be greater than 20\"," +
 				"\"description\":\"must not be greater than 2000\"" +
-				"}", sce.getMessage());
+			"}", sce.getMessage());
 		}
 	}
 
@@ -97,8 +100,9 @@ public class BannerControllerTest implements TestSeawave, CollectionSunbeam, Dat
 		securityManager.doConnect("admin", 0);
 		try {
 			bannerController.create(params(), Json.createJsonFromString(
-					"{ 'name':'...', 'path':'...', 'status':'???' }"
+					"{ 'name':'...', 'status':'???' }"
 			));
+			Assert.fail("The request should fail");
 		}
 		catch (SummerControllerException sce) {
 			Assert.assertEquals(400, sce.getStatus());
@@ -114,7 +118,6 @@ public class BannerControllerTest implements TestSeawave, CollectionSunbeam, Dat
 			Assert.assertTrue(entity instanceof Banner);
 			Banner banner = (Banner) entity;
 			Assert.assertEquals("banner", banner.getName());
-			Assert.assertEquals("here/there/banner.png",banner.getPath());
 			return true;
 		});
 		OutputStream outputStream = new ByteArrayOutputStream();
@@ -122,14 +125,21 @@ public class BannerControllerTest implements TestSeawave, CollectionSunbeam, Dat
 		dataManager.register("flush", null, null);
 		dataManager.register("flush", null, null);
 		securityManager.doConnect("admin", 0);
-		bannerController.create(params(
+		Json result = bannerController.create(params(
 			ControllerSunbeam.MULTIPART_FILES, new FileSpecification[] {
 				new FileSpecification("banner-elf", "banner-elf.png", "png",
 					new ByteArrayInputStream(("Content of /games/elf.png").getBytes()))
 			}
 		), Json.createJsonFromString(
-		"{ 'version':0, 'name':'banner', 'path':'here/there/banner.png' }"
+		"{ 'version':0, 'name':'banner' }"
 		));
+		Assert.assertEquals("{" +
+			"\"path\":\"/api/banner/images/banner0-0.png\"," +
+			"\"comments\":[]," +
+			"\"name\":\"banner\"," +
+			"\"id\":0," +
+			"\"version\":0" +
+		"}", result.toString());
 		Assert.assertEquals("Content of /games/elf.png", outputStreamToString(outputStream));
 		platformManager.hasFinished();
 		dataManager.hasFinished();
@@ -146,7 +156,7 @@ public class BannerControllerTest implements TestSeawave, CollectionSunbeam, Dat
 		securityManager.doConnect("admin", 0);
 		try {
 			bannerController.create(params(), Json.createJsonFromString(
-				"{ 'version':0, 'name':'banner', 'path':'here/there/banner.png' }"
+				"{ 'version':0, 'name':'banner' }"
 			));
 			Assert.fail("The request should fail");
 		}
@@ -162,7 +172,7 @@ public class BannerControllerTest implements TestSeawave, CollectionSunbeam, Dat
 		securityManager.doConnect("someone", 0);
 		try {
 			bannerController.create(params(), Json.createJsonFromString(
-					"{ 'version':0, 'name':'banner', 'path':'here/there/banner.png' }"
+					"{ 'version':0, 'name':'banner' }"
 			));
 			Assert.fail("The request should fail");
 		}
@@ -189,13 +199,13 @@ public class BannerControllerTest implements TestSeawave, CollectionSunbeam, Dat
 						new ByteArrayInputStream(("Content of /games/elf2.png").getBytes()))
 				}
 			), Json.createJsonFromString(
-					"{ 'version':0, 'name':'banner', 'path':'here/there/banner.png' }"
+					"{ 'version':0, 'name':'banner' }"
 			));
 			Assert.fail("The request should fail");
 		}
 		catch (SummerControllerException sce) {
 			Assert.assertEquals(400, sce.getStatus());
-			Assert.assertEquals("Only one banner file must be loaded.", sce.getMessage());
+			Assert.assertEquals("One and only one banner file must be loaded.", sce.getMessage());
 		}
 		dataManager.hasFinished();
 	}
@@ -203,15 +213,15 @@ public class BannerControllerTest implements TestSeawave, CollectionSunbeam, Dat
 	@Test
 	public void failToCreateABannerForUnknownReason() {
 		dataManager.register("persist", null,
-				new PersistenceException("Some reason"),
-				(Predicate) entity->{
-					return (entity instanceof Banner);
-				}
+			new PersistenceException("Some reason"),
+			(Predicate) entity->{
+				return (entity instanceof Banner);
+			}
 		);
 		securityManager.doConnect("admin", 0);
 		try {
 			bannerController.create(params(), Json.createJsonFromString(
-					"{ 'version':0, 'name':'banner', 'path':'here/there/banner.png' }"
+					"{ 'version':0, 'name':'banner' }"
 			));
 			Assert.fail("The request should fail");
 		}
@@ -245,7 +255,7 @@ public class BannerControllerTest implements TestSeawave, CollectionSunbeam, Dat
 		dataManager.register("setMaxResults", null, null, 16);
 		dataManager.register("getResultList", arrayList(
 			setEntityId(new Banner().setName("banner1").setPath("/there/where/banner1.png"), 1),
-				setEntityId(new Banner().setName("banner2").setPath("/there/where/banner2.png"), 2)
+			setEntityId(new Banner().setName("banner2").setPath("/there/where/banner2.png"), 2)
 		), null);
 		securityManager.doConnect("admin", 0);
 		Json result = bannerController.getAll(params("page", "0"), null);
@@ -566,14 +576,14 @@ public class BannerControllerTest implements TestSeawave, CollectionSunbeam, Dat
 			bannerController.update(params("id", "1"), Json.createJsonFromString(
 					"{ 'name':'b', 'path':'t', 'description':'d' }"
 			));
+			Assert.fail("The request should fail");
 		}
 		catch (SummerControllerException sce) {
 			Assert.assertEquals(400, sce.getStatus());
 			Assert.assertEquals("{" +
-				"\"path\":\"must be greater of equals to 2\"," +
 				"\"name\":\"must be greater of equals to 2\"," +
 				"\"description\":\"must be greater of equals to 2\"" +
-				"}", sce.getMessage());
+			"}", sce.getMessage());
 		}
 	}
 
@@ -585,19 +595,19 @@ public class BannerControllerTest implements TestSeawave, CollectionSunbeam, Dat
 		null, Banner.class, 1L);
 		securityManager.doConnect("admin", 0);
 		try {
-			bannerController.update(params("id", "1"), Json.createJsonFromString(
-			"{ 'name':'" + generateText("a", 21) + "'," +
-					" 'path':'" + generateText("t", 201) + "'," +
-					" 'description':'" + generateText("d", 2001) + "' }"
+			bannerController.update(params("id", "1"), Json.createJsonFromString("{" +
+					" 'name':'" + generateText("a", 21) + "'," +
+					" 'description':'" + generateText("d", 2001) + "'" +
+				"}"
 			));
+			Assert.fail("The request should fail");
 		}
 		catch (SummerControllerException sce) {
 			Assert.assertEquals(400, sce.getStatus());
 			Assert.assertEquals("{" +
-				"\"path\":\"must not be greater than 200\"," +
 				"\"name\":\"must not be greater than 20\"," +
 				"\"description\":\"must not be greater than 2000\"" +
-				"}", sce.getMessage());
+			"}", sce.getMessage());
 		}
 	}
 
@@ -613,6 +623,7 @@ public class BannerControllerTest implements TestSeawave, CollectionSunbeam, Dat
 			"{ 'name':'...'," +
 					" 'status':'???' }"
 			));
+			Assert.fail("The request should fail");
 		}
 		catch (SummerControllerException sce) {
 			Assert.assertEquals(400, sce.getStatus());
@@ -634,7 +645,7 @@ public class BannerControllerTest implements TestSeawave, CollectionSunbeam, Dat
 			"{ 'id':1, 'version':1, 'name':'banner2', 'path':'here/there/banner2.png' }"
 		));
 		Assert.assertEquals(
-		"{\"path\":\"here/there/banner2.png\",\"comments\":[],\"name\":\"banner2\",\"id\":1,\"version\":1}",
+		"{\"path\":\"/there/where/banner1.png\",\"comments\":[],\"name\":\"banner2\",\"id\":1,\"version\":1}",
 			result.toString()
 		);
 		dataManager.hasFinished();
@@ -705,6 +716,7 @@ public class BannerControllerTest implements TestSeawave, CollectionSunbeam, Dat
 			bannerController.updateStatus(params("id", "1"), Json.createJsonFromString(
 					"{}"
 			));
+			Assert.fail("The request should fail");
 		}
 		catch (SummerControllerException sce) {
 			Assert.assertEquals(400, sce.getStatus());
@@ -723,6 +735,7 @@ public class BannerControllerTest implements TestSeawave, CollectionSunbeam, Dat
 			bannerController.updateStatus(params("id", "1"), Json.createJsonFromString(
 					"{ 'id':'1234', 'status':'???'}"
 			));
+			Assert.fail("The request should fail");
 		}
 		catch (SummerControllerException sce) {
 			Assert.assertEquals(400, sce.getStatus());
@@ -811,6 +824,7 @@ public class BannerControllerTest implements TestSeawave, CollectionSunbeam, Dat
 				new PersistenceException("For Any Reason..."),  "/games/elf.png");
 		try {
 			bannerController.getImage(params("imagename", "elf-10123456.png"));
+			Assert.fail("The request should fail");
 		}
 		catch (SummerControllerException sce) {
 			Assert.assertEquals(409, sce.getStatus());

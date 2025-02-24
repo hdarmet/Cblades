@@ -7,7 +7,7 @@ import javax.persistence.PersistenceException;
 public class SummerPersistenceException extends SummerException {
 
     public SummerPersistenceException(PersistenceException pe) {
-        super(pe);
+        super(pe.getMessage(), pe);
     }
 
 }

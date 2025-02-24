@@ -27,6 +27,9 @@ import java.util.Map;
 import java.util.function.BiPredicate;
 import java.util.stream.Collectors;
 
+/**
+ * Controleur permettant de manipuler des propositions de parties
+ */
 @Controller
 public class ProposalController implements InjectorSunbeam, DataSunbeam, SecuritySunbeam, ControllerSunbeam, FileSunbeam, StandardUsers {
 

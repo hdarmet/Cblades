@@ -28,6 +28,9 @@ import java.util.Map;
 import java.util.function.BiPredicate;
 import java.util.stream.Collectors;
 
+/**
+ * Controleur permettant de gérer le forum
+ */
 @Controller
 public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySunbeam, ControllerSunbeam, StandardUsers {
 

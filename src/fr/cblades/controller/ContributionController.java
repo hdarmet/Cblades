@@ -22,6 +22,10 @@ import java.util.*;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+/**
+ * Controleur permettant de manipuler des contributions (sur l'élaboration de thèmes, de planches, d'articles
+ * et de scénarios)
+ */
 @Controller
 public class ContributionController implements InjectorSunbeam, DataSunbeam, SecuritySunbeam, ControllerSunbeam, FileSunbeam, StandardUsers {
 

@@ -29,25 +29,45 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+/**
+ * Controleur permettant de manipuler des annonces
+ */
 @Controller
 public class AnnouncementController implements
 		InjectorSunbeam, DataSunbeam, SecuritySunbeam, ControllerSunbeam,
 		FileSunbeam, StandardUsers, CommonEntities
 {
 
+	/**
+	 * Endpoint (accessible via "/api/announcement/images/:imagename") permettant de télécharger depuis le navigateur
+	 * une image associée à une annonce.
+	 * @param params paramètres de l'URL (on utilisera le paraètre "imagename" qui donne le nom de l'image).
+	 * @return une spécification de fichier que Summer exploitera pour retourner l'image au navigateur.
+	 */
 	@MIME(url="/api/announcement/images/:imagename")
 	public FileSpecification getImage(Map<String, Object> params) {
 		return this.getImage(params, "imagename", "/announcements/");
 	}
 
+	/**
+	 * Stocke sur le système de fichiers/blob Cloud,l'image associée à une annonce (il ne peut y en avoir qu'une) et
+	 * l'associe à l'annonce (en précisant l'URL de l'image dans le champ "illustration" de l'annonce). Le contenu de l'image
+	 * a été, au préalable, extrait du message HTTP (par Summer) et passé dans le paramètre params sous l'étiquette
+	 * MULTIPART_FILES (un tableau qui ne doit contenir au plus qu'un élément)<br>
+	 * L'image sera stockée dans le sous répertoire/blob nommé "/announcements" sous un nom qui est la concaténation
+	 * de "announcement" et l'ID de l'annonce.
+	 * @param params paramètres d'appel HTTP (l'image a stocker si elle existe, est accessible via l'étiquette
+	 *               MULTIPART_FILES)
+	 * @param announcement annonce à laquellle il faut associer l'image.
+	 */
 	void storeIllustration (Map<String, Object> params, Announcement announcement) {
 		FileSpecification[] files = (FileSpecification[])params.get(MULTIPART_FILES);
-		if (files!= null && files.length>0) {
-			if (files.length>1) throw new SummerControllerException(400, "Only one illustration file may be loaded.");
+		if (files!= null) {
+			if (files.length!=1) throw new SummerControllerException(400, "One and only one illustration file may be loaded.");
 			String fileName = "illustration"+announcement.getId()+"."+files[0].getExtension();
 			String webName = "illustration"+announcement.getId()+"-"+PlatformManager.get().now()+"."+files[0].getExtension();
 			copyStream(files[0].getStream(), PlatformManager.get().getOutputStream("/announcements/"+fileName));
-			announcement.setIllustration("/api/event/images/" + webName);
+			announcement.setIllustration("/api/announcement/images/" + webName);
 		}
 	}
 
@@ -144,7 +164,7 @@ public class AnnouncementController implements
 		long id = getLongParam(params, "id", "The Announcement ID is missing or invalid (%s)");
 		ifAuthorized(user->{
 			try {
-				inTransaction(em->{
+				inTransactionUntilSuccessful(em->{
 					Announcement announcement= findAnnouncement(em, id);
 					remove(em, announcement);
 				});
@@ -182,7 +202,7 @@ public class AnnouncementController implements
 		Ref<Json> result = new Ref<>();
 		ifAuthorized(user->{
 			try {
-				inTransaction(em->{
+				inTransactionUntilSuccessful(em->{
 					Announcement announcement = findAnnouncement(em, id);
 					writeToAnnouncementStatus(request, announcement);
 					flush(em);
@@ -209,14 +229,11 @@ public class AnnouncementController implements
 		Verifier verifier = verify(json);
 		if (full) {
 			verifier
-				.checkRequired("description")
-				.checkRequired("illustration");
+				.checkRequired("description");
 		}
 		verifier
 			.checkMinSize("description", 2)
 			.checkMaxSize("description", 19995)
-			.checkMinSize("illustration", 2)
-			.checkMaxSize("illustration", 100)
 			.check("status", AnnouncementStatus.byLabels().keySet());
 		verifier.ensure();
 	}
@@ -225,7 +242,6 @@ public class AnnouncementController implements
 		Synchronizer synchronizer = sync(json, announcement)
 			.write("version")
 			.write("description")
-			.write("illustration")
 			.write("status", label->AnnouncementStatus.byLabels().get(label));
 		return announcement;
 	}

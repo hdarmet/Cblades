@@ -5,6 +5,7 @@ import fr.cblades.controller.ArticleController;
 import fr.cblades.domain.*;
 import fr.cblades.services.LikeVoteService;
 import fr.cblades.services.LikeVoteServiceImpl;
+import org.checkerframework.checker.units.qual.A;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -86,6 +87,7 @@ public class ArticleControllerTest implements TestSeawave, CollectionSunbeam, Da
             articleController.create(params(), Json.createJsonFromString(
             "{ 'themes': [{}], 'paragraphs': [{}], 'comments':[{}] }"
             ));
+            Assert.fail("The request should fail");
         } catch (SummerControllerException sce) {
             Assert.assertEquals(400, sce.getStatus());
             Assert.assertEquals("{" +
@@ -97,7 +99,6 @@ public class ArticleControllerTest implements TestSeawave, CollectionSunbeam, Da
                 "\"paragraphs-version\":\"required\"," +
                 "\"paragraphs-ordinal\":\"required\"," +
                 "\"title\":\"required\"," +
-                "\"paragraphs-illustration\":\"required\"," +
                 "\"comments-text\":\"required\"" +
             "}", sce.getMessage());
         }
@@ -113,7 +114,6 @@ public class ArticleControllerTest implements TestSeawave, CollectionSunbeam, Da
                     "'version':0, " +
                     "'ordinal':0, " +
                     "'title':'t', " +
-                    "'illustration':'i', " +
                     "'text':'x' " +
                 "}], " +
                 " 'comments':[{ " +
@@ -122,13 +122,13 @@ public class ArticleControllerTest implements TestSeawave, CollectionSunbeam, Da
                     "'text': 't'," +
                 " }]" +
             "}"));
+            Assert.fail("The request should fail");
         } catch (SummerControllerException sce) {
             Assert.assertEquals(400, sce.getStatus());
             Assert.assertEquals("{" +
                 "\"paragraphs-text\":\"must be greater of equals to 2\"," +
                 "\"paragraphs-title\":\"must be greater of equals to 2\"," +
                 "\"title\":\"must be greater of equals to 2\"," +
-                "\"paragraphs-illustration\":\"must be greater of equals to 2\"," +
                 "\"comments-text\":\"must be greater of equals to 2\"" +
             "}", sce.getMessage());
         }
@@ -144,7 +144,6 @@ public class ArticleControllerTest implements TestSeawave, CollectionSunbeam, Da
                     "'version':0, " +
                     "'ordinal':0, " +
                     "'title':'"+ generateText("f", 201) +"', " +
-                    "'illustration':'"+ generateText("f", 201) +"', " +
                     "'text':'"+ generateText("f", 20000) +"' " +
                 " }]," +
                 " 'comments':[{ " +
@@ -153,13 +152,13 @@ public class ArticleControllerTest implements TestSeawave, CollectionSunbeam, Da
                     "'text': '" + generateText("f", 20000) + "'," +
                 " }]" +
             " }"));
+            Assert.fail("The request should fail");
         } catch (SummerControllerException sce) {
             Assert.assertEquals(400, sce.getStatus());
             Assert.assertEquals("{" +
                 "\"paragraphs-text\":\"must not be greater than 19995\"," +
                 "\"paragraphs-title\":\"must not be greater than 200\"," +
                 "\"title\":\"must not be greater than 200\"," +
-                "\"paragraphs-illustration\":\"must not be greater than 200\"," +
                 "\"comments-text\":\"must not be greater than 19995\"" +
             "}", sce.getMessage());
         }
@@ -179,7 +178,6 @@ public class ArticleControllerTest implements TestSeawave, CollectionSunbeam, Da
             Paragraph paragraph = article.getParagraphs().get(0);
             Assert.assertEquals("Why Magic is so important", paragraph.getTitle());
             Assert.assertEquals("Because its powerful !", paragraph.getText());
-            Assert.assertEquals("strong-magic.png", paragraph.getIllustration());
             Assert.assertEquals(1, article.getComments().size());
             Comment comment = article.getComments().get(0);
             Assert.assertEquals("Some explanations here", comment.getText());
@@ -204,7 +202,6 @@ public class ArticleControllerTest implements TestSeawave, CollectionSunbeam, Da
             " 'paragraphs':[{ " +
                 " 'title':'Why Magic is so important'," +
                 " 'text':'Because its powerful !'," +
-                " 'illustration':'strong-magic.png'," +
                 " 'ordinal':0," +
                 " 'version':0," +
             " }]," +
@@ -230,7 +227,6 @@ public class ArticleControllerTest implements TestSeawave, CollectionSunbeam, Da
                     " 'paragraphs':[{ " +
                         " 'title':'While Magic is so important'," +
                         " 'text':'Because its powerful !'," +
-                        " 'illustration':'strong-magic.png'," +
                         " 'ordinal':0," +
                         " 'version':0," +
                     "}]" +
@@ -266,7 +262,6 @@ public class ArticleControllerTest implements TestSeawave, CollectionSunbeam, Da
                     " 'paragraphs':[{ " +
                         " 'title':'While Magic is so important'," +
                         " 'text':'Because its powerful !'," +
-                        " 'illustration':'strong-magic.png'," +
                         " 'ordinal':0," +
                         " 'version':0," +
                     "}]" +
@@ -324,7 +319,6 @@ public class ArticleControllerTest implements TestSeawave, CollectionSunbeam, Da
                     " 'paragraphs':[{ " +
                         " 'title':'While Magic is so important'," +
                         " 'text':'Because its powerful !'," +
-                        " 'illustration':'strong-magic.png'," +
                         " 'ordinal':0," +
                         " 'version':0," +
                     "}]" +
@@ -345,6 +339,7 @@ public class ArticleControllerTest implements TestSeawave, CollectionSunbeam, Da
             articleController.propose(params(), Json.createJsonFromString(
                     "{ 'themes': [{}], 'paragraphs': [{}] }"
             ));
+            Assert.fail("The request should fail");
         } catch (SummerControllerException sce) {
             Assert.assertEquals(400, sce.getStatus());
             Assert.assertEquals("{" +
@@ -353,8 +348,8 @@ public class ArticleControllerTest implements TestSeawave, CollectionSunbeam, Da
                 "\"paragraphs-title\":\"required\"," +
                 "\"paragraphs-version\":\"required\"," +
                 "\"paragraphs-ordinal\":\"required\"," +
-                "\"title\":\"required\"," +
-                "\"paragraphs-illustration\":\"required\"}", sce.getMessage());
+                "\"title\":\"required\"" +
+            "}", sce.getMessage());
         }
     }
 
@@ -368,20 +363,19 @@ public class ArticleControllerTest implements TestSeawave, CollectionSunbeam, Da
                     "'version':0, " +
                     "'ordinal':0, " +
                     "'title':'t', " +
-                    "'illustration':'i', " +
                     "'text':'x' " +
                 "}], " +
                 "'newComment':'t'," +
             "}"));
+            Assert.fail("The request should fail");
         } catch (SummerControllerException sce) {
             Assert.assertEquals(400, sce.getStatus());
             Assert.assertEquals("{" +
                 "\"paragraphs-text\":\"must be greater of equals to 2\"," +
                 "\"newComment\":\"must be greater of equals to 2\"," +
                 "\"paragraphs-title\":\"must be greater of equals to 2\"," +
-                "\"title\":\"must be greater of equals to 2\"," +
-                "\"paragraphs-illustration\":\"must be greater of equals to 2\"" +
-                "}", sce.getMessage());
+                "\"title\":\"must be greater of equals to 2\"" +
+            "}", sce.getMessage());
         }
     }
 
@@ -395,21 +389,54 @@ public class ArticleControllerTest implements TestSeawave, CollectionSunbeam, Da
                     "'version':0, " +
                     "'ordinal':0, " +
                     "'title':'"+ generateText("f", 201) +"', " +
-                    "'illustration':'"+ generateText("f", 201) +"', " +
                     "'text':'"+ generateText("f", 20000) +"' " +
                 " }]," +
                 " 'newComment': '" + generateText("f", 20000) + "'," +
             " }"));
+            Assert.fail("The request should fail");
         } catch (SummerControllerException sce) {
             Assert.assertEquals(400, sce.getStatus());
             Assert.assertEquals("{" +
                 "\"paragraphs-text\":\"must not be greater than 19995\"," +
                 "\"newComment\":\"must not be greater than 200\"," +
                 "\"paragraphs-title\":\"must not be greater than 200\"," +
-                "\"title\":\"must not be greater than 200\"," +
-                "\"paragraphs-illustration\":\"must not be greater than 200\"" +
+                "\"title\":\"must not be greater than 200\"" +
             "}", sce.getMessage());
         }
+    }
+
+    @Test
+    public void createAProposalWithMoreImagesThanParagraphs() {
+        Account account = new Account().setAccess(new Login().setLogin("someone"));
+        dataManager.register("createQuery", null, null,
+                "select a from Account a, Login l where a.access = l and l.login=:login");
+        dataManager.register("setParameter", null, null, "login", "someone");
+        dataManager.register("getSingleResult", account, null, null);
+        dataManager.register("persist", null, null);
+        OutputStream outputStream = new ByteArrayOutputStream();
+        platformManager.register("getOutputStream", outputStream, null);
+        dataManager.register("flush", null, null);
+        securityManager.doConnect("someone", 0);
+        try {
+            articleController.propose(params(
+                ControllerSunbeam.MULTIPART_FILES, new FileSpecification[] {
+                    new FileSpecification("magic_article-0", "magic_article-0.png", "png",
+                        new ByteArrayInputStream(("Content of /avatars/magic_article-0.png").getBytes()))
+                }
+            ), Json.createJsonFromString("{" +
+                " 'title':'The power of Magic'," +
+                " 'paragraphs':[]," +
+                " 'newComment': 'Some explanations here'," +
+                "}"
+            ));
+            Assert.fail("The request should fail");
+        }
+        catch (SummerControllerException sce) {
+            Assert.assertEquals(404, sce.getStatus());
+            Assert.assertEquals("No paragraph for image : 0", sce.getMessage());
+        }
+        platformManager.hasFinished();
+        dataManager.hasFinished();
     }
 
     @Test
@@ -431,7 +458,6 @@ public class ArticleControllerTest implements TestSeawave, CollectionSunbeam, Da
             Paragraph paragraph = article.getParagraphs().get(0);
             Assert.assertEquals("Why Magic is so important", paragraph.getTitle());
             Assert.assertEquals("Because its powerful !", paragraph.getText());
-            Assert.assertEquals("strong-magic.png", paragraph.getIllustration());
             Assert.assertEquals(1, article.getComments().size());
             Comment comment = article.getComments().get(0);
             Assert.assertEquals("Some explanations here", comment.getText());
@@ -455,7 +481,6 @@ public class ArticleControllerTest implements TestSeawave, CollectionSunbeam, Da
             " 'paragraphs':[{ " +
                 " 'title':'Why Magic is so important'," +
                 " 'text':'Because its powerful !'," +
-                " 'illustration':'strong-magic.png'," +
                 " 'ordinal':0," +
                 " 'version':0," +
             " }]," +
@@ -487,7 +512,6 @@ public class ArticleControllerTest implements TestSeawave, CollectionSunbeam, Da
                 " 'paragraphs':[{ " +
                     " 'title':'While Magic is so important'," +
                     " 'text':'Because its powerful !'," +
-                    " 'illustration':'strong-magic.png'," +
                     " 'ordinal':0," +
                     " 'version':0," +
                 "}]" +
@@ -551,6 +575,7 @@ public class ArticleControllerTest implements TestSeawave, CollectionSunbeam, Da
             articleController.update(params("id", "1"), Json.createJsonFromString(
                     "{ 'themes': [{}], 'paragraphs': [{}], 'comments': [{}] }"
             ));
+            Assert.fail("The request should fail");
         } catch (SummerControllerException sce) {
             Assert.assertEquals(400, sce.getStatus());
             Assert.assertEquals("{" +
@@ -558,8 +583,7 @@ public class ArticleControllerTest implements TestSeawave, CollectionSunbeam, Da
                 "\"themes-id\":\"required\"," +
                 "\"paragraphs-title\":\"required\"," +
                 "\"paragraphs-version\":\"required\"," +
-                "\"paragraphs-ordinal\":\"required\"," +
-                "\"paragraphs-illustration\":\"required\"" +
+                "\"paragraphs-ordinal\":\"required\"" +
             "}", sce.getMessage());
         }
     }
@@ -585,13 +609,13 @@ public class ArticleControllerTest implements TestSeawave, CollectionSunbeam, Da
                     "'text': 't'," +
                 " }]" +
                 "}"));
+            Assert.fail("The request should fail");
         } catch (SummerControllerException sce) {
             Assert.assertEquals(400, sce.getStatus());
             Assert.assertEquals("{" +
                 "\"paragraphs-text\":\"must be greater of equals to 2\"," +
                 "\"paragraphs-title\":\"must be greater of equals to 2\"," +
                 "\"title\":\"must be greater of equals to 2\"," +
-                "\"paragraphs-illustration\":\"must be greater of equals to 2\"," +
                 "\"comments-text\":\"must be greater of equals to 2\"" +
             "}", sce.getMessage());
         }
@@ -620,13 +644,13 @@ public class ArticleControllerTest implements TestSeawave, CollectionSunbeam, Da
                     "'text': '" + generateText("f", 20000) +"'," +
                 " }]" +
                 "}"));
+            Assert.fail("The request should fail");
         } catch (SummerControllerException sce) {
             Assert.assertEquals(400, sce.getStatus());
             Assert.assertEquals("{" +
                 "\"paragraphs-text\":\"must not be greater than 19995\"," +
                 "\"paragraphs-title\":\"must not be greater than 200\"," +
                 "\"title\":\"must not be greater than 200\"," +
-                "\"paragraphs-illustration\":\"must not be greater than 200\"," +
                 "\"comments-text\":\"must not be greater than 19995\"" +
             "}", sce.getMessage());
         }
@@ -710,6 +734,7 @@ public class ArticleControllerTest implements TestSeawave, CollectionSunbeam, Da
                     " 'status':'live'," +
                     "}"
                 ));
+            Assert.fail("The request should fail");
         }
         catch (SummerControllerException sce) {
                 Assert.assertEquals(409, sce.getStatus());
@@ -745,7 +770,7 @@ public class ArticleControllerTest implements TestSeawave, CollectionSunbeam, Da
 
     @Test
     public void tryToAmendAnArticleWithoutGivingItsID() {
-        securityManager.doConnect("admin", 0);
+        securityManager.doConnect("someone", 0);
         try {
             articleController.amend(params(), null);
             Assert.fail("The request should fail");
@@ -781,6 +806,7 @@ public class ArticleControllerTest implements TestSeawave, CollectionSunbeam, Da
             articleController.amend(params("id", "1"), Json.createJsonFromString(
                 "{ 'themes': [{}], 'paragraphs': [{}] }"
             ));
+            Assert.fail("The request should fail");
         } catch (SummerControllerException sce) {
             Assert.assertEquals(400, sce.getStatus());
             Assert.assertEquals("{" +
@@ -789,8 +815,7 @@ public class ArticleControllerTest implements TestSeawave, CollectionSunbeam, Da
                 "\"paragraphs-title\":\"required\"," +
                 "\"paragraphs-version\":\"required\"," +
                 "\"paragraphs-ordinal\":\"required\"," +
-                "\"title\":\"required\"," +
-                "\"paragraphs-illustration\":\"required\"" +
+                "\"title\":\"required\"" +
                 "}", sce.getMessage());
         }
     }
@@ -813,13 +838,13 @@ public class ArticleControllerTest implements TestSeawave, CollectionSunbeam, Da
                 " }], " +
                 " 'newComments': 't'," +
                 "}"));
+            Assert.fail("The request should fail");
         } catch (SummerControllerException sce) {
             Assert.assertEquals(400, sce.getStatus());
             Assert.assertEquals("{" +
                 "\"paragraphs-text\":\"must be greater of equals to 2\"," +
                 "\"paragraphs-title\":\"must be greater of equals to 2\"," +
-                "\"title\":\"must be greater of equals to 2\"," +
-                "\"paragraphs-illustration\":\"must be greater of equals to 2\"" +
+                "\"title\":\"must be greater of equals to 2\"" +
                 "}", sce.getMessage());
         }
     }
@@ -843,14 +868,14 @@ public class ArticleControllerTest implements TestSeawave, CollectionSunbeam, Da
                 " }]," +
                 " 'newComments': '" + generateText("f", 20000) + "', " +
                 "}"));
+            Assert.fail("The request should fail");
         } catch (SummerControllerException sce) {
             Assert.assertEquals(400, sce.getStatus());
             Assert.assertEquals("{" +
                 "\"paragraphs-text\":\"must not be greater than 19995\"," +
                 "\"paragraphs-title\":\"must not be greater than 200\"," +
-                "\"title\":\"must not be greater than 200\"," +
-                "\"paragraphs-illustration\":\"must not be greater than 200\"" +
-                "}", sce.getMessage());
+                "\"title\":\"must not be greater than 200\"" +
+            "}", sce.getMessage());
         }
     }
 
@@ -931,6 +956,28 @@ public class ArticleControllerTest implements TestSeawave, CollectionSunbeam, Da
     }
 
     @Test
+    public void checkThatAnAdminIsAllowedToAmendAnArticle() {
+        Article article = articleBelongingToSomeone();
+        dataManager.register("find", article, null, Article.class, 1L);
+        Account account = new Account().setAccess(new Login().setLogin("someone"));
+        dataManager.register("createQuery", null, null,
+                "select a from Account a, Login l where a.access = l and l.login=:login");
+        dataManager.register("setParameter", null, null, "login", "admin");
+        dataManager.register("getSingleResult", account, null, null);
+        dataManager.register("flush", null, null);
+        securityManager.doConnect("admin", 0);
+        platformManager.setTime(1739879980962L);
+        Json result = articleController.amend(params("id", "1"),
+            Json.createJsonFromString("{" +
+                " 'title':'The power of Magic'," +
+                " 'status':'live'" +
+            "}"
+        ));
+        platformManager.hasFinished();
+        dataManager.hasFinished();
+    }
+
+    @Test
     public void tryToAmendAnArticleAndFailPourAnUnknownReason() {
         Article article = articleBelongingToSomeone();
         dataManager.register("find", article, null, Article.class, 1L);
@@ -948,6 +995,7 @@ public class ArticleControllerTest implements TestSeawave, CollectionSunbeam, Da
                     " 'status':'live'," +
                     "}"
                 ));
+            Assert.fail("The request should fail");
         }
         catch (SummerControllerException sce) {
             Assert.assertEquals(409, sce.getStatus());
@@ -1551,7 +1599,6 @@ public class ArticleControllerTest implements TestSeawave, CollectionSunbeam, Da
         }
         dataManager.hasFinished();
     }
-/////////////////////////////////
 
     @Test
     public void checkRequestedFieldsForAnArticleStatusUpdate() {
@@ -1562,6 +1609,7 @@ public class ArticleControllerTest implements TestSeawave, CollectionSunbeam, Da
             articleController.updateStatus(params("id", "1"), Json.createJsonFromString(
                     "{}"
             ));
+            Assert.fail("The request should fail");
         }
         catch (SummerControllerException sce) {
             Assert.assertEquals(400, sce.getStatus());
@@ -1578,6 +1626,7 @@ public class ArticleControllerTest implements TestSeawave, CollectionSunbeam, Da
             articleController.updateStatus(params("id", "1"), Json.createJsonFromString(
                     "{ 'id':'1234', 'status':'???'}"
             ));
+            Assert.fail("The request should fail");
         }
         catch (SummerControllerException sce) {
             Assert.assertEquals(400, sce.getStatus());
@@ -1599,19 +1648,19 @@ public class ArticleControllerTest implements TestSeawave, CollectionSunbeam, Da
                 "{ 'id':1, 'status': 'live' }"
         ));
         Assert.assertEquals("{" +
-                    "\"themes\":[{\"id\":0,\"title\":\"Magic\"}]," +
-                    "\"comments\":[]," +
-                    "\"id\":1," +
-                    "\"title\":\"Power of Magic\"," +
-                    "\"paragraphs\":[{" +
-                        "\"illustration\":\"power-magin.png\"," +
-                        "\"id\":0,\"text\":\"Here we describe the power of Magic\"," +
-                        "\"title\":\"What is Magic Power\"," +
-                        "\"illustrationPosition\":\"center\",\"version\":0" +
-                    "}]," +
-                    "\"version\":0,\"status\":\"live\"" +
-                "}",
-                result.toString()
+                "\"themes\":[{\"id\":0,\"title\":\"Magic\"}]," +
+                "\"comments\":[]," +
+                "\"id\":1," +
+                "\"title\":\"Power of Magic\"," +
+                "\"paragraphs\":[{" +
+                    "\"illustration\":\"power-magin.png\"," +
+                    "\"id\":0,\"text\":\"Here we describe the power of Magic\"," +
+                    "\"title\":\"What is Magic Power\"," +
+                    "\"illustrationPosition\":\"center\",\"version\":0" +
+                "}]," +
+                "\"version\":0,\"status\":\"live\"" +
+            "}",
+            result.toString()
         );
         dataManager.hasFinished();
     }
@@ -1668,18 +1717,291 @@ public class ArticleControllerTest implements TestSeawave, CollectionSunbeam, Da
     }
 
     @Test
-    public void getVote() {
+    public void getLikeVote() {
+        LikePoll likePoll = new LikePoll().setLikes(102).setDislikes(8);
+        LikeVote likeVote = new LikeVote().setPoll(likePoll).setVoter(someone).setOption(LikeVoteOption.LIKE);
         dataManager.register("find",
-            article1(), null, Article.class, 1L);
+            likePoll, null, LikePoll.class, 101L);
+        dataManager.register("createQuery",
+            null, null, "select v from LikeVote v where v.poll=:poll and v.voter.access.login=:user");
+        dataManager.register("setParameter",
+                null, null, "poll", likePoll);
+        dataManager.register("setParameter",
+                null, null, "user", "someone");
+        dataManager.register("getSingleResult",
+                likeVote, null, null);
         securityManager.doConnect("someone", 0);
         Json result = articleController.getVote(params("poll", "101"), null);
-        Assert.assertEquals("{}",
+        Assert.assertEquals("{\"dislikes\":8,\"likes\":102,\"option\":\"like\"}",
             result.toString());
         dataManager.hasFinished();
     }
 
+    @Test
+    public void getDislikeVote() {
+        LikePoll likePoll = new LikePoll().setLikes(102).setDislikes(8);
+        LikeVote likeVote = new LikeVote().setPoll(likePoll).setVoter(someone).setOption(LikeVoteOption.DISLIKE);
+        dataManager.register("find",
+                likePoll, null, LikePoll.class, 101L);
+        dataManager.register("createQuery",
+                null, null, "select v from LikeVote v where v.poll=:poll and v.voter.access.login=:user");
+        dataManager.register("setParameter",
+                null, null, "poll", likePoll);
+        dataManager.register("setParameter",
+                null, null, "user", "someone");
+        dataManager.register("getSingleResult",
+                likeVote, null, null);
+        securityManager.doConnect("someone", 0);
+        Json result = articleController.getVote(params("poll", "101"), null);
+        Assert.assertEquals("{\"dislikes\":8,\"likes\":102,\"option\":\"dislike\"}",
+                result.toString());
+        dataManager.hasFinished();
+    }
 
-//////////////////////////////////
+    @Test
+    public void nonExistingVote() {
+        LikePoll likePoll = setEntityId(new LikePoll().setLikes(102).setDislikes(8), 101L);
+        dataManager.register("find",
+                likePoll, null, LikePoll.class, 101L);
+        dataManager.register("createQuery",
+                null, null, "select v from LikeVote v where v.poll=:poll and v.voter.access.login=:user");
+        dataManager.register("setParameter",
+                null, null, "poll", likePoll);
+        dataManager.register("setParameter",
+                null, null, "user", "someone");
+        dataManager.register("getSingleResult",
+                null, new NoResultException(), null);
+        securityManager.doConnect("someone", 0);
+        Json result = articleController.getVote(params("poll", "101"), null);
+        Assert.assertEquals("{\"dislikes\":8,\"likes\":102,\"option\":\"none\"}", result.toString());
+        dataManager.hasFinished();
+    }
+
+    @Test
+    public void nonExistingPoll() {
+        LikePoll likePoll = new LikePoll().setLikes(102).setDislikes(8);
+        dataManager.register("find",
+                null, null, LikePoll.class, 101L);
+        securityManager.doConnect("someone", 0);
+        try {
+            articleController.getVote(params("poll", "101"), null);
+            Assert.fail("The request should fail");
+        }
+        catch (SummerControllerException sce) {
+            Assert.assertEquals(404, sce.getStatus());
+            Assert.assertEquals("Unknown Poll with id 101.", sce.getMessage());
+        }
+        dataManager.hasFinished();
+    }
+
+    @Test
+    public void tryToGetAVoteAndExperimentPersistenceException() {
+        LikePoll likePoll = setEntityId(new LikePoll().setLikes(102).setDislikes(8), 101L);
+        dataManager.register("find",
+                likePoll, null, LikePoll.class, 101L);
+        dataManager.register("createQuery",
+                null, null, "select v from LikeVote v where v.poll=:poll and v.voter.access.login=:user");
+        dataManager.register("setParameter",
+                null, null, "poll", likePoll);
+        dataManager.register("setParameter",
+                null, null, "user", "someone");
+        dataManager.register("getSingleResult",
+                null, new PersistenceException("Some Reason"), null);
+        securityManager.doConnect("someone", 0);
+        try {
+            articleController.getVote(params("poll", "101"), null);
+            Assert.fail("The request should fail");
+        }
+        catch (SummerControllerException sce) {
+            Assert.assertEquals(409, sce.getStatus());
+            Assert.assertEquals("Unexpected exception: Some Reason.", sce.getMessage());
+        }
+        dataManager.hasFinished();
+    }
+
+    @Test
+    public void voteALike() {
+        LikePoll likePoll = new LikePoll().setLikes(102).setDislikes(8);
+        LikeVote likeVote = new LikeVote().setPoll(likePoll).setVoter(someone).setOption(LikeVoteOption.DISLIKE);
+        dataManager.register("find",
+                likePoll, null, LikePoll.class, 101L);
+        dataManager.register("createQuery",
+                null, null, "select v from LikeVote v where v.poll=:poll and v.voter.access.login=:user");
+        dataManager.register("setParameter",
+                null, null, "poll", likePoll);
+        dataManager.register("setParameter",
+                null, null, "user", "someone");
+        dataManager.register("getSingleResult",
+                likeVote, null, null);
+        securityManager.doConnect("someone", 0);
+        Json result = articleController.vote(params("poll", "101"), Json.createJsonFromString(
+                "{ 'option': 'like' }"
+        ));
+        Assert.assertEquals("{" +
+            "\"dislikes\":7," +
+            "\"likes\":103," +
+            "\"option\":\"like\"" +
+        "}", result.toString());
+        dataManager.hasFinished();
+    }
+
+    @Test
+    public void voteADislike() {
+        LikePoll likePoll = new LikePoll().setLikes(102).setDislikes(8);
+        LikeVote likeVote = new LikeVote().setPoll(likePoll).setVoter(someone).setOption(LikeVoteOption.DISLIKE);
+        dataManager.register("find",
+                likePoll, null, LikePoll.class, 101L);
+        dataManager.register("createQuery",
+                null, null, "select v from LikeVote v where v.poll=:poll and v.voter.access.login=:user");
+        dataManager.register("setParameter",
+                null, null, "poll", likePoll);
+        dataManager.register("setParameter",
+                null, null, "user", "someone");
+        dataManager.register("getSingleResult",
+                likeVote, null, null);
+        securityManager.doConnect("someone", 0);
+        Json result = articleController.vote(params("poll", "101"), Json.createJsonFromString(
+                "{ 'option': 'dislike' }"
+        ));
+        Assert.assertEquals("{" +
+            "\"dislikes\":8," +
+            "\"likes\":102," +
+            "\"option\":\"dislike\"" +
+        "}", result.toString());
+        dataManager.hasFinished();
+    }
+
+    @Test
+    public void voteOnAnNonExistingVote() {
+        LikePoll likePoll = setEntityId(new LikePoll().setLikes(102).setDislikes(8), 101L);
+        dataManager.register("find",
+                likePoll, null, LikePoll.class, 101L);
+        dataManager.register("createQuery",
+                null, null, "select v from LikeVote v where v.poll=:poll and v.voter.access.login=:user");
+        dataManager.register("setParameter",
+                null, null, "poll", likePoll);
+        dataManager.register("setParameter",
+                null, null, "user", "someone");
+        dataManager.register("getSingleResult",
+                null, new NoResultException(), null);
+        dataManager.register("createQuery",
+            null, null, "select a from Account a, Login l where a.access = l and l.login=:login");
+        dataManager.register("setParameter",
+            null, null, "login", "someone");
+        dataManager.register("getSingleResult",
+            someone, null, null);
+        dataManager.register("persist",
+            null, null, (Predicate) entity->{
+                Assert.assertTrue(entity instanceof LikeVote);
+                LikeVote likeVote = (LikeVote)entity;
+                Assert.assertEquals(likeVote.getOption(), LikeVoteOption.LIKE);
+                Assert.assertEquals(likeVote.getPoll(), likePoll);
+                Assert.assertEquals(likeVote.getVoter(), someone);
+                return true;
+            });
+        dataManager.register("flush",
+                null, null, null);
+        securityManager.doConnect("someone", 0);
+        articleController.vote(params("poll", "101"), Json.createJsonFromString(
+            "{ 'option': 'like' }"
+        ));
+        dataManager.hasFinished();
+    }
+
+    @Test
+    public void voteAndMeetAPersistenceException() {
+        LikePoll likePoll = setEntityId(new LikePoll().setLikes(102).setDislikes(8), 101L);
+        dataManager.register("find",
+                likePoll, null, LikePoll.class, 101L);
+        dataManager.register("createQuery",
+                null, null, "select v from LikeVote v where v.poll=:poll and v.voter.access.login=:user");
+        dataManager.register("setParameter",
+                null, null, "poll", likePoll);
+        dataManager.register("setParameter",
+                null, null, "user", "someone");
+        dataManager.register("getSingleResult",
+                null, new PersistenceException("Some Reason"), null);
+        securityManager.doConnect("someone", 0);
+        try {
+            articleController.vote(params("poll", "101"), Json.createJsonFromString(
+                    "{ 'option': 'like' }"
+            ));
+            Assert.fail("The request should fail");
+        }
+        catch (SummerControllerException sce) {
+            Assert.assertEquals(409, sce.getStatus());
+            Assert.assertEquals("Unexpected exception: Some Reason.", sce.getMessage());
+        }
+        dataManager.hasFinished();
+    }
+
+    @Test
+    public void nonVoteOnAnExistingPoll() {
+        LikePoll likePoll = new LikePoll().setLikes(102).setDislikes(8);
+        dataManager.register("find",
+                null, null, LikePoll.class, 101L);
+        securityManager.doConnect("someone", 0);
+        try {
+            articleController.vote(params("poll", "101"), Json.createJsonFromString(
+                    "{ 'option': 'like' }"
+            ));
+            Assert.fail("The request should fail");
+        }
+        catch (SummerControllerException sce) {
+            Assert.assertEquals(404, sce.getStatus());
+            Assert.assertEquals("Unknown Poll with id 101.", sce.getMessage());
+        }
+        dataManager.hasFinished();
+    }
+
+    @Test
+    public void tryToVoteWithoutGivingVoteId() {
+        securityManager.doConnect("someone", 0);
+        try {
+            articleController.vote(params(), null);
+            Assert.fail("The request should fail");
+        }
+        catch (SummerControllerException sce) {
+            Assert.assertEquals(400, sce.getStatus());
+            Assert.assertEquals("A valid Poll Id must be provided.", sce.getMessage());
+        }
+        dataManager.hasFinished();
+    }
+
+    @Test
+    public void tryToVoteWithoutGivingAWrongVoteOption() {
+        securityManager.doConnect("someone", 0);
+        try {
+            securityManager.doConnect("someone", 0);
+            Json result = articleController.vote(params("poll", "101"), Json.createJsonFromString(
+                    "{ }"
+            ));
+            Assert.fail("The request should fail");
+        }
+        catch (SummerControllerException sce) {
+            Assert.assertEquals(400, sce.getStatus());
+            Assert.assertEquals("Vote option must be one of these: 'like' or 'dislike'.", sce.getMessage());
+        }
+        dataManager.hasFinished();
+    }
+
+    @Test
+    public void tryToVoteWithoutGivingAnyVoteOption() {
+        securityManager.doConnect("someone", 0);
+        try {
+            securityManager.doConnect("someone", 0);
+            Json result = articleController.vote(params("poll", "101"), Json.createJsonFromString(
+                    "{ 'option': '???' }"
+            ));
+            Assert.fail("The request should fail");
+        }
+        catch (SummerControllerException sce) {
+            Assert.assertEquals(400, sce.getStatus());
+            Assert.assertEquals("Vote option must be one of these: 'like' or 'dislike'.", sce.getMessage());
+        }
+        dataManager.hasFinished();
+    }
+
     @Test
     public void chargeArticleImage() {
         platformManager.register("getInputStream",
@@ -1700,6 +2022,7 @@ public class ArticleControllerTest implements TestSeawave, CollectionSunbeam, Da
                 new PersistenceException("For Any Reason..."),  "/articles/article.png");
         try {
             articleController.getImage(params("imagename", "article-10123456.png"));
+            Assert.fail("The request should fail");
         }
         catch (SummerControllerException sce) {
             Assert.assertEquals(409, sce.getStatus());
@@ -1707,6 +2030,5 @@ public class ArticleControllerTest implements TestSeawave, CollectionSunbeam, Da
         }
         platformManager.hasFinished();
     }
-
 
 }

@@ -97,17 +97,14 @@ public class InjectorForTest implements Injector {
 
 	@Override
 	public <T> void releaseComponent(T component) {
-		throw new SummerTestException("Should not be invoked !");
 	}
 
 	@Override
 	public void startThread(HttpSession session) {
-		throw new SummerTestException("Should not be invoked !");
 	}
 
 	@Override
 	public void finishThread() {
-		throw new SummerTestException("Should not be invoked !");
 	}
 
 	public static InjectorForTest get() {

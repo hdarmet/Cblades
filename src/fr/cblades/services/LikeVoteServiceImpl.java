@@ -7,10 +7,12 @@ import fr.cblades.domain.LikeVoteOption;
 import org.summer.Ref;
 import org.summer.annotation.SingletonScoped;
 import org.summer.data.DataSunbeam;
+import org.summer.data.SummerNotFoundException;
 import org.summer.data.SummerPersistenceException;
 import org.summer.security.SecuritySunbeam;
 
 import javax.persistence.EntityManager;
+import javax.persistence.EntityNotFoundException;
 import javax.persistence.PersistenceException;
 
 @SingletonScoped
@@ -22,6 +24,7 @@ public class LikeVoteServiceImpl implements LikeVoteService, SecuritySunbeam, Da
         inTransaction(em -> {
             try {
                 LikePoll poll = LikePoll.find(em, pollId);
+                if (poll == null) throw new SummerNotFoundException("No poll of ID: "+pollId+".");
                 result.set(getPoll(em, poll, user));
             } catch (PersistenceException pe) {
                 throw new SummerPersistenceException(pe);
@@ -33,8 +36,13 @@ public class LikeVoteServiceImpl implements LikeVoteService, SecuritySunbeam, Da
     @Override
     public Votation getPoll(EntityManager em, LikePoll poll, String user) {
         String queryString = "select v from LikeVote v where v.poll=:poll and v.voter.access.login=:user";
-        LikeVote vote = getSingleResult(em, queryString, "poll", poll, "user", user);
-        return new Votation(poll, vote);
+        try {
+            LikeVote vote = getSingleResult(em, queryString, "poll", poll, "user", user);
+            return new Votation(poll, vote);
+        }
+        catch (EntityNotFoundException enfe) {
+            return new Votation(poll, null);
+        }
     }
 
     @Override
@@ -53,8 +61,8 @@ public class LikeVoteServiceImpl implements LikeVoteService, SecuritySunbeam, Da
 
     @Override
     public Votation vote(EntityManager em, LikePoll poll, LikeVoteOption option, String user) {
-        String queryString = "select v from LikeVote v where v.poll=:poll and v.voter.access.login=:voter";
-        LikeVote vote = getSingleResult(em, queryString, "poll", poll, "voter", user);
+        String queryString = "select v from LikeVote v where v.poll=:poll and v.voter.access.login=:user";
+        LikeVote vote = getSingleResult(em, queryString, "poll", poll, "user", user);
         if (vote == null) {
             if (option !=LikeVoteOption.NONE) {
                 Account voter = Account.find(em, user);

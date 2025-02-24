@@ -175,7 +175,7 @@ public class ArticleTest implements DataSunbeam {
                 Assert.fail("A Not Found exception should be raised at this point");
             }
             catch(SummerNotFoundException snfe) {
-                Assert.assertEquals("Unknown Poll with id 1", snfe.getMessage());
+                Assert.assertEquals("Unknown Poll with id 1.", snfe.getMessage());
             }
         });
         dataManager.hasFinished();

@@ -19,6 +19,9 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Controleur permettant de manipuler des présentations, c'est à dire des textes explicatifs.
+ */
 @Controller
 public class PresentationController implements InjectorSunbeam, DataSunbeam, SecuritySunbeam, ControllerSunbeam, StandardUsers {
 	

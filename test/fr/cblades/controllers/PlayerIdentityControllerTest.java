@@ -566,6 +566,7 @@ public class PlayerIdentityControllerTest implements TestSeawave, CollectionSunb
 			playerIdentityController.updateStatus(params("id", "1"), Json.createJsonFromString(
 					"{}"
 			));
+			Assert.fail("The request should fail");
 		}
 		catch (SummerControllerException sce) {
 			Assert.assertEquals(400, sce.getStatus());
@@ -584,6 +585,7 @@ public class PlayerIdentityControllerTest implements TestSeawave, CollectionSunb
 			playerIdentityController.updateStatus(params("id", "1"), Json.createJsonFromString(
 					"{ 'id':'1234', 'status':'???'}"
 			));
+			Assert.fail("The request should fail");
 		}
 		catch (SummerControllerException sce) {
 			Assert.assertEquals(400, sce.getStatus());
@@ -677,6 +679,7 @@ public class PlayerIdentityControllerTest implements TestSeawave, CollectionSunb
 				new PersistenceException("For Any Reason..."),  "/games/wurst.png");
 		try {
 			playerIdentityController.getImage(params("imagename", "wurst-10123456.png"));
+			Assert.fail("The request should fail");
 		}
 		catch (SummerControllerException sce) {
 			Assert.assertEquals(409, sce.getStatus());

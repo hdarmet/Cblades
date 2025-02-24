@@ -29,9 +29,18 @@ import java.util.Map;
 import java.util.function.BiPredicate;
 import java.util.stream.Collectors;
 
+/**
+ * Controleur permettant de manipuler des planches
+ */
 @Controller
 public class BoardController implements InjectorSunbeam, DataSunbeam, SecuritySunbeam, ControllerSunbeam, FileSunbeam, StandardUsers {
 
+	/**
+	 * Endpoint (accessible via "/api/board/images/:imagename") permettant de télécharger depuis le navigateur
+	 * une image associée à une planche.
+	 * @param params paramètres de l'URL (on utilisera le paraètre "imagename" qui donne le nom de l'image.
+	 * @return une spécification de fichier que Summer exploitera pour retourner l'image au navigateur.
+	 */
 	@MIME(url="/api/board/images/:imagename")
 	public FileSpecification getImage(Map<String, Object> params) {
 		try {
@@ -47,6 +56,18 @@ public class BoardController implements InjectorSunbeam, DataSunbeam, SecuritySu
 		}
 	}
 
+	/**
+	 * Stocke sur le système de fichiers/blob Cloud, les deux images associées à une planche (la planche elle-même et une
+	 * représentation réduite, appelée icone) et les associe à la planche (en précisant l'URL des images dans les champs
+	 * "path" et "icon" de la planche). Le contenu des deux images ont été, au préalable, extraits du message HTTP (par
+	 * Summer) et passé dans le paramètre params sous l'étiquette MULTIPART_FILES (un tableau qui doit contenir deux
+	 * éléments (et deux seulement): le premier est l'image de la planche, le second celui de l'icone).<br>
+	 * Les images seront stockées dans le sous répertoire/blob nommé "/boards" sous les noms qui sont, respectivement la
+	 * concaténation de "board" et "boardicon" et de l'ID de la planche.
+	 * @param params paramètres d'appel HTTP (les images à stocker sont accessibles via l'étiquette
+	 *               MULTIPART_FILES)
+	 * @param board planche à laquelle il faut associer les images.
+	 */
 	void storeBoardImages(Map<String, Object> params, Board board) {
 		FileSpecification[] files = (FileSpecification[]) params.get(MULTIPART_FILES);
 		if (files!= null && files.length > 0) {

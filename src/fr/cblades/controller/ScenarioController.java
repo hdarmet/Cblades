@@ -30,9 +30,18 @@ import java.util.Map;
 import java.util.function.BiPredicate;
 import java.util.stream.Collectors;
 
+/**
+ * Controleur permettant de manipuler des scénarios
+ */
 @Controller
 public class ScenarioController implements InjectorSunbeam, DataSunbeam, SecuritySunbeam, ControllerSunbeam, FileSunbeam, StandardUsers {
 
+	/**
+	 * Endpoint (accessible via "/api/scenario/images/:imagename") permettant de télécharger depuis le navigateur
+	 * une image associée à un scénario.
+	 * @param params paramètres de l'URL (on utilisera le paraètre "imagename" qui donne le nom de l'image.
+	 * @return une spécification de fichier que Summer exploitera pour retourner l'image au navigateur.
+	 */
 	@MIME(url="/api/scenario/images/:imagename")
 	public FileSpecification getImage(Map<String, Object> params) {
 		try {
@@ -48,6 +57,17 @@ public class ScenarioController implements InjectorSunbeam, DataSunbeam, Securit
 		}
 	}
 
+	/**
+	 * Stocke sur le système de fichiers/blob Cloud, l'image associée à un scénario (il ne peut y en avoir qu'une) et
+	 * l'associe au scénario (en précisant l'URL de l'image dans le champ "illustration" du scénario). Le contenu de
+	 * l'image a été, au préalable, extrait du message HTTP (par Summer) et passé dans le paramètre params sous
+	 * l'étiquette MULTIPART_FILES (un tableau qui ne doit contenir au plus qu'un élément)<br>
+	 * L'image sera stockée dans le sous répertoire/blob nommé "/scenarios" sous un nom qui est la concaténation
+	 * de "scenario" et l'ID du thème.
+	 * @param params paramètres d'appel HTTP (l'image a stocker si elle existe, est accessible via l'étiquette
+	 *               MULTIPART_FILES)
+	 * @param scenario scénario auquel il faut associer l'image.
+	 */
 	void storeScenarioImages(Map<String, Object> params, Scenario scenario) {
 		FileSpecification[] files = (FileSpecification[]) params.get(MULTIPART_FILES);
 		if (files.length > 0) {

@@ -25,9 +25,18 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Controleur permettant de manipuler des documents contenant les règles du jeu
+ */
 @Controller
 public class RuleSetController implements InjectorSunbeam, DataSunbeam, SecuritySunbeam, ControllerSunbeam, FileSunbeam, StandardUsers {
 
+	/**
+	 * Endpoint (accessible via "/api/ruleset/documents/:docname") permettant de télécharger depuis le navigateur
+	 * une image associée à un ensemble de règles.
+	 * @param params paramètres de l'URL (on utilisera le paraètre "docname" qui donne le nom de l'image.
+	 * @return une spécification de fichier que Summer exploitera pour retourner l'image au navigateur.
+	 */
 	@MIME(url="/api/ruleset/documents/:docname")
 	public FileSpecification getImage(Map<String, Object> params) {
 		try {

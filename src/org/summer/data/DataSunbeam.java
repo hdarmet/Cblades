@@ -17,8 +17,6 @@ import org.summer.data.DataManager.Executor;
 
 public interface DataSunbeam {
 
-	static DataSunbeam INSTANCE = new DataSunbeam() {};
-	
 	default void inTransaction(String persistenceUnitName, Executor executor) {
 		DataManager.inTransaction(persistenceUnitName, executor);
 	}

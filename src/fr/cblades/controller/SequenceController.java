@@ -20,6 +20,9 @@ import javax.persistence.PersistenceException;
 import java.util.*;
 import java.util.Map;
 
+/**
+ * Controleur permettant de manipuler des s"quences d'actions lors d'une partie
+ */
 @Controller
 public class SequenceController implements InjectorSunbeam, CollectionSunbeam, DataSunbeam, SecuritySunbeam, ControllerSunbeam, StandardUsers {
 	

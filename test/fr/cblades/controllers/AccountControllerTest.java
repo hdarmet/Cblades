@@ -48,13 +48,13 @@ public class AccountControllerTest  implements TestSeawave, CollectionSunbeam, D
             accountController.create(params(), Json.createJsonFromString(
                     "{}"
             ));
+            Assert.fail("The request should fail");
         } catch (SummerControllerException sce) {
             Assert.assertEquals(400, sce.getStatus());
             Assert.assertEquals("{" +
                 "\"firstName\":\"required\"," +
                 "\"lastName\":\"required\"," +
                 "\"password\":\"required\"," +
-                "\"avatar\":\"required\"," +
                 "\"login\":\"required\"," +
                 "\"email\":\"required\"" +
             "}", sce.getMessage());
@@ -69,17 +69,16 @@ public class AccountControllerTest  implements TestSeawave, CollectionSunbeam, D
                 " 'firstName':'f'," +
                 " 'lastName':'n'," +
                 " 'password':'p'," +
-                " 'avatar':'a'," +
                 " 'login':'l'," +
                 " 'email':'m' " +
             "}"));
+            Assert.fail("The request should fail");
         } catch (SummerControllerException sce) {
             Assert.assertEquals(400, sce.getStatus());
             Assert.assertEquals("{" +
                 "\"firstName\":\"must be greater of equals to 2\"," +
                 "\"lastName\":\"must be greater of equals to 2\"," +
                 "\"password\":\"must be greater of equals to 4\"," +
-                "\"avatar\":\"must be greater of equals to 2\"," +
                 "\"login\":\"must be greater of equals to 2\"," +
                 "\"email\":\"must be greater of equals to 2\"" +
             "}", sce.getMessage());
@@ -94,18 +93,17 @@ public class AccountControllerTest  implements TestSeawave, CollectionSunbeam, D
                 " 'firstName':'" + generateText("f", 101) + "'," +
                 " 'lastName':'" + generateText("f", 101) + "'," +
                 " 'password':'" + generateText("f", 101) + "'," +
-                " 'avatar':'" + generateText("f", 101) + "'," +
                 " 'login':'" + generateText("f", 21) + "'," +
                 " 'email':'" + generateText("f", 101) + "' " +
                 "}"
             ));
+            Assert.fail("The request should fail");
         } catch (SummerControllerException sce) {
             Assert.assertEquals(400, sce.getStatus());
             Assert.assertEquals("{" +
                 "\"firstName\":\"must not be greater than 100\"," +
                 "\"lastName\":\"must not be greater than 100\"," +
                 "\"password\":\"must not be greater than 20\"," +
-                "\"avatar\":\"must not be greater than 100\"," +
                 "\"login\":\"must not be greater than 20\"," +
                 "\"email\":\"must not be greater than 100\"" +
             "}", sce.getMessage());
@@ -113,14 +111,13 @@ public class AccountControllerTest  implements TestSeawave, CollectionSunbeam, D
     }
 
     @Test
-    public void createNewAccount() {
+    public void createNewAccountWithAvatar() {
         dataManager.register("persist", null, null, (Predicate) entity->{
             Assert.assertTrue(entity instanceof Account);
             Account account = (Account) entity;
             Assert.assertEquals("John", account.getFirstName());
             Assert.assertEquals("Cook", account.getLastName());
             Assert.assertEquals("b693d6437d40aa024c4b6792cc66375c", account.getPassword());
-            Assert.assertEquals("avatar.png", account.getAvatar());
             Assert.assertEquals("john", account.getLogin());
             Assert.assertEquals("jcook@gmail.com",account.getEmail());
             return true;
@@ -130,7 +127,7 @@ public class AccountControllerTest  implements TestSeawave, CollectionSunbeam, D
         dataManager.register("flush", null, null);
         dataManager.register("flush", null, null);
         securityManager.doConnect("admin", 0);
-        accountController.create(params(
+        Json result = accountController.create(params(
             ControllerSunbeam.MULTIPART_FILES, new FileSpecification[] {
                 new FileSpecification("avatar", "avatar.png", "png",
                     new ByteArrayInputStream(("Content of /avatars/avatar.png").getBytes()))
@@ -139,13 +136,62 @@ public class AccountControllerTest  implements TestSeawave, CollectionSunbeam, D
                 " 'firstName':'John'," +
                 " 'lastName':'Cook'," +
                 " 'password':'p@ssW0rd'," +
-                " 'avatar':'avatar.png'," +
                 " 'login':'john'," +
                 " 'email':'jcook@gmail.com' " +
             "}"
         ));
+        Assert.assertEquals("{" +
+            "\"firstName\":\"John\"," +
+            "\"lastName\":\"Cook\"," +
+            "\"messageCount\":0," +
+            "\"role\":\"std\"," +
+            "\"rating\":0," +
+            "\"id\":0," +
+            "\"avatar\":\"/api/account/images/avatar0-0.png\"," +
+            "\"login\":\"john\"," +
+            "\"version\":0," +
+            "\"email\":\"jcook@gmail.com\"" +
+        "}", result.toString());
         Assert.assertEquals("Content of /avatars/avatar.png", outputStreamToString(outputStream));
         platformManager.hasFinished();
+        dataManager.hasFinished();
+    }
+
+    @Test
+    public void createNewAccountWithoutAnAvatar() {
+        dataManager.register("persist", null, null, (Predicate) entity->{
+            Assert.assertTrue(entity instanceof Account);
+            Account account = (Account) entity;
+            Assert.assertEquals("John", account.getFirstName());
+            Assert.assertEquals("Cook", account.getLastName());
+            Assert.assertEquals("b693d6437d40aa024c4b6792cc66375c", account.getPassword());
+            Assert.assertNull(account.getAvatar());
+            Assert.assertEquals("john", account.getLogin());
+            Assert.assertEquals("jcook@gmail.com",account.getEmail());
+            return true;
+        });
+        dataManager.register("flush", null, null);
+        dataManager.register("flush", null, null);
+        securityManager.doConnect("admin", 0);
+        Json result = accountController.create(params(), Json.createJsonFromString("{" +
+                " 'firstName':'John'," +
+                " 'lastName':'Cook'," +
+                " 'password':'p@ssW0rd'," +
+                " 'login':'john'," +
+                " 'email':'jcook@gmail.com' " +
+            "}"
+        ));
+        Assert.assertEquals("{" +
+            "\"firstName\":\"John\"," +
+            "\"lastName\":\"Cook\"," +
+            "\"messageCount\":0," +
+            "\"role\":\"std\"," +
+            "\"rating\":0," +
+            "\"id\":0," +
+            "\"login\":\"john\"," +
+            "\"version\":0," +
+            "\"email\":\"jcook@gmail.com\"" +
+        "}", result.toString());
         dataManager.hasFinished();
     }
 
@@ -157,7 +203,6 @@ public class AccountControllerTest  implements TestSeawave, CollectionSunbeam, D
                 " 'firstName':'John'," +
                 " 'lastName':'Cook'," +
                 " 'password':'p@ssW0àrd'," +
-                " 'avatar':'avatar.png'," +
                 " 'login':'john'," +
                 " 'email':'jcook@gmail.com' " +
                 "}"
@@ -190,7 +235,6 @@ public class AccountControllerTest  implements TestSeawave, CollectionSunbeam, D
                 " 'firstName':'John'," +
                 " 'lastName':'Cook'," +
                 " 'password':'p@ssW0àrd'," +
-                " 'avatar':'avatar.png'," +
                 " 'login':'john'," +
                 " 'email':'jcook@gmail.com' " +
             "}"));
@@ -198,7 +242,7 @@ public class AccountControllerTest  implements TestSeawave, CollectionSunbeam, D
         }
         catch (SummerControllerException sce) {
             Assert.assertEquals(400, sce.getStatus());
-            Assert.assertEquals("Only one avatar file may be loaded.", sce.getMessage());
+            Assert.assertEquals("One and only one avatar file may be loaded.", sce.getMessage());
         }
         dataManager.hasFinished();
     }
@@ -217,7 +261,6 @@ public class AccountControllerTest  implements TestSeawave, CollectionSunbeam, D
                 " 'firstName':'John'," +
                 " 'lastName':'Cook'," +
                 " 'password':'p@ssW0àrd'," +
-                " 'avatar':'avatar.png'," +
                 " 'login':'john'," +
                 " 'email':'jcook@gmail.com' " +
             "}"));
@@ -244,7 +287,6 @@ public class AccountControllerTest  implements TestSeawave, CollectionSunbeam, D
                 " 'firstName':'John'," +
                 " 'lastName':'Cook'," +
                 " 'password':'p@ssW0àrd'," +
-                " 'avatar':'avatar.png'," +
                 " 'login':'john'," +
                 " 'email':'jcook@gmail.com' " +
             "}"));
@@ -543,13 +585,13 @@ public class AccountControllerTest  implements TestSeawave, CollectionSunbeam, D
                 " 'login':'l'," +
                 " 'email':'m' " +
             "}"));
+            Assert.fail("The request should fail");
         } catch (SummerControllerException sce) {
             Assert.assertEquals(400, sce.getStatus());
             Assert.assertEquals("{" +
                 "\"firstName\":\"must be greater of equals to 2\"," +
                 "\"lastName\":\"must be greater of equals to 2\"," +
                 "\"password\":\"must be greater of equals to 4\"," +
-                "\"avatar\":\"must be greater of equals to 2\"," +
                 "\"login\":\"must be greater of equals to 2\"," +
                 "\"email\":\"must be greater of equals to 2\"" +
             "}", sce.getMessage());
@@ -573,6 +615,7 @@ public class AccountControllerTest  implements TestSeawave, CollectionSunbeam, D
                 " 'login':'" + generateText("f", 21) + "'," +
                 " 'email':'" + generateText("f", 101) + "' " +
             "}"));
+            Assert.fail("The request should fail");
         }
         catch (SummerControllerException sce) {
             Assert.assertEquals(400, sce.getStatus());
@@ -580,7 +623,6 @@ public class AccountControllerTest  implements TestSeawave, CollectionSunbeam, D
                 "\"firstName\":\"must not be greater than 100\"," +
                 "\"lastName\":\"must not be greater than 100\"," +
                 "\"password\":\"must not be greater than 20\"," +
-                "\"avatar\":\"must not be greater than 100\"," +
                 "\"login\":\"must not be greater than 20\"," +
                 "\"email\":\"must not be greater than 100\"" +
             "}"
@@ -601,7 +643,6 @@ public class AccountControllerTest  implements TestSeawave, CollectionSunbeam, D
             " 'firstName':'john'," +
             " 'lastName':'cook'," +
             " 'password':'p@ssW0rd'," +
-            " 'avatar':'Avatar.png'," +
             " 'login':'John'," +
             " 'email':'Jcook@gmail.com' " +
         "}"));
@@ -612,7 +653,6 @@ public class AccountControllerTest  implements TestSeawave, CollectionSunbeam, D
             "\"role\":\"std\"," +
             "\"rating\":0," +
             "\"id\":1," +
-            "\"avatar\":\"Avatar.png\"," +
             "\"login\":\"John\"," +
             "\"version\":0," +
             "\"email\":\"Jcook@gmail.com\"" +
@@ -645,7 +685,6 @@ public class AccountControllerTest  implements TestSeawave, CollectionSunbeam, D
                 " 'firstName':'john'," +
                 " 'lastName':'cook'," +
                 " 'password':'p@ssW0rd'," +
-                " 'avatar':'Avatar.png'," +
                 " 'login':'John'," +
                 " 'email':'Jcook@gmail.com' " +
             "}"));
@@ -712,6 +751,7 @@ public class AccountControllerTest  implements TestSeawave, CollectionSunbeam, D
             new PersistenceException("For Any Reason..."),  "/avatars/john.png");
         try {
             accountController.getImage(params("imagename", "john-10123456.png"));
+            Assert.fail("The request should fail");
         }
         catch (SummerControllerException sce) {
             Assert.assertEquals(409, sce.getStatus());

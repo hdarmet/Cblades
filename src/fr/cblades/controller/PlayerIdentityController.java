@@ -28,10 +28,19 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+/**
+ * Controleur permettant de maniuler des joueurs
+ */
 @Controller
 public class PlayerIdentityController
 		implements InjectorSunbeam, DataSunbeam, SecuritySunbeam, ControllerSunbeam, StandardUsers, FileSunbeam, CommonEntities {
 
+	/**
+	 * Endpoint (accessible via "/api/player-identity/images/:imagename") permettant de télécharger depuis le navigateur
+	 * une image associée à une identitée de joueur.
+	 * @param params paramètres de l'URL (on utilisera le paraètre "imagename" qui donne le nom de l'image.
+	 * @return une spécification de fichier que Summer exploitera pour retourner l'image au navigateur.
+	 */
 	@MIME(url="/api/player-identity/images/:imagename")
 	public FileSpecification getImage(Map<String, Object> params) {
 		try {
@@ -47,10 +56,21 @@ public class PlayerIdentityController
 		}
 	}
 
+	/**
+	 * Stocke sur le système de fichiers/blob Cloud, l'image associée à un joueur (il ne peut y en avoir qu'une) et
+	 * l'associe au joueur (en précisant l'URL de l'image dans le champ "path" de l'identité de joueur). Le contenu
+	 * de l'image a été, au préalable, extrait du message HTTP (par Summer) et passé dans le paramètre params sous
+	 * l'étiquette MULTIPART_FILES (un tableau qui ne doit contenir au plus qu'un élément)<br>
+	 * L'image sera stockée dans le sous répertoire/blob nommé "/games" sous un nom qui est la concaténation de
+	 * "playeridentity" et l'ID de l'ientification de joueur.
+	 * @param params paramètres d'appel HTTP (l'image a stocker si elle existe, est accessible via l'étiquette
+	 *               MULTIPART_FILES)
+	 * @param playerIdentity identité du joueur à laquelle il faut associer l'image.
+	 */
 	void storePlayerIdentityImages(Map<String, Object> params, PlayerIdentity playerIdentity) {
 		FileSpecification[] files = (FileSpecification[]) params.get(MULTIPART_FILES);
-		if (files!=null && files.length > 0) {
-			if (files.length!= 1) throw new SummerControllerException(400, "One player identity file must be loaded.");
+		if (files!=null) {
+			if (files.length!= 1) throw new SummerControllerException(400, "One and only one player identity file must be loaded.");
 			String fileName = "playeridentity" + playerIdentity.getId() + "." + files[0].getExtension();
 			String webName = "playeridentity" + playerIdentity.getId() + "-" + PlatformManager.get().now() + "." + files[0].getExtension();
 			copyStream(files[0].getStream(), PlatformManager.get().getOutputStream("/games/" + fileName));
@@ -93,10 +113,6 @@ public class PlayerIdentityController
 				String countQuery = "select count(pi) from PlayerIdentity pi";
 				String queryString = "select pi from PlayerIdentity pi ";
 				if (search!=null) {
-					/*
-					search = StringReplacer.replace(search,
-							"tester", "test");
-					 */
 					String whereClause =" where fts('pg_catalog.english', " +
 						"pi.name||' '||" +
 						"pi.description ||' '||" +
@@ -173,7 +189,7 @@ public class PlayerIdentityController
 		long id = getLongParam(params, "id", "The Player Identity ID is missing or invalid (%s)");
 		ifAuthorized(user->{
 			try {
-				inTransaction(em->{
+				inTransactionUntilSuccessful(em->{
 					PlayerIdentity playerIdentity = findPlayerIdentity(em, id);
 					remove(em, playerIdentity);
 				});
@@ -190,7 +206,7 @@ public class PlayerIdentityController
 		Ref<Json> result = new Ref<>();
 		ifAuthorized(user->{
 			try {
-				inTransaction(em->{
+				inTransactionUntilSuccessful(em->{
 					PlayerIdentity playerIdentity = findPlayerIdentity(em, id);
 					writeToPlayerIdentity(em, request, playerIdentity, false);
 					storePlayerIdentityImages(params, playerIdentity);
@@ -208,7 +224,7 @@ public class PlayerIdentityController
 	public Json updateStatus(Map<String, Object> params, Json request) {
 		long id = getLongParam(params, "id", "The Player Identity ID is missing or invalid (%s)");
 		Ref<Json> result = new Ref<>();
-		inTransaction(em-> {
+		inTransactionUntilSuccessful(em-> {
 			PlayerIdentity playerIdentity = findPlayerIdentity(em, id);
 			ifAuthorized(
 				user -> {

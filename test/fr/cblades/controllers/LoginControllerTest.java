@@ -440,6 +440,7 @@ public class LoginControllerTest implements TestSeawave, CollectionSunbeam, Data
 			loginController.login(params(),
 					Json.createJsonFromString("{'login':'John', 'password':'PassW0rd'}")
 			);
+			Assert.fail("The request should fail");
 		}
 		catch (SummerControllerException sce) {
 			Assert.assertEquals(401, sce.getStatus());
@@ -473,6 +474,7 @@ public class LoginControllerTest implements TestSeawave, CollectionSunbeam, Data
 			loginController.login(params(),
 					Json.createJsonFromString("{'login':'John', 'password':'PassW0rd'}")
 			);
+			Assert.fail("The request should fail");
 		}
 		catch (SummerControllerException sce) {
 			Assert.assertEquals(401, sce.getStatus());
@@ -491,6 +493,7 @@ public class LoginControllerTest implements TestSeawave, CollectionSunbeam, Data
 			loginController.login(params(),
 					Json.createJsonFromString("{'login':'John', 'password':'PassW0rd'}")
 			);
+			Assert.fail("The request should fail");
 		}
 		catch (SummerControllerException sce) {
 			Assert.assertEquals(409, sce.getStatus());
@@ -522,6 +525,7 @@ public class LoginControllerTest implements TestSeawave, CollectionSunbeam, Data
 		Assert.assertEquals(Login.encrypt("PassW0rd"), "298cde70c32a57b84d0a546fedbb2596");
 		try {
 			Login.encrypt("PassW0rd", "m5d");
+			Assert.fail("The request should fail");
 		}
 		catch (SummerException sce) {
 			//Assert.assertEquals(403, sce.getStatus());

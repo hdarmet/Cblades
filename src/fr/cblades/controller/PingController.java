@@ -9,6 +9,9 @@ import org.summer.security.SecuritySunbeam;
 import java.util.Map;
 import java.util.logging.Logger;
 
+/**
+ * Controleur permettant de s'assurer que le système est accessible.
+ */
 @Controller
 public class PingController implements SecuritySunbeam, StandardUsers {
     static final Logger log = Logger.getLogger("cblades");

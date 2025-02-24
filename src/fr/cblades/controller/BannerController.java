@@ -25,20 +25,39 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+/**
+ * Controleur permettant de manipuler des "bannières"
+ */
 @Controller
 public class BannerController
 		implements InjectorSunbeam, DataSunbeam, SecuritySunbeam, ControllerSunbeam, StandardUsers, FileSunbeam, CommonEntities
 {
-
+	/**
+	 * Endpoint (accessible via "/api/banner/images/:imagename") permettant de télécharger depuis le navigateur
+	 * une image associée à une bannière.
+	 * @param params paramètres de l'URL (on utilisera le paraètre "imagename" qui donne le nom de l'image.
+	 * @return une spécification de fichier que Summer exploitera pour retourner l'image au navigateur.
+	 */
 	@MIME(url="/api/banner/images/:imagename")
 	public FileSpecification getImage(Map<String, Object> params) {
 		return this.getImage(params, "imagename", "/games/");
 	}
 
+	/**
+	 * Stocke sur le système de fichiers/blob Cloud,l'image associée à une bannière (il ne peut y en avoir qu'une) et
+	 * l'associe à la bannière (en précisant l'URL de l'image dans le champ "path" de la bannière). Le contenu de l'image
+	 * a été, au préalable, extrait du message HTTP (par Summer) et passé dans le paramètre params sous l'étiquette
+	 * MULTIPART_FILES (un tableau qui ne doit contenir au plus qu'un élément)<br>
+	 * L'image sera stockée dans le sous répertoire/blob nommé "/banner" sous un nom qui est la concaténation de
+	 * "banner" et l'ID de la bannière.
+	 * @param params paramètres d'appel HTTP (l'image a stocker si elle existe, est accessible via l'étiquette
+	 *               MULTIPART_FILES)
+	 * @param banner bannière à laquelle il faut associer l'image.
+	 */
 	void storeBannerImages(Map<String, Object> params, Banner banner) {
 		FileSpecification[] files = (FileSpecification[]) params.get(MULTIPART_FILES);
-		if (files != null && files.length > 0) {
-			if (files.length!= 1) throw new SummerControllerException(400, "Only one banner file must be loaded.");
+		if (files != null) {
+			if (files.length!= 1) throw new SummerControllerException(400, "One and only one banner file must be loaded.");
 			String fileName = "banner" + banner.getId() + "." + files[0].getExtension();
 			String webName = "banner" + banner.getId() + "-" + PlatformManager.get().now() + "." + files[0].getExtension();
 			copyStream(files[0].getStream(), PlatformManager.get().getOutputStream("/games/" + fileName));
@@ -163,7 +182,7 @@ public class BannerController
 		long id = getLongParam(params, "id", "The Banner ID is missing or invalid (%s)");
 		ifAuthorized(user->{
 			try {
-				inTransaction(em->{
+				inTransactionUntilSuccessful(em->{
 					Banner banner = findBanner(em, id);
 					remove(em, banner);
 				});
@@ -198,7 +217,7 @@ public class BannerController
 	@REST(url="/api/banner/update-status/:id", method=Method.POST)
 	public Json updateStatus(Map<String, Object> params, Json request) {
 		Ref<Json> result = new Ref<>();
-		inTransaction(em-> {
+		inTransactionUntilSuccessful(em-> {
 			String id = (String) params.get("id");
 			Banner banner = findBanner(em, new Long(id));
 			ifAuthorized(
@@ -231,12 +250,10 @@ public class BannerController
 		Verifier verifier = verify(json);
 		if (full) {
 			verifier
-				.checkRequired("name")
-				.checkRequired("path");
+				.checkRequired("name");
 		}
 		verifier
 			.checkMinSize("name", 2).checkMaxSize("name", 20)
-			.checkMinSize("path", 2).checkMaxSize("path", 200)
 			.checkPattern("name", "[a-zA-Z0-9_\\-]+")
 			.checkMinSize("description", 2).checkMaxSize("description", 2000)
 			.check("status", BannerStatus.byLabels().keySet());
@@ -248,7 +265,6 @@ public class BannerController
 		Synchronizer synchronizer = sync(json, banner)
 			.write("version")
 			.write("name")
-			.write("path")
 			.write("description")
 			.write("status", label->BannerStatus.byLabels().get(label))
 			.writeRef("author.id", "author", (Integer id)-> Account.find(em, id));

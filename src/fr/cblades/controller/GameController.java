@@ -22,6 +22,9 @@ import java.util.*;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+/**
+ * Controleur permettant de manipuler les parties
+ */
 @Controller
 public class GameController implements InjectorSunbeam, DataSunbeam, SecuritySunbeam, ControllerSunbeam, StandardUsers {
 	

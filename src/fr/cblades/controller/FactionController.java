@@ -30,10 +30,19 @@ import java.util.function.BiPredicate;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
+/**
+ * Controleur permettant de manipuler des factions
+ */
 @Controller
 public class FactionController implements InjectorSunbeam, DataSunbeam, SecuritySunbeam, ControllerSunbeam, FileSunbeam, StandardUsers {
 	static final Logger log = Logger.getLogger("summer");
 
+	/**
+	 * Endpoint (accessible via "/api/faction/documents/:docname") permettant de télécharger depuis le navigateur
+	 * une image associée à une faction.
+	 * @param params paramètres de l'URL (on utilisera le paraètre "docname" qui donne le nom de l'image.
+	 * @return une spécification de fichier que Summer exploitera pour retourner l'image au navigateur.
+	 */
 	@MIME(url="/api/faction/documents/:docname")
 	public FileSpecification getImage(Map<String, Object> params) {
 		try {
