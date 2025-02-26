@@ -47,7 +47,7 @@ public class MailServiceImpl implements MailService {
             msg.setFrom(new InternetAddress(from, personal));
             msg.setReplyTo(InternetAddress.parse(replyTo, false));
             msg.setSubject(subject, encoding);
-            msg.setSentDate(new Date());
+            msg.setSentDate(PlatformManager.get().today());
             msg.setRecipients(Message.RecipientType.TO, InternetAddress.parse(toEmail, false));
             if (attachments.length==0) {
                 msg.setText(body, encoding);

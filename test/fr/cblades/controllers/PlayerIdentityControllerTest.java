@@ -318,8 +318,7 @@ public class PlayerIdentityControllerTest implements TestSeawave, CollectionSunb
 	@Test
 	public void tryToFindAnUnknownPlayerIdentity() {
 		dataManager.register("find",
-			null,
-			new EntityNotFoundException("Entity Does Not Exists"), PlayerIdentity.class, 1L);
+			null, null, PlayerIdentity.class, 1L);
 		securityManager.doConnect("admin", 0);
 		try {
 			playerIdentityController.getById(params("id", "1"), null);
@@ -395,8 +394,7 @@ public class PlayerIdentityControllerTest implements TestSeawave, CollectionSunb
 	@Test
 	public void tryToDeleteAnUnknownPlayerIdentity() {
 		dataManager.register("find",
-			null,
-			new EntityNotFoundException("Entity Does Not Exists"), PlayerIdentity.class, 1L);
+			null, null, PlayerIdentity.class, 1L);
 		securityManager.doConnect("admin", 0);
 		try {
 			playerIdentityController.delete(params("id", "1"), null);
@@ -477,8 +475,7 @@ public class PlayerIdentityControllerTest implements TestSeawave, CollectionSunb
 	@Test
 	public void tryToUpdateAnUnknownPlayerIdentity() {
 		dataManager.register("find",
-			null,
-			new EntityNotFoundException("Entity Does Not Exists"), PlayerIdentity.class, 1L);
+			null, null, PlayerIdentity.class, 1L);
 		securityManager.doConnect("admin", 0);
 		try {
 			playerIdentityController.update(params("id", "1"), Json.createJsonFromString(
@@ -538,6 +535,17 @@ public class PlayerIdentityControllerTest implements TestSeawave, CollectionSunb
 				setEntityId(new PlayerIdentity().setName("Achilles").setPath("/there/where/achilles.png"), 2)
 		), null);
 		Json result = playerIdentityController.getLive(params(), null);
+		Assert.assertEquals("[{" +
+				"\"path\":\"/there/where/hector.png\"," +
+				"\"name\":\"Hector\"," +
+				"\"id\":1," +
+				"\"version\":0" +
+			"},{" +
+				"\"path\":\"/there/where/achilles.png\"," +
+				"\"name\":\"Achilles\"," +
+				"\"id\":2," +
+				"\"version\":0" +
+			"}]", result.toString());
 		dataManager.hasFinished();
 	}
 

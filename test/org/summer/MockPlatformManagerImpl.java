@@ -8,6 +8,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 public class MockPlatformManagerImpl implements Mockable, PlatformManager {
@@ -94,6 +95,11 @@ public class MockPlatformManagerImpl implements Mockable, PlatformManager {
     @Override
     public Long now() {
         return this.time;
+    }
+
+    @Override
+    public Date today() {
+        return new Date(this.time);
     }
 
 }

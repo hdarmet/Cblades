@@ -304,6 +304,17 @@ public class BannerControllerTest implements TestSeawave, CollectionSunbeam, Dat
 			setEntityId(new Banner().setName("banner2").setPath("/there/where/banner2.png"), 2)
 		), null);
 		Json result = bannerController.getLive(params(), null);
+		Assert.assertEquals("[{" +
+				"\"path\":\"/there/where/banner1.png\"," +
+				"\"name\":\"banner1\"," +
+				"\"id\":1," +
+				"\"version\":0" +
+			"},{" +
+				"\"path\":\"/there/where/banner2.png\"," +
+				"\"name\":\"banner2\"," +
+				"\"id\":2," +
+				"\"version\":0" +
+			"}]", result.toString());
 		dataManager.hasFinished();
 	}
 
@@ -415,8 +426,7 @@ public class BannerControllerTest implements TestSeawave, CollectionSunbeam, Dat
 	@Test
 	public void tryToFindAnUnknownBanner() {
 		dataManager.register("find",
-			null,
-			new EntityNotFoundException("Entity Does Not Exists"), Banner.class, 1L);
+			null, null, Banner.class, 1L);
 		securityManager.doConnect("admin", 0);
 		try {
 			bannerController.getById(params("id", "1"), null);
@@ -492,8 +502,7 @@ public class BannerControllerTest implements TestSeawave, CollectionSunbeam, Dat
 	@Test
 	public void tryToDeleteAnUnknownBanner() {
 		dataManager.register("find",
-			null,
-			new EntityNotFoundException("Entity Does Not Exists"), Banner.class, 1L);
+			null, null, Banner.class, 1L);
 		securityManager.doConnect("admin", 0);
 		try {
 			bannerController.delete(params("id", "1"), null);
@@ -654,8 +663,7 @@ public class BannerControllerTest implements TestSeawave, CollectionSunbeam, Dat
 	@Test
 	public void tryToUpdateAnUnknownBanner() {
 		dataManager.register("find",
-			null,
-			new EntityNotFoundException("Entity Does Not Exists"), Banner.class, 1L);
+			null, null, Banner.class, 1L);
 		securityManager.doConnect("admin", 0);
 		try {
 			bannerController.update(params("id", "1"), Json.createJsonFromString(

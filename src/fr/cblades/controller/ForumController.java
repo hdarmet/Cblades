@@ -16,6 +16,7 @@ import org.summer.data.DataSunbeam;
 import org.summer.data.SummerNotFoundException;
 import org.summer.data.SummerPersistenceException;
 import org.summer.data.Synchronizer;
+import org.summer.platform.PlatformManager;
 import org.summer.security.SecuritySunbeam;
 
 import javax.persistence.EntityManager;
@@ -448,7 +449,7 @@ public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySu
 					Account author = Account.find(em, user);
 					newMessage.get()
 						.setAuthor(author)
-						.setPublishedDate(new Date())
+						.setPublishedDate(PlatformManager.get().today())
 						.setPoll(new LikePoll().setLikes(0).setDislikes(0));
 					persist(em, newMessage.get());
 					result.set(readFromForumMessage(newMessage.get()));
@@ -1052,7 +1053,7 @@ public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySu
 				user->{
 					try {
 						Account author = Account.find(em, user);
-						newReport.setAuthor(author).setSendDate(new Date());
+						newReport.setAuthor(author).setSendDate(PlatformManager.get().today());
 						newReport.setCategory(ForumMessage.REPORT);
 						persist(em, newReport);
 						result.set(readFromReport(newReport));
@@ -1260,7 +1261,7 @@ public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySu
 		Json reporterEvent = request.get("reporter");
 		if (reporterEvent!=null) {
 			Event event = new Event()
-				.setDate(new Date())
+				.setDate(PlatformManager.get().today())
 				.setStatus(EventStatus.LIVE)
 				.setTarget(report.getAuthor());
 			writeToEvent(em, reporterEvent, event);
@@ -1269,7 +1270,7 @@ public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySu
 		Json authorEvent = request.get("author");
 		if (authorEvent!=null) {
 			Event event = new Event()
-				.setDate(new Date())
+				.setDate(PlatformManager.get().today())
 				.setStatus(EventStatus.LIVE)
 				.setTarget(message.getAuthor());
 			writeToEvent(em, authorEvent, event);

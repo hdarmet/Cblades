@@ -15,6 +15,7 @@ import org.summer.controller.SummerControllerException;
 import org.summer.controller.Verifier;
 import org.summer.data.DataSunbeam;
 import org.summer.data.SummerNotFoundException;
+import org.summer.data.Synchronizer;
 import org.summer.platform.FileSunbeam;
 import org.summer.platform.PlatformManager;
 import org.summer.security.SecuritySunbeam;
@@ -23,7 +24,6 @@ import javax.persistence.EntityManager;
 import javax.persistence.PersistenceException;
 import javax.persistence.Query;
 import java.util.Collection;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.function.BiPredicate;
@@ -33,7 +33,8 @@ import java.util.stream.Collectors;
  * Controleur permettant de manipuler des thèmes
  */
 @Controller
-public class ThemeController implements InjectorSunbeam, DataSunbeam, SecuritySunbeam, ControllerSunbeam, FileSunbeam, StandardUsers {
+public class ThemeController implements InjectorSunbeam, DataSunbeam, SecuritySunbeam, ControllerSunbeam, FileSunbeam,
+	StandardUsers,CommonEntities {
 
 	/**
 	 * Endpoint (accessible via "/api/theme/images/:imagename") permettant de télécharger depuis le navigateur
@@ -43,17 +44,7 @@ public class ThemeController implements InjectorSunbeam, DataSunbeam, SecuritySu
 	 */
 	@MIME(url="/api/theme/images/:imagename")
 	public FileSpecification getImage(Map<String, Object> params) {
-		try {
-			String webName = (String)params.get("imagename");
-			int minusPos = webName.indexOf('-');
-			int pointPos = webName.indexOf('.');
-			String imageName = webName.substring(0, minusPos)+webName.substring(pointPos);
-			return new FileSpecification()
-				.setName(imageName)
-				.setStream(PlatformManager.get().getInputStream("/themes/"+imageName));
-		} catch (PersistenceException pe) {
-			throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe);
-		}
+		return this.getImage(params, "imagename", "/themes/");
 	}
 
 	/**
@@ -69,7 +60,7 @@ public class ThemeController implements InjectorSunbeam, DataSunbeam, SecuritySu
 	 */
 	void storeThemeImages(Map<String, Object> params, Theme theme) {
 		FileSpecification[] files = (FileSpecification[]) params.get(MULTIPART_FILES);
-		if (files!=null && files.length > 0) {
+		if (files!=null) {
 			if (files.length!= 1) throw new SummerControllerException(400, "One Theme file must be loaded.");
 			String fileName = "theme" + theme.getId() + "." + files[0].getExtension();
 			String webName = "theme" + theme.getId() + "-" + PlatformManager.get().now() + "." + files[0].getExtension();
@@ -82,16 +73,18 @@ public class ThemeController implements InjectorSunbeam, DataSunbeam, SecuritySu
 	public Json propose(Map<String, Object> params, Json request) {
 		Ref<Json> result = new Ref<>();
 		inTransaction(em->{
-			Theme newTheme = writeToProposedTheme(request, new Theme());
 			ifAuthorized(
 				user->{
 					try {
+						checkJson(request, Usage.PROPOSE);
+						Theme newTheme = writeToTheme(em, request, new Theme(), Usage.PROPOSE);
 						Account author = Account.find(em, user);
 						addComment(request, newTheme, author);
 						newTheme.setStatus(ThemeStatus.PROPOSED);
 						newTheme.setAuthor(author);
 						persist(em, newTheme);
 						storeThemeImages(params, newTheme);
+						flush(em);
 						result.set(readFromTheme(newTheme));
 					} catch (PersistenceException pe) {
 						throw new SummerControllerException(409,
@@ -109,15 +102,16 @@ public class ThemeController implements InjectorSunbeam, DataSunbeam, SecuritySu
 
 	@REST(url="/api/theme/amend/:id", method=Method.POST)
 	public Json amend(Map<String, Object> params, Json request) {
+		long id = getLongParam(params, "id", "The Theme ID is missing or invalid (%s)");
 		Ref<Json> result = new Ref<>();
 		inTransactionUntilSuccessful(em-> {
-			String id = (String) params.get("id");
-			Theme theme = findTheme(em, new Long(id));
+			Theme theme = findTheme(em, id);
 			ifAuthorized(
 				user -> {
 					try {
+						checkJson(request, Usage.AMEND);
 						Account author = Account.find(em, user);
-						writeToProposedTheme(request, theme);
+						writeToTheme(em, request, theme, Usage.AMEND);
 						addComment(request, theme, author);
 						storeThemeImages(params, theme);
 						flush(em);
@@ -138,12 +132,13 @@ public class ThemeController implements InjectorSunbeam, DataSunbeam, SecuritySu
 	public Json create(Map<String, Object> params, Json request) {
 		Ref<Json> result = new Ref<>();
 		inTransaction(em->{
-			Theme newTheme = writeToTheme(em, request, new Theme(), true);
-			ifAuthorized(
-				user->{
+			ifAuthorized(user->{
 					try {
+						checkJson(request, Usage.CREATE);
+						Theme newTheme = writeToTheme(em, request, new Theme(), Usage.CREATE);
 						persist(em, newTheme);
 						storeThemeImages(params, newTheme);
+						flush(em);
 						result.set(readFromTheme(newTheme));
 					} catch (PersistenceException pe) {
 						throw new SummerControllerException(409,
@@ -200,7 +195,7 @@ public class ThemeController implements InjectorSunbeam, DataSunbeam, SecuritySu
 	}
 
 	@REST(url="/api/theme/live", method=Method.GET)
-	public Json getLive(Map<String, String> params, Json request) {
+	public Json getLive(Map<String, Object> params, Json request) {
 		Ref<Json> result = new Ref<>();
 		inReadTransaction(em->{
 			Collection<Theme> themes = findThemes(em.createQuery(
@@ -217,7 +212,7 @@ public class ThemeController implements InjectorSunbeam, DataSunbeam, SecuritySu
 		Ref<Json> result = new Ref<>();
 		inReadTransaction(em->{
 			int pageNo = getIntegerParam(params, "page", "The requested Page Number is invalid (%s)");
-			String category = (String)params.get("category");
+			String category = getStringParam(params, "category",  null,"The requested category is invalid (%s)");
 			String search = (String)params.get("search");
 			String queryString = "select t from Theme t" +
 				" where t.category=:category" +
@@ -249,9 +244,9 @@ public class ThemeController implements InjectorSunbeam, DataSunbeam, SecuritySu
 
 	@REST(url="/api/theme/by-title/:title", method=Method.GET)
 	public Json getByTitle(Map<String, Object> params, Json request) {
+		String title = getStringParam(params,"title", null, "The Title of the Theme is missing (%s)");
 		Ref<Json> result = new Ref<>();
 		inReadTransaction(em->{
-			String title = (String)params.get("title");
 			Theme theme = getSingleResult(em,
 				"select t from Theme t " +
 						"left outer join fetch t.author a " +
@@ -273,10 +268,10 @@ public class ThemeController implements InjectorSunbeam, DataSunbeam, SecuritySu
 
 	@REST(url="/api/theme/load/:id", method=Method.GET)
 	public Json getThemeWithComments(Map<String, Object> params, Json request) {
+		long id = getLongParam(params, "id", "The Theme ID is missing or invalid (%s)");
 		Ref<Json> result = new Ref<>();
 		inReadTransaction(em->{
-			String id = (String)params.get("id");
-			Theme theme = findTheme(em, new Long(id));
+			Theme theme = findTheme(em, id);
 			ifAuthorized(user->{
 				result.set(readFromTheme(theme));
 			},
@@ -287,33 +282,34 @@ public class ThemeController implements InjectorSunbeam, DataSunbeam, SecuritySu
 
 	@REST(url="/api/theme/delete/:id", method=Method.GET)
 	public Json delete(Map<String, Object> params, Json request) {
+		long id = getLongParam(params, "id", "The Theme ID is missing or invalid (%s)");
 		inTransactionUntilSuccessful(em->{
-			String id = (String)params.get("id");
-			Theme theme = findTheme(em, new Long(id));
-			ifAuthorized(
-				user->{
-					try {
-						remove(em, theme);
-					} catch (PersistenceException pe) {
-						throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe);
-					}
-				},
-				verifyIfAdminOrOwner(theme)
-			);
+			try {
+				Theme theme = findTheme(em, id);
+				ifAuthorized(
+					user->{
+							remove(em, theme);
+					},
+					verifyIfAdminOrOwner(theme)
+				);
+			} catch (PersistenceException pe) {
+				throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe);
+			}
 		});
 		return Json.createJsonObject().put("deleted", "ok");
 	}
 
 	@REST(url="/api/theme/update/:id", method=Method.POST)
 	public Json update(Map<String, Object> params, Json request) {
+		long id = getLongParam(params, "id", "The Theme ID is missing or invalid (%s)");
 		Ref<Json> result = new Ref<>();
 		inTransaction(em-> {
-			String id = (String) params.get("id");
-			Theme theme = findTheme(em, new Long(id));
+			Theme theme = findTheme(em, id);
 			ifAuthorized(
 				user -> {
 					try {
-						writeToTheme(em, request, theme, false);
+						checkJson(request, Usage.UPDATE);
+						writeToTheme(em, request, theme, Usage.UPDATE);
 						storeThemeImages(params, theme);
 						flush(em);
 						result.set(readFromTheme(theme));
@@ -329,13 +325,13 @@ public class ThemeController implements InjectorSunbeam, DataSunbeam, SecuritySu
 
 	@REST(url="/api/theme/update-status/:id", method=Method.POST)
 	public Json updateStatus(Map<String, Object> params, Json request) {
+		long id = getLongParam(params, "id", "The Theme ID is missing or invalid (%s)");
 		Ref<Json> result = new Ref<>();
 		inTransactionUntilSuccessful(em-> {
-			String id = (String) params.get("id");
-			Theme theme = findTheme(em, new Long(id));
 			ifAuthorized(
 				user -> {
 					try {
+						Theme theme = findTheme(em, id);
 						writeToThemeStatus(em, request, theme);
 						flush(em);
 						result.set(readFromTheme(theme));
@@ -361,81 +357,59 @@ public class ThemeController implements InjectorSunbeam, DataSunbeam, SecuritySu
 		};
 	}
 
-	Theme writeToProposedTheme(Json json, Theme theme) {
-		verify(json)
+	void addComment(Json json, Theme theme, Account author) {
+		String comment = json.get("newComment");
+		if (comment!=null) {
+			theme.addComment(new Comment()
+				.setDate(PlatformManager.get().today())
+				.setText(comment)
+				.setAuthor(author));
+		}
+	}
+
+	void checkJson(Json json, Usage usage) {
+		Verifier verifier = verify(json);
+		if (usage.creation) {
+			verifier
+				.checkRequired("title")
+				.checkRequired("description");
+		}
+		verifier
 			.check("category", ThemeCategory.byLabels().keySet())
-			.checkRequired("title").checkMinSize("title", 2).checkMaxSize("title", 200)
+			.checkMinSize("title", 2).checkMaxSize("title", 200)
 			.checkPattern("title", "[\\d\\s\\w]+")
-			.checkRequired("description").checkMinSize("description", 2).checkMaxSize("description", 1000)
-			.checkRequired("illustration").checkMinSize("illustration", 2).checkMaxSize("illustration", 200)
-			.checkMinSize("newComment", 2).checkMaxSize("newComment", 200)
-			.ensure();
-		sync(json, theme)
+			.checkMinSize("description", 2).checkMaxSize("description", 1000)
+			.check("status", ThemeStatus.byLabels().keySet());
+		checkComments(verifier, true);
+		if (usage.propose) {
+			verifier.checkMinSize("newComment", 2).checkMaxSize("newComment", 200);
+		}
+		else {
+			verifier.check("status", ThemeStatus.byLabels().keySet());
+			checkComments(verifier, usage.creation);
+		}
+		verifier.ensure();
+	}
+
+	Theme writeToTheme(EntityManager em, Json json, Theme theme, Usage usage) {
+		Synchronizer synchronizer = sync(json, theme)
 			.write("version")
 			.write("category", label->ThemeCategory.byLabels().get(label))
 			.write("title")
 			.write("description")
-			.write("illustration");
+			.write("status", label->ThemeStatus.byLabels().get(label));
+		if (!usage.propose) {
+			synchronizer
+				.write("status", label -> ThemeStatus.byLabels().get(label));
+			writeComments(synchronizer);
+		}
 		return theme;
-	}
-
-	void addComment(Json json, Theme theme, Account author) {
-		String comment = json.get("newComment");
-		if (comment!=null) {
-			theme.addComment(new Comment().setDate(new Date()).setText(comment).setAuthor(author));
-		}
-	}
-
-	Theme writeToTheme(EntityManager em, Json json, Theme theme, boolean full) {
-		Verifier verifier = verify(json);
-		try {
-			if (full) {
-				verifier
-					.checkRequired("title")
-					.checkRequired("description")
-					.checkRequired("illustration")
-					.each("comments", cJson -> verify(cJson)
-						.checkRequired("version")
-						.checkRequired("date")
-						.checkRequired("text")
-					);
-			}
-			verifier
-				.check("category", ThemeCategory.byLabels().keySet())
-				.checkMinSize("title", 2).checkMaxSize("title", 200)
-				.checkPattern("title", "[\\d\\s\\w]+")
-				.checkMinSize("description", 2).checkMaxSize("description", 1000)
-				.checkMinSize("illustration", 2).checkMaxSize("illustration", 200)
-				.check("status", ThemeStatus.byLabels().keySet())
-				.each("comments", cJson->verify(cJson)
-					.checkMinSize("text", 2)
-					.checkMaxSize("text", 19995)
-				);
-			verifier
-				.ensure();
-			sync(json, theme)
-				.write("version")
-				.write("category", label->ThemeCategory.byLabels().get(label))
-				.write("title")
-				.write("description")
-				.write("illustration")
-				.write("status", label->ThemeStatus.byLabels().get(label))
-				.writeRef("author.id", "author", (Integer id)-> Account.find(em, id))
-				.syncEach("comments", (cJson, comment)->sync(cJson, comment)
-					.write("version")
-					.writeDate("date")
-					.write("text")
-				);
-			return theme;
-		} catch (SummerNotFoundException snfe) {
-			throw new SummerControllerException(404, snfe.getMessage());
-		}
 	}
 
 	Theme writeToThemeStatus(EntityManager em, Json json, Theme theme) {
 		verify(json)
 			.checkRequired("id").checkInteger("id", "Not a valid id")
-			.check("status", ThemeStatus.byLabels().keySet())
+			.checkRequired("status").check("status", ThemeStatus.byLabels().keySet())
 			.ensure();
 		sync(json, theme)
 			.write("status", label->ThemeStatus.byLabels().get(label));
@@ -444,21 +418,15 @@ public class ThemeController implements InjectorSunbeam, DataSunbeam, SecuritySu
 
 	Json readFromThemeSummary(Theme theme) {
 		Json json = Json.createJsonObject();
-		sync(json, theme)
+		Synchronizer synchronizer = sync(json, theme)
 			.read("id")
 			.read("version")
 			.read("category", ThemeCategory::getLabel)
 			.read("title")
 			.read("description")
 			.read("illustration")
-			.read("status", ThemeStatus::getLabel)
-			.readLink("author", (pJson, account)->sync(pJson, account)
-				.read("id")
-				.read("login", "access.login")
-				.read("firstName")
-				.read("lastName")
-				.read("avatar")
-			);
+			.read("status", ThemeStatus::getLabel);
+		readAuthor(synchronizer);
 		return json;
 	}
 
@@ -474,27 +442,16 @@ public class ThemeController implements InjectorSunbeam, DataSunbeam, SecuritySu
 
 	Json readFromTheme(Theme theme) {
 		Json json = Json.createJsonObject();
-		sync(json, theme)
+		Synchronizer synchronizer = sync(json, theme)
 			.read("id")
 			.read("version")
 			.read("category", ThemeCategory::getLabel)
 			.read("title")
 			.read("description")
 			.read("illustration")
-			.read("status", ThemeStatus::getLabel)
-			.readLink("author", (pJson, account)->sync(pJson, account)
-				.read("id")
-				.read("login", "access.login")
-				.read("firstName")
-				.read("lastName")
-				.read("avatar")
-			)
-			.readEach("comments", (hJson, hex)->sync(hJson, hex)
-				.read("id")
-				.read("version")
-				.readDate("date")
-				.read("text")
-			);
+			.read("status", ThemeStatus::getLabel);
+		readAuthor(synchronizer);
+		readComments(synchronizer);
 		return json;
 	}
 

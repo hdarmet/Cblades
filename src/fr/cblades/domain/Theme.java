@@ -17,7 +17,7 @@ public class Theme extends BaseEntity {
     String title="";
     @Column(length = 1000)
     String description="";
-    String illustration ="";
+    String illustration = null;
     @Enumerated(EnumType.STRING)
     ThemeCategory category;
     @Enumerated(EnumType.STRING)

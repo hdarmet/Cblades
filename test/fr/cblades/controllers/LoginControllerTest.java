@@ -190,8 +190,7 @@ public class LoginControllerTest implements TestSeawave, CollectionSunbeam, Data
 	@Test
 	public void tryToFindAnUnknownLogin() {
 		dataManager.register("find",
-			setEntityId(new Login().setLogin("Peter").setPassword("PiEtEr").setAdministrator(true), 1L),
-				new EntityNotFoundException("Entity Does Not Exists"), Login.class, 1L);
+			null,	null, Login.class, 1L);
 		securityManager.doConnect("admin", 0);
 		try {
 			loginController.getById(params("id", "1"), null);
@@ -252,8 +251,7 @@ public class LoginControllerTest implements TestSeawave, CollectionSunbeam, Data
 	@Test
 	public void tryToDeleteAnUnknownLogin() {
 		dataManager.register("find",
-				null,
-				new EntityNotFoundException("Entity Does Not Exists"), Login.class, 1L);
+				null, null, Login.class, 1L);
 		securityManager.doConnect("admin", 0);
 		try {
 			loginController.delete(params("id", "1"), null);
@@ -324,8 +322,7 @@ public class LoginControllerTest implements TestSeawave, CollectionSunbeam, Data
 	@Test
 	public void tryToUpdateAnUnknownLogin() {
 		dataManager.register("find",
-			null,
-			new EntityNotFoundException("Entity Does Not Exists"), Login.class, 1L);
+			null, null, Login.class, 1L);
 		securityManager.doConnect("admin", 0);
 		try {
 			loginController.update(params("id", "1"), Json.createJsonFromString(

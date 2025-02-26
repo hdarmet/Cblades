@@ -395,7 +395,10 @@ public class MagicArtController implements InjectorSunbeam, DataSunbeam, Securit
 	void addComment(Json json, MagicArt magicArt, Account author) {
 		String comment = json.get("newComment");
 		if (comment!=null) {
-			magicArt.addComment(new Comment().setDate(new Date()).setText(comment).setAuthor(author));
+			magicArt.addComment(new Comment()
+                .setDate(PlatformManager.get().today())
+                .setText(comment)
+                .setAuthor(author));
 		}
 	}
 

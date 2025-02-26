@@ -400,7 +400,7 @@ public class BoardController implements InjectorSunbeam, DataSunbeam, SecuritySu
 	void addComment(Json json, Board board, Account author) {
 		String comment = json.get("newComment");
 		if (comment!=null) {
-			board.addComment(new Comment().setDate(new Date()).setText(comment).setAuthor(author));
+			board.addComment(new Comment().setDate(PlatformManager.get().today()).setText(comment).setAuthor(author));
 		}
 	}
 

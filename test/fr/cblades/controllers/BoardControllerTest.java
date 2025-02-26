@@ -319,8 +319,7 @@ public class BoardControllerTest implements TestSeawave, CollectionSunbeam, Data
 	@Test
 	public void tryToFindAnUnknownBoard() {
 		dataManager.register("find",
-			null,
-			new EntityNotFoundException("Entity Does Not Exists"), Board.class, 1L);
+			null, null, Board.class, 1L);
 		securityManager.doConnect("admin", 0);
 		try {
 			boardController.getById(params("id", "1"), null);
@@ -389,8 +388,7 @@ public class BoardControllerTest implements TestSeawave, CollectionSunbeam, Data
 	@Test
 	public void tryToDeleteAnUnknownBoard() {
 		dataManager.register("find",
-			null,
-			new EntityNotFoundException("Entity Does Not Exists"), Board.class, 1L);
+			null, null, Board.class, 1L);
 		securityManager.doConnect("admin", 0);
 		try {
 			boardController.delete(params("id", "1"), null);
@@ -488,8 +486,7 @@ public class BoardControllerTest implements TestSeawave, CollectionSunbeam, Data
 	@Test
 	public void tryToUpdateAnUnknownBoard() {
 		dataManager.register("find",
-				null,
-				new EntityNotFoundException("Entity Does Not Exists"), Board.class, 1L);
+				null, null, Board.class, 1L);
 		securityManager.doConnect("admin", 0);
 		try {
 			boardController.update(params("id", "1"), Json.createJsonFromString(

@@ -72,4 +72,19 @@ public interface CommonEntities extends ControllerSunbeam {
         return synchronizer;
     }
 
+    enum Usage {
+        CREATE(true, false),
+        UPDATE(false, false),
+        PROPOSE(true, true),
+        AMEND(false, true);
+
+        final boolean creation;
+        final boolean propose;
+
+        Usage(boolean creation, boolean propose) {
+            this.creation = creation;
+            this.propose = propose;
+        }
+    }
+
 }

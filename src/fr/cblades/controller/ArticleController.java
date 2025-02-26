@@ -331,10 +331,10 @@ public class ArticleController
 
 	@REST(url="/api/article/load/:id", method=Method.GET)
 	public Json getArticleWithComments(Map<String, Object> params, Json request) {
+		long id = getLongParam(params, "id", "The Article ID is missing or invalid (%s)");
 		Ref<Json> result = new Ref<>();
 		inReadTransaction(em->{
-			String id = (String)params.get("id");
-			Article article = findArticle(em, new Long(id));
+			Article article = findArticle(em, id);
 			ifAuthorized(user->{
 				result.set(readFromArticle(article));
 			},
@@ -396,21 +396,6 @@ public class ArticleController
 		};
 	}
 
-	enum Usage {
-		CREATE(true, false),
-		UPDATE(false, false),
-		PROPOSE(true, true),
-		AMEND(true, false);
-
-		final boolean creation;
-		final boolean propose;
-
-		Usage(boolean creation, boolean propose) {
-			this.creation = creation;
-			this.propose = propose;
-		}
-	}
-
 	void checkJson(Json json, Usage usage) {
 		Verifier verifier = verify(json);
 		if (usage.creation) {
@@ -439,7 +424,7 @@ public class ArticleController
 			verifier.checkMinSize("newComment", 2).checkMaxSize("newComment", 200);
 		}
 		else {
-			verifier.check("status", ThemeStatus.byLabels().keySet());
+			verifier.check("status", ArticleStatus.byLabels().keySet());
 			checkComments(verifier, usage.creation);
 		}
 		verifier.ensure();
@@ -448,7 +433,10 @@ public class ArticleController
 	void addComment(Json json, Article article, Account author) {
 		String comment = json.get("newComment");
 		if (comment!=null) {
-			article.addComment(new Comment().setDate(new Date()).setText(comment).setAuthor(author));
+			article.addComment(new Comment()
+				.setDate(PlatformManager.get().today())
+				.setText(comment)
+				.setAuthor(author));
 		}
 	}
 
@@ -477,11 +465,7 @@ public class ArticleController
 				);
 			article.setFirstParagraph(article.getParagraph(0));
 			article.buildDocument();
-			if (usage.propose) {
-				synchronizer
-					.writeRef("author.id", "author", (Integer id) -> Account.find(em, id));
-			}
-			else {
+			if (!usage.propose) {
 				synchronizer
 					.write("status", label -> ArticleStatus.byLabels().get(label));
 				writeComments(synchronizer);

@@ -19,6 +19,7 @@ import io.jsonwebtoken.JwtBuilder;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.SignatureException;
+import org.summer.platform.PlatformManager;
 
 public class SecurityManagerImpl implements SecurityManager {
 
@@ -209,7 +210,7 @@ public class SecurityManagerImpl implements SecurityManager {
         SecretKeySpec signingKey = new SecretKeySpec(apiKeySecretBytes, signatureAlgorithm.getJcaName());
         long now = System.currentTimeMillis();
         JwtBuilder builder = Jwts.builder().setId(claimSpec.id)
-                .setIssuedAt(new Date(now))
+                .setIssuedAt(PlatformManager.get().today())
                 .setSubject(claimSpec.subject)
                 .setIssuer(issuer)
                 .signWith(signatureAlgorithm, signingKey);

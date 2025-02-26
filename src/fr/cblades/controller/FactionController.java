@@ -395,7 +395,7 @@ public class FactionController implements InjectorSunbeam, DataSunbeam, Security
 	void addComment(Json json, Faction faction, Account author) {
 		String comment = json.get("newComment");
 		if (comment!=null) {
-			faction.addComment(new Comment().setDate(new Date()).setText(comment).setAuthor(author));
+			faction.addComment(new Comment().setDate(PlatformManager.get().today()).setText(comment).setAuthor(author));
 		}
 	}
 

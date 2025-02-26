@@ -50,6 +50,7 @@ public class ArticleControllerTest implements TestSeawave, CollectionSunbeam, Da
         securityManager.register(new MockSecurityManagerImpl.Credential("admin", "admin", StandardUsers.ADMIN));
         securityManager.register(new MockSecurityManagerImpl.Credential("someone", "someone", StandardUsers.USER));
         securityManager.register(new MockSecurityManagerImpl.Credential("someoneelse", "someoneelse", StandardUsers.USER));
+        platformManager.setTime(1739879980962L);
     }
 
     Article article1() {
@@ -160,6 +161,24 @@ public class ArticleControllerTest implements TestSeawave, CollectionSunbeam, Da
                 "\"paragraphs-title\":\"must not be greater than 200\"," +
                 "\"title\":\"must not be greater than 200\"," +
                 "\"comments-text\":\"must not be greater than 19995\"" +
+            "}", sce.getMessage());
+        }
+    }
+
+    @Test
+    public void checkFieldValidityForArticleCreation() {
+        securityManager.doConnect("admin", 0);
+        try {
+            articleController.create(params(), Json.createJsonFromString(
+                "{ 'title':'...', 'status':'???' }"
+            ));
+            Assert.fail("The request should fail");
+        }
+        catch (SummerControllerException sce) {
+            Assert.assertEquals(400, sce.getStatus());
+            Assert.assertEquals("{" +
+                "\"title\":\"must matches '[\\\\d\\\\s\\\\w]+'\"," +
+                "\"status\":\"??? must matches one of [pnd, live, prp]\"" +
             "}", sce.getMessage());
         }
     }
@@ -406,6 +425,23 @@ public class ArticleControllerTest implements TestSeawave, CollectionSunbeam, Da
     }
 
     @Test
+    public void checkFieldValidityForArticleProposal() {
+        securityManager.doConnect("admin", 0);
+        try {
+            articleController.propose(params(), Json.createJsonFromString(
+                    "{ 'title':'...' }"
+            ));
+            Assert.fail("The request should fail");
+        }
+        catch (SummerControllerException sce) {
+            Assert.assertEquals(400, sce.getStatus());
+            Assert.assertEquals("{" +
+                "\"title\":\"must matches '[\\\\d\\\\s\\\\w]+'\"" +
+            "}", sce.getMessage());
+        }
+    }
+
+    @Test
     public void createAProposalWithMoreImagesThanParagraphs() {
         Account account = new Account().setAccess(new Login().setLogin("someone"));
         dataManager.register("createQuery", null, null,
@@ -468,7 +504,7 @@ public class ArticleControllerTest implements TestSeawave, CollectionSunbeam, Da
         dataManager.register("flush", null, null);
         dataManager.register("flush", null, null);
         securityManager.doConnect("someone", 0);
-        articleController.propose(params(
+        Json result = articleController.propose(params(
             ControllerSunbeam.MULTIPART_FILES, new FileSpecification[] {
                 new FileSpecification("magic_article-0", "magic_article-0.png", "png",
                     new ByteArrayInputStream(("Content of /avatars/magic_article-0.png").getBytes()))
@@ -487,6 +523,22 @@ public class ArticleControllerTest implements TestSeawave, CollectionSunbeam, Da
             " 'newComment': 'Some explanations here'," +
             "}"
         ));
+        Assert.assertEquals("{" +
+                "\"themes\":[{\"id\":0,\"title\":\"\"}]," +
+                "\"comments\":[{\"date\":\"2025-02-18\",\"id\":0,\"text\":\"Some explanations here\",\"version\":0}]," +
+                "\"author\":{\"firstName\":\"\",\"lastName\":\"\",\"id\":0,\"login\":\"someone\"}," +
+                "\"id\":0," +
+                "\"title\":\"The power of Magic\"," +
+                "\"paragraphs\":[{" +
+                    "\"illustration\":\"/api/article/images/paragraph0_0-1739879980962.png\"," +
+                    "\"id\":0," +
+                    "\"text\":\"Because its powerful !\"," +
+                    "\"title\":\"Why Magic is so important\"," +
+                    "\"version\":0" +
+                "}]," +
+                "\"version\":0," +
+                "\"status\":\"prp\"" +
+            "}", result.toString());
         Assert.assertEquals("Content of /avatars/magic_article-0.png", outputStreamToString(outputStream));
         platformManager.hasFinished();
         dataManager.hasFinished();
@@ -542,7 +594,7 @@ public class ArticleControllerTest implements TestSeawave, CollectionSunbeam, Da
                         " 'ordinal':0," +
                         " 'version':0," +
                     " }]" +
-                    "}"));
+                "}"));
             Assert.fail("The request should fail");
         }
         catch (SummerControllerException sce) {
@@ -623,10 +675,10 @@ public class ArticleControllerTest implements TestSeawave, CollectionSunbeam, Da
 
     @Test
     public void checkMaxFieldSizesForArticleUpdate() {
-        securityManager.doConnect("admin", 0);
         dataManager.register("find",
-                setEntityId(new Article().setTitle("The power of Magic"), 1L),
-                null, Article.class, 1L);
+            setEntityId(new Article().setTitle("The power of Magic"), 1L),
+            null, Article.class, 1L);
+        securityManager.doConnect("admin", 0);
         dataManager.register("flush", null, null);
         try {
             articleController.update(params("id", "1"), Json.createJsonFromString("{ " +
@@ -657,6 +709,27 @@ public class ArticleControllerTest implements TestSeawave, CollectionSunbeam, Da
     }
 
     @Test
+    public void checkFieldValidityForArticleUpdate() {
+        dataManager.register("find",
+            setEntityId(new Article().setTitle("The power of Magic"), 1L),
+            null, Article.class, 1L);
+        securityManager.doConnect("admin", 0);
+        try {
+            articleController.update(params("id", "1"), Json.createJsonFromString(
+                "{ 'title':'...', 'status':'???' }"
+            ));
+            Assert.fail("The request should fail");
+        }
+        catch (SummerControllerException sce) {
+            Assert.assertEquals(400, sce.getStatus());
+            Assert.assertEquals("{" +
+                "\"title\":\"must matches '[\\\\d\\\\s\\\\w]+'\"," +
+                "\"status\":\"??? must matches one of [pnd, live, prp]\"" +
+            "}", sce.getMessage());
+        }
+    }
+
+    @Test
     public void updateAnArticle() {
         Article article = (Article)setEntityId(new Article().setTitle("The power of Magic"), 1L);
         dataManager.register("find", article, null, Article.class, 1L);
@@ -666,7 +739,6 @@ public class ArticleControllerTest implements TestSeawave, CollectionSunbeam, Da
         platformManager.register("getOutputStream", outputStream, null);
         dataManager.register("flush", null, null);
         securityManager.doConnect("admin", 0);
-        platformManager.setTime(1739879980962L);
         Json result = articleController.update(params("id", "1",
             ControllerSunbeam.MULTIPART_FILES, new FileSpecification[] {
                 new FileSpecification("magic_article-0", "magic_article-0.png", "png",
@@ -814,9 +886,8 @@ public class ArticleControllerTest implements TestSeawave, CollectionSunbeam, Da
                 "\"themes-id\":\"required\"," +
                 "\"paragraphs-title\":\"required\"," +
                 "\"paragraphs-version\":\"required\"," +
-                "\"paragraphs-ordinal\":\"required\"," +
-                "\"title\":\"required\"" +
-                "}", sce.getMessage());
+                "\"paragraphs-ordinal\":\"required\"" +
+            "}", sce.getMessage());
         }
     }
 
@@ -880,6 +951,26 @@ public class ArticleControllerTest implements TestSeawave, CollectionSunbeam, Da
     }
 
     @Test
+    public void checkFieldValidityForArticleAmend() {
+        dataManager.register("find",
+            setEntityId(new Article().setTitle("The power of Magic"), 1L),
+            null, Article.class, 1L);
+        securityManager.doConnect("admin", 0);
+        try {
+            articleController.amend(params("id", "1"), Json.createJsonFromString(
+                    "{ 'title':'...', 'status':'???' }"
+            ));
+            Assert.fail("The request should fail");
+        }
+        catch (SummerControllerException sce) {
+            Assert.assertEquals(400, sce.getStatus());
+            Assert.assertEquals("{" +
+                "\"title\":\"must matches '[\\\\d\\\\s\\\\w]+'\"" +
+            "}", sce.getMessage());
+        }
+    }
+
+    @Test
     public void amendAnArticle() {
         Article article = articleBelongingToSomeone();
         dataManager.register("find", article, null, Article.class, 1L);
@@ -894,7 +985,6 @@ public class ArticleControllerTest implements TestSeawave, CollectionSunbeam, Da
         platformManager.register("getOutputStream", outputStream, null);
         dataManager.register("flush", null, null);
         securityManager.doConnect("someone", 0);
-        platformManager.setTime(1739879980962L);
         Json result = articleController.amend(params("id", "1",
             ControllerSunbeam.MULTIPART_FILES, new FileSpecification[] {
                 new FileSpecification("magic_article-0", "magic_article-0.png", "png",
@@ -913,41 +1003,22 @@ public class ArticleControllerTest implements TestSeawave, CollectionSunbeam, Da
                 " 'ordinal':0," +
                 " 'version':0," +
             " }]," +
-            " 'comments':[{ " +
-                " 'text': 'Some explanations here'," +
-                " 'date': '2024-11-12'," +
-                " 'version':0," +
-            " }]" +
-            "}"
+            " 'newComment': 'Some explanations here'" +
+        "}"
         ));
         Assert.assertEquals("{" +
-                "\"themes\":[{" +
-                    "\"id\":0," +
-                    "\"title\":\"\"" +
-                "}]," +
-                "\"comments\":[{" +
-                    "\"date\":\"2024-11-12\"," +
-                    "\"id\":0," +
-                    "\"text\":\"Some explanations here\"," +
-                    "\"version\":0" +
-                "}]," +
-                "\"author\":{" +
-                    "\"firstName\":\"\"," +
-                    "\"lastName\":\"\"," +
-                    "\"id\":0," +
-                    "\"login\":\"someone\"" +
-                "}," +
+                "\"themes\":[{\"id\":0,\"title\":\"\"}]," +
+                "\"comments\":[{\"date\":\"2025-02-18\",\"id\":0,\"text\":\"Some explanations here\",\"version\":0}]," +
+                "\"author\":{\"firstName\":\"\",\"lastName\":\"\",\"id\":0,\"login\":\"someone\"}," +
                 "\"id\":1," +
                 "\"title\":\"The power of Magic\"," +
                 "\"paragraphs\":[{" +
                     "\"illustration\":\"/api/article/images/paragraph1_0-1739879980962.png\"," +
                     "\"id\":0," +
-                    "\"text\":\"Because its powerful !\"," +
-                    "\"title\":\"Why Magic is so important\"," +
+                    "\"text\":\"Because its powerful !\",\"title\":\"Why Magic is so important\"," +
                     "\"version\":0" +
                 "}]," +
-                "\"version\":0," +
-                "\"status\":\"live\"" +
+                "\"version\":0" +
             "}",
             result.toString()
         );
@@ -966,7 +1037,6 @@ public class ArticleControllerTest implements TestSeawave, CollectionSunbeam, Da
         dataManager.register("getSingleResult", account, null, null);
         dataManager.register("flush", null, null);
         securityManager.doConnect("admin", 0);
-        platformManager.setTime(1739879980962L);
         Json result = articleController.amend(params("id", "1"),
             Json.createJsonFromString("{" +
                 " 'title':'The power of Magic'," +
@@ -1442,7 +1512,7 @@ public class ArticleControllerTest implements TestSeawave, CollectionSunbeam, Da
     public void tryToGetAnArticleWithoutGivingItsID() {
         securityManager.doConnect("admin", 0);
         try {
-            articleController.update(params(), null);
+            articleController.getArticleWithComments(params(), null);
             Assert.fail("The request should fail");
         }
         catch (SummerControllerException sce) {
@@ -1479,8 +1549,7 @@ public class ArticleControllerTest implements TestSeawave, CollectionSunbeam, Da
 
     @Test
     public void tryToFindAnUnknownArticle() {
-        dataManager.register("find", null,
-            new EntityNotFoundException("Entity Does Not Exists"), Article.class, 1L);
+        dataManager.register("find", null, null, Article.class, 1L);
         securityManager.doConnect("admin", 0);
         try {
             articleController.getArticleWithComments(params("id", "1"), null);
@@ -1554,8 +1623,7 @@ public class ArticleControllerTest implements TestSeawave, CollectionSunbeam, Da
 
     @Test
     public void tryToDeleteAnUnknownArticle() {
-        dataManager.register("find", null,
-            new EntityNotFoundException("Entity Does Not Exists"), Article.class, 1L);
+        dataManager.register("find", null, null, Article.class, 1L);
         securityManager.doConnect("admin", 0);
         try {
             articleController.delete(params("id", "1"), null);

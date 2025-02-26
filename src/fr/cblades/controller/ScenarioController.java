@@ -373,7 +373,10 @@ public class ScenarioController implements InjectorSunbeam, DataSunbeam, Securit
 	void addComment(Json json, Scenario scenario, Account author) {
 		String comment = json.get("newComment");
 		if (comment!=null) {
-			scenario.addComment(new Comment().setDate(new Date()).setText(comment).setAuthor(author));
+			scenario.addComment(new Comment()
+                .setDate(PlatformManager.get().today())
+                .setText(comment)
+                .setAuthor(author));
 		}
 	}
 

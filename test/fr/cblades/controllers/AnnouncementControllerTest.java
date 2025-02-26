@@ -287,6 +287,16 @@ public class AnnouncementControllerTest implements TestSeawave, CollectionSunbea
                 setEntityId(new Announcement().setDescription("Second news").setIllustration("/there/where/news2.png"), 2)
         ), null);
         Json result = announcementController.getLive(params(), null);
+        Assert.assertEquals("{\"announcements\":[{" +
+                "\"description\":\"First news\"," +
+                "\"illustration\":\"/there/where/news1.png\"," +
+                "\"id\":1,\"version\":0" +
+            "},{" +
+                "\"description\":\"Second news\"," +
+                "\"illustration\":\"/there/where/news2.png\"," +
+                "\"id\":2," +
+                "\"version\":0" +
+            "}]}", result.toString());
         dataManager.hasFinished();
     }
 
@@ -320,8 +330,7 @@ public class AnnouncementControllerTest implements TestSeawave, CollectionSunbea
 
     @Test
     public void tryToFindAnUnknownAnnouncement() {
-        dataManager.register("find", null,
-                new EntityNotFoundException("Entity Does Not Exists"), Announcement.class, 1L);
+        dataManager.register("find", null, null, Announcement.class, 1L);
         securityManager.doConnect("admin", 0);
         try {
             announcementController.getById(params("id", "1"), null);
@@ -396,8 +405,7 @@ public class AnnouncementControllerTest implements TestSeawave, CollectionSunbea
     @Test
     public void tryToDeleteAnUnknownAnnouncement() {
         dataManager.register("find",
-                null,
-                new EntityNotFoundException("Entity Does Not Exists"), Announcement.class, 1L);
+                null, null, Announcement.class, 1L);
         securityManager.doConnect("admin", 0);
         try {
             announcementController.delete(params("id", "1"), null);
@@ -532,8 +540,7 @@ public class AnnouncementControllerTest implements TestSeawave, CollectionSunbea
     @Test
     public void tryToUpdateAnUnknownAnnouncement() {
         dataManager.register("find",
-                null,
-                new EntityNotFoundException("Entity Does Not Exists"), Announcement.class, 1L);
+                null, null, Announcement.class, 1L);
         securityManager.doConnect("admin", 0);
         try {
             announcementController.update(params("id", "1"), Json.createJsonFromString(

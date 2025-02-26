@@ -325,8 +325,7 @@ public class GameControllerTest implements TestSeawave, CollectionSunbeam, DataM
 	@Test
 	public void tryToFindAnUnknownGame() {
 		dataManager.register("find",
-			null,
-			new EntityNotFoundException("Entity Does Not Exists"), Game.class, 1L);
+			null, null, Game.class, 1L);
 		securityManager.doConnect("admin", 0);
 		try {
 			gameController.getById(params("id", "1"), null);
@@ -388,8 +387,7 @@ public class GameControllerTest implements TestSeawave, CollectionSunbeam, DataM
 	@Test
 	public void tryToDeleteAnUnknownGame() {
 		dataManager.register("find",
-			null,
-			new EntityNotFoundException("Entity Does Not Exists"), Game.class, 1L);
+			null, null, Game.class, 1L);
 		securityManager.doConnect("admin", 0);
 		try {
 			gameController.delete(params("id", "1"), null);
@@ -524,7 +522,7 @@ public class GameControllerTest implements TestSeawave, CollectionSunbeam, DataM
 	@Test
 	public void tryToUpdateAnUnknownGame() {
 		dataManager.register("find",
-			null, new EntityNotFoundException("Entity Does Not Exists"), Game.class, 101L);
+			null, null, Game.class, 101L);
 		securityManager.doConnect("admin", 0);
 		try {
 			gameController.update(params("id", "101"), Json.createJsonFromString(SIMPLE_GAME_UPDATE));

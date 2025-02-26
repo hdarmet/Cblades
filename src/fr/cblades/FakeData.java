@@ -4,6 +4,7 @@ import fr.cblades.domain.*;
 import org.summer.Ref;
 import org.summer.annotation.Launch;
 import org.summer.data.DataSunbeam;
+import org.summer.platform.PlatformManager;
 
 import javax.persistence.EntityManager;
 import java.util.Date;
@@ -37,12 +38,12 @@ public class FakeData {
     static void createGameData(DataSunbeam data) {
         data.inTransaction(em->{
             data.persist(em, new Board().setName("board1").setStatus(BoardStatus.LIVE).setDescription(TINY_PARAGRAPH_TEXT).setPath("./../images/maps/map-1.png").setIcon("./../images/maps/map-1-icon.png")
-                .addComment(new Comment().setDate(new Date()).setText(TINY_PARAGRAPH_TEXT))
-                .addComment(new Comment().setDate(new Date()).setText(SHORT_PARAGRAPH_TEXT))
-                .addComment(new Comment().setDate(new Date()).setText(TINY_PARAGRAPH_TEXT))
-                .addComment(new Comment().setDate(new Date()).setText(SHORT_PARAGRAPH_TEXT))
-                .addComment(new Comment().setDate(new Date()).setText(TINY_PARAGRAPH_TEXT))
-                .addComment(new Comment().setDate(new Date()).setText(SHORT_PARAGRAPH_TEXT))
+                .addComment(new Comment().setDate(PlatformManager.get().today()).setText(TINY_PARAGRAPH_TEXT))
+                .addComment(new Comment().setDate(PlatformManager.get().today()).setText(SHORT_PARAGRAPH_TEXT))
+                .addComment(new Comment().setDate(PlatformManager.get().today()).setText(TINY_PARAGRAPH_TEXT))
+                .addComment(new Comment().setDate(PlatformManager.get().today()).setText(SHORT_PARAGRAPH_TEXT))
+                .addComment(new Comment().setDate(PlatformManager.get().today()).setText(TINY_PARAGRAPH_TEXT))
+                .addComment(new Comment().setDate(PlatformManager.get().today()).setText(SHORT_PARAGRAPH_TEXT))
             );
             data.persist(em, new Board().setName("board2").setStatus(BoardStatus.LIVE).setDescription(TINY_PARAGRAPH_TEXT).setPath("./../images/maps/map-2.png").setIcon("./../images/maps/map-2-icon.png"));
             data.persist(em, new Board().setName("board3").setStatus(BoardStatus.LIVE).setDescription(TINY_PARAGRAPH_TEXT).setPath("./../images/maps/map-3.png").setIcon("./../images/maps/map-3-icon.png"));
@@ -78,7 +79,7 @@ public class FakeData {
                 .setAvatar("../images/site/avatars/my-avatar.png").setStatus(AccountStatus.ACTIVE)
                 .setRating(201).setMessageCount(100);
             data.persist(em, temrad);
-            long now = new Date().getTime();
+            long now = PlatformManager.get().today().getTime();
             for (int index=0; index<10; index++) {
                 Event event = new Event()
                     .setDescription(SHORT_PARAGRAPH_TEXT)
@@ -154,7 +155,7 @@ public class FakeData {
 
     static void createEvents(DataSunbeam data) {
         data.inTransaction(em-> {
-            long now = new Date().getTime();
+            long now = PlatformManager.get().today().getTime();
             for (int index=0; index<10; index++) {
                 Event event = new Event()
                     .setDescription(SHORT_PARAGRAPH_TEXT)
@@ -875,7 +876,7 @@ public class FakeData {
             int accountIndex = 0;
             for (int messageIndex=0; messageIndex<messageCount; messageIndex++) {
                 ForumMessage message = new ForumMessage()
-                    .setPublishedDate(new Date())
+                    .setPublishedDate(PlatformManager.get().today())
                     .setPoll(new LikePoll().setLikes(123).setDislikes(0))
                     .setText(PARAGRAPH_TEXT)
                     .setForumThread(thread)
@@ -884,7 +885,7 @@ public class FakeData {
                 thread.setLastMessage(message);
                 forum.setLastMessage(message);
                 Report report = new Report()
-                    .setSendDate(new Date())
+                    .setSendDate(PlatformManager.get().today())
                     .setCategory(ForumMessage.REPORT)
                     .setReason("off-topic")
                     .setText(TINY_PARAGRAPH_TEXT)

@@ -42,12 +42,7 @@ public interface DataSunbeam {
 	}
 
 	default <E> E find(EntityManager em, Class<E> entityClass, Object id) {
-		try {
-			return em.find(entityClass, id);
-		}
-		catch (EntityNotFoundException e) {
-			return null;
-		}
+		return em.find(entityClass, id);
 	}
 
 	@SuppressWarnings("unchecked")

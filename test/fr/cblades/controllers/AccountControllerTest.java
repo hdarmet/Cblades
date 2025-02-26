@@ -413,8 +413,7 @@ public class AccountControllerTest  implements TestSeawave, CollectionSunbeam, D
 
     @Test
     public void tryToFindAnUnknownAccount() {
-        dataManager.register("find", null,
-                new EntityNotFoundException("Entity Does Not Exists"), Account.class, 1L);
+        dataManager.register("find", null, null, Account.class, 1L);
         securityManager.doConnect("admin", 0);
         try {
             accountController.getById(params("id", "1"), null);
@@ -494,8 +493,7 @@ public class AccountControllerTest  implements TestSeawave, CollectionSunbeam, D
     @Test
     public void tryToDeleteAnUnknownAccount() {
         dataManager.register("find",
-                null,
-                new EntityNotFoundException("Entity Does Not Exists"), Account.class, 1L);
+                null, null, Account.class, 1L);
         securityManager.doConnect("admin", 0);
         try {
             accountController.delete(params("id", "1"), null);
@@ -677,8 +675,7 @@ public class AccountControllerTest  implements TestSeawave, CollectionSunbeam, D
 
     @Test
     public void tryToUpdateAnUnknownAccount() {
-        dataManager.register("find", null,
-                new EntityNotFoundException("Entity Does Not Exists"), Account.class, 1L);
+        dataManager.register("find", null, null, Account.class, 1L);
         securityManager.doConnect("admin", 0);
         try {
             accountController.update(params("id", "1"), Json.createJsonFromString( "{" +

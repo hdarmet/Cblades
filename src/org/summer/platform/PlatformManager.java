@@ -8,6 +8,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.Method;
 import java.security.SecureRandom;
+import java.util.Date;
 import java.util.Properties;
 import java.util.function.Consumer;
 
@@ -56,5 +57,7 @@ public interface PlatformManager {
     default Long now() {
         return System.currentTimeMillis();
     }
+
+    default Date today() { return new Date(); }
 
 }
