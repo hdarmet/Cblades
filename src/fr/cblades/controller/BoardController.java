@@ -15,6 +15,7 @@ import org.summer.controller.SummerControllerException;
 import org.summer.controller.Verifier;
 import org.summer.data.DataSunbeam;
 import org.summer.data.SummerNotFoundException;
+import org.summer.data.Synchronizer;
 import org.summer.platform.FileSunbeam;
 import org.summer.platform.PlatformManager;
 import org.summer.security.SecuritySunbeam;
@@ -33,7 +34,8 @@ import java.util.stream.Collectors;
  * Controleur permettant de manipuler des planches
  */
 @Controller
-public class BoardController implements InjectorSunbeam, DataSunbeam, SecuritySunbeam, ControllerSunbeam, FileSunbeam, StandardUsers {
+public class BoardController implements InjectorSunbeam, DataSunbeam, SecuritySunbeam, ControllerSunbeam, FileSunbeam,
+		StandardUsers, CommonEntities {
 
 	/**
 	 * Endpoint (accessible via "/api/board/images/:imagename") permettant de télécharger depuis le navigateur
@@ -43,17 +45,7 @@ public class BoardController implements InjectorSunbeam, DataSunbeam, SecuritySu
 	 */
 	@MIME(url="/api/board/images/:imagename")
 	public FileSpecification getImage(Map<String, Object> params) {
-		try {
-			String webName = (String)params.get("imagename");
-			int minusPos = webName.indexOf('-');
-			int pointPos = webName.indexOf('.');
-			String imageName = webName.substring(0, minusPos)+webName.substring(pointPos);
-			return new FileSpecification()
-					.setName(imageName)
-					.setStream(PlatformManager.get().getInputStream("/boards/"+imageName));
-		} catch (PersistenceException pe) {
-			throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe);
-		}
+		return this.getImage(params, "imagename", "/boards/");
 	}
 
 	/**
@@ -70,8 +62,8 @@ public class BoardController implements InjectorSunbeam, DataSunbeam, SecuritySu
 	 */
 	void storeBoardImages(Map<String, Object> params, Board board) {
 		FileSpecification[] files = (FileSpecification[]) params.get(MULTIPART_FILES);
-		if (files!= null && files.length > 0) {
-			if (files.length!= 2) throw new SummerControllerException(400, "Two board files must be loaded.");
+		if (files!= null) {
+			if (files.length != 2) throw new SummerControllerException(400, "Two board files must be loaded.");
 			String fileName = "board" + board.getId() + "." + files[0].getExtension();
 			String fileIconName = "boardicon" + board.getId() + "." + files[1].getExtension();
 			String webName = "board" + board.getId() + "-" + PlatformManager.get().now() + "." + files[0].getExtension();
@@ -87,16 +79,18 @@ public class BoardController implements InjectorSunbeam, DataSunbeam, SecuritySu
 	public Json propose(Map<String, Object> params, Json request) {
 		Ref<Json> result = new Ref<>();
 		inTransaction(em->{
-			Board newBoard = writeToProposedBoard(request, new Board());
 			ifAuthorized(
 				user->{
 					try {
+						checkJson(request, Usage.PROPOSE);
+						Board newBoard = writeToBoard(em, request, new Board(), Usage.PROPOSE);
 						Account author = Account.find(em, user);
 						addComment(request, newBoard, author);
 						newBoard.setStatus(BoardStatus.PROPOSED);
 						newBoard.setAuthor(author);
 						persist(em, newBoard);
 						storeBoardImages(params, newBoard);
+						flush(em);
 						result.set(readFromBoard(newBoard));
 					} catch (PersistenceException pe) {
 						throw new SummerControllerException(409,
@@ -112,27 +106,28 @@ public class BoardController implements InjectorSunbeam, DataSunbeam, SecuritySu
 
 	@REST(url="/api/board/amend/:id", method=Method.POST)
 	public Json amend(Map<String, Object> params, Json request) {
+		long id = getLongParam(params, "id", "The Board ID is missing or invalid (%s)");
 		Ref<Json> result = new Ref<>();
+		checkJson(request, Usage.AMEND);
 		inTransaction(em-> {
-			String id = (String) params.get("id");
-			Board board = findBoard(em, new Long(id));
-			ifAuthorized(
-				user -> {
-					try {
+			try {
+				Board board = findBoard(em, id);
+				ifAuthorized(
+					user -> {
 						Account author = Account.find(em, user);
-						writeToProposedBoard(request, board);
+						writeToBoard(em, request, board, Usage.AMEND);
 						addComment(request, board, author);
 						storeBoardImages(params, board);
 						flush(em);
 						result.set(readFromBoard(board));
-					} catch (PersistenceException pe) {
-						throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe);
-					} catch (SummerNotFoundException snfe) {
-						throw new SummerControllerException(404, snfe.getMessage());
-					}
-				},
-				verifyIfAdminOrOwner(board)
-			);
+					},
+					verifyIfAdminOrOwner(board)
+				);
+			} catch (PersistenceException pe) {
+				throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe);
+			} catch (SummerNotFoundException snfe) {
+				throw new SummerControllerException(404, snfe.getMessage());
+			}
 		});
 		return result.get();
 	}
@@ -141,12 +136,14 @@ public class BoardController implements InjectorSunbeam, DataSunbeam, SecuritySu
 	public Json create(Map<String, Object> params, Json request) {
 		Ref<Json> result = new Ref<>();
 		inTransaction(em->{
-			Board newBoard = writeToBoard(em, request, new Board(), true);
 			ifAuthorized(
 				user->{
 					try {
+						checkJson(request, Usage.CREATE);
+						Board newBoard = writeToBoard(em, request, new Board(), Usage.CREATE);
 						persist(em, newBoard);
 						storeBoardImages(params, newBoard);
+						flush(em);
 						result.set(readFromBoard(newBoard));
 					} catch (PersistenceException pe) {
 						throw new SummerControllerException(409,
@@ -161,6 +158,29 @@ public class BoardController implements InjectorSunbeam, DataSunbeam, SecuritySu
 		return result.get();
 	}
 
+
+	@REST(url="/api/board/update/:id", method=Method.POST)
+	public Json update(Map<String, Object> params, Json request) {
+		long id = getLongParam(params, "id", "The Board ID is missing or invalid (%s)");
+		Ref<Json> result = new Ref<>();
+		inTransaction(em-> {
+			ifAuthorized(user -> {
+				try {
+					checkJson(request, Usage.UPDATE);
+					Board board = findBoard(em, id);
+					writeToBoard(em, request, board, Usage.UPDATE);
+					storeBoardImages(params, board);
+					flush(em);
+					result.set(readFromBoard(board));
+				} catch (PersistenceException pe) {
+					throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe);
+				}
+			},
+			ADMIN);
+		});
+		return result.get();
+	}
+
 	@REST(url="/api/board/all", method=Method.GET)
 	public Json getAll(Map<String, Object> params, Json request) {
 		Ref<Json> result = new Ref<>();
@@ -171,10 +191,6 @@ public class BoardController implements InjectorSunbeam, DataSunbeam, SecuritySu
 				String countQuery = "select count(b) from Board b";
 				String queryString = "select b from Board b";
 				if (search!=null) {
-					/*
-					search = StringReplacer.replace(search,
-							"tester", "test");
-					 */
 					String whereClause =" where fts('pg_catalog.english', " +
 						"b.name||' '||" +
 						"b.description||' '||" +
@@ -202,7 +218,7 @@ public class BoardController implements InjectorSunbeam, DataSunbeam, SecuritySu
 	}
 
 	@REST(url="/api/board/live", method=Method.GET)
-	public Json getLive(Map<String, String> params, Json request) {
+	public Json getLive(Map<String, Object> params, Json request) {
 		Ref<Json> result = new Ref<>();
 		inReadTransaction(em->{
 			Collection<Board> boards = findBoards(em.createQuery("select b from Board b where b.status=:status"),
@@ -241,11 +257,6 @@ public class BoardController implements InjectorSunbeam, DataSunbeam, SecuritySu
 			ifAuthorized(
 				user->{
 					try {
-						String searchClause =" and fts('pg_catalog.english', " +
-							"b.name||' '||" +
-							"b.description||' '||" +
-							"b.status, :search) = true";
-
 						String queryString = "select b from Board b where b.author=:author order by b.updateTimestamp, b.status";
 						Collection<Board> boards = findPagedBoards(
 							em.createQuery(queryString),
@@ -263,10 +274,10 @@ public class BoardController implements InjectorSunbeam, DataSunbeam, SecuritySu
 
 	@REST(url="/api/board/find/:id", method=Method.GET)
 	public Json getById(Map<String, Object> params, Json request) {
+		long id = getLongParam(params, "id", "The Board ID is missing or invalid (%s)");
 		Ref<Json> result = new Ref<>();
 		inReadTransaction(em->{
-			String id = (String)params.get("id");
-			Board board = findBoard(em, new Long(id));
+			Board board = findBoard(em, id);
 			ifAuthorized(user->{
 				result.set(readFromBoardAndHexes(board));
 			},
@@ -277,10 +288,10 @@ public class BoardController implements InjectorSunbeam, DataSunbeam, SecuritySu
 
 	@REST(url="/api/board/load/:id", method=Method.GET)
 	public Json getBoardWithComments(Map<String, Object> params, Json request) {
+		long id = getLongParam(params, "id", "The Board ID is missing or invalid (%s)");
 		Ref<Json> result = new Ref<>();
 		inReadTransaction(em->{
-			String id = (String)params.get("id");
-			Board board = findBoard(em, new Long(id));
+			Board board = findBoard(em, id);
 			ifAuthorized(user->{
 				result.set(readFromBoard(board));
 			},
@@ -291,10 +302,10 @@ public class BoardController implements InjectorSunbeam, DataSunbeam, SecuritySu
 
 	@REST(url="/api/board/delete/:id", method=Method.GET)
 	public Json delete(Map<String, Object> params, Json request) {
+		long id = getLongParam(params, "id", "The Board ID is missing or invalid (%s)");
 		inTransaction(em->{
-			String id = (String)params.get("id");
 			try {
-				Board board = findBoard(em, new Long(id));
+				Board board = findBoard(em, id);
 				ifAuthorized(user->{
 						remove(em, board);
 					},
@@ -307,34 +318,15 @@ public class BoardController implements InjectorSunbeam, DataSunbeam, SecuritySu
 		return Json.createJsonObject().put("deleted", "ok");
 	}
 
-	@REST(url="/api/board/update/:id", method=Method.POST)
-	public Json update(Map<String, Object> params, Json request) {
-		Ref<Json> result = new Ref<>();
-		try {
-			inTransaction(em-> {
-				String id = (String) params.get("id");
-				Board board = findBoard(em, new Long(id));
-				ifAuthorized(user -> {
-					writeToBoard(em, request, board, false);
-					storeBoardImages(params, board);
-					flush(em);
-					result.set(readFromBoard(board));
-				}, verifyIfAdminOrOwner(board));
-			});
-		} catch (PersistenceException pe) {
-			throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe);
-		}
-		return result.get();
-	}
 
 	@REST(url="/api/board/update-status/:id", method=Method.POST)
 	public Json updateStatus(Map<String, Object> params, Json request) {
+		long id = getLongParam(params, "id", "The Board ID is missing or invalid (%s)");
 		Ref<Json> result = new Ref<>();
 		ifAuthorized(user -> {
 			try {
 				inTransaction(em-> {
-					String id = (String) params.get("id");
-					Board board = findBoard(em, new Long(id));
+					Board board = findBoard(em, id);
 					writeToBoardStatus(request, board);
 					flush(em);
 					result.set(readFromBoard(board));
@@ -350,8 +342,9 @@ public class BoardController implements InjectorSunbeam, DataSunbeam, SecuritySu
 	public Json updateHexes(Map<String, Object> params, Json request) {
 		Ref<Json> result = new Ref<>();
 		inTransaction(em->{
-			String id = (String)params.get("id");
-			Board board = findBoard(em, new Long(id));
+			long id = getLongParam(params, "id", "The Board ID is missing or invalid (%s)");
+			checkJsonForBoardHexes(request);
+			Board board = findBoard(em, id);
 			ifAuthorized(user->{
 					try {
 						writeToBoardHexes(request, board);
@@ -379,24 +372,6 @@ public class BoardController implements InjectorSunbeam, DataSunbeam, SecuritySu
 		};
 	}
 
-	Board writeToProposedBoard(Json json, Board board) {
-		verify(json)
-			.checkRequired("name").checkMinSize("name", 2).checkMaxSize("name", 20)
-			.checkPattern("name", "[\\d\\s\\w]+")
-			.checkRequired("description").checkMinSize("description", 2).checkMaxSize("description", 1000)
-			.checkRequired("path").checkMinSize("path", 2).checkMaxSize("path", 200)
-			.checkRequired("icon").checkMinSize("icon", 2).checkMaxSize("icon", 200)
-			.checkMinSize("newComment", 2).checkMaxSize("newComment", 200)
-			.ensure();
-		sync(json, board)
-			.write("version")
-			.write("name")
-			.write("description")
-			.write("path")
-			.write("icon");
-		return board;
-	}
-
 	void addComment(Json json, Board board, Account author) {
 		String comment = json.get("newComment");
 		if (comment!=null) {
@@ -404,71 +379,77 @@ public class BoardController implements InjectorSunbeam, DataSunbeam, SecuritySu
 		}
 	}
 
-	Board writeToBoard(EntityManager em, Json json, Board board, boolean full) {
+	void checkJson(Json json, Usage usage) {
 		Verifier verifier = verify(json);
-		try {
-			if (full) {
-				verifier
-					.checkRequired("name").checkMinSize("name", 2).checkMaxSize("name", 20)
-					.checkRequired("description").checkMinSize("description", 2).checkMaxSize("description", 1000)
-					.checkRequired("path").checkMinSize("path", 2).checkMaxSize("path", 200)
-					.checkRequired("icon").checkMinSize("icon", 2).checkMaxSize("icon", 200)
-					.each("comments", cJson -> verify(cJson)
-							.checkRequired("version")
-							.checkRequired("date")
-							.checkRequired("text")
-					);
-			}
+		if (usage.creation) {
 			verifier
-				.checkPattern("name", "[\\d\\s\\w]+")
-				.check("status", BoardStatus.byLabels().keySet())
-				.each("comments", cJson -> verify(cJson)
-					.checkMinSize("text", 2)
-					.checkMaxSize("text", 19995)
-				);
-			verifier.ensure();
-			sync(json, board)
-				.write("version")
-				.write("name")
-				.write("description")
-				.write("path")
-				.write("icon")
-				.write("status", label -> BoardStatus.byLabels().get(label))
-				.writeRef("author.id", "author", (Integer id) -> Account.find(em, id))
-				.syncEach("comments", (cJson, comment) -> sync(cJson, comment)
-					.write("version")
-					.writeDate("date")
-					.write("text")
-				);
-			return board;
-		} catch (SummerNotFoundException snfe) {
-			throw new SummerControllerException(404, snfe.getMessage());
+				.checkRequired("name");
 		}
+		verifier
+			.checkMinSize("name", 2).checkMaxSize("name", 20)
+			.checkMinSize("description", 2).checkMaxSize("description", 1000)
+			.checkPattern("name", "[\\d\\s\\w]+");
+		checkComments(verifier, true);
+		if (usage.propose) {
+			verifier.checkMinSize("newComment", 2).checkMaxSize("newComment", 200);
+		}
+		else {
+			verifier.check("status", BoardStatus.byLabels().keySet());
+			checkComments(verifier, usage.creation);
+		}
+		verifier.ensure();
+	}
+
+	Board writeToBoard(EntityManager em, Json json, Board board, Usage usage) {
+		Synchronizer synchronizer =sync(json, board)
+			.write("version")
+			.write("name")
+			.write("description");
+		writeComments(synchronizer);
+		if (!usage.propose) {
+			synchronizer
+				.write("status", label -> BoardStatus.byLabels().get(label));
+			writeComments(synchronizer);
+		}
+		return board;
 	}
 
 	Board writeToBoardStatus(Json json, Board board) {
 		verify(json)
 			.checkRequired("id").checkInteger("id", "Not a valid id")
-			.check("status", BoardStatus.byLabels().keySet())
+			.checkRequired("status").check("status", BoardStatus.byLabels().keySet())
 			.ensure();
 		sync(json, board)
 			.write("status", label->BoardStatus.byLabels().get(label));
 		return board;
 	}
 
-	Board writeToBoardHexes(Json json, Board board) {
+	void checkJsonForBoardHexes(Json json) {
 		verify(json)
-			.each("hexes", cJson->verify(cJson)
-				.checkRequired("version")
-				.checkRequired("col").checkMin("col", 0).checkMax("col", 13)
-				.checkRequired("row").checkMin("row", 0).checkMax("row", 16)
-				.checkRequired("height").checkMin("height", -5).checkMax("height", 5)
+			.each("hexes", cJson -> verify(cJson)
+				.checkIdAndVersion()
+				.checkRequired("col").ifThen(
+					iJson -> verify(iJson).checkInteger("col"),
+					tJson -> verify(tJson).checkMin("col", 0).checkMax("col", 13)
+				)
+				.checkRequired("row").ifThen(
+					iJson -> verify(iJson).checkInteger("row"),
+					tJson -> verify(tJson).checkMin("row", 0).checkMax("row", 16)
+				)
+				.checkRequired("height").ifThen(
+					iJson -> verify(iJson).checkInteger("height"),
+					tJson -> verify(tJson).checkMin("height", -5).checkMax("height", 5)
+				)
+				.checkRequired("row").checkInteger("row")//.checkMin("row", 0).checkMax("row", 16)
 				.checkRequired("type").check("type", HexType.byLabels().keySet())
 				.checkRequired("side120Type").check("side120Type", HexSideType.byLabels().keySet())
 				.checkRequired("side180Type").check("side180Type", HexSideType.byLabels().keySet())
 				.checkRequired("side240Type").check("side240Type", HexSideType.byLabels().keySet())
 			)
 			.ensure();
+	}
+
+	Board writeToBoardHexes(Json json, Board board) {
 		sync(json, board)
 			.syncEach("hexes", (hJson, hex)->sync(hJson, hex)
 				.write("version")
@@ -516,47 +497,30 @@ public class BoardController implements InjectorSunbeam, DataSunbeam, SecuritySu
 
 	Json readFromBoardSummary(Board board) {
 		Json json = Json.createJsonObject();
-		sync(json, board)
+		Synchronizer synchronizer = sync(json, board)
 			.read("id")
 			.read("version")
 			.read("name")
 			.read("description")
 			.read("path")
 			.read("icon")
-			.read("status", BoardStatus::getLabel)
-			.readLink("author", (pJson, account)->sync(pJson, account)
-				.read("id")
-				.read("login", "access.login")
-				.read("firstName")
-				.read("lastName")
-				.read("avatar")
-			);
+			.read("status", BoardStatus::getLabel);
+		readAuthor(synchronizer);
 		return json;
 	}
 
 	Json readFromBoard(Board board) {
 		Json json = Json.createJsonObject();
-		sync(json, board)
+		Synchronizer synchronizer = sync(json, board)
 			.read("id")
 			.read("version")
 			.read("name")
 			.read("description")
 			.read("path")
 			.read("icon")
-			.read("status", BoardStatus::getLabel)
-			.readLink("author", (pJson, account)->sync(pJson, account)
-				.read("id")
-				.read("login", "access.login")
-				.read("firstName")
-				.read("lastName")
-				.read("avatar")
-			)
-			.readEach("comments", (hJson, hex)->sync(hJson, hex)
-				.read("id")
-				.read("version")
-				.readDate("date")
-				.read("text")
-			);
+			.read("status", BoardStatus::getLabel);
+		readAuthor(synchronizer);
+		readComments(synchronizer);
 		return json;
 	}
 

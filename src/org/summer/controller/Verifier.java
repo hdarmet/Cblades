@@ -52,7 +52,27 @@ public class Verifier {
 		}
 		return this;
 	}
-	
+
+	public Verifier ifThen(Function<Json, Verifier> ifBuilder, Function<Json, Verifier> thenBuilder) {
+		Verifier ifVerifier = ifBuilder.apply(json);
+		if (ifVerifier.result!=null) {
+			if (this.result == null) {
+				this.result = Json.createJsonObject();
+			}
+			this.result.putAll(ifVerifier.result);
+		}
+		else {
+			Verifier thenVerifier = thenBuilder.apply(json);
+			if (thenVerifier.result!=null) {
+				if (this.result == null) {
+					this.result = Json.createJsonObject();
+				}
+				this.result.putAll(thenVerifier.result);
+			}
+		}
+		return this;
+	}
+
 	public Verifier each(String field, Function<Json, Verifier> verifyBuilder) {
 		Json jarray = (Json)this.json.get(field);
 		this.levels.add(field);
@@ -116,6 +136,19 @@ public class Verifier {
 
 	public Verifier checkPattern(String field, String pattern) {
 		return checkPattern(field, pattern, "must matches '"+pattern+"'");
+	}
+
+	public Verifier checkIdAndVersion() {
+		return checkIdAndVersion("id and version must be valid integers");
+	}
+
+	public Verifier checkIdAndVersion(String message) {
+		return check(json->
+			json.get("id")==null || (
+				(json.get("id") instanceof Integer) &&
+				json.get("version")!=null &&
+				(json.get("version") instanceof Integer)
+		), "version", message);
 	}
 
 	public <T> Verifier check(String field, Set<T>values) {

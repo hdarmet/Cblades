@@ -1,7 +1,6 @@
 package fr.cblades.controllers;
 
 import fr.cblades.StandardUsers;
-import fr.cblades.controller.AccountController;
 import fr.cblades.controller.ThemeController;
 import fr.cblades.domain.*;
 import org.junit.Assert;
@@ -317,7 +316,7 @@ public class ThemeControllerTest implements TestSeawave, CollectionSunbeam, Data
         securityManager.doConnect("admin", 0);
         try {
             themeController.propose(params(), Json.createJsonFromString(
-                    "{ 'description': '123', 'title':'...', 'category':'???' }"
+                "{ 'description': '123', 'title':'...', 'category':'???' }"
             ));
             Assert.fail("The request should fail");
         }
@@ -334,7 +333,7 @@ public class ThemeControllerTest implements TestSeawave, CollectionSunbeam, Data
     public void createNewThemeProposal() {
         Account account = new Account().setAccess(new Login().setLogin("someone"));
         dataManager.register("createQuery", null, null,
-                "select a from Account a, Login l where a.access = l and l.login=:login");
+            "select a from Account a, Login l where a.access = l and l.login=:login");
         dataManager.register("setParameter", null, null, "login", "someone");
         dataManager.register("getSingleResult", account, null, null);
         dataManager.register("persist", null, null, (Predicate) entity->{

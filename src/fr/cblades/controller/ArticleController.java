@@ -125,26 +125,26 @@ public class ArticleController
 	public Json amend(Map<String, Object> params, Json request) {
 		long id = getLongParam(params, "id", "The Article ID is missing or invalid (%s)");
 		Ref<Json> result = new Ref<>();
-		inTransactionUntilSuccessful(em-> {
-			Article article = findArticle(em, id);
-			ifAuthorized(
-				user -> {
-					try {
-						checkJson(request, Usage.AMEND);
+		checkJson(request, Usage.AMEND);
+		inTransaction(em-> {
+			try {
+				Article article = findArticle(em, id);
+				ifAuthorized(
+					user -> {
 						Account author = Account.find(em, user);
 						writeToArticle(em, request, article, Usage.AMEND);
 						addComment(request, article, author);
 						storeArticleImages(params, article);
 						flush(em);
 						result.set(readFromArticle(article));
-					} catch (PersistenceException pe) {
-						throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe);
-					} catch (SummerNotFoundException snfe) {
-						throw new SummerControllerException(404, snfe.getMessage());
-					}
-				},
-				verifyIfAdminOrOwner(article)
-			);
+					},
+					verifyIfAdminOrOwner(article)
+				);
+			} catch (PersistenceException pe) {
+				throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe);
+			} catch (SummerNotFoundException snfe) {
+				throw new SummerControllerException(404, snfe.getMessage());
+			}
 		});
 		return result.get();
 	}
@@ -176,7 +176,6 @@ public class ArticleController
 		return result.get();
 	}
 
-
 	@REST(url="/api/article/update/:id", method=Method.POST)
 	public Json update(Map<String, Object> params, Json request) {
 		long id = getLongParam(params, "id", "The Article ID is missing or invalid (%s)");
@@ -185,8 +184,8 @@ public class ArticleController
 			ifAuthorized(
 				user -> {
 					try {
-						Article article = findArticle(em, id);
 						checkJson(request, Usage.UPDATE);
+						Article article = findArticle(em, id);
 						writeToArticle(em, request, article, Usage.UPDATE);
 						storeArticleImages(params, article);
 						flush(em);
