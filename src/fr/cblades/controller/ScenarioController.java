@@ -34,7 +34,8 @@ import java.util.stream.Collectors;
  * Controleur permettant de manipuler des scénarios
  */
 @Controller
-public class ScenarioController implements InjectorSunbeam, DataSunbeam, SecuritySunbeam, ControllerSunbeam, FileSunbeam, StandardUsers {
+public class ScenarioController implements InjectorSunbeam, DataSunbeam, SecuritySunbeam,
+		ControllerSunbeam, StandardUsers, CommonEntities {
 
 	/**
 	 * Endpoint (accessible via "/api/scenario/images/:imagename") permettant de télécharger depuis le navigateur
@@ -44,17 +45,7 @@ public class ScenarioController implements InjectorSunbeam, DataSunbeam, Securit
 	 */
 	@MIME(url="/api/scenario/images/:imagename")
 	public FileSpecification getImage(Map<String, Object> params) {
-		try {
-			String webName = (String)params.get("imagename");
-			int minusPos = webName.indexOf('-');
-			int pointPos = webName.indexOf('.');
-			String imageName = webName.substring(0, minusPos)+webName.substring(pointPos);
-			return new FileSpecification()
-				.setName(imageName)
-				.setStream(PlatformManager.get().getInputStream("/scenarios/"+imageName));
-		} catch (PersistenceException pe) {
-			throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe);
-		}
+		return this.getFile(params, "imagename", "/scenarios/");
 	}
 
 	/**
@@ -72,24 +63,28 @@ public class ScenarioController implements InjectorSunbeam, DataSunbeam, Securit
 		FileSpecification[] files = (FileSpecification[]) params.get(MULTIPART_FILES);
 		if (files.length > 0) {
 			if (files.length!= 1) throw new SummerControllerException(400, "One Scenario file must be loaded.");
-			String fileName = "scenario" + scenario.getId() + "." + files[0].getExtension();
-			String webName = "scenario" + scenario.getId() + "-" + PlatformManager.get().now() + "." + files[0].getExtension();
-			copyStream(files[0].getStream(), PlatformManager.get().getOutputStream("/scenarios/" + fileName));
-			scenario.setIllustration("/api/scenario/images/" + webName);
+			scenario.setIllustration(saveFile(files[0],
+				"scenario" + scenario.getId(),
+				"/scenarios/", "/api/scenario/images/"
+			));
 		}
 	}
 
 	@REST(url="/api/scenario/propose", method=Method.POST)
 	public Json propose(Map<String, Object> params, Json request) {
+		checkJson(request, Usage.PROPOSE);
 		Ref<Json> result = new Ref<>();
 		inTransaction(em->{
-			Scenario newScenario = writeToProposedScenario(request, new Scenario().setGame(
-					new Game().setMap(new fr.cblades.domain.Map())
-				)
-			);
 			ifAuthorized(
 				user->{
 					try {
+						Scenario newScenario = writeToScenario(
+							em, request,
+							new Scenario().setGame(
+								new Game().setMap(new fr.cblades.domain.Map())
+							),
+							Usage.PROPOSE
+						);
 						Account author = Account.find(em, user);
 						addComment(request, newScenario, author);
 						newScenario.setStatus(ScenarioStatus.PROPOSED);
@@ -113,15 +108,16 @@ public class ScenarioController implements InjectorSunbeam, DataSunbeam, Securit
 
 	@REST(url="/api/scenario/amend/:id", method=Method.POST)
 	public Json amend(Map<String, Object> params, Json request) {
+		long id = getLongParam(params, "id", "The Scenario ID is missing or invalid (%s)");
+		checkJson(request, Usage.AMEND);
 		Ref<Json> result = new Ref<>();
 		inTransaction(em-> {
-			String id = (String) params.get("id");
-			Scenario scenario = findScenario(em, new Long(id));
+			Scenario scenario = findScenario(em, id);
 			ifAuthorized(
 				user -> {
 					try {
 						Account author = Account.find(em, user);
-						writeToProposedScenario(request, scenario);
+						writeToScenario(em, request, scenario, Usage.AMEND);
 						addComment(request, scenario, author);
 						storeScenarioImages(params, scenario);
 						flush(em);
@@ -140,15 +136,17 @@ public class ScenarioController implements InjectorSunbeam, DataSunbeam, Securit
 
 	@REST(url="/api/scenario/create", method=Method.POST)
 	public Json create(Map<String, Object> params, Json request) {
+		checkJson(request, Usage.CREATE);
 		Ref<Json> result = new Ref<>();
 		inTransaction(em->{
 			ifAuthorized(
 				user->{
 					try {
-						Scenario newScenario = writeToScenario(em, request, new Scenario().setGame(
+						Scenario newScenario = writeToScenario(em, request,
+							new Scenario().setGame(
 								new Game().setMap(new fr.cblades.domain.Map())
 							),
-							true
+							Usage.CREATE
 						);
 						persist(em, newScenario);
 						storeScenarioImages(params, newScenario);
@@ -260,10 +258,10 @@ public class ScenarioController implements InjectorSunbeam, DataSunbeam, Securit
 
 	@REST(url="/api/scenario/load/:id", method=Method.GET)
 	public Json getScenarioWithComments(Map<String, Object> params, Json request) {
+		long id = getLongParam(params, "id", "The Scenario ID is missing or invalid (%s)");
 		Ref<Json> result = new Ref<>();
 		inReadTransaction(em->{
-			String id = (String)params.get("id");
-			Scenario scenario = findScenario(em, new Long(id));
+			Scenario scenario = findScenario(em, id);
 			ifAuthorized(user->{
 				result.set(readFromScenario(scenario));
 			},
@@ -274,9 +272,9 @@ public class ScenarioController implements InjectorSunbeam, DataSunbeam, Securit
 
 	@REST(url="/api/scenario/delete/:id", method=Method.GET)
 	public Json delete(Map<String, Object> params, Json request) {
+		long id = getLongParam(params, "id", "The Scenario ID is missing or invalid (%s)");
 		inTransaction(em->{
-			String id = (String)params.get("id");
-			Scenario scenario = findScenario(em, new Long(id));
+			Scenario scenario = findScenario(em, id);
 			ifAuthorized(
 				user->{
 					try {
@@ -293,14 +291,15 @@ public class ScenarioController implements InjectorSunbeam, DataSunbeam, Securit
 
 	@REST(url="/api/scenario/update/:id", method=Method.POST)
 	public Json update(Map<String, Object> params, Json request) {
+		long id = getLongParam(params, "id", "The Scenario ID is missing or invalid (%s)");
+		checkJson(request, Usage.UPDATE);
 		Ref<Json> result = new Ref<>();
 		inTransaction(em-> {
-			String id = (String) params.get("id");
-			Scenario scenario = findScenario(em, new Long(id));
 			ifAuthorized(
 				user -> {
 					try {
-						writeToScenario(em, request, scenario, false);
+						Scenario scenario = findScenario(em, id);
+						writeToScenario(em, request, scenario, Usage.UPDATE);
 						storeScenarioImages(params, scenario);
 						flush(em);
 						result.set(readFromScenario(scenario));
@@ -316,10 +315,10 @@ public class ScenarioController implements InjectorSunbeam, DataSunbeam, Securit
 
 	@REST(url="/api/scenario/update-status/:id", method=Method.POST)
 	public Json updateStatus(Map<String, Object> params, Json request) {
+		long id = getLongParam(params, "id", "The Scenario ID is missing or invalid (%s)");
 		Ref<Json> result = new Ref<>();
 		inTransaction(em-> {
-			String id = (String) params.get("id");
-			Scenario scenario = findScenario(em, new Long(id));
+			Scenario scenario = findScenario(em, id);
 			ifAuthorized(
 				user -> {
 					try {
@@ -348,28 +347,6 @@ public class ScenarioController implements InjectorSunbeam, DataSunbeam, Securit
 		};
 	}
 
-	Scenario writeToProposedScenario(Json json, Scenario scenario) {
-		verify(json)
-			.checkRequired("title").checkMinSize("title", 2).checkMaxSize("title", 200)
-			.checkPattern("title", "[\\d\\s\\w]+")
-			.checkRequired("story").checkMinSize("story", 2).checkMaxSize("story", 2000)
-			.checkRequired("setUp").checkMinSize("setUp", 2).checkMaxSize("setUp", 2000)
-			.checkRequired("victoryConditions").checkMinSize("victoryConditions", 2).checkMaxSize("victoryConditions", 2000)
-			.checkRequired("specialRules").checkMinSize("specialRules", 2).checkMaxSize("specialRules", 2000)
-			.checkRequired("illustration").checkMinSize("illustration", 2).checkMaxSize("illustration", 200)
-			.checkMinSize("newComment", 2).checkMaxSize("newComment", 200)
-			.ensure();
-		sync(json, scenario)
-			.write("version")
-			.write("title")
-			.write("story")
-			.write("setUp")
-			.write("victoryConditions")
-			.write("specialRules")
-			.write("illustration");
-		return scenario;
-	}
-
 	void addComment(Json json, Scenario scenario, Account author) {
 		String comment = json.get("newComment");
 		if (comment!=null) {
@@ -380,41 +357,30 @@ public class ScenarioController implements InjectorSunbeam, DataSunbeam, Securit
 		}
 	}
 
-	Scenario writeToScenario(EntityManager em, Json json, Scenario scenario, boolean full) {
-		Verifier verifier = verify(json);
-		try {
-			if (full) {
-				verifier
+	void checkJson(Json json, Usage usage) {
+		verify(json)
+			.process(v->{
+				if (usage.creation) {v
 					.checkRequired("title")
 					.checkRequired("story")
 					.checkRequired("setUp")
 					.checkRequired("victoryConditions")
-					.checkRequired("specialRules")
-					.checkRequired("illustration")
-					.each("comments", cJson -> verify(cJson)
-						.checkRequired("version")
-						.checkRequired("date")
-						.checkRequired("text")
-					);
-			}
-			verifier
-				.checkRequired("title").checkMinSize("title", 2).checkMaxSize("title", 200)
-				.checkPattern("title", "[\\d\\s\\w]+")
-				.checkRequired("story").checkMinSize("story", 2).checkMaxSize("story", 2000)
-				.checkRequired("setUp").checkMinSize("setUp", 2).checkMaxSize("setUp", 2000)
-				.checkRequired("victoryConditions").checkMinSize("victoryConditions", 2).checkMaxSize("victoryConditions", 2000)
-				.checkRequired("specialRules").checkMinSize("specialRules", 2).checkMaxSize("specialRules", 2000)
-				.checkRequired("illustration").checkMinSize("illustration", 2).checkMaxSize("illustration", 200)
-				.check("status", ScenarioStatus.byLabels().keySet())
-				.each("comments", cJson->verify(cJson)
-					.checkRequired("version")
-					.checkRequired("date")
-					.checkRequired("text")
-					.checkMinSize("text", 2)
-					.checkMaxSize("text", 19995)
-				);
-			verifier
-				.ensure();
+					.checkRequired("specialRules");
+				}
+			})
+			.checkMinSize("title", 2).checkMaxSize("title", 200)
+			.checkPattern("title", "[\\d\\s\\w]+")
+			.checkMinSize("story", 2).checkMaxSize("story", 2000)
+			.checkMinSize("setUp", 2).checkMaxSize("setUp", 2000)
+			.checkMinSize("victoryConditions", 2).checkMaxSize("victoryConditions", 2000)
+			.checkMinSize("specialRules", 2).checkMaxSize("specialRules", 2000)
+			.check("status", ScenarioStatus.byLabels().keySet())
+			.process(v->checkComments(v))
+			.ensure();
+	}
+
+	Scenario writeToScenario(EntityManager em, Json json, Scenario scenario, Usage usage) {
+		try {
 			sync(json, scenario)
 				.write("version")
 				.write("title")
@@ -422,14 +388,12 @@ public class ScenarioController implements InjectorSunbeam, DataSunbeam, Securit
 				.write("setUp")
 				.write("victoryConditions")
 				.write("specialRules")
-				.write("illustration")
-				.write("status", label->ScenarioStatus.byLabels().get(label))
-				.writeRef("author.id", "author", (Integer id)-> Account.find(em, id))
-				.syncEach("comments", (cJson, comment)->sync(cJson, comment)
-					.write("version")
-					.writeDate("date")
-					.write("text")
-				);
+				.process(s->{
+					if (!usage.propose) {s
+						.write("status", label -> ArticleStatus.byLabels().get(label));
+						writeComments(s);
+					}
+				});
 			return scenario;
 		} catch (SummerNotFoundException snfe) {
 			throw new SummerControllerException(404, snfe.getMessage());
@@ -458,13 +422,7 @@ public class ScenarioController implements InjectorSunbeam, DataSunbeam, Securit
 			.read("specialRules")
 			.read("illustration")
 			.read("status", ScenarioStatus::getLabel)
-			.readLink("author", (pJson, account)->sync(pJson, account)
-				.read("id")
-				.read("login", "access.login")
-				.read("firstName")
-				.read("lastName")
-				.read("avatar")
-			);
+			.process(s->readAuthor(s));
 		return json;
 	}
 
@@ -480,19 +438,8 @@ public class ScenarioController implements InjectorSunbeam, DataSunbeam, Securit
 			.read("specialRules")
 			.read("illustration")
 			.read("status", ScenarioStatus::getLabel)
-			.readLink("author", (pJson, account)->sync(pJson, account)
-				.read("id")
-				.read("login", "access.login")
-				.read("firstName")
-				.read("lastName")
-				.read("avatar")
-			)
-			.readEach("comments", (hJson, hex)->sync(hJson, hex)
-				.read("id")
-				.read("version")
-				.readDate("date")
-				.read("text")
-			);
+			.process(s->readAuthor(s))
+			.process(s->readComments(s));
 		json.put("game", scenario.getGame().getId()); // force load
 		return json;
 	}

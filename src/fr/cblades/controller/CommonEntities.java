@@ -1,18 +1,28 @@
 package fr.cblades.controller;
 
+import fr.cblades.domain.Faction;
+import fr.cblades.domain.Sheet;
 import org.summer.FileSpecification;
 import org.summer.controller.ControllerSunbeam;
 import org.summer.controller.SummerControllerException;
 import org.summer.controller.Verifier;
+import org.summer.data.BaseEntity;
 import org.summer.data.Synchronizer;
+import org.summer.platform.FileSunbeam;
 import org.summer.platform.PlatformManager;
 
 import javax.persistence.PersistenceException;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.logging.Logger;
 
-public interface CommonEntities extends ControllerSunbeam {
+public interface CommonEntities extends ControllerSunbeam, FileSunbeam {
 
-    default FileSpecification getImage(Map<String, Object> params, String name, String folder) {
+    static final Logger log = Logger.getLogger("summer");
+
+    default FileSpecification getFile(Map<String, Object> params, String name, String folder) {
         try {
             String webName = (String)params.get(name);
             int minusPos = webName.indexOf('-');
@@ -26,42 +36,43 @@ public interface CommonEntities extends ControllerSunbeam {
         }
     }
 
-    default Verifier checkComments(Verifier verifier, boolean full) {
-        if (full) {
-            verifier.each("comments", cJson -> verify(cJson)
-                .checkRequired("version")
-                .checkRequired("date")
-                .checkRequired("text")
-            );
-        }
+    default String saveFile(FileSpecification file, String baseName, String path, String webPath) {
+        String fileName = baseName + "." + file.getExtension();
+        String webName = baseName + "-" + PlatformManager.get().now() + "." + file.getExtension();
+        copyStream(file.getStream(), PlatformManager.get().getOutputStream(path + fileName));
+        log.info("Save: " + path + fileName + " for: " + webPath + webName);
+        return webPath + webName;
+    }
+
+    default void checkComments(Verifier verifier) {
         verifier.each("comments", cJson -> verify(cJson)
+            .checkRequired("version")
+            .checkRequired("date")
+            .checkRequired("text")
             .checkMinSize("text", 2)
             .checkMaxSize("text", 19995)
             .checkDate("date")
         );
-        return verifier;
     }
 
-     default Synchronizer writeComments(Synchronizer synchronizer) {
+     default void writeComments(Synchronizer synchronizer) {
         synchronizer.syncEach("comments", (cJson, comment)->sync(cJson, comment)
              .write("version")
              .writeDate("date")
              .write("text")
          );
-        return synchronizer;
      }
 
-     default Synchronizer readComments(Synchronizer synchronizer) {
-     synchronizer.readEach("comments", (hJson, hex)->sync(hJson, hex)
+     default void readComments(Synchronizer synchronizer) {
+        synchronizer.readEach("comments", (hJson, hex)->sync(hJson, hex)
              .read("id")
              .read("version")
              .readDate("date")
              .read("text")
          );
-         return synchronizer;
      }
 
-    default Synchronizer readAuthor(Synchronizer synchronizer) {
+    default void readAuthor(Synchronizer synchronizer) {
         synchronizer.readLink("author", (pJson, account)->sync(pJson, account)
             .read("id")
             .read("login", "access.login")
@@ -69,7 +80,115 @@ public interface CommonEntities extends ControllerSunbeam {
             .read("lastName")
             .read("avatar")
         );
-        return synchronizer;
+    }
+
+
+    default void checkSheets(Verifier verifier) {
+        verifier.each("sheets", cJson->verify(cJson)
+            .checkInteger("version")
+            .checkRequired("ordinal")
+            .checkInteger("ordinal")
+            .checkRequired("name")
+            .checkString("name")
+            .checkMinSize("name", 2)
+            .checkMaxSize("name", 200)
+            .checkPattern("name", "[\\d\\s\\w]+")
+            .checkRequired("description")
+            .checkString("description")
+            .checkMinSize("description", 2)
+            .checkMaxSize("description", 19995)
+        );
+    }
+
+    default void writeSheets(Synchronizer synchronizer) {
+        synchronizer.syncEach("sheets", (cJson, comment)->sync(cJson, comment)
+            .write("version")
+            .write("ordinal")
+            .write("name")
+            .write("description")
+        );
+    }
+
+    default void readSheets(Synchronizer synchronizer) {
+        synchronizer.readEach("sheets", (pJson, sheet)->sync(pJson, sheet)
+            .read("id")
+            .read("name")
+            .read("description")
+            .read("icon")
+            .read("path")
+        );
+    }
+
+    default FileSpecification storeSheetImages(
+            FileSpecification[] files,
+            long id,
+            List<Sheet> sheets,
+            String entityName,
+            String path,
+            String webPath
+    ) {
+        Set<String> processed = new HashSet<>();
+        String exceptions = "";
+        FileSpecification mainFile = null;
+        if (files != null) {
+            for (FileSpecification file : files) {
+                int ordinalIdx = file.getName().lastIndexOf("-");
+                if (ordinalIdx < 0) {
+                    if (processed.contains("f")) {
+                        exceptions += String.format("Only one %s file must be loaded.\n", entityName);
+                    }
+                    else {
+                        mainFile = file;
+                        processed.add("f");
+                    }
+                } else {
+                    boolean isIcon = file.getName().indexOf("icon-") == 0;
+                    int ordinal = Integer.parseInt(file.getName().substring(ordinalIdx + 1));
+                    Sheet sheet = sheets.size()>ordinal?sheets.get(ordinal):null;
+                    if (isIcon) {
+                        if (sheet == null) {
+                            exceptions += String.format("No sheet with number %d found for Path.\n", ordinal);
+                        }
+                        else if (processed.contains("p"+ordinal)) {
+                            exceptions += String.format("Only one Path file must be loaded.\n", ordinal);
+                        }
+                        else {
+                            sheet.setIcon(saveFile(file,
+                                    "sheeticon" + id + "_" + ordinal,
+                                    path, webPath
+                            ));
+                            processed.add("p"+ordinal);
+                        }
+                    } else {
+                        if (sheet == null) {
+                            exceptions += String.format("No sheet with number %d found for Icon.\n", ordinal);
+                        }
+                        else if (processed.contains("i"+ordinal)) {
+                            exceptions += String.format("Only one Icon file must be loaded for sheet %d.\n", ordinal);
+                        }
+                        else {
+                            sheet.setPath(saveFile(file,
+                                "sheet" + id + "_" + ordinal,
+                                path, webPath
+                            ));
+                            processed.add("i"+ordinal);
+                        }
+                    }
+                }
+            }
+        }
+        for (Sheet sheet: sheets) {
+            if (sheet.getIcon().isEmpty()) {
+                exceptions += String.format("Sheet number %d does not have an icon.\n", sheet.getOrdinal());
+            }
+            if (sheet.getPath().isEmpty()) {
+                exceptions += String.format("Sheet number %d does not have a path.\n", sheet.getOrdinal());
+            }
+        }
+        if (!exceptions.isEmpty()) {
+            throw new SummerControllerException(400, exceptions);
+        }
+        return mainFile;
     }
 
     enum Usage {

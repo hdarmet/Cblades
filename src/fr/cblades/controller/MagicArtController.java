@@ -15,6 +15,7 @@ import org.summer.controller.SummerControllerException;
 import org.summer.controller.Verifier;
 import org.summer.data.DataSunbeam;
 import org.summer.data.SummerNotFoundException;
+import org.summer.data.Synchronizer;
 import org.summer.platform.FileSunbeam;
 import org.summer.platform.PlatformManager;
 import org.summer.security.SecuritySunbeam;
@@ -34,7 +35,8 @@ import java.util.stream.Collectors;
  * Controleur permettant de manipuler arts de magie
  */
 @Controller
-public class MagicArtController implements InjectorSunbeam, DataSunbeam, SecuritySunbeam, ControllerSunbeam, FileSunbeam, StandardUsers {
+public class MagicArtController implements InjectorSunbeam, DataSunbeam, SecuritySunbeam,
+		ControllerSunbeam, StandardUsers, CommonEntities {
 	static final Logger log = Logger.getLogger("summer");
 
 	/**
@@ -45,56 +47,32 @@ public class MagicArtController implements InjectorSunbeam, DataSunbeam, Securit
 	 */
 	@MIME(url="/api/magicart/documents/:docname")
 	public FileSpecification getImage(Map<String, Object> params) {
-		try {
-			String webName = (String)params.get("docname");
-			int minusPos = webName.indexOf('-');
-			int pointPos = webName.indexOf('.');
-			String docName = webName.substring(0, minusPos)+webName.substring(pointPos);
-			return new FileSpecification()
-				.setName(docName)
-				.setStream(PlatformManager.get().getInputStream("/magics/"+docName));
-		} catch (PersistenceException pe) {
-			throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe);
-		}
+		return this.getFile(params, "imagename", "/magics/");
 	}
 
 	void storeMagicArtImages(Map<String, Object> params, MagicArt magicArt) {
 		FileSpecification[] files = (FileSpecification[]) params.get(MULTIPART_FILES);
-		for (FileSpecification file : files) {
-			int ordinalIdx = file.getName().indexOf("-");
-			if (ordinalIdx<0) {
-				String magicArtFileName = "magicart" + magicArt.getId() + "." + file.getExtension();
-				String magicArtWebName = "magicart" + magicArt.getId() + "-" + PlatformManager.get().now() + "." + file.getExtension();
-				copyStream(file.getStream(), PlatformManager.get().getOutputStream("/magics/" + magicArtFileName));
-				magicArt.setIllustration("/api/magicart/documents/" +magicArtWebName);
-			}
-			else {
-				boolean isIcon = file.getName().indexOf("icon-")==0;
-				int ordinal = Integer.parseInt(file.getName().substring(ordinalIdx+1));
-				if (isIcon) {
-					String sheetFileIconName = "sheeticon" + magicArt.getId() + "_" + ordinal + "." + file.getExtension();
-					String sheetWebIconName = "sheeticon" + magicArt.getId() + "_" + ordinal + "-" + PlatformManager.get().now() + "." + file.getExtension();
-					copyStream(file.getStream(), PlatformManager.get().getOutputStream("/magics/" + sheetFileIconName));
-					magicArt.getSheet(ordinal).setIcon("/api/magicart/documents/" + sheetWebIconName);
-				}
-				else {
-					String sheetFileName = "sheet" + magicArt.getId() + "_" + ordinal + "." + file.getExtension();
-					String sheetWebName = "sheet" + magicArt.getId() + "_" + ordinal + "-" + PlatformManager.get().now() + "." + file.getExtension();
-					copyStream(file.getStream(), PlatformManager.get().getOutputStream("/magics/" + sheetFileName));
-					magicArt.getSheet(ordinal).setPath("/api/magicart/documents/" + sheetWebName);
-				}
-			}
+		FileSpecification magicArtImage = storeSheetImages(
+			files, magicArt.getId(), magicArt.getSheets(),
+			"Faction", "/magics/", "/api/magicart/documents/"
+		);
+		if (magicArtImage != null) {
+			magicArt.setIllustration(saveFile(magicArtImage,
+				"magicart" + magicArt.getId(),
+				"/lagics/", "/api/magicart/documents/"
+			));
 		}
 	}
 
 	@REST(url="/api/magicart/propose", method=Method.POST)
 	public Json propose(Map<String, Object> params, Json request) {
+		checkJson(request, Usage.PROPOSE);
 		Ref<Json> result = new Ref<>();
 		inTransaction(em->{
-			MagicArt newMagicArt = writeToProposedMagicArt(em, request, new MagicArt());
 			ifAuthorized(
 				user->{
 					try {
+						MagicArt newMagicArt = writeToMagicArt(em, request, new MagicArt(), Usage.PROPOSE);
 						Account author = Account.find(em, user);
 						addComment(request, newMagicArt, author);
 						newMagicArt.setStatus(MagicArtStatus.PROPOSED);
@@ -118,15 +96,16 @@ public class MagicArtController implements InjectorSunbeam, DataSunbeam, Securit
 
 	@REST(url="/api/magicart/amend/:id", method=Method.POST)
 	public Json amend(Map<String, Object> params, Json request) {
+		long id = getLongParam(params, "id", "The Magic Art ID is missing or invalid (%s)");
+		checkJson(request, Usage.AMEND);
 		Ref<Json> result = new Ref<>();
 		inTransaction(em-> {
-			String id = (String) params.get("id");
-			MagicArt magicArt = findMagicArt(em, new Long(id));
+			MagicArt magicArt = findMagicArt(em, id);
 			ifAuthorized(
 				user -> {
 					try {
 						Account author = Account.find(em, user);
-						writeToProposedMagicArt(em, request, magicArt);
+						writeToMagicArt(em, request, magicArt, Usage.AMEND);
 						addComment(request, magicArt, author);
 						storeMagicArtImages(params, magicArt);
 						flush(em);
@@ -145,12 +124,13 @@ public class MagicArtController implements InjectorSunbeam, DataSunbeam, Securit
 
 	@REST(url="/api/magicart/create", method=Method.POST)
 	public Json create(Map<String, Object> params, Json request) {
+		checkJson(request, Usage.CREATE);
 		Ref<Json> result = new Ref<>();
 		inTransaction(em->{
-			MagicArt newMagicArt = writeToMagicArt(em, request, new MagicArt(), true);
 			ifAuthorized(
 				user->{
 					try {
+						MagicArt newMagicArt = writeToMagicArt(em, request, new MagicArt(), Usage.CREATE);
 						persist(em, newMagicArt);
 						storeMagicArtImages(params, newMagicArt);
 						result.set(readFromMagicArt(newMagicArt));
@@ -159,6 +139,31 @@ public class MagicArtController implements InjectorSunbeam, DataSunbeam, Securit
 							"Magic Art with name (%s) already exists",
 							request.get("name"), null
 						);
+					}
+				},
+				ADMIN
+			);
+		});
+		return result.get();
+	}
+
+
+	@REST(url="/api/magicart/update/:id", method=Method.POST)
+	public Json update(Map<String, Object> params, Json request) {
+		long id = getLongParam(params, "id", "The Magic Art ID is missing or invalid (%s)");
+		checkJson(request, Usage.UPDATE);
+		Ref<Json> result = new Ref<>();
+		inTransaction(em-> {
+			ifAuthorized(
+				user -> {
+					try {
+						MagicArt magicArt = findMagicArt(em, id);
+						writeToMagicArt(em, request, magicArt, Usage.UPDATE);
+						storeMagicArtImages(params, magicArt);
+						flush(em);
+						result.set(readFromMagicArt(magicArt));
+					} catch (PersistenceException pe) {
+						throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe);
 					}
 				},
 				ADMIN
@@ -246,10 +251,10 @@ public class MagicArtController implements InjectorSunbeam, DataSunbeam, Securit
 
 	@REST(url="/api/magicart/load/:id", method=Method.GET)
 	public Json getMagicArtWithComments(Map<String, Object> params, Json request) {
+		long id = getLongParam(params, "id", "The Magic Art ID is missing or invalid (%s)");
 		Ref<Json> result = new Ref<>();
 		inReadTransaction(em->{
-			String id = (String)params.get("id");
-			MagicArt magicArt = findMagicArt(em, new Long(id));
+			MagicArt magicArt = findMagicArt(em, id);
 			ifAuthorized(user->{
 				result.set(readFromMagicArt(magicArt));
 			},
@@ -260,9 +265,9 @@ public class MagicArtController implements InjectorSunbeam, DataSunbeam, Securit
 
 	@REST(url="/api/magicart/delete/:id", method=Method.GET)
 	public Json delete(Map<String, Object> params, Json request) {
+		long id = getLongParam(params, "id", "The Magic Art ID is missing or invalid (%s)");
 		inTransaction(em->{
-			String id = (String)params.get("id");
-			MagicArt magicArt = findMagicArt(em, new Long(id));
+			MagicArt magicArt = findMagicArt(em, id);
 			ifAuthorized(
 				user->{
 					try {
@@ -279,10 +284,10 @@ public class MagicArtController implements InjectorSunbeam, DataSunbeam, Securit
 
 	@REST(url="/api/magicart/update-status/:id", method=Method.POST)
 	public Json updateStatus(Map<String, Object> params, Json request) {
+		long id = getLongParam(params, "id", "The Magic Art ID is missing or invalid (%s)");
 		Ref<Json> result = new Ref<>();
 		inTransaction(em-> {
-			String id = (String) params.get("id");
-			MagicArt magicArt = findMagicArt(em, new Long(id));
+			MagicArt magicArt = findMagicArt(em, id);
 			ifAuthorized(
 				user -> {
 					try {
@@ -299,35 +304,12 @@ public class MagicArtController implements InjectorSunbeam, DataSunbeam, Securit
 		return result.get();
 	}
 
-	@REST(url="/api/magicart/update/:id", method=Method.POST)
-	public Json update(Map<String, Object> params, Json request) {
-		Ref<Json> result = new Ref<>();
-		inTransaction(em-> {
-			String id = (String) params.get("id");
-			MagicArt magicArt = findMagicArt(em, new Long(id));
-			ifAuthorized(
-				user -> {
-					try {
-						writeToMagicArt(em, request, magicArt, false);
-						storeMagicArtImages(params, magicArt);
-						flush(em);
-						result.set(readFromMagicArt(magicArt));
-					} catch (PersistenceException pe) {
-						throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe);
-					}
-				},
-				ADMIN
-			);
-		});
-		return result.get();
-	}
-
 	@REST(url="/api/magicart/published/:id", method=Method.GET)
 	public Json getPublishedMagicArt(Map<String, Object> params, Json request) {
+		long id = getLongParam(params, "id", "The Magic Art ID is missing or invalid (%s)");
 		Ref<Json> result = new Ref<>();
 		inTransaction(em->{
-			String id = (String)params.get("id");
-			MagicArt magicArt = findMagicArt(em, new Long(id));
+			MagicArt magicArt = findMagicArt(em, id);
 			if (magicArt.getStatus() != MagicArtStatus.LIVE) {
 				throw new SummerControllerException(409, "MagicArt is not live.");
 			}
@@ -346,50 +328,6 @@ public class MagicArtController implements InjectorSunbeam, DataSunbeam, Securit
 			}
 			return false;
 		};
-	}
-
-	MagicArt writeToProposedMagicArt(EntityManager em, Json json, MagicArt magicArt) {
-		try {
-			verify(json)
-				.checkRequired("name").checkMinSize("name", 2).checkMaxSize("name", 200)
-				.checkPattern("name", "[\\d\\s\\w]+")
-				.checkMinSize("newComment", 2).checkMaxSize("newComment", 200)
-				.checkRequired("illustration")
-				.checkMinSize("illustration", 2).checkMaxSize("illustration", 200)
-				.checkRequired("description")
-				.checkMinSize("description", 2)
-				.checkMaxSize("description", 19995)
-				.each("sheets", cJson->verify(cJson)
-					.checkRequired("version")
-					.checkRequired("ordinal")
-					.checkRequired("name").checkMinSize("name", 2).checkMaxSize("name", 200)
-					.checkPattern("name", "[\\d\\s\\w]+")
-					.checkRequired("description")
-					.checkMinSize("description", 2)
-					.checkMaxSize("description", 19995)
-					.checkRequired("icon")
-					.checkMinSize("icon", 2).checkMaxSize("icon", 200)
-				)
-				.ensure();
-			sync(json, magicArt)
-				.write("version")
-				.write("name")
-				.write("description")
-				.syncEach("sheets", (cJson, comment)->sync(cJson, comment)
-					.write("version")
-					.write("ordinal")
-					.write("name")
-					.write("description")
-					.write("icon")
-					.write("path")
-					.write("description")
-				);
-			magicArt.setFirstSheet(magicArt.getSheet(0));
-			magicArt.buildDocument();
-			return magicArt;
-		} catch (SummerNotFoundException snfe) {
-			throw new SummerControllerException(404, snfe.getMessage());
-		}
 	}
 
 	void addComment(Json json, MagicArt magicArt, Account author) {
@@ -412,69 +350,43 @@ public class MagicArtController implements InjectorSunbeam, DataSunbeam, Securit
 		return magicArt;
 	}
 
-	MagicArt writeToMagicArt(EntityManager em, Json json, MagicArt magicArt, boolean full) {
+	void checkJson(Json json, Usage usage) {
 		Verifier verifier = verify(json);
+		if (usage.creation) {
+			verifier
+				.checkRequired("name")
+				.checkRequired("description");
+		}
+		verifier
+			.checkMinSize("name", 2).checkMaxSize("name", 200)
+			.checkPattern("name", "[\\d\\s\\w]+")
+			.checkMinSize("description", 2)
+			.checkMaxSize("description", 19995);
+		checkSheets(verifier);
+		if (usage.propose) {
+			verifier.checkMinSize("newComment", 2).checkMaxSize("newComment", 200);
+		}
+		else {
+			verifier.check("status", MagicArtStatus.byLabels().keySet());
+			checkComments(verifier);
+		}
+		verifier.ensure();
+	}
+
+	MagicArt writeToMagicArt(EntityManager em, Json json, MagicArt magicArt, Usage usage) {
 		try {
-			if (full) {
-				verifier
-					.checkRequired("name")
-					.checkRequired("illustration")
-					.checkRequired("description")
-					.each("sheets", cJson -> verify(cJson)
-						.checkRequired("version")
-						.checkRequired("ordinal")
-						.checkRequired("name")
-						.checkRequired("description")
-						.checkRequired("icon")
-						.checkRequired("path")
-					)
-					.each("comments", cJson -> verify(cJson)
-						.checkRequired("version")
-						.checkRequired("date")
-						.checkRequired("text")
-					);
-			}
-			verifier
-				.checkMinSize("name", 2).checkMaxSize("name", 200)
-				.checkPattern("name", "[\\d\\s\\w]+")
-				.check("status", ThemeStatus.byLabels().keySet())
-				.checkMinSize("illustration", 2).checkMaxSize("illustration", 200)
-				.checkMinSize("description", 2)
-				.checkMaxSize("description", 19995)
-				.each("sheets", cJson->verify(cJson)
-					.checkMinSize("name", 2).checkMaxSize("name", 200)
-					.checkPattern("name", "[\\d\\s\\w]+")
-					.checkMinSize("description", 2)
-					.checkMaxSize("description", 19995)
-					.checkMinSize("icon", 2).checkMaxSize("icon", 200)
-					.checkMinSize("path", 2).checkMaxSize("path", 200)
-				)
-				.each("comments", cJson->verify(cJson)
-					.checkMinSize("text", 2)
-					.checkMaxSize("text", 19995)
-				);
-			verifier
-				.ensure();
-			sync(json, magicArt)
+			Synchronizer synchronizer = sync(json, magicArt)
 				.write("version")
 				.write("name")
-				.write("illustration")
 				.write("description")
 				.writeRef("author.id", "author", (Integer id)-> Account.find(em, id))
-				.write("status", label->MagicArtStatus.byLabels().get(label))
-				.syncEach("sheets", (cJson, comment)->sync(cJson, comment)
-					.write("version")
-					.write("ordinal")
-					.write("name")
-					.write("description")
-					.write("icon")
-					.write("path")
-				)
-				.syncEach("comments", (cJson, comment)->sync(cJson, comment)
-					.write("version")
-					.writeDate("date")
-					.write("text")
-				);
+				.write("status", label->MagicArtStatus.byLabels().get(label));
+			writeSheets(synchronizer);
+			if (!usage.propose) {
+				synchronizer
+						.write("status", label -> MagicArtStatus.byLabels().get(label));
+				writeComments(synchronizer);
+			}
 			magicArt.setFirstSheet(magicArt.getSheet(0));
 			magicArt.buildDocument();
 			return magicArt;
@@ -485,70 +397,40 @@ public class MagicArtController implements InjectorSunbeam, DataSunbeam, Securit
 
 	Json readFromMagicArtSummary(MagicArt magicArt) {
 		Json json = Json.createJsonObject();
-		sync(json, magicArt)
+		Synchronizer synchronizer = sync(json, magicArt)
 			.read("id")
 			.read("version")
 			.read("name")
 			.read("illustration")
 			.read("description")
-			.read("status", MagicArtStatus::getLabel)
-			.readLink("author", (pJson, account)->sync(pJson, account)
-				.read("id")
-				.read("login", "access.login")
-				.read("firstName")
-				.read("lastName")
-				.read("avatar")
-			);
+			.read("status", MagicArtStatus::getLabel);
+		readAuthor(synchronizer);
 		return json;
 	}
 
 	Json readFromMagicArt(MagicArt magicArt) {
 		Json json = Json.createJsonObject();
-		sync(json, magicArt)
+		Synchronizer synchronizer = sync(json, magicArt)
 			.read("id")
 			.read("version")
 			.read("name")
 			.read("description")
 			.read("illustration")
-			.read("status", MagicArtStatus::getLabel)
-			.readEach("sheets", (pJson, sheet)->sync(pJson, sheet)
-				.read("id")
-				.read("version")
-				.read("name")
-				.read("description")
-				.read("icon")
-				.read("path")
-			)
-			.readLink("author", (pJson, account)->sync(pJson, account)
-				.read("id")
-				.read("login", "access.login")
-				.read("firstName")
-				.read("lastName")
-				.read("avatar")
-			)
-			.readEach("comments", (hJson, hex)->sync(hJson, hex)
-				.read("id")
-				.read("version")
-				.readDate("date")
-				.read("text")
-			);
+			.read("status", MagicArtStatus::getLabel);
+		readAuthor(synchronizer);
+		readAuthor(synchronizer);
+		readComments(synchronizer);
 		return json;
 	}
 
 	Json readFromPublishedMagicArt(MagicArt magicArt) {
 		Json json = Json.createJsonObject();
-		sync(json, magicArt)
+		Synchronizer synchronizer = sync(json, magicArt)
 			.read("id")
 			.read("name")
 			.read("description")
-			.read("illustration")
-			.readEach("sheets", (pJson, sheet)->sync(pJson, sheet)
-				.read("id")
-				.read("name")
-				.read("description")
-				.read("icon")
-				.read("path")
-			);
+			.read("illustration");
+		readSheets(synchronizer);
 		return json;
 	}
 

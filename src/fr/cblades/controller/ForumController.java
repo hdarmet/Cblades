@@ -33,7 +33,8 @@ import java.util.stream.Collectors;
  * Controleur permettant de gérer le forum
  */
 @Controller
-public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySunbeam, ControllerSunbeam, StandardUsers {
+public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySunbeam, ControllerSunbeam,
+	StandardUsers, CommonEntities {
 
 	@REST(url="/api/forum/live", method=Method.GET)
 	public Json getLive(Map<String, Object> params, Json request) {
@@ -53,10 +54,10 @@ public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySu
 	@REST(url="/api/forum/threads/:id", method=Method.GET)
 	public Json readThreads(Map<String, Object> params, Json request) {
 		Ref<Json> result = new Ref<>();
+		long id = getLongParam(params, "id", "The Thread ID is missing or invalid (%s)");
 		inReadTransaction(em->{
-			String id = (String)params.get("id");
 			int pageNo = getIntegerParam(params, "page", "The requested Page Number is invalid (%s)");
-			Forum forum = findForum(em, new Long(id));
+			Forum forum = findForum(em, id);
 			if (forum.getStatus() != ForumStatus.LIVE) {
 				throw new SummerControllerException(409, "Forum is not live.");
 			}
@@ -170,6 +171,7 @@ public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySu
 
 	@REST(url="/api/forum/create", method=Method.POST)
 	public Json create(Map<String, Object> params, Json request) {
+		checkForumJson(request, true);
 		Ref<Json> result = new Ref<>();
 		inTransaction(em->{
 			Forum newForum = writeToForumWithComments(em, request, new Forum(), true);
@@ -193,10 +195,10 @@ public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySu
 
 	@REST(url="/api/forum/load/:id", method=Method.GET)
 	public Json loadForum(Map<String, Object> params, Json request) {
+		long id = getLongParam(params, "id", "The Forum ID is missing or invalid (%s)");
 		Ref<Json> result = new Ref<>();
 		inReadTransaction(em->{
-			String id = (String)params.get("id");
-			Forum forum = findForum(em, new Long(id));
+			Forum forum = findForum(em, id);
 			ifAuthorized(user->{
 				result.set(readFromForumWithComments(forum));
 			},
@@ -207,9 +209,9 @@ public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySu
 
 	@REST(url="/api/forum/delete/:id", method=Method.GET)
 	public Json delete(Map<String, Object> params, Json request) {
+		long id = getLongParam(params, "id", "The Forum ID is missing or invalid (%s)");
 		inTransaction(em->{
-			String id = (String)params.get("id");
-			Forum forum = findForum(em, new Long(id));
+			Forum forum = findForum(em, id);
 			ifAuthorized(
 				user->{
 					try {
@@ -232,10 +234,11 @@ public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySu
 
 	@REST(url="/api/forum/update/:id", method=Method.POST)
 	public Json update(Map<String, Object> params, Json request) {
+		long id = getLongParam(params, "id", "The Forum ID is missing or invalid (%s)");
+		checkForumJson(request, false);
 		Ref<Json> result = new Ref<>();
 		inTransaction(em-> {
-			String id = (String) params.get("id");
-			Forum forum = findForum(em, new Long(id));
+			Forum forum = findForum(em, id);
 			ifAuthorized(
 				user -> {
 					try {
@@ -254,10 +257,10 @@ public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySu
 
 	@REST(url="/api/forum/update-status/:id", method=Method.POST)
 	public Json updateStatus(Map<String, Object> params, Json request) {
+		long id = getLongParam(params, "id", "The Forum ID is missing or invalid (%s)");
 		Ref<Json> result = new Ref<>();
 		inTransaction(em-> {
-			String id = (String) params.get("id");
-			Forum forum = findForum(em, new Long(id));
+			Forum forum = findForum(em, id);
 			ifAuthorized(
 				user -> {
 					try {
@@ -307,6 +310,7 @@ public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySu
 
 	@REST(url="/api/forum/thread/create", method=Method.POST)
 	public Json createThread(Map<String, Object> params, Json request) {
+		checkForumThreadJson(request, true);
 		Ref<Json> result = new Ref<>();
 		inTransaction(em->{
 			ForumThread newThread = writeToForumThreadWithComments(em, request, new ForumThread(), true);
@@ -330,10 +334,10 @@ public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySu
 
 	@REST(url="/api/forum/thread/load/:id", method=Method.GET)
 	public Json loadThread(Map<String, Object> params, Json request) {
+		long id = getLongParam(params, "id", "The Forum Thread ID is missing or invalid (%s)");
 		Ref<Json> result = new Ref<>();
 		inReadTransaction(em->{
-			String id = (String)params.get("id");
-			ForumThread thread = findForumThread(em, new Long(id));
+			ForumThread thread = findForumThread(em, id);
 			ifAuthorized(user->{
 				result.set(readFromForumThreadWithComments(thread));
 			},
@@ -344,9 +348,9 @@ public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySu
 
 	@REST(url="/api/forum/thread/delete/:id", method=Method.GET)
 	public Json deleteThread(Map<String, Object> params, Json request) {
+		long id = getLongParam(params, "id", "The Forum Thread ID is missing or invalid (%s)");
 		inTransaction(em->{
-			String id = (String)params.get("id");
-			ForumThread thread = findForumThread(em, new Long(id));
+			ForumThread thread = findForumThread(em, id);
 			ifAuthorized(
 				user->{
 					try {
@@ -369,9 +373,9 @@ public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySu
 
 	@REST(url="/api/forum/message/delete/:id", method=Method.GET)
 	public Json deleteMessage(Map<String, Object> params, Json request) {
+		long id = getLongParam(params, "id", "The Forum Message ID is missing or invalid (%s)");
 		inTransaction(em->{
-			String id = (String)params.get("id");
-			ForumMessage message = findForumMessage(em, new Long(id));
+			ForumMessage message = findForumMessage(em, id);
 			ifAuthorized(
 				user->{
 					try {
@@ -396,10 +400,11 @@ public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySu
 
 	@REST(url="/api/forum/thread/update/:id", method=Method.POST)
 	public Json updateThread(Map<String, Object> params, Json request) {
+		long id = getLongParam(params, "id", "The Forum Thread ID is missing or invalid (%s)");
+		checkForumThreadJson(request, false);
 		Ref<Json> result = new Ref<>();
 		inTransaction(em-> {
-			String id = (String) params.get("id");
-			ForumThread thread = findForumThread(em, new Long(id));
+			ForumThread thread = findForumThread(em, id);
 			ifAuthorized(
 				user -> {
 					try {
@@ -418,10 +423,10 @@ public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySu
 
 	@REST(url="/api/forum/thread/update-status/:id", method=Method.POST)
 	public Json updateThreadStatus(Map<String, Object> params, Json request) {
+		long id = getLongParam(params, "id", "The Forum Thread ID is missing or invalid (%s)");
 		Ref<Json> result = new Ref<>();
 		inTransaction(em-> {
-			String id = (String) params.get("id");
-			ForumThread thread = findForumThread(em, new Long(id));
+			ForumThread thread = findForumThread(em, id);
 			ifAuthorized(
 				user -> {
 					try {
@@ -479,10 +484,10 @@ public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySu
 
 	@REST(url="/api/forum/message/update-status/:id", method=Method.POST)
 	public Json updateMessageStatus(Map<String, Object> params, Json request) {
+		long id = getLongParam(params, "id", "The Forum Message ID is missing or invalid (%s)");
 		Ref<Json> result = new Ref<>();
 		inTransaction(em-> {
-			String id = (String) params.get("id");
-			ForumMessage message = findForumMessage(em, new Long(id));
+			ForumMessage message = findForumMessage(em, id);
 			ifAuthorized(
 				user -> {
 					try {
@@ -514,87 +519,71 @@ public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySu
 		}
 	}
 
-	Forum writeToForumWithComments(EntityManager em, Json json, Forum forum, boolean full) {
+	void checkForumJson(Json json, boolean full) {
 		Verifier verifier = verify(json);
+		if (full) {
+			verifier
+				.checkRequired("title")
+				.checkRequired("description");
+		}
+		verifier
+			.checkMinSize("title", 2).checkMaxSize("title", 200)
+			.checkPattern("title", "[\\d\\s\\w]+")
+			.checkMinSize("description", 2).checkMaxSize("description", 2000)
+			.check("status", ForumStatus.byLabels().keySet())
+			.checkInteger("author", "Not a valid author id")
+			.each("comments", cJson->verify(cJson)
+				.checkMinSize("text", 2)
+				.checkMaxSize("text", 19995)
+			);
+		checkComments(verifier);
+		verifier.ensure();
+	}
+
+	Forum writeToForumWithComments(EntityManager em, Json json, Forum forum, boolean full) {
 		try {
-			if (full) {
-				verifier
-					.checkRequired("title")
-					.checkRequired("description")
-					.each("comments", cJson -> verify(cJson)
-						.checkRequired("version")
-						.checkRequired("date")
-						.checkRequired("text")
-					);
-			}
-			verifier
-				.checkMinSize("title", 2).checkMaxSize("title", 200)
-				.checkPattern("title", "[\\d\\s\\w]+")
-				.checkMinSize("description", 2).checkMaxSize("description", 2000)
-				.check("status", ForumStatus.byLabels().keySet())
-				.checkInteger("author", "Not a valid author id")
-				.each("comments", cJson->verify(cJson)
-					.checkMinSize("text", 2)
-					.checkMaxSize("text", 19995)
-				);
-			verifier
-				.ensure();
-			sync(json, forum)
+			Synchronizer synchronizer = sync(json, forum)
 				.write("version")
 				.write("title")
 				.write("description")
 				.write("status", label->ForumStatus.byLabels().get(label))
-				.writeRef("author", (Integer id)-> Account.find(em, id))
-				.syncEach("comments", (cJson, comment)->sync(cJson, comment)
-					.write("version")
-					.writeDate("date")
-					.write("text")
-				);
+				.writeRef("author", (Integer id)-> Account.find(em, id));
+			writeComments(synchronizer);
 			return forum;
 		} catch (SummerNotFoundException snfe) {
 			throw new SummerControllerException(404, snfe.getMessage());
 		}
 	}
 
-	ForumThread writeToForumThreadWithComments(EntityManager em, Json json, ForumThread thread, boolean full) {
+	void checkForumThreadJson(Json json, boolean full) {
 		Verifier verifier = verify(json);
+		if (full) {
+			verifier
+				.checkRequired("title")
+				.checkRequired("description")
+				.checkRequired("forum");
+		}
+		verifier
+			.checkMinSize("title", 2).checkMaxSize("title", 200)
+			.checkPattern("title", "[\\d\\s\\w]+")
+			.checkMinSize("description", 2).checkMaxSize("description", 2000)
+			.checkInteger("forum")
+			.check("status", ForumStatus.byLabels().keySet())
+			.checkInteger("author", "Not a valid author id");
+		checkComments(verifier);
+		verifier.ensure();
+	}
+
+	ForumThread writeToForumThreadWithComments(EntityManager em, Json json, ForumThread thread, boolean full) {
 		try {
-			if (full) {
-				verifier
-					.checkRequired("title")
-					.checkRequired("description")
-					.checkRequired("forum")
-					.each("comments", cJson -> verify(cJson)
-						.checkRequired("version")
-						.checkRequired("date")
-						.checkRequired("text")
-					);
-			}
-			verifier
-				.checkMinSize("title", 2).checkMaxSize("title", 200)
-				.checkPattern("title", "[\\d\\s\\w]+")
-				.checkMinSize("description", 2).checkMaxSize("description", 2000)
-				.checkInteger("forum")
-				.check("status", ForumStatus.byLabels().keySet())
-				.checkInteger("author", "Not a valid author id")
-				.each("comments", cJson->verify(cJson)
-					.checkMinSize("text", 2)
-					.checkMaxSize("text", 19995)
-				);
-			verifier
-				.ensure();
-			sync(json, thread)
+			Synchronizer synchronizer = sync(json, thread)
 				.write("version")
 				.write("title")
 				.write("description")
 				.writeRef("forum", (Integer id) -> find(em, Forum. class, (long)id))
 				.write("status", label->ForumThreadStatus.byLabels().get(label))
-				.writeRef("author", (Integer id)-> Account.find(em, id))
-				.syncEach("comments", (cJson, comment)->sync(cJson, comment)
-					.write("version")
-					.writeDate("date")
-					.write("text")
-				);
+				.writeRef("author", (Integer id)-> Account.find(em, id));
+			writeComments(synchronizer);
 			return thread;
 		} catch (SummerNotFoundException snfe) {
 			throw new SummerControllerException(404, snfe.getMessage());
@@ -659,6 +648,18 @@ public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySu
 		return message;
 	}
 
+	void readExtendedAuthor(Synchronizer synchronizer) {
+		synchronizer.readLink("author", (pJson, account)->sync(pJson, account)
+			.read("firstName")
+			.read("lastName")
+			.read("avatar")
+			.read("messageCount")
+			.process((aJson, author)->
+				aJson.put("rating", Account.getRatingLevel((Account)author))
+			)
+		);
+	}
+
 	Json readFromForum(Forum forum) {
 		Json json = Json.createJsonObject();
 		sync(json, forum)
@@ -687,25 +688,14 @@ public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySu
 
 	Json readFromForumWithComments(Forum forum) {
 		Json json = Json.createJsonObject();
-		sync(json, forum)
+		Synchronizer synchronizer = sync(json, forum)
 			.read("id")
 			.read("version")
 			.read("title")
 			.read("description")
 			.read("status", ForumStatus::getLabel)
-			.readLink("author", (pJson, account)->sync(pJson, account)
-				.read("id")
-				.read("login", "access.login")
-				.read("firstName")
-				.read("lastName")
-				.read("avatar")
-			)
-			.readEach("comments", (hJson, hex)->sync(hJson, hex)
-				.read("id")
-				.read("version")
-				.readDate("date")
-				.read("text")
-			);
+			.process(s->readAuthor(s))
+			.process(s->readComments(s));
 		return json;
 	}
 
@@ -721,13 +711,7 @@ public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySu
 			.read("status", ForumThreadStatus::getLabel)
 			.readLink("lastMessage", (lJson, message)->sync(lJson, message)
 				.readDate("publishedDate")
-				.readLink("author", (pJson, account)->sync(pJson, account)
-					.read("firstName")
-					.read("lastName")
-					.read("avatar")
-					.read("messageCount")
-					.process((aJson, author)->aJson.put("rating", Account.getRatingLevel((Account)author)))
-				)
+				.process(s->readExtendedAuthor(s))
 			);
 		return json;
 	}
@@ -742,12 +726,7 @@ public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySu
 			.read("likeCount")
 			.read("messageCount")
 			.read("status", ForumThreadStatus::getLabel)
-			.readEach("comments", (hJson, hex)->sync(hJson, hex)
-				.read("id")
-				.read("version")
-				.readDate("date")
-				.read("text")
-			)
+			.process(s->readComments(s))
 			.readLink("author", (pJson, account)->sync(pJson, account)
 				.read("id")
 				.read("login", "access.login")
@@ -946,10 +925,10 @@ public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySu
 
 	@REST(url="/api/forum/thread/amend/:id", method=Method.POST)
 	public Json amend(Map<String, Object> params, Json request) {
+		long id = getLongParam(params, "id", "The Forum Thread ID is missing or invalid (%s)");
 		Ref<Json> result = new Ref<>();
 		inTransaction(em-> {
-			String id = (String) params.get("id");
-			ForumThread thread = find(em, ForumThread.class, new Long(id));
+			ForumThread thread = find(em, ForumThread.class, id);
 			ifAuthorized(
 				user -> {
 					try {
@@ -1031,11 +1010,11 @@ public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySu
 
 	@REST(url="/api/forum/message/report/load/:id", method=Method.GET)
 	public Json loadReport(Map<String, Object> params, Json request) {
+		long id = getLongParam(params, "id", "The Forum Report ID is missing or invalid (%s)");
 		Ref<Json> result = new Ref<>();
 		inReadTransaction(em->{
 			ifAuthorized(user->{
-				String id = (String)params.get("id");
-				Report report = findReport(em, new Long(id));
+				Report report = findReport(em, id);
 				ForumMessage message = findForumMessage(em, report.getTarget());
 				result.set(readFromReportAndMessage(report, message));
 			},
@@ -1089,41 +1068,29 @@ public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySu
 
 	Json readFromReport(Report report) {
 		Json json = Json.createJsonObject();
-		sync(json, report)
+		Synchronizer synchronizer =sync(json, report)
 			.read("id")
 			.read("version")
 			.readDate("sendDate")
 			.read("reason")
 			.read("text")
-			.read("target")
-			.readLink("author", (pJson, account)->sync(pJson, account)
-				.read("id")
-				.read("login", "access.login")
-				.read("firstName")
-				.read("lastName")
-				.read("avatar")
-			);
+			.read("target");
+		readAuthor(synchronizer);
 		return json;
 	}
 
 	Json readFromReportAndMessage(Report report, ForumMessage message) {
 		Json json = Json.createJsonObject();
-		sync(json, report)
+		Synchronizer synchronizer = sync(json, report)
 			.read("id")
 			.read("version")
 			.readDate("sendDate")
 			.read("reason")
 			.read("text")
-			.read("target")
-			.readLink("author", (pJson, account)->sync(pJson, account)
-				.read("id")
-				.read("login", "access.login")
-				.read("firstName")
-				.read("lastName")
-				.read("avatar")
-			);
+			.read("target");
+		readAuthor(synchronizer);
 		json.put("message", Json.createJsonObject());
-		sync((Json)json.get("message"), message)
+		synchronizer = sync((Json)json.get("message"), message)
 			.read("id")
 			.read("version")
 			.readDate("publishedDate")
@@ -1135,14 +1102,8 @@ public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySu
 					.read("id")
 					.read("title")
 				)
-			)
-			.readLink("author", (pJson, account)->sync(pJson, account)
-				.read("id")
-				.read("login", "access.login")
-				.read("firstName")
-				.read("lastName")
-				.read("avatar")
 			);
+		readAuthor(synchronizer);
 		return json;
 	}
 
@@ -1175,11 +1136,11 @@ public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySu
 
 	@REST(url="/api/forum/message/report/close/:id", method=Method.POST)
 	public Json closeReport(Map<String, Object> params, Json request) {
+		long id = getLongParam(params, "id", "The Forum Report ID is missing or invalid (%s)");
 		Ref<Json> result = new Ref<>();
 		inTransaction(em->{
 			ifAuthorized(user->{
-				String id = (String)params.get("id");
-				Report report = findReport(em, new Long(id));
+				Report report = findReport(em, id);
 				ForumMessage message = findForumMessage(em, report.getTarget());
 				createEvents(em, report, message, request);
 				report.setStatus(ReportStatus.CANCELED);
@@ -1192,11 +1153,11 @@ public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySu
 
 	@REST(url="/api/forum/message/report/block-message/:id", method=Method.POST)
 	public Json removeMessage(Map<String, Object> params, Json request) {
+		long id = getLongParam(params, "id", "The Forum Report ID is missing or invalid (%s)");
 		Ref<Json> result = new Ref<>();
 		inTransaction(em->{
 			ifAuthorized(user->{
-				String id = (String)params.get("id");
-				Report report = findReport(em, new Long(id));
+				Report report = findReport(em, id);
 				ForumMessage message = findForumMessage(em, report.getTarget());
 				createEvents(em, report, message, request);
 				report.setStatus(ReportStatus.PROCESSED);
@@ -1210,11 +1171,11 @@ public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySu
 
 	@REST(url="/api/forum/message/report/block-and-ban/:id", method=Method.POST)
 	public Json removeMessageAndBanAuthor(Map<String, Object> params, Json request) {
+		long id = getLongParam(params, "id", "The Forum Report ID is missing or invalid (%s)");
 		Ref<Json> result = new Ref<>();
 		inTransaction(em->{
 			ifAuthorized(user->{
-				String id = (String)params.get("id");
-				Report report = findReport(em, new Long(id));
+				Report report = findReport(em, id);
 				ForumMessage message = findForumMessage(em, report.getTarget());
 				createEvents(em, report, message, request);
 				report.setStatus(ReportStatus.PROCESSED);
@@ -1229,11 +1190,11 @@ public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySu
 
 	@REST(url="/api/forum/message/report/move-message/:id", method=Method.POST)
 	public Json moveMessage(Map<String, Object> params, Json request) {
+		long id = getLongParam(params, "id", "The Forum Report ID is missing or invalid (%s)");
 		Ref<Json> result = new Ref<>();
 		inTransaction(em->{
 			ifAuthorized(user->{
-				String id = (String)params.get("id");
-				Report report = findReport(em, new Long(id));
+				Report report = findReport(em, id);
 				ForumMessage message = findForumMessage(em, report.getTarget());
 				createEvents(em, report, message, request);
 				report.setStatus(ReportStatus.PROCESSED);

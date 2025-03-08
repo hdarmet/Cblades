@@ -52,12 +52,12 @@ public class NoticeController implements InjectorSunbeam, DataSunbeam, SecurityS
 	}
 
 	@REST(url="/api/notice/delete/:id", method=Method.GET)
-	public Json delete(Map<String, String> params, Json request) {
+	public Json delete(Map<String, Object> params, Json request) {
+		long id = getLongParam(params, "id", "The Notice ID is missing or invalid (%s)");
 		ifAuthorized(user->{
 			try {
 				inTransaction(em->{
-					String id = params.get("id");
-					Notice notice = findNotice(em, new Long(id));
+					Notice notice = findNotice(em, id);
 					if (notice.isPublished()) {
 						throw new SummerControllerException(401, "Published notice cannot be deleted");
 					}

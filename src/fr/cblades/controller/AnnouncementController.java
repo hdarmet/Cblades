@@ -16,11 +16,9 @@ import org.summer.controller.Verifier;
 import org.summer.data.DataSunbeam;
 import org.summer.data.Synchronizer;
 import org.summer.platform.FileSunbeam;
-import org.summer.platform.PlatformManager;
 import org.summer.security.SecuritySunbeam;
 import org.summer.util.StringReplacer;
 
-import javax.persistence.EntityExistsException;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceException;
 import javax.persistence.Query;
@@ -35,7 +33,7 @@ import java.util.stream.Collectors;
 @Controller
 public class AnnouncementController implements
 		InjectorSunbeam, DataSunbeam, SecuritySunbeam, ControllerSunbeam,
-		FileSunbeam, StandardUsers, CommonEntities
+		StandardUsers, CommonEntities
 {
 
 	/**
@@ -46,7 +44,7 @@ public class AnnouncementController implements
 	 */
 	@MIME(url="/api/announcement/images/:imagename")
 	public FileSpecification getImage(Map<String, Object> params) {
-		return this.getImage(params, "imagename", "/announcements/");
+		return this.getFile(params, "imagename", "/announcements/");
 	}
 
 	/**
@@ -64,20 +62,20 @@ public class AnnouncementController implements
 		FileSpecification[] files = (FileSpecification[])params.get(MULTIPART_FILES);
 		if (files!= null) {
 			if (files.length!=1) throw new SummerControllerException(400, "One and only one illustration file may be loaded.");
-			String fileName = "illustration"+announcement.getId()+"."+files[0].getExtension();
-			String webName = "illustration"+announcement.getId()+"-"+PlatformManager.get().now()+"."+files[0].getExtension();
-			copyStream(files[0].getStream(), PlatformManager.get().getOutputStream("/announcements/"+fileName));
-			announcement.setIllustration("/api/announcement/images/" + webName);
+			announcement.setIllustration(saveFile(files[0],
+				"illustration"+announcement.getId(),
+				"/announcements/", "/api/announcement/images/"
+			));
 		}
 	}
 
 	@REST(url="/api/announcement/create", method=Method.POST)
 	public Json create(Map<String, Object> params, Json request) {
+		checkJson(request, true);
 		Ref<Json> result = new Ref<>();
 		ifAuthorized(user->{
 			try {
 				inTransaction(em -> {
-					checkJson(request, true);
 					Announcement newAnnouncement = writeToAnnouncement(request, new Announcement());
 					persist(em, newAnnouncement);
 					storeIllustration(params, newAnnouncement);
@@ -178,11 +176,11 @@ public class AnnouncementController implements
 	@REST(url="/api/announcement/update/:id", method=Method.POST)
 	public Json update(Map<String, Object> params, Json request) {
 		long id = getLongParam(params, "id", "The Announcement ID is missing or invalid (%s)");
+		checkJson(request, false);
 		Ref<Json> result = new Ref<>();
 		ifAuthorized(user->{
 			try {
 				inTransaction(em->{
-					checkJson(request, false);
 					Announcement announcement = findAnnouncement(em, id);
 					writeToAnnouncement(request, announcement);
 					storeIllustration(params, announcement);
@@ -239,7 +237,7 @@ public class AnnouncementController implements
 	}
 
 	Announcement writeToAnnouncement(Json json, Announcement announcement) {
-		Synchronizer synchronizer = sync(json, announcement)
+		sync(json, announcement)
 			.write("version")
 			.write("description")
 			.write("status", label->AnnouncementStatus.byLabels().get(label));

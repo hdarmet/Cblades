@@ -22,7 +22,6 @@ import org.summer.platform.FileSunbeam;
 import org.summer.platform.PlatformManager;
 import org.summer.security.SecuritySunbeam;
 
-import javax.persistence.EntityExistsException;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceException;
 import javax.persistence.Query;
@@ -39,8 +38,7 @@ import java.util.stream.Collectors;
 @Controller
 public class ArticleController
 	implements InjectorSunbeam, DataSunbeam, SecuritySunbeam, ControllerSunbeam,
-		FileSunbeam, StandardUsers, CommonEntities {
-	static final Logger log = Logger.getLogger("summer");
+		StandardUsers, CommonEntities {
 
 	/**
 	 * Endpoint (accessible via "/api/article/images/:imagename") permettant de télécharger depuis le navigateur
@@ -50,7 +48,7 @@ public class ArticleController
 	 */
 	@MIME(url="/api/article/images/:imagename")
 	public FileSpecification getImage(Map<String, Object> params) {
-		return this.getImage(params, "imagename", "/articles/");
+		return this.getFile(params, "imagename", "/articles/");
 	}
 
 	/**
@@ -78,25 +76,24 @@ public class ArticleController
 			for (Map.Entry<Integer, FileSpecification> fileEntry : fileMap.entrySet()) {
 				int ordinal = fileEntry.getKey();
 				FileSpecification file = fileEntry.getValue();
-				String fileName = "paragraph" + article.getId() + "_" + ordinal + "." + files[0].getExtension();
-				String webName = "paragraph" + article.getId() + "_" + ordinal + "-" + PlatformManager.get().now() + "." + files[0].getExtension();
-				copyStream(file.getStream(), PlatformManager.get().getOutputStream("/articles/" + fileName));
-				log.info("Save: " + "/articles/" + fileName + " for: " + "/api/article/images/" + webName);
 				Paragraph paragraph = article.getParagraph(ordinal);
 				if (paragraph == null) throw new SummerControllerException(404, "No paragraph for image : " + ordinal);
-				article.getParagraph(ordinal).setIllustration("/api/article/images/" + webName);
+				article.getParagraph(ordinal).setIllustration(saveFile(file,
+					"paragraph" + article.getId() + "_" + ordinal,
+					"/articles/", "/api/article/images/"
+				));
 			}
 		}
 	}
 
 	@REST(url="/api/article/propose", method=Method.POST)
 	public Json propose(Map<String, Object> params, Json request) {
+		checkJson(request, Usage.PROPOSE);
 		Ref<Json> result = new Ref<>();
 		inTransaction(em->{
 			ifAuthorized(
 				user->{
 					try {
-						checkJson(request, Usage.PROPOSE);
 						Article newArticle = writeToArticle(em, request, new Article(), Usage.PROPOSE);
 						Account author = Account.find(em, user);
 						addComment(request, newArticle, author);
@@ -124,8 +121,8 @@ public class ArticleController
 	@REST(url="/api/article/amend/:id", method=Method.POST)
 	public Json amend(Map<String, Object> params, Json request) {
 		long id = getLongParam(params, "id", "The Article ID is missing or invalid (%s)");
-		Ref<Json> result = new Ref<>();
 		checkJson(request, Usage.AMEND);
+		Ref<Json> result = new Ref<>();
 		inTransaction(em-> {
 			try {
 				Article article = findArticle(em, id);
@@ -151,12 +148,12 @@ public class ArticleController
 
 	@REST(url="/api/article/create", method=Method.POST)
 	public Json create(Map<String, Object> params, Json request) {
+		checkJson(request, Usage.CREATE);
 		Ref<Json> result = new Ref<>();
 		inTransaction(em->{
 			ifAuthorized(
 				user->{
 					try {
-						checkJson(request, Usage.CREATE);
 						Article newArticle = writeToArticle(em, request, new Article(), Usage.CREATE);
 						newArticle.setPoll(new LikePoll().setLikes(0).setDislikes(0));
 						persist(em, newArticle);
@@ -179,12 +176,12 @@ public class ArticleController
 	@REST(url="/api/article/update/:id", method=Method.POST)
 	public Json update(Map<String, Object> params, Json request) {
 		long id = getLongParam(params, "id", "The Article ID is missing or invalid (%s)");
+		checkJson(request, Usage.UPDATE);
 		Ref<Json> result = new Ref<>();
 		inTransaction(em-> {
 			ifAuthorized(
 				user -> {
 					try {
-						checkJson(request, Usage.UPDATE);
 						Article article = findArticle(em, id);
 						writeToArticle(em, request, article, Usage.UPDATE);
 						storeArticleImages(params, article);
@@ -396,12 +393,12 @@ public class ArticleController
 	}
 
 	void checkJson(Json json, Usage usage) {
-		Verifier verifier = verify(json);
-		if (usage.creation) {
-			verifier
-				.checkRequired("title");
-		}
-		verifier
+		verify(json)
+			.process(v->{
+				if (usage.creation) {v
+					.checkRequired("title");
+				}
+			})
 			.checkMinSize("title", 2).checkMaxSize("title", 200)
 			.checkPattern("title", "[\\d\\s\\w]+")
 			.each("themes", tJson -> verify(tJson)
@@ -418,15 +415,17 @@ public class ArticleController
 				.checkRequired("text")
 				.checkMinSize("text", 2)
 				.checkMaxSize("text", 19995)
-			);
-		if (usage.propose) {
-			verifier.checkMinSize("newComment", 2).checkMaxSize("newComment", 200);
-		}
-		else {
-			verifier.check("status", ArticleStatus.byLabels().keySet());
-			checkComments(verifier, usage.creation);
-		}
-		verifier.ensure();
+			)
+			.process(v->{
+				if (usage.propose) {v
+					.checkMinSize("newComment", 2).checkMaxSize("newComment", 200);
+				}
+				else {v
+					.check("status", ArticleStatus.byLabels().keySet());
+					checkComments(v);
+				}
+			})
+			.ensure();
 	}
 
 	void addComment(Json json, Article article, Account author) {
@@ -451,7 +450,7 @@ public class ArticleController
 
 	Article writeToArticle(EntityManager em, Json json, Article article, Usage usage) {
 		try {
-			Synchronizer synchronizer = sync(json, article)
+			sync(json, article)
 				.write("version")
 				.write("title")
 				.syncEach("themes", (Json jsonTheme)-> Theme.find(em, jsonTheme.getLong("id")))
@@ -461,14 +460,15 @@ public class ArticleController
 					.write("title")
 					.write("illustrationPosition", label->IllustrationPosition.byLabels().get(label))
 					.write("text")
-				);
+				)
+				.process(s->{
+					if (!usage.propose) {s
+						.write("status", label -> ArticleStatus.byLabels().get(label));
+						writeComments(s);
+					}
+				});
 			article.setFirstParagraph(article.getParagraph(0));
 			article.buildDocument();
-			if (!usage.propose) {
-				synchronizer
-					.write("status", label -> ArticleStatus.byLabels().get(label));
-				writeComments(synchronizer);
-			}
 			return article;
 		} catch (SummerNotFoundException snfe) {
 			throw new SummerControllerException(404, snfe.getMessage());
@@ -477,7 +477,7 @@ public class ArticleController
 
 	Json readFromArticleSummary(Article article) {
 		Json json = Json.createJsonObject();
-		Synchronizer synchronizer = sync(json, article)
+		sync(json, article)
 			.read("id")
 			.read("version")
 			.readEach("themes", (tJson, account)->sync(tJson, account)
@@ -491,8 +491,8 @@ public class ArticleController
 				.read("illustration")
 				.read("illustrationPosition", IllustrationPosition::getLabel)
 				.read("text")
-			);
-		readAuthor(synchronizer);
+			)
+			.process(s->readAuthor(s));
 		return json;
 	}
 
@@ -514,9 +514,9 @@ public class ArticleController
 				.read("illustration")
 				.read("illustrationPosition", IllustrationPosition::getLabel)
 				.read("text")
-			);
-		readAuthor(synchronizer);
-		readComments(synchronizer);
+			)
+			.process(s->readAuthor(s))
+			.process(s->readComments(s));
 		return json;
 	}
 
@@ -531,13 +531,13 @@ public class ArticleController
 				.read("illustration")
 				.read("illustrationPosition", IllustrationPosition::getLabel)
 				.read("text")
-			);
-		readAuthor(synchronizer);
-		synchronizer.readLink("poll", (pJson, poll)->sync(pJson, poll)
-				.read("id")
-				.read("likes")
-				.read("dislikes")
-			);
+			)
+			.process(s->readAuthor(s))
+			.readLink("poll", (pJson, poll)->sync(pJson, poll)
+			.read("id")
+			.read("likes")
+			.read("dislikes")
+		);
 		return json;
 	}
 

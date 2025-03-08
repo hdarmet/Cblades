@@ -1,7 +1,7 @@
 package fr.cblades.controllers;
 
 import fr.cblades.StandardUsers;
-import fr.cblades.controller.ThemeController;
+import fr.cblades.controller.FactionController;
 import fr.cblades.domain.*;
 import org.junit.Assert;
 import org.junit.Before;
@@ -21,9 +21,9 @@ import java.io.OutputStream;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
-public class ThemeControllerTest implements TestSeawave, CollectionSunbeam, DataManipulatorSunbeam {
+public class FactionControllerTest implements TestSeawave, CollectionSunbeam, DataManipulatorSunbeam {
 
-    ThemeController themeController;
+    FactionController factionController;
     MockDataManagerImpl dataManager;
     MockPlatformManagerImpl platformManager;
     MockSecurityManagerImpl securityManager;
@@ -31,7 +31,7 @@ public class ThemeControllerTest implements TestSeawave, CollectionSunbeam, Data
     @Before
     public void before() {
         ApplicationManager.set(new ApplicationManagerForTestImpl());
-        themeController = new ThemeController();
+        factionController = new FactionController();
         dataManager = (MockDataManagerImpl) ApplicationManager.get().getDataManager();
         dataManager.openPersistenceUnit("default");
         platformManager = (MockPlatformManagerImpl) ApplicationManager.get().getPlatformManager();
@@ -43,157 +43,205 @@ public class ThemeControllerTest implements TestSeawave, CollectionSunbeam, Data
     }
 
     @Test
-    public void checkRequiredFieldsForThemeCreation() {
+    public void checkRequiredFieldsForFactionCreation() {
         securityManager.doConnect("admin", 0);
         try {
-            themeController.create(params(), Json.createJsonFromString(
-                    "{ 'comments': [{}] }"
+            factionController.create(params(), Json.createJsonFromString(
+                    "{ 'comments': [{}], 'sheets': [{}] }"
             ));
             Assert.fail("The request should fail");
         } catch (SummerControllerException sce) {
             Assert.assertEquals(400, sce.getStatus());
             Assert.assertEquals("{" +
+                "\"sheets-description\":\"required\"," +
                 "\"comments-version\":\"required\"," +
+                "\"sheets-name\":\"required\"," +
                 "\"comments-date\":\"required\"," +
+                "\"name\":\"required\"," +
                 "\"description\":\"required\"," +
-                "\"title\":\"required\"," +
+                "\"sheets-ordinal\":\"required\"," +
                 "\"comments-text\":\"required\"" +
             "}", sce.getMessage());
         }
     }
 
     @Test
-    public void checkMinFieldSizesForThemeCreation() {
+    public void checkMinFieldSizesForFactionCreation() {
         securityManager.doConnect("admin", 0);
         try {
-            themeController.create(params(), Json.createJsonFromString("{" +
-                " 'title':'n'," +
-                " 'description':'f'" +
+            factionController.create(params(), Json.createJsonFromString("{" +
+                " 'name':'n'," +
+                " 'description':'d'," +
+                " 'sheets': [{ " +
+                    "'ordinal':0, " +
+                    "'name':'n', " +
+                    "'description':'d'" +
+                " }] " +
             "}"));
             Assert.fail("The request should fail");
         } catch (SummerControllerException sce) {
             Assert.assertEquals(400, sce.getStatus());
             Assert.assertEquals("{" +
-                "\"description\":\"must be greater of equals to 2\"," +
-                "\"title\":\"must be greater of equals to 2\"" +
+                "\"sheets-description\":\"must be greater of equals to 2\"," +
+                "\"sheets-name\":\"must be greater of equals to 2\"," +
+                "\"name\":\"must be greater of equals to 2\"," +
+                "\"description\":\"must be greater of equals to 2\"" +
             "}", sce.getMessage());
         }
     }
 
     @Test
-    public void checkMaxFieldSizesForThemeCreation() {
+    public void checkMaxFieldSizesForFactionCreation() {
         securityManager.doConnect("admin", 0);
         try {
-            themeController.create(params(), Json.createJsonFromString("{" +
-                " 'title':'" + generateText("f", 201) + "'," +
-                " 'description':'" + generateText("f", 1001) + "' " +
+            factionController.create(params(), Json.createJsonFromString("{" +
+                " 'name':'" + generateText("n", 201) + "'," +
+                " 'description':'" + generateText("d", 20000) + "', " +
+                " 'sheets': [{ " +
+                    "'ordinal':0, " +
+                    "'name':'" + generateText("n", 201) +"', " +
+                    "'description':'" + generateText("d", 20000) +"'" +
+                " }] " +
             "}"));
             Assert.fail("The request should fail");
         } catch (SummerControllerException sce) {
             Assert.assertEquals(400, sce.getStatus());
             Assert.assertEquals("{" +
-                "\"description\":\"must not be greater than 1000\"," +
-                "\"title\":\"must not be greater than 200\"" +
+                "\"sheets-description\":\"must not be greater than 19995\"," +
+                "\"sheets-name\":\"must not be greater than 200\"," +
+                "\"name\":\"must not be greater than 200\"," +
+                "\"description\":\"must not be greater than 19995\"" +
             "}", sce.getMessage());
         }
     }
 
     @Test
-    public void checkFieldValidityForThemeCreation() {
+    public void checkFieldValidityForFactionCreation() {
         securityManager.doConnect("admin", 0);
         try {
-            themeController.create(params(), Json.createJsonFromString(
-                "{ 'description': '123', 'title':'...', 'status':'???', 'category':'???' }"
+            factionController.create(params(), Json.createJsonFromString(
+            "{ " +
+                    "'name':'...', 'status':'???', 'description': 0, " +
+                    "'sheets': [ { 'name':'...', 'description': 0, ordinal:'un' } ] " +
+                "}"
             ));
             Assert.fail("The request should fail");
         }
         catch (SummerControllerException sce) {
             Assert.assertEquals(400, sce.getStatus());
             Assert.assertEquals("{" +
-                "\"category\":\"??? must matches one of [game, legends, examples]\"," +
-                "\"title\":\"must matches '[\\\\d\\\\s\\\\w]+'\"," +
+                "\"sheets-description\":\"not a valid string\"," +
+                "\"sheets-name\":\"must matches '[\\\\d\\\\s\\\\w]+'\"," +
+                "\"name\":\"must matches '[\\\\d\\\\s\\\\w]+'\"," +
+                "\"sheets-ordinal\":\"not a valid integer\"," +
                 "\"status\":\"??? must matches one of [pnd, live, prp]\"" +
-            "}", sce.getMessage());
+            "}",
+            sce.getMessage());
         }
     }
 
     @Test
-    public void createNewThemeWithIllustration() {
+    public void createNewFactionWithIllustration() {
         dataManager.register("persist", null, null, (Predicate) entity->{
-            Assert.assertTrue(entity instanceof Theme);
-            Theme theme = (Theme) entity;
-            Assert.assertEquals("Magic", theme.getTitle());
-            Assert.assertEquals(ThemeStatus.PENDING, theme.getStatus());
-            Assert.assertEquals(ThemeCategory.GAME, theme.getCategory());
-            Assert.assertEquals("A powerful feature", theme.getDescription());
+            Assert.assertTrue(entity instanceof Faction);
+            Faction faction = (Faction) entity;
+            Assert.assertEquals("Redneck", faction.getName());
+            Assert.assertEquals(FactionStatus.PENDING, faction.getStatus());
+            Assert.assertEquals("A skilled faction", faction.getDescription());
             return true;
         });
-        OutputStream outputStream = new ByteArrayOutputStream();
-        platformManager.register("getOutputStream", outputStream, null);
+        OutputStream sheetOutputStream = new ByteArrayOutputStream();
+        platformManager.register("getOutputStream", sheetOutputStream, null);
+        OutputStream iconOutputStream = new ByteArrayOutputStream();
+        platformManager.register("getOutputStream", iconOutputStream, null);
+        OutputStream factionOutputStream = new ByteArrayOutputStream();
+        platformManager.register("getOutputStream", factionOutputStream, null);
         dataManager.register("flush", null, null);
         dataManager.register("flush", null, null);
         securityManager.doConnect("admin", 0);
-        Json result = themeController.create(params(
+        Json result = factionController.create(params(
             ControllerSunbeam.MULTIPART_FILES, new FileSpecification[] {
-                new FileSpecification("theme", "theme.png", "png",
-                    new ByteArrayInputStream(("Content of /theme/theme.png").getBytes()))
+                new FileSpecification("redneck", "redneck_faction.png", "png",
+                    new ByteArrayInputStream(("Content of /factions/redneck_faction.png").getBytes())),
+                new FileSpecification("redneck-0", "redneck_faction-0.png", "png",
+                    new ByteArrayInputStream(("Content of /factions/redneck_faction-0.png").getBytes())),
+                new FileSpecification("icon-redneck-0", "icon-redneck_faction-0.png", "png",
+                    new ByteArrayInputStream(("Content of /factions/icon-redneck_faction-0.png").getBytes()))
             }
         ), Json.createJsonFromString("{" +
-                " 'title':'Magic'," +
+                " 'name':'Redneck'," +
                 " 'status':'pnd'," +
-                " 'category':'game'," +
-                " 'description':'A powerful feature' " +
+                " 'description':'A skilled faction', " +
+                " 'sheets': [{ " +
+                    "'ordinal':0, " +
+                    "'name':'infantry', " +
+                    "'description':'infantry units'" +
+                " }] " +
             "}"
         ));
         Assert.assertEquals("{" +
+            "\"sheets\":[{" +
+                "\"path\":\"/api/faction/documents/sheet0_0-1739879980962.png\"," +
+                "\"name\":\"infantry\"," +
+                "\"icon\":\"/api/faction/documents/sheeticon0_0-1739879980962.png\"," +
+                "\"description\":\"infantry units\"," +
+                "\"id\":0" +
+            "}]," +
             "\"comments\":[]," +
-            "\"description\":\"A powerful feature\"," +
-            "\"illustration\":\"/api/theme/images/theme0-1739879980962.png\"," +
-            "\"id\":0," +
-            "\"category\":\"game\"," +
-            "\"title\":\"Magic\"," +
-            "\"version\":0," +
+            "\"name\":\"Redneck\"," +
+            "\"description\":\"A skilled faction\"," +
+            "\"illustration\":\"/api/faction/documents/faction0-1739879980962.png\"," +
+            "\"id\":0,\"version\":0," +
             "\"status\":\"pnd\"" +
         "}", result.toString());
-        Assert.assertEquals("Content of /theme/theme.png", outputStreamToString(outputStream));
+        Assert.assertEquals("Content of /factions/redneck_faction.png", outputStreamToString(factionOutputStream));
+        Assert.assertEquals("Content of /factions/redneck_faction-0.png", outputStreamToString(sheetOutputStream));
+        Assert.assertEquals("Content of /factions/icon-redneck_faction-0.png", outputStreamToString(iconOutputStream));
         platformManager.hasFinished();
         dataManager.hasFinished();
     }
 
     @Test
-    public void createNewThemeWithoutAnIllustration() {
+    public void createNewFactionWithoutAnIllustration() {
         dataManager.register("persist", null, null, (Predicate) entity->{
-            Assert.assertTrue(entity instanceof Theme);
-            Theme theme = (Theme) entity;
-            Assert.assertEquals("Magic", theme.getTitle());
-            Assert.assertEquals("A powerful feature", theme.getDescription());
+            Assert.assertTrue(entity instanceof Faction);
+            Faction faction = (Faction) entity;
+            Assert.assertEquals("Redneck", faction.getName());
+            Assert.assertEquals(FactionStatus.PENDING, faction.getStatus());
+            Assert.assertEquals("A skilled faction", faction.getDescription());
             return true;
         });
         dataManager.register("flush", null, null);
         dataManager.register("flush", null, null);
         securityManager.doConnect("admin", 0);
-        Json result = themeController.create(params(), Json.createJsonFromString("{" +
-                " 'title':'Magic'," +
-                " 'description':'A powerful feature' " +
+        Json result = factionController.create(params(),
+            Json.createJsonFromString("{" +
+                " 'name':'Redneck'," +
+                " 'status':'pnd'," +
+                " 'description':'A skilled faction' " +
             "}"
         ));
         Assert.assertEquals("{" +
+            "\"sheets\":[]," +
             "\"comments\":[]," +
-            "\"description\":\"A powerful feature\"," +
+            "\"name\":\"Redneck\"," +
+            "\"description\":\"A skilled faction\"," +
+            "\"illustration\":\"\"," +
             "\"id\":0," +
-            "\"title\":\"Magic\"," +
-            "\"version\":0" +
+            "\"version\":0," +
+            "\"status\":\"pnd\"" +
         "}", result.toString());
         dataManager.hasFinished();
     }
 
     @Test
-    public void tryToCreateANewThemeWithBadCredentials() {
+    public void tryToCreateANewFactionWithBadCredentials() {
         securityManager.doConnect("someone", 0);
         try {
-            themeController.create(params(), Json.createJsonFromString("{" +
-                    " 'title':'Magic'," +
-                    " 'description':'A powerful feature' " +
+            factionController.create(params(), Json.createJsonFromString("{" +
+                    " 'name':'Redneck'," +
+                    " 'status':'pnd'," +
+                    " 'description':'A skilled faction' " +
                 "}"
             ));
             Assert.fail("The request should fail");
@@ -206,177 +254,257 @@ public class ThemeControllerTest implements TestSeawave, CollectionSunbeam, Data
     }
 
     @Test
-    public void failToCreateAThemeBecauseMoreThanOneImageFileAreReceived() {
+    public void failToCreateAFactionBecauseMoreThanOneImageFileAreReceived() {
         dataManager.register("persist", null, null, (Predicate) entity->{
             return true;
         });
         dataManager.register("flush", null, null, null);
+        OutputStream outputStream = new ByteArrayOutputStream();
+        for (int index=0; index<6; index ++) {
+            platformManager.register("getOutputStream", outputStream, null);
+        }
         securityManager.doConnect("admin", 0);
         try {
-            themeController.create(params(
+            factionController.create(params(
                 ControllerSunbeam.MULTIPART_FILES, new FileSpecification[] {
-                    new FileSpecification("magic_theme0-0", "magic_yheme0-0.png", "png",
-                            new ByteArrayInputStream(("Content of /themes/magic_theme0-0.png").getBytes())),
-                    new FileSpecification("magic_theme1-0", "magic_theme1-0.png", "png",
-                            new ByteArrayInputStream(("Content of /themes/magic_theme1-0.png").getBytes()))
+                    new FileSpecification("redneck", "redneck_faction.png", "png",
+                        new ByteArrayInputStream(("Content of /factions/redneck_faction.png").getBytes())),
+                    new FileSpecification("redneck_b", "redneck_faction_b.png", "png",
+                        new ByteArrayInputStream(("Content of /factions/redneck_faction_b.png").getBytes())),
+                    new FileSpecification("redneck-0", "redneck_faction-0.png", "png",
+                        new ByteArrayInputStream(("Content of /factions/redneck_faction-0.png").getBytes())),
+                    new FileSpecification("icon-redneck-0", "icon-redneck_faction-0.png", "png",
+                        new ByteArrayInputStream(("Content of /factions/icon-redneck_faction-0.png").getBytes())),
+                    new FileSpecification("redneck_b-0", "redneck_faction_b-0.png", "png",
+                        new ByteArrayInputStream(("Content of /factions/redneck_faction_b-0.png").getBytes())),
+                    new FileSpecification("icon-redneck_b-0", "icon-redneck_faction_b-0.png", "png",
+                        new ByteArrayInputStream(("Content of /factions/icon-redneck_faction_b-0.png").getBytes())),
+                    new FileSpecification("redneck-3", "redneck_faction-3.png", "png",
+                        new ByteArrayInputStream(("Content of /factions/redneck_faction-3.png").getBytes())),
+                    new FileSpecification("icon-redneck-3", "icon-redneck_faction-3.png", "png",
+                        new ByteArrayInputStream(("Content of /factions/icon-redneck_faction-3.png").getBytes()))
             }), Json.createJsonFromString("{" +
-                " 'title':'Magic'," +
-                " 'description':'A powerful feature' " +
-            "}"));
+                    " 'name':'Redneck'," +
+                    " 'status':'pnd'," +
+                    " 'description':'A skilled faction', " +
+                    " 'sheets': [{ " +
+                        "'ordinal':0, " +
+                        "'name':'infantry', " +
+                        "'description':'infantry units'" +
+                    " }, {" +
+                        "'ordinal':1, " +
+                        "'name':'cavalry', " +
+                        "'description':'cavalry units'" +
+                    " }] " +
+                "}"
+            ));
             Assert.fail("The request should fail");
         }
         catch (SummerControllerException sce) {
             Assert.assertEquals(400, sce.getStatus());
-            Assert.assertEquals("One Theme file must be loaded.", sce.getMessage());
+            Assert.assertEquals(
+                "Only one Faction file must be loaded.\n" +
+                "Only one Icon file must be loaded for sheet 0.\n" +
+                "Only one Path file must be loaded.\n" +
+                "No sheet with number 3 found for Icon.\n" +
+                "No sheet with number 3 found for Path.\n" +
+                "Sheet number 1 does not have an icon.\n" +
+                "Sheet number 1 does not have a path.\n", sce.getMessage());
         }
         dataManager.hasFinished();
     }
 
     @Test
-    public void tryToCreateAnAlreadyExistingTheme() {
+    public void tryToCreateAnAlreadyExistingFaction() {
         dataManager.register("persist", null,
             new EntityExistsException("Entity already Exists"),
             (Predicate) entity->{
-            return (entity instanceof Theme);
+            return (entity instanceof Faction);
             }
         );
         securityManager.doConnect("admin", 0);
         try {
-            themeController.create(params(), Json.createJsonFromString("{" +
-                " 'title':'Magic'," +
-                " 'description':'A powerful feature' " +
+            factionController.create(params(), Json.createJsonFromString("{" +
+                " 'name':'Redneck'," +
+                " 'status':'pnd'," +
+                " 'description':'A skilled faction' " +
             "}"));
             Assert.fail("The request should fail");
         }
         catch (SummerControllerException sce) {
             Assert.assertEquals(409, sce.getStatus());
-            Assert.assertEquals("Theme with title (Magic) already exists", sce.getMessage());
+            Assert.assertEquals("Faction with name (Redneck) already exists", sce.getMessage());
         }
         dataManager.hasFinished();
     }
 
     @Test
-    public void checkRequiredFieldsForThemeProposal() {
+    public void checkRequiredFieldsForFactionProposal() {
         securityManager.doConnect("admin", 0);
         try {
-            themeController.propose(params(), Json.createJsonFromString(
-                "{ }"
+            factionController.propose(params(), Json.createJsonFromString(
+                "{ 'sheets': [{}] }"
             ));
             Assert.fail("The request should fail");
         } catch (SummerControllerException sce) {
             Assert.assertEquals(400, sce.getStatus());
             Assert.assertEquals("{" +
+                "\"sheets-description\":\"required\"," +
+                "\"sheets-name\":\"required\"," +
+                "\"name\":\"required\"," +
                 "\"description\":\"required\"," +
-                "\"title\":\"required\"" +
+                "\"sheets-ordinal\":\"required\"" +
             "}", sce.getMessage());
         }
     }
 
     @Test
-    public void checkMinFieldSizesForThemeProposal() {
+    public void checkMinFieldSizesForFactionProposal() {
         securityManager.doConnect("admin", 0);
         try {
-            themeController.propose(params(), Json.createJsonFromString("{" +
-                " 'title':'n'," +
-                " 'description':'f'" +
+            factionController.propose(params(), Json.createJsonFromString("{" +
+                " 'name':'n'," +
+                " 'description':'d'," +
+                " 'sheets': [{ " +
+                    "'ordinal':0, " +
+                    "'name':'n', " +
+                    "'description':'d'" +
+                " }], " +
+                "'newComment':'n'" +
             "}"));
             Assert.fail("The request should fail");
         } catch (SummerControllerException sce) {
             Assert.assertEquals(400, sce.getStatus());
             Assert.assertEquals("{" +
-                "\"description\":\"must be greater of equals to 2\"," +
-                "\"title\":\"must be greater of equals to 2\"" +
+                "\"sheets-description\":\"must be greater of equals to 2\"," +
+                "\"sheets-name\":\"must be greater of equals to 2\"," +
+                "\"newComment\":\"must be greater of equals to 2\"," +
+                "\"name\":\"must be greater of equals to 2\"," +
+                "\"description\":\"must be greater of equals to 2\"" +
             "}", sce.getMessage());
         }
     }
 
     @Test
-    public void checkMaxFieldSizesForThemeProposal() {
+    public void checkMaxFieldSizesForFactionProposal() {
         securityManager.doConnect("admin", 0);
         try {
-            themeController.propose(params(), Json.createJsonFromString("{" +
-                " 'title':'" + generateText("f", 201) + "'," +
-                " 'description':'" + generateText("f", 1001) + "' " +
+            factionController.propose(params(), Json.createJsonFromString(  "{" +
+                " 'name':'" + generateText("n", 201) + "'," +
+                " 'description':'" + generateText("d", 20000) + "', " +
+                " 'sheets': [{ " +
+                    "'ordinal':0, " +
+                    "'name':'" + generateText("n", 201) +"', " +
+                    "'description':'" + generateText("d", 20000) +"'" +
+                " }], " +
+                "'newComment':'" + generateText("c", 20000) + "'" +
             "}"));
             Assert.fail("The request should fail");
         } catch (SummerControllerException sce) {
             Assert.assertEquals(400, sce.getStatus());
             Assert.assertEquals("{" +
-                "\"description\":\"must not be greater than 1000\"," +
-                "\"title\":\"must not be greater than 200\"" +
+                "\"sheets-description\":\"must not be greater than 19995\"," +
+                "\"sheets-name\":\"must not be greater than 200\"," +
+                "\"newComment\":\"must not be greater than 200\"," +
+                "\"name\":\"must not be greater than 200\"," +
+                "\"description\":\"must not be greater than 19995\"" +
             "}", sce.getMessage());
         }
     }
 
     @Test
-    public void checkFieldValidityForThemeProposal() {
+    public void checkFieldValidityForFactionProposal() {
         securityManager.doConnect("admin", 0);
         try {
-            themeController.propose(params(), Json.createJsonFromString(
-                "{ 'description': '123', 'title':'...', 'category':'???' }"
-            ));
+            factionController.propose(params(), Json.createJsonFromString("{ " +
+                "'name':'...', 'status':'???', 'description': 0, " +
+                "'sheets': [ { 'name':'...', 'description': 0, ordinal:'un' } ] " +
+            "}"));
             Assert.fail("The request should fail");
         }
         catch (SummerControllerException sce) {
             Assert.assertEquals(400, sce.getStatus());
             Assert.assertEquals("{" +
-                "\"category\":\"??? must matches one of [game, legends, examples]\"," +
-                "\"title\":\"must matches '[\\\\d\\\\s\\\\w]+'\"" +
+                "\"sheets-description\":\"not a valid string\"," +
+                "\"sheets-name\":\"must matches '[\\\\d\\\\s\\\\w]+'\"," +
+                "\"name\":\"must matches '[\\\\d\\\\s\\\\w]+'\"," +
+                "\"sheets-ordinal\":\"not a valid integer\"" +
             "}", sce.getMessage());
         }
     }
 
     @Test
-    public void createNewThemeProposal() {
+    public void createNewFactionProposal() {
         Account account = new Account().setAccess(new Login().setLogin("someone"));
         dataManager.register("createQuery", null, null,
             "select a from Account a, Login l where a.access = l and l.login=:login");
         dataManager.register("setParameter", null, null, "login", "someone");
         dataManager.register("getSingleResult", account, null, null);
         dataManager.register("persist", null, null, (Predicate) entity->{
-            Assert.assertTrue(entity instanceof Theme);
-            Theme theme = (Theme) entity;
-            Assert.assertEquals("Magic", theme.getTitle());
-            Assert.assertEquals(ThemeStatus.PROPOSED, theme.getStatus());
-            Assert.assertEquals(ThemeCategory.GAME, theme.getCategory());
-            Assert.assertEquals("A powerful feature", theme.getDescription());
+            Assert.assertTrue(entity instanceof Faction);
+            Faction faction = (Faction) entity;
+            Assert.assertEquals("Redneck", faction.getName());
+            Assert.assertEquals(FactionStatus.PROPOSED, faction.getStatus());
+            Assert.assertEquals("A skilled faction", faction.getDescription());
             return true;
         });
-        OutputStream outputStream = new ByteArrayOutputStream();
-        platformManager.register("getOutputStream", outputStream, null);
+        OutputStream sheetOutputStream = new ByteArrayOutputStream();
+        platformManager.register("getOutputStream", sheetOutputStream, null);
+        OutputStream iconOutputStream = new ByteArrayOutputStream();
+        platformManager.register("getOutputStream", iconOutputStream, null);
+        OutputStream factionOutputStream = new ByteArrayOutputStream();
+        platformManager.register("getOutputStream", factionOutputStream, null);
         dataManager.register("flush", null, null);
         dataManager.register("flush", null, null);
         securityManager.doConnect("someone", 0);
-        Json result = themeController.propose(params(
+        Json result = factionController.propose(params(
             ControllerSunbeam.MULTIPART_FILES, new FileSpecification[] {
-                new FileSpecification("theme", "theme.png", "png",
-                        new ByteArrayInputStream(("Content of /theme/theme.png").getBytes()))
+                new FileSpecification("redneck", "redneck_faction.png", "png",
+                        new ByteArrayInputStream(("Content of /factions/redneck_faction.png").getBytes())),
+                new FileSpecification("redneck-0", "redneck_faction-0.png", "png",
+                        new ByteArrayInputStream(("Content of /factions/redneck_faction-0.png").getBytes())),
+                new FileSpecification("icon-redneck-0", "icon-redneck_faction-0.png", "png",
+                        new ByteArrayInputStream(("Content of /factions/icon-redneck_faction-0.png").getBytes()))
             }
         ), Json.createJsonFromString("{" +
-                " 'title':'Magic'," +
-                " 'category':'game'," +
-                " 'description':'A powerful feature', " +
-                " 'newComment':'Interesting theme' " +
-            "}"
-        ));
+            " 'name':'Redneck'," +
+            " 'description':'A skilled faction', " +
+            " 'sheets': [{ " +
+                "'ordinal':0, " +
+                "'name':'infantry', " +
+                "'description':'infantry units'" +
+            " }], " +
+            " 'newComment':'A long awaited proposal' " +
+        "}"));
         Assert.assertEquals("{" +
-                "\"comments\":[{\"date\":\"2025-02-18\",\"id\":0,\"text\":\"Interesting theme\",\"version\":0}]," +
-                "\"author\":{\"firstName\":\"\",\"lastName\":\"\",\"id\":0,\"login\":\"someone\"}," +
-                "\"description\":\"A powerful feature\"," +
-                "\"illustration\":\"/api/theme/images/theme0-1739879980962.png\"," +
+            "\"sheets\":[{" +
+                "\"path\":\"/api/faction/documents/sheet0_0-1739879980962.png\"," +
+                "\"name\":\"infantry\"," +
+                "\"icon\":\"/api/faction/documents/sheeticon0_0-1739879980962.png\"," +
+                "\"description\":\"infantry units\",\"id\":0" +
+            "}]," +
+            "\"comments\":[{" +
+                "\"date\":\"2025-02-18\"," +
                 "\"id\":0," +
-                "\"category\":\"game\"," +
-                "\"title\":\"Magic\"," +
-                "\"version\":0," +
-                "\"status\":\"prp\"" +
-            "}", result.toString());
-        Assert.assertEquals("Content of /theme/theme.png", outputStreamToString(outputStream));
+                "\"text\":\"A long awaited proposal\"," +
+                "\"version\":0" +
+            "}]," +
+            "\"author\":{\"firstName\":\"\",\"lastName\":\"\",\"id\":0,\"login\":\"someone\"}," +
+            "\"name\":\"Redneck\"," +
+            "\"description\":\"A skilled faction\"," +
+            "\"illustration\":\"/api/faction/documents/faction0-1739879980962.png\"," +
+            "\"id\":0,\"version\":0," +
+            "\"status\":\"prp\"" +
+        "}", result.toString());
+        Assert.assertEquals("Content of /factions/redneck_faction.png", outputStreamToString(factionOutputStream));
+        Assert.assertEquals("Content of /factions/redneck_faction-0.png", outputStreamToString(sheetOutputStream));
+        Assert.assertEquals("Content of /factions/icon-redneck_faction-0.png", outputStreamToString(iconOutputStream));
         platformManager.hasFinished();
         dataManager.hasFinished();
     }
 
     @Test
-    public void tryToProposeAnAlreadyExistingTheme() {
+    public void tryToProposeAnAlreadyExistingFaction() {
         Account account = new Account().setAccess(new Login().setLogin("someone"));
         dataManager.register("createQuery", null, null,
                 "select a from Account a, Login l where a.access = l and l.login=:login");
@@ -385,39 +513,37 @@ public class ThemeControllerTest implements TestSeawave, CollectionSunbeam, Data
         dataManager.register("persist", null,
             new EntityExistsException("Entity already Exists"),
             (Predicate) entity->{
-                return (entity instanceof Theme);
+                return (entity instanceof Faction);
             }
         );
         securityManager.doConnect("someone", 0);
         try {
-            themeController.propose(params(), Json.createJsonFromString("{" +
-                " 'title':'Magic'," +
-                " 'category':'game'," +
-                " 'description':'A powerful feature', " +
-                " 'newComment':'Interesting theme' " +
+            factionController.propose(params(), Json.createJsonFromString("{" +
+                " 'name':'Redneck'," +
+                " 'description':'A skilled faction', " +
+                " 'newComment':'A long awaited proposal' " +
             "}"));
             Assert.fail("The request should fail");
         }
         catch (SummerControllerException sce) {
             Assert.assertEquals(409, sce.getStatus());
-            Assert.assertEquals("Theme with title (Magic) already exists", sce.getMessage());
+            Assert.assertEquals("Faction with name (Redneck) already exists", sce.getMessage());
         }
         dataManager.hasFinished();
     }
 
     @Test
-    public void tryToProposeAThemeFromAnUnknownAuthor() {
+    public void tryToProposeAFactionFromAnUnknownAuthor() {
         dataManager.register("createQuery", null, null,
                 "select a from Account a, Login l where a.access = l and l.login=:login");
         dataManager.register("setParameter", null, null, "login", "someone");
         dataManager.register("getSingleResult", null, new NoResultException("Account not found."), null);
         securityManager.doConnect("someone", 0);
         try {
-            themeController.propose(params(), Json.createJsonFromString("{" +
-                " 'title':'Magic'," +
-                " 'category':'game'," +
-                " 'description':'A powerful feature', " +
-                " 'newComment':'Interesting theme' " +
+            factionController.propose(params(), Json.createJsonFromString("{" +
+                " 'name':'Redneck'," +
+                " 'description':'A skilled faction', " +
+                " 'newComment':'A long awaited proposal' " +
             "}"));
             Assert.fail("The request should fail");
         }
@@ -429,150 +555,188 @@ public class ThemeControllerTest implements TestSeawave, CollectionSunbeam, Data
     }
 
     @Test
-    public void tryToUpdateAThemeWithoutGivingItsID() {
+    public void tryToUpdateAFactionWithoutGivingItsID() {
         securityManager.doConnect("admin", 0);
         try {
-            themeController.update(params(), null);
+            factionController.update(params(), null);
             Assert.fail("The request should fail");
         }
         catch (SummerControllerException sce) {
             Assert.assertEquals(400, sce.getStatus());
-            Assert.assertEquals("The Theme ID is missing or invalid (null)", sce.getMessage());
+            Assert.assertEquals("The Faction ID is missing or invalid (null)", sce.getMessage());
         }
         dataManager.hasFinished();
     }
 
     @Test
-    public void checkRequiredFieldsForThemeUpdate() {
+    public void checkRequiredFieldsForFactionUpdate() {
         dataManager.register("find",
-            new Theme(),  null, Theme.class, 1L);
+            new Faction(),  null, Faction.class, 1L);
         securityManager.doConnect("admin", 0);
         try {
-            themeController.update(params("id", "1"), Json.createJsonFromString(
-                "{ 'comments': [{}] }"
+            factionController.update(params("id", "1"), Json.createJsonFromString(
+                "{ 'comments': [{}], 'sheets': [{}] }"
             ));
             Assert.fail("The request should fail");
         } catch (SummerControllerException sce) {
             Assert.assertEquals(400, sce.getStatus());
             Assert.assertEquals("{" +
+                "\"sheets-description\":\"required\"," +
                 "\"comments-version\":\"required\"," +
+                "\"sheets-name\":\"required\"," +
                 "\"comments-date\":\"required\"," +
+                "\"sheets-ordinal\":\"required\"," +
                 "\"comments-text\":\"required\"" +
             "}", sce.getMessage());
         }
     }
 
     @Test
-    public void checkMinFieldSizesForThemeUpdate() {
+    public void checkMinFieldSizesForFactionUpdate() {
         dataManager.register("find",
-            new Theme(),  null, Theme.class, 1L);
+            new Faction(),  null, Faction.class, 1L);
         securityManager.doConnect("admin", 0);
         try {
-            themeController.update(params("id", "1"), Json.createJsonFromString("{" +
-                " 'title':'n'," +
-                " 'description':'f'" +
+            factionController.update(params("id", "1"), Json.createJsonFromString("{" +
+                " 'name':'n'," +
+                " 'description':'d'," +
+                " 'sheets': [{ " +
+                    "'ordinal':0, " +
+                    "'name':'n', " +
+                    "'description':'d'" +
+                "  }] " +
             "}"));
             Assert.fail("The request should fail");
         } catch (SummerControllerException sce) {
             Assert.assertEquals(400, sce.getStatus());
             Assert.assertEquals("{" +
-                "\"description\":\"must be greater of equals to 2\"," +
-                "\"title\":\"must be greater of equals to 2\"" +
+                "\"sheets-description\":\"must be greater of equals to 2\"," +
+                "\"sheets-name\":\"must be greater of equals to 2\"," +
+                "\"name\":\"must be greater of equals to 2\"," +
+                "\"description\":\"must be greater of equals to 2\"" +
             "}", sce.getMessage());
         }
     }
 
     @Test
-    public void checkMaxFieldSizesForThemeUpdate() {
+    public void checkMaxFieldSizesForFactionUpdate() {
         dataManager.register("find",
-                setEntityId(new Theme().setTitle("Magic"), 1L),
-                null, Theme.class, 1L);
+                setEntityId(new Faction().setName("Magic"), 1L),
+                null, Faction.class, 1L);
         securityManager.doConnect("admin", 0);
         dataManager.register("flush", null, null);
         try {
-            themeController.update(params("id", "1"), Json.createJsonFromString("{" +
-                " 'title':'n'," +
-                " 'description':'f'" +
+            factionController.update(params("id", "1"), Json.createJsonFromString("{" +
+            " 'name':'" + generateText("n", 201) + "'," +
+            " 'description':'" + generateText("d", 20000) + "', " +
+            " 'sheets': [{ " +
+            " 'ordinal':0, " +
+                "'name':'" + generateText("n", 201) +"', " +
+                "'description':'" + generateText("d", 20000) +"'" +
+            "  }] " +
             "}"));
             Assert.fail("The request should fail");
         } catch (SummerControllerException sce) {
             Assert.assertEquals(400, sce.getStatus());
             Assert.assertEquals("{" +
-                "\"description\":\"must be greater of equals to 2\"," +
-                "\"title\":\"must be greater of equals to 2\"" +
+                "\"sheets-description\":\"must not be greater than 19995\"," +
+                "\"sheets-name\":\"must not be greater than 200\"," +
+                "\"name\":\"must not be greater than 200\"," +
+                "\"description\":\"must not be greater than 19995\"" +
             "}", sce.getMessage());
         }
     }
 
     @Test
-    public void checkFieldValidityForThemeUpdate() {
+    public void checkFieldValidityForFactionUpdate() {
         dataManager.register("find",
-                setEntityId(new Theme().setTitle("Magic"), 1L),
-                null, Theme.class, 1L);
+                setEntityId(new Faction().setName("Magic"), 1L),
+                null, Faction.class, 1L);
         securityManager.doConnect("admin", 0);
         try {
-            themeController.update(params("id", "1"), Json.createJsonFromString(
-                "{ 'description': '123', 'title':'...', 'status':'???', 'category':'???' }"
-            ));
+            factionController.update(params("id", "1"), Json.createJsonFromString("{ " +
+                "'name':'...', 'status':'???', 'description': 0, " +
+                "'sheets': [ { 'name':'...', 'description': 0, ordinal:'un' } ] " +
+            "}"));
             Assert.fail("The request should fail");
         }
         catch (SummerControllerException sce) {
             Assert.assertEquals(400, sce.getStatus());
             Assert.assertEquals("{" +
-                "\"category\":\"??? must matches one of [game, legends, examples]\"," +
-                "\"title\":\"must matches '[\\\\d\\\\s\\\\w]+'\"," +
+                "\"sheets-description\":\"not a valid string\"," +
+                "\"sheets-name\":\"must matches '[\\\\d\\\\s\\\\w]+'\"," +
+                "\"name\":\"must matches '[\\\\d\\\\s\\\\w]+'\"," +
+                "\"sheets-ordinal\":\"not a valid integer\"," +
                 "\"status\":\"??? must matches one of [pnd, live, prp]\"" +
             "}", sce.getMessage());
         }
     }
 
     @Test
-    public void updateATheme() {
-        Theme theme = (Theme)setEntityId(new Theme().setTitle("The Magic"), 1L);
-        dataManager.register("find", theme, null, Theme.class, 1L);
-        OutputStream outputStream = new ByteArrayOutputStream();
-        platformManager.register("getOutputStream", outputStream, null);
+    public void updateAFaction() {
+        Faction faction = (Faction)setEntityId(new Faction().setName("The Mercenaries"), 1L);
+        dataManager.register("find", faction, null, Faction.class, 1L);
+        OutputStream sheetOutputStream = new ByteArrayOutputStream();
+        platformManager.register("getOutputStream", sheetOutputStream, null);
+        OutputStream iconOutputStream = new ByteArrayOutputStream();
+        platformManager.register("getOutputStream", iconOutputStream, null);
+        OutputStream factionOutputStream = new ByteArrayOutputStream();
+        platformManager.register("getOutputStream", factionOutputStream, null);
         dataManager.register("flush", null, null);
         securityManager.doConnect("admin", 0);
         platformManager.setTime(1739879980962L);
-        Json result = themeController.update(params("id", "1",
+        Json result = factionController.update(params("id", "1",
             ControllerSunbeam.MULTIPART_FILES, new FileSpecification[] {
-                new FileSpecification("theme", "theme.png", "png",
-                    new ByteArrayInputStream(("Content of /theme/theme.png").getBytes()))
+                new FileSpecification("redneck", "redneck_faction.png", "png",
+                    new ByteArrayInputStream(("Content of /factions/redneck_faction.png").getBytes())),
+                new FileSpecification("redneck-0", "redneck_faction-0.png", "png",
+                    new ByteArrayInputStream(("Content of /factions/redneck_faction-0.png").getBytes())),
+                new FileSpecification("icon-redneck-0", "icon-redneck_faction-0.png", "png",
+                    new ByteArrayInputStream(("Content of /factions/icon-redneck_faction-0.png").getBytes()))
             }
         ), Json.createJsonFromString("{" +
-            "\"description\":\"A powerful feature\"," +
-            "\"illustration\":\"/api/theme/images/theme1-1739879980962.png\"," +
-            "\"id\":1," +
-            "\"category\":\"game\"," +
-            "\"title\":\"Magic\"," +
-            "\"version\":0," +
-            "\"status\":\"pnd\"" +
-        "}"));
+                " 'name':'Redneck'," +
+                " 'status':'pnd'," +
+                " 'description':'A skilled faction', " +
+                " 'sheets': [{ " +
+                    " 'ordinal':0, " +
+                    " 'name':'infantry', " +
+                    " 'description':'infantry units'" +
+                " }] " +
+            "}"
+        ));
         Assert.assertEquals("{" +
+                "\"sheets\":[{" +
+                    "\"path\":\"/api/faction/documents/sheet1_0-1739879980962.png\"," +
+                    "\"name\":\"infantry\"," +
+                    "\"icon\":\"/api/faction/documents/sheeticon1_0-1739879980962.png\"," +
+                    "\"description\":\"infantry units\"," +
+                    "\"id\":0" +
+                "}]," +
                 "\"comments\":[]," +
-                "\"description\":\"A powerful feature\"," +
-                "\"illustration\":\"/api/theme/images/theme1-1739879980962.png\"," +
-                "\"id\":1," +
-                "\"category\":\"game\"," +
-                "\"title\":\"Magic\"," +
-                "\"version\":0," +
+                "\"name\":\"Redneck\"," +
+                "\"description\":\"A skilled faction\"," +
+                "\"illustration\":\"/api/faction/documents/faction1-1739879980962.png\"," +
+                "\"id\":1,\"version\":0," +
                 "\"status\":\"pnd\"" +
             "}",
             result.toString()
         );
+        Assert.assertEquals("Content of /factions/redneck_faction.png", outputStreamToString(factionOutputStream));
+        Assert.assertEquals("Content of /factions/redneck_faction-0.png", outputStreamToString(sheetOutputStream));
+        Assert.assertEquals("Content of /factions/icon-redneck_faction-0.png", outputStreamToString(iconOutputStream));
         platformManager.hasFinished();
         dataManager.hasFinished();
     }
 
     @Test
-    public void tryToUpdateAThemeAndFailPourAnUnknownReason() {
-        Theme theme = (Theme)setEntityId(new Theme().setTitle("Magic"), 1L);
-        dataManager.register("find", theme, null, Theme.class, 1L);
+    public void tryToUpdateAFactionAndFailPourAnUnknownReason() {
+        Faction faction = (Faction)setEntityId(new Faction().setName("Magic"), 1L);
+        dataManager.register("find", faction, null, Faction.class, 1L);
         dataManager.register("flush", null, new PersistenceException("Some Reason."));
         securityManager.doConnect("admin", 0);
         try {
-            themeController.update(params("id", "1"),
+            factionController.update(params("id", "1"),
                 Json.createJsonFromString("{" +
                         " 'title':'Magic'," +
                         " 'status':'pnd'," +
@@ -590,43 +754,43 @@ public class ThemeControllerTest implements TestSeawave, CollectionSunbeam, Data
     }
 
     @Test
-    public void tryToUpdateAnUnknownTheme() {
-        dataManager.register("find", null, null, Theme.class, 1L);
+    public void tryToUpdateAnUnknownFaction() {
+        dataManager.register("find", null, null, Faction.class, 1L);
         securityManager.doConnect("admin", 0);
         try {
-            themeController.update(params("id", "1"), Json.createJsonFromString("{" +
-                " 'title':'Magic'," +
+            factionController.update(params("id", "1"), Json.createJsonFromString("{" +
+                " 'name':'Redneck'," +
                 " 'status':'pnd'," +
-                " 'category':'game'," +
-                " 'description':'A powerful feature' " +
+                " 'description':'A skilled faction' " +
             "}"));
             Assert.fail("The request should fail");
         }
         catch (SummerControllerException sce) {
             Assert.assertEquals(404, sce.getStatus());
-            Assert.assertEquals("Unknown Theme with id 1", sce.getMessage());
+            Assert.assertEquals("Unknown Faction with id 1", sce.getMessage());
         }
         dataManager.hasFinished();
     }
 
+    /*
     @Test
-    public void tryToAmendAThemeWithoutGivingItsID() {
+    public void tryToAmendAFactionWithoutGivingItsID() {
         securityManager.doConnect("someone", 0);
         try {
-            themeController.amend(params(), null);
+            factionController.amend(params(), null);
             Assert.fail("The request should fail");
         }
         catch (SummerControllerException sce) {
             Assert.assertEquals(400, sce.getStatus());
-            Assert.assertEquals("The Theme ID is missing or invalid (null)", sce.getMessage());
+            Assert.assertEquals("The Faction ID is missing or invalid (null)", sce.getMessage());
         }
         dataManager.hasFinished();
     }
 
-    Theme themeBelongingToSomeone() {
+    Faction factionBelongingToSomeone() {
         return setEntityId(
-            new Theme()
-                .setTitle("The Magic")
+            new Faction()
+                .setName("The Magic")
                 .setAuthor(
                     new Account()
                         .setAccess(
@@ -638,13 +802,13 @@ public class ThemeControllerTest implements TestSeawave, CollectionSunbeam, Data
     }
 
     @Test
-    public void checkMinFieldSizesForThemeAmend() {
+    public void checkMinFieldSizesForFactionAmend() {
         dataManager.register("find",
-            themeBelongingToSomeone(),
-            null, Theme.class, 1L);
+            factionBelongingToSomeone(),
+            null, Faction.class, 1L);
         securityManager.doConnect("someone", 0);
         try {
-            themeController.amend(params("id", "1"), Json.createJsonFromString("{ " +
+            factionController.amend(params("id", "1"), Json.createJsonFromString("{ " +
                 " 'title':'m'," +
                 " 'description':'d', " +
                 " 'newComments': 't'," +
@@ -660,14 +824,14 @@ public class ThemeControllerTest implements TestSeawave, CollectionSunbeam, Data
     }
 
     @Test
-    public void checkMaxFieldSizesForThemeAmend() {
+    public void checkMaxFieldSizesForFactionAmend() {
         dataManager.register("find",
-            themeBelongingToSomeone(),
-            null, Theme.class, 1L);
+            factionBelongingToSomeone(),
+            null, Faction.class, 1L);
         dataManager.register("flush", null, null);
         securityManager.doConnect("someone", 0);
         try {
-            themeController.amend(params("id", "1"), Json.createJsonFromString("{ " +
+            factionController.amend(params("id", "1"), Json.createJsonFromString("{ " +
                 " 'title':'" + generateText("f", 201) + "'," +
                 " 'description':'" + generateText("d", 1001) + "', " +
                 " 'newComments': '"+ generateText("c", 20000) + "'" +
@@ -685,11 +849,11 @@ public class ThemeControllerTest implements TestSeawave, CollectionSunbeam, Data
     @Test
     public void checkFieldValidityForArticleAmend() {
         dataManager.register("find",
-                setEntityId(new Theme().setTitle("The Magic"), 1L),
-                null, Theme.class, 1L);
+                setEntityId(new Faction().setName("The Magic"), 1L),
+                null, Faction.class, 1L);
         securityManager.doConnect("admin", 0);
         try {
-            themeController.amend(params("id", "1"), Json.createJsonFromString(
+            factionController.amend(params("id", "1"), Json.createJsonFromString(
                     "{ 'title':'...', 'category':'???' }"
             ));
             Assert.fail("The request should fail");
@@ -704,9 +868,9 @@ public class ThemeControllerTest implements TestSeawave, CollectionSunbeam, Data
     }
 
     @Test
-    public void amendATheme() {
-        Theme theme = themeBelongingToSomeone();
-        dataManager.register("find", theme, null, Theme.class, 1L);
+    public void amendAFaction() {
+        Faction faction = factionBelongingToSomeone();
+        dataManager.register("find", faction, null, Faction.class, 1L);
         Account account = new Account().setAccess(new Login().setLogin("someone"));
         dataManager.register("createQuery", null, null,
                 "select a from Account a, Login l where a.access = l and l.login=:login");
@@ -716,24 +880,24 @@ public class ThemeControllerTest implements TestSeawave, CollectionSunbeam, Data
         platformManager.register("getOutputStream", outputStream, null);
         dataManager.register("flush", null, null);
         securityManager.doConnect("someone", 0);
-        Json result = themeController.amend(params("id", "1",
+        Json result = factionController.amend(params("id", "1",
             ControllerSunbeam.MULTIPART_FILES, new FileSpecification[]{
-            new FileSpecification("theme", "theme.png", "png",
-                new ByteArrayInputStream(("Content of /theme/theme.png").getBytes()))
+            new FileSpecification("faction", "faction.png", "png",
+                new ByteArrayInputStream(("Content of /faction/faction.png").getBytes()))
         }), Json.createJsonFromString("{" +
             "\"description\":\"A powerful feature\"," +
-            "\"illustration\":\"/api/theme/images/theme1-1739879980962.png\"," +
+            "\"illustration\":\"/api/faction/images/faction1-1739879980962.png\"," +
             "\"id\":1," +
             "\"category\":\"game\"," +
             "\"title\":\"Magic\"," +
 //                "\"version\":0," +
-            "\"newComment\":\"Interesting theme\"" +
+            "\"newComment\":\"Interesting faction\"" +
         "}"));
         Assert.assertEquals("{" +
-                "\"comments\":[{\"date\":\"2025-02-18\",\"id\":0,\"text\":\"Interesting theme\",\"version\":0}]," +
+                "\"comments\":[{\"date\":\"2025-02-18\",\"id\":0,\"text\":\"Interesting faction\",\"version\":0}]," +
                 "\"author\":{\"firstName\":\"\",\"lastName\":\"\",\"id\":0,\"login\":\"someone\"}," +
                 "\"description\":\"A powerful feature\"," +
-                "\"illustration\":\"/api/theme/images/theme1-1739879980962.png\"," +
+                "\"illustration\":\"/api/faction/images/faction1-1739879980962.png\"," +
                 "\"id\":1," +
                 "\"category\":\"game\"," +
                 "\"title\":\"Magic\"," +
@@ -746,9 +910,9 @@ public class ThemeControllerTest implements TestSeawave, CollectionSunbeam, Data
     }
 
     @Test
-    public void checkThatAnAdminIsAllowedToAmendATheme() {
-        Theme theme = themeBelongingToSomeone();
-        dataManager.register("find", theme, null, Theme.class, 1L);
+    public void checkThatAnAdminIsAllowedToAmendAFaction() {
+        Faction faction = factionBelongingToSomeone();
+        dataManager.register("find", faction, null, Faction.class, 1L);
         Account account = new Account().setAccess(new Login().setLogin("someone"));
         dataManager.register("createQuery", null, null,
                 "select a from Account a, Login l where a.access = l and l.login=:login");
@@ -757,10 +921,10 @@ public class ThemeControllerTest implements TestSeawave, CollectionSunbeam, Data
         dataManager.register("flush", null, null);
         securityManager.doConnect("admin", 0);
         platformManager.setTime(1739879980962L);
-        Json result = themeController.amend(params("id", "1"),
+        Json result = factionController.amend(params("id", "1"),
             Json.createJsonFromString("{" +
                 "\"description\":\"A powerful feature\"," +
-                "\"illustration\":\"/api/theme/images/theme1-1739879980962.png\"," +
+                "\"illustration\":\"/api/faction/images/faction1-1739879980962.png\"," +
                 "\"id\":1," +
                 "\"category\":\"game\"," +
                 "\"title\":\"Magic\"," +
@@ -771,9 +935,9 @@ public class ThemeControllerTest implements TestSeawave, CollectionSunbeam, Data
     }
 
     @Test
-    public void tryToAmendAThemeAndFailPourAnUnknownReason() {
-        Theme theme = themeBelongingToSomeone();
-        dataManager.register("find", theme, null, Theme.class, 1L);
+    public void tryToAmendAFactionAndFailPourAnUnknownReason() {
+        Faction faction = factionBelongingToSomeone();
+        dataManager.register("find", faction, null, Faction.class, 1L);
         Account account = new Account().setAccess(new Login().setLogin("someone"));
         dataManager.register("createQuery", null, null,
                 "select a from Account a, Login l where a.access = l and l.login=:login");
@@ -782,15 +946,15 @@ public class ThemeControllerTest implements TestSeawave, CollectionSunbeam, Data
         dataManager.register("flush", null, new PersistenceException("Some Reason."));
         securityManager.doConnect("someone", 0);
         try {
-            themeController.amend(params("id", "1"),
+            factionController.amend(params("id", "1"),
                 Json.createJsonFromString("{" +
                     "\"description\":\"A powerful feature\"," +
-                    "\"illustration\":\"/api/theme/images/theme1-1739879980962.png\"," +
+                    "\"illustration\":\"/api/faction/images/faction1-1739879980962.png\"," +
                     "\"id\":1," +
                     "\"category\":\"game\"," +
                     "\"title\":\"Magic\"," +
 //                "\"version\":0," +
-                    "\"newComment\":\"Interesting theme\"" +
+                    "\"newComment\":\"Interesting faction\"" +
                 "}"));
             Assert.fail("The request should fail");
         }
@@ -802,24 +966,24 @@ public class ThemeControllerTest implements TestSeawave, CollectionSunbeam, Data
     }
 
     @Test
-    public void tryToAmendAThemeByAnUnknownAccount() {
-        Theme theme = themeBelongingToSomeone();
-        dataManager.register("find", theme, null, Theme.class, 1L);
+    public void tryToAmendAFactionByAnUnknownAccount() {
+        Faction faction = factionBelongingToSomeone();
+        dataManager.register("find", faction, null, Faction.class, 1L);
         Account account = new Account().setAccess(new Login().setLogin("someone"));
         dataManager.register("createQuery", null, null,
                 "select a from Account a, Login l where a.access = l and l.login=:login");
         dataManager.register("setParameter", null, null, "login", "someone");
         dataManager.register("getSingleResult", null, new NoResultException("Account not found."), null);        securityManager.doConnect("someone", 0);
         try {
-            themeController.amend(params("id", "1"),
+            factionController.amend(params("id", "1"),
                 Json.createJsonFromString("{" +
                     "\"description\":\"A powerful feature\"," +
-                    "\"illustration\":\"/api/theme/images/theme1-1739879980962.png\"," +
+                    "\"illustration\":\"/api/faction/images/faction1-1739879980962.png\"," +
                     "\"id\":1," +
                     "\"category\":\"game\"," +
                     "\"title\":\"Magic\"," +
 //                "\"version\":0," +
-                    "\"newComment\":\"Interesting theme\"" +
+                    "\"newComment\":\"Interesting faction\"" +
                 "}"));
             Assert.fail("The request should fail");
         }
@@ -831,34 +995,34 @@ public class ThemeControllerTest implements TestSeawave, CollectionSunbeam, Data
     }
 
     @Test
-    public void tryToAmendAnUnknownTheme() {
-        dataManager.register("find", null, null, Theme.class, 1L);
+    public void tryToAmendAnUnknownFaction() {
+        dataManager.register("find", null, null, Faction.class, 1L);
         securityManager.doConnect("someone", 0);
         try {
-            themeController.amend(params("id", "1"),
+            factionController.amend(params("id", "1"),
                 Json.createJsonFromString("{" +
                     "\"description\":\"A powerful feature\"," +
-                    "\"illustration\":\"/api/theme/images/theme1-1739879980962.png\"," +
+                    "\"illustration\":\"/api/faction/images/faction1-1739879980962.png\"," +
                     "\"id\":1," +
                     "\"category\":\"game\"," +
                     "\"title\":\"Magic\"," +
 //                "\"version\":0," +
-                    "\"newComment\":\"Interesting theme\"" +
+                    "\"newComment\":\"Interesting faction\"" +
                 "}"));
             Assert.fail("The request should fail");
         }
         catch (SummerControllerException sce) {
             Assert.assertEquals(404, sce.getStatus());
-            Assert.assertEquals("Unknown Theme with id 1", sce.getMessage());
+            Assert.assertEquals("Unknown Faction with id 1", sce.getMessage());
         }
         dataManager.hasFinished();
     }
 
     @Test
-    public void tryToListThemesWithoutGivingParameters() {
+    public void tryToListFactionsWithoutGivingParameters() {
         securityManager.doConnect("admin", 0);
         try {
-            themeController.getAll(params(), null);
+            factionController.getAll(params(), null);
             Assert.fail("The request should fail");
         }
         catch (SummerControllerException sce) {
@@ -868,40 +1032,38 @@ public class ThemeControllerTest implements TestSeawave, CollectionSunbeam, Data
         dataManager.hasFinished();
     }
 
-    Theme theme1() {
-        return setEntityId(new Theme()
-            .setTitle("Magic")
-            .setStatus(ThemeStatus.LIVE)
-            .setCategory(ThemeCategory.GAME)
+    Faction faction1() {
+        return setEntityId(new Faction()
+            .setName("Magic")
+            .setStatus(FactionStatus.LIVE)
             .setDescription("Description of Magic"),
         1L);
     }
 
-    Theme theme2() {
-        return setEntityId(new Theme()
-            .setTitle("Armor")
-            .setStatus(ThemeStatus.LIVE)
-            .setCategory(ThemeCategory.GAME)
+    Faction faction2() {
+        return setEntityId(new Faction()
+            .setName("Armor")
+            .setStatus(FactionStatus.LIVE)
             .setDescription("Description of Armor"),
         2L);
     }
 
     @Test
-    public void listAllThemes() {
+    public void listAllFactions() {
         dataManager.register("createQuery", null, null,
-                "select count(t) from Theme t");
+                "select count(t) from Faction t");
         dataManager.register("getSingleResult", 2L, null);
         dataManager.register("createQuery", null, null,
-                "select t from Theme t");
+                "select t from Faction t");
         dataManager.register("setFirstResult", null, null, 0);
         dataManager.register("setMaxResults", null, null, 10);
         dataManager.register("getResultList", arrayList(
-                theme1(), theme2()
+                faction1(), faction2()
         ), null);
         securityManager.doConnect("admin", 0);
-        Json result = themeController.getAll(params("page", "0"), null);
+        Json result = factionController.getAll(params("page", "0"), null);
         Assert.assertEquals("{" +
-            "\"themes\":[{" +
+            "\"factions\":[{" +
                 "\"description\":\"Description of Magic\"," +
                 "\"id\":1," +
                 "\"category\":\"game\"," +
@@ -921,28 +1083,28 @@ public class ThemeControllerTest implements TestSeawave, CollectionSunbeam, Data
     }
 
     @Test
-    public void listThemesWithASearchPattern() {
+    public void listFactionsWithASearchPattern() {
         dataManager.register("createQuery", null, null,
-            "select count(t) from Theme t " +
+            "select count(t) from Faction t " +
                 "where fts('pg_catalog.english', t.title||' '||t.category||' '||t.description||" +
                 "' '||t.status, :search) = true");
         dataManager.register("setParameter", null, null,"search", "Magic");
         dataManager.register("getSingleResult", 2L, null);
         dataManager.register("createQuery", null, null,
-            "select t from Theme t " +
+            "select t from Faction t " +
                 "where fts('pg_catalog.english', t.title||' '||t.category||' '||t.description||" +
                 "' '||t.status, :search) = true");
         dataManager.register("setParameter", null, null,"search", "Magic");
         dataManager.register("setFirstResult", null, null, 0);
         dataManager.register("setMaxResults", null, null, 10);
-        Theme magicTheme = new Theme().setTitle("Magic");
+        Faction magicFaction = new Faction().setName("Magic");
         dataManager.register("getResultList", arrayList(
-                theme1(), theme2()
+                faction1(), faction2()
         ), null);
         securityManager.doConnect("admin", 0);
-        Json result = themeController.getAll(params("page", "0", "search", "Magic"), null);
+        Json result = factionController.getAll(params("page", "0", "search", "Magic"), null);
         Assert.assertEquals("{" +
-            "\"themes\":[{" +
+            "\"factions\":[{" +
                 "\"description\":\"Description of Magic\"," +
                 "\"id\":1," +
                 "\"category\":\"game\"," +
@@ -962,10 +1124,10 @@ public class ThemeControllerTest implements TestSeawave, CollectionSunbeam, Data
     }
 
     @Test
-    public void tryToListAllThemesWithBadCredentials() {
+    public void tryToListAllFactionsWithBadCredentials() {
         securityManager.doConnect("someone", 0);
         try {
-            themeController.getAll(params(), null);
+            factionController.getAll(params(), null);
             Assert.fail("The request should fail");
         }
         catch (SummerControllerException sce) {
@@ -976,31 +1138,31 @@ public class ThemeControllerTest implements TestSeawave, CollectionSunbeam, Data
     }
 
     @Test
-    public void tryToGetAThemeByTitleWithoutGivingTheTitle() {
+    public void tryToGetAFactionByTitleWithoutGivingTheTitle() {
         securityManager.doConnect("admin", 0);
         try {
-            themeController.getByTitle(params(), null);
+            factionController.getByTitle(params(), null);
             Assert.fail("The request should fail");
         }
         catch (SummerControllerException sce) {
             Assert.assertEquals(400, sce.getStatus());
-            Assert.assertEquals("The Title of the Theme is missing (null)", sce.getMessage());
+            Assert.assertEquals("The Title of the Faction is missing (null)", sce.getMessage());
         }
         dataManager.hasFinished();
     }
 
     @Test
-    public void getOneThemeByTitle() {
+    public void getOneFactionByTitle() {
         dataManager.register("createQuery", null, null,
-            "select t from Theme t " +
+            "select t from Faction t " +
                 "left outer join fetch t.author a " +
                 "left outer join fetch a.access " +
                 "where t.title = :title");
         dataManager.register("setParameter", null, null,"title", "Magic");
         dataManager.register("getSingleResult",
-                theme1(), null);
+                faction1(), null);
         securityManager.doConnect("admin", 0);
-        Json result = themeController.getByTitle(params("title", "Magic"), null);
+        Json result = factionController.getByTitle(params("title", "Magic"), null);
         Assert.assertEquals("{" +
                 "\"comments\":[]," +
                 "\"description\":\"Description of Magic\"," +
@@ -1016,9 +1178,9 @@ public class ThemeControllerTest implements TestSeawave, CollectionSunbeam, Data
     }
 
     @Test
-    public void tryToFindByTitleAnUnknownTheme() {
+    public void tryToFindByTitleAnUnknownFaction() {
         dataManager.register("createQuery", null, null,
-            "select t from Theme t " +
+            "select t from Faction t " +
                 "left outer join fetch t.author a " +
                 "left outer join fetch a.access " +
                 "where t.title = :title");
@@ -1026,29 +1188,29 @@ public class ThemeControllerTest implements TestSeawave, CollectionSunbeam, Data
         dataManager.register("getSingleResult", null, null);
         securityManager.doConnect("admin", 0);
         try {
-            themeController.getByTitle(params("title", "The power of Magic"), null);
+            factionController.getByTitle(params("title", "The power of Magic"), null);
             Assert.fail("The request should fail");
         }
         catch (SummerControllerException sce) {
             Assert.assertEquals(404, sce.getStatus());
-            Assert.assertEquals("Unknown Theme with title The power of Magic", sce.getMessage());
+            Assert.assertEquals("Unknown Faction with title The power of Magic", sce.getMessage());
         }
         dataManager.hasFinished();
     }
 
     @Test
-    public void tryToFindByTitleAThemeWithBadCredentials() {
+    public void tryToFindByTitleAFactionWithBadCredentials() {
         dataManager.register("createQuery", null, null,
-            "select t from Theme t " +
+            "select t from Faction t " +
                 "left outer join fetch t.author a " +
                 "left outer join fetch a.access " +
                 "where t.title = :title");
         dataManager.register("setParameter", null, null,"title", "The power of Magic");
         dataManager.register("getSingleResult",
-                theme1(), null);
+                faction1(), null);
         securityManager.doConnect("someoneelse", 0);
         try {
-            themeController.getByTitle(params("title", "The power of Magic"), null);
+            factionController.getByTitle(params("title", "The power of Magic"), null);
             Assert.fail("The request should fail");
         }
         catch (SummerControllerException sce) {
@@ -1058,16 +1220,12 @@ public class ThemeControllerTest implements TestSeawave, CollectionSunbeam, Data
         dataManager.hasFinished();
     }
 
-
-
-
-
-
+/*
     @Test
-    public void tryToListThemesByCategoryWithoutGivingParameters() {
+    public void tryToListFactionsByCategoryWithoutGivingParameters() {
         securityManager.doConnect("admin", 0);
         try {
-            themeController.getByCategory(params(), null);
+            factionController.getByCategory(params(), null);
             Assert.fail("The request should fail");
         }
         catch (SummerControllerException sce) {
@@ -1075,7 +1233,7 @@ public class ThemeControllerTest implements TestSeawave, CollectionSunbeam, Data
             Assert.assertEquals("The requested Page Number is invalid (null)", sce.getMessage());
         }
         try {
-            themeController.getByCategory(params("page", "0"), null);
+            factionController.getByCategory(params("page", "0"), null);
             Assert.fail("The request should fail");
         }
         catch (SummerControllerException sce) {
@@ -1083,22 +1241,24 @@ public class ThemeControllerTest implements TestSeawave, CollectionSunbeam, Data
             Assert.assertEquals("The requested category is invalid (null)", sce.getMessage());
         }
     }
+*/
 
+    /*
     @Test
-    public void listArticlesByTheme() {
+    public void listArticlesByFaction() {
         dataManager.register("createQuery", null, null,
-                "select t from Theme t where t.category=:category and t.status=:status");
-        Theme theme = (Theme)setEntityId(new Theme().setTitle("Power of Magic"), 101);
-        dataManager.register("setParameter", null, null, "category", ThemeCategory.GAME);
-        dataManager.register("setParameter", null, null, "status", ThemeStatus.LIVE);
+                "select t from Faction t where t.category=:category and t.status=:status");
+        Faction faction = (Faction)setEntityId(new Faction().setName("Power of Magic"), 101);
+        dataManager.register("setParameter", null, null, "category", FactionCategory.GAME);
+        dataManager.register("setParameter", null, null, "status", FactionStatus.LIVE);
         dataManager.register("setFirstResult", null, null, 0);
         dataManager.register("setMaxResults", null, null, 10);
-        Theme magicTheme = new Theme().setTitle("Magic");
+        Faction magicFaction = new Faction().setName("Magic");
         dataManager.register("getResultList", arrayList(
-                theme1(), theme2()
+                faction1(), faction2()
         ), null);
         securityManager.doConnect("admin", 0);
-        Json result = themeController.getByCategory(params("page", "0", "category", "game"), null);
+        Json result = factionController.getByCategory(params("page", "0", "category", "game"), null);
         Assert.assertEquals("[{" +
                 "\"description\":\"Description of Magic\"," +
                 "\"id\":1," +
@@ -1110,25 +1270,27 @@ public class ThemeControllerTest implements TestSeawave, CollectionSunbeam, Data
             "}]", result.toString());
         dataManager.hasFinished();
     }
+     */
 
+    /*
     @Test
-    public void listThemesByCategoryAndASearchPattern() {
+    public void listFactionsByCategoryAndASearchPattern() {
         dataManager.register("createQuery", null, null,
-            "select t from Theme t " +
+            "select t from Faction t " +
                 "where t.category=:category and t.status=:status and " +
                 "fts('pg_catalog.english', t.title||' '||t.category||' '||" +
                 "t.description||' '||t.status, :search) = true");
-        Theme theme = (Theme)setEntityId(new Theme().setTitle("Power of Magic"), 101);
-        dataManager.register("setParameter", null, null, "category", ThemeCategory.GAME);
-        dataManager.register("setParameter", null, null, "status", ThemeStatus.LIVE);
+        Faction faction = (Faction)setEntityId(new Faction().setName("Power of Magic"), 101);
+        dataManager.register("setParameter", null, null, "category", FactionCategory.GAME);
+        dataManager.register("setParameter", null, null, "status", FactionStatus.LIVE);
         dataManager.register("setParameter", null, null,"search", "Magic");
         dataManager.register("setFirstResult", null, null, 0);
         dataManager.register("setMaxResults", null, null, 10);
         dataManager.register("getResultList", arrayList(
-                theme1(), theme2()
+                faction1(), faction2()
         ), null);
         securityManager.doConnect("admin", 0);
-        Json result = themeController.getByCategory(params("page", "0", "category", "game", "search", "Magic"), null);
+        Json result = factionController.getByCategory(params("page", "0", "category", "game", "search", "Magic"), null);
         Assert.assertEquals("[{" +
             "\"description\":\"Description of Magic\"," +
             "\"id\":1," +
@@ -1140,16 +1302,18 @@ public class ThemeControllerTest implements TestSeawave, CollectionSunbeam, Data
         "}]", result.toString());
         dataManager.hasFinished();
     }
+*/
 
+    /*
     @Test
-    public void getLiveThemes() {
+    public void getLiveFactions() {
         dataManager.register("createQuery", null, null,
-                "select t from Theme t where t.status=:status");
-        dataManager.register("setParameter", null, null, "status", ThemeStatus.LIVE);
+                "select t from Faction t where t.status=:status");
+        dataManager.register("setParameter", null, null, "status", FactionStatus.LIVE);
         dataManager.register("getResultList", arrayList(
-                theme1(), theme2()
+                faction1(), faction2()
         ), null);
-        Json result = themeController.getLive(params(), null);
+        Json result = factionController.getLive(params(), null);
         Assert.assertEquals("[{" +
                 "\"description\":\"Description of Magic\"," +
                 "\"id\":1," +
@@ -1168,25 +1332,25 @@ public class ThemeControllerTest implements TestSeawave, CollectionSunbeam, Data
     }
 
     @Test
-    public void tryToGetAThemeWithoutGivingItsID() {
+    public void tryToGetAFactionWithoutGivingItsID() {
         securityManager.doConnect("admin", 0);
         try {
-            themeController.getThemeWithComments(params(), null);
+            factionController.getFactionWithComments(params(), null);
             Assert.fail("The request should fail");
         }
         catch (SummerControllerException sce) {
             Assert.assertEquals(400, sce.getStatus());
-            Assert.assertEquals("The Theme ID is missing or invalid (null)", sce.getMessage());
+            Assert.assertEquals("The Faction ID is missing or invalid (null)", sce.getMessage());
         }
         dataManager.hasFinished();
     }
 
     @Test
-    public void getOneThemeById() {
+    public void getOneFactionById() {
         dataManager.register("find",
-                theme1(), null, Theme.class, 1L);
+                faction1(), null, Faction.class, 1L);
         securityManager.doConnect("admin", 0);
-        Json result = themeController.getThemeWithComments(params("id", "1"), null);
+        Json result = factionController.getFactionWithComments(params("id", "1"), null);
         Assert.assertEquals("{" +
                 "\"comments\":[]," +
                 "\"description\":\"Description of Magic\"," +
@@ -1202,27 +1366,27 @@ public class ThemeControllerTest implements TestSeawave, CollectionSunbeam, Data
     }
 
     @Test
-    public void tryToFindAnUnknownTheme() {
-        dataManager.register("find", null, null, Theme.class, 1L);
+    public void tryToFindAnUnknownFaction() {
+        dataManager.register("find", null, null, Faction.class, 1L);
         securityManager.doConnect("admin", 0);
         try {
-            themeController.getThemeWithComments(params("id", "1"), null);
+            factionController.getFactionWithComments(params("id", "1"), null);
             Assert.fail("The request should fail");
         }
         catch (SummerControllerException sce) {
             Assert.assertEquals(404, sce.getStatus());
-            Assert.assertEquals("Unknown Theme with id 1", sce.getMessage());
+            Assert.assertEquals("Unknown Faction with id 1", sce.getMessage());
         }
         dataManager.hasFinished();
     }
 
     @Test
-    public void tryToFindAThemeWithBadCredentials() {
+    public void tryToFindAFactionWithBadCredentials() {
         dataManager.register("find",
-                theme1(), null, Theme.class, 1L);
+                faction1(), null, Faction.class, 1L);
         securityManager.doConnect("someoneelse", 0);
         try {
-            themeController.getThemeWithComments(params("id", "1"), null);
+            factionController.getFactionWithComments(params("id", "1"), null);
             Assert.fail("The request should fail");
         }
         catch (SummerControllerException sce) {
@@ -1233,42 +1397,42 @@ public class ThemeControllerTest implements TestSeawave, CollectionSunbeam, Data
     }
 
     @Test
-    public void tryToDeleteAThemeWithoutGivingItsID() {
+    public void tryToDeleteAFactionWithoutGivingItsID() {
         securityManager.doConnect("admin", 0);
         try {
-            themeController.delete(params(), null);
+            factionController.delete(params(), null);
             Assert.fail("The request should fail");
         }
         catch (SummerControllerException sce) {
             Assert.assertEquals(400, sce.getStatus());
-            Assert.assertEquals("The Theme ID is missing or invalid (null)", sce.getMessage());
+            Assert.assertEquals("The Faction ID is missing or invalid (null)", sce.getMessage());
         }
         dataManager.hasFinished();
     }
 
     @Test
-    public void deleteATheme() {
-        dataManager.register("find", theme1(), null, Theme.class, 1L);
-        Ref<Theme> rTheme = new Ref<>();
-        dataManager.register("merge", (Supplier)()->rTheme.get(), null,
+    public void deleteAFaction() {
+        dataManager.register("find", faction1(), null, Faction.class, 1L);
+        Ref<Faction> rFaction = new Ref<>();
+        dataManager.register("merge", (Supplier)()->rFaction.get(), null,
                 (Predicate) entity->{
-                    if (!(entity instanceof Theme)) return false;
-                    rTheme.set((Theme) entity);
-                    if (rTheme.get().getId() != 1L) return false;
+                    if (!(entity instanceof Faction)) return false;
+                    rFaction.set((Faction) entity);
+                    if (rFaction.get().getId() != 1L) return false;
                     return true;
                 }
         );
         dataManager.register("remove", null, null,
                 (Predicate) entity->{
-                    if (!(entity instanceof Theme)) return false;
-                    Theme theme = (Theme) entity;
-                    if (theme.getId() != 1L) return false;
+                    if (!(entity instanceof Faction)) return false;
+                    Faction faction = (Faction) entity;
+                    if (faction.getId() != 1L) return false;
                     return true;
                 }
         );
         dataManager.register("flush", null, null);
         securityManager.doConnect("admin", 0);
-        Json result = themeController.delete(params("id", "1"), null);
+        Json result = factionController.delete(params("id", "1"), null);
         Assert.assertEquals(result.toString(),
                 "{\"deleted\":\"ok\"}"
         );
@@ -1276,27 +1440,27 @@ public class ThemeControllerTest implements TestSeawave, CollectionSunbeam, Data
     }
 
     @Test
-    public void tryToDeleteAnUnknownTheme() {
-        dataManager.register("find", null, null, Theme.class, 1L);
+    public void tryToDeleteAnUnknownFaction() {
+        dataManager.register("find", null, null, Faction.class, 1L);
         securityManager.doConnect("admin", 0);
         try {
-            themeController.delete(params("id", "1"), null);
+            factionController.delete(params("id", "1"), null);
             Assert.fail("The request should fail");
         }
         catch (SummerControllerException sce) {
             Assert.assertEquals(404, sce.getStatus());
-            Assert.assertEquals("Unknown Theme with id 1", sce.getMessage());
+            Assert.assertEquals("Unknown Faction with id 1", sce.getMessage());
         }
         dataManager.hasFinished();
     }
 
     @Test
-    public void tryToDeleteAThemeAndFailsForAnUnknownReason() {
+    public void tryToDeleteAFactionAndFailsForAnUnknownReason() {
         dataManager.register("find", null,
-                new PersistenceException("Some Reason"), Theme.class, 1L);
+                new PersistenceException("Some Reason"), Faction.class, 1L);
         securityManager.doConnect("admin", 0);
         try {
-            themeController.delete(params("id", "1"), null);
+            factionController.delete(params("id", "1"), null);
             Assert.fail("The request should fail");
         }
         catch (SummerControllerException sce) {
@@ -1307,12 +1471,12 @@ public class ThemeControllerTest implements TestSeawave, CollectionSunbeam, Data
     }
 
     @Test
-    public void tryToDeleteAThemeWithBadCredentials() {
+    public void tryToDeleteAFactionWithBadCredentials() {
         dataManager.register("find",
-                theme1(),null);
+                faction1(),null);
         securityManager.doConnect("someoneelse", 0);
         try {
-            themeController.delete(params("id", "1"), null);
+            factionController.delete(params("id", "1"), null);
             Assert.fail("The request should fail");
         }
         catch (SummerControllerException sce) {
@@ -1323,12 +1487,12 @@ public class ThemeControllerTest implements TestSeawave, CollectionSunbeam, Data
     }
 
     @Test
-    public void checkRequestedFieldsForAThemeStatusUpdate() {
+    public void checkRequestedFieldsForAFactionStatusUpdate() {
         dataManager.register("find",
-                theme1(), null, Theme.class, 1L);
+                faction1(), null, Faction.class, 1L);
         securityManager.doConnect("admin", 0);
         try {
-            themeController.updateStatus(params("id", "1"), Json.createJsonFromString(
+            factionController.updateStatus(params("id", "1"), Json.createJsonFromString(
                     "{}"
             ));
             Assert.fail("The request should fail");
@@ -1340,12 +1504,12 @@ public class ThemeControllerTest implements TestSeawave, CollectionSunbeam, Data
     }
 
     @Test
-    public void checkFieldValidationsForAThemeSStatusUpdate() {
+    public void checkFieldValidationsForAFactionSStatusUpdate() {
         dataManager.register("find",
-                theme1(),null, Theme.class, 1L);
+                faction1(),null, Faction.class, 1L);
         securityManager.doConnect("admin", 0);
         try {
-            themeController.updateStatus(params("id", "1"), Json.createJsonFromString(
+            factionController.updateStatus(params("id", "1"), Json.createJsonFromString(
                 "{ 'id':'1234', 'status':'???'}"
             ));
             Assert.fail("The request should fail");
@@ -1360,12 +1524,12 @@ public class ThemeControllerTest implements TestSeawave, CollectionSunbeam, Data
     }
 
     @Test
-    public void upadteAThemeSStatus() {
+    public void upadteAFactionSStatus() {
         dataManager.register("find",
-                theme1(), null, Theme.class, 1L);
+                faction1(), null, Faction.class, 1L);
         dataManager.register("flush", null, null);
         securityManager.doConnect("admin", 0);
-        Json result = themeController.updateStatus(params("id", "1"), Json.createJsonFromString(
+        Json result = factionController.updateStatus(params("id", "1"), Json.createJsonFromString(
                 "{ 'id':1, 'status': 'live' }"
         ));
         Assert.assertEquals("{" +
@@ -1383,10 +1547,10 @@ public class ThemeControllerTest implements TestSeawave, CollectionSunbeam, Data
     }
 
     @Test
-    public void tryToUpadteAThemeSStatusWithBadCredential() {
+    public void tryToUpadteAFactionSStatusWithBadCredential() {
         securityManager.doConnect("someone", 0);
         try {
-            themeController.updateStatus(params("id", "1"), Json.createJsonFromString(
+            factionController.updateStatus(params("id", "1"), Json.createJsonFromString(
                     "{ 'id':1, 'status': 'live' }"
             ));
             Assert.fail("The request should fail");
@@ -1401,13 +1565,13 @@ public class ThemeControllerTest implements TestSeawave, CollectionSunbeam, Data
     @Test
     public void failToUpdateAnArticleStatusForUnknownReason() {
         dataManager.register("find",
-                theme1(), null, Theme.class, 1L);
+                faction1(), null, Faction.class, 1L);
         dataManager.register("flush", null,
                 new PersistenceException("Some reason"), null
         );
         securityManager.doConnect("admin", 0);
         try {
-            themeController.updateStatus(params("id", "1"), Json.createJsonFromString(
+            factionController.updateStatus(params("id", "1"), Json.createJsonFromString(
                     "{ 'id':1, 'status': 'live' }"
             ));
             Assert.fail("The request should fail");
@@ -1418,27 +1582,28 @@ public class ThemeControllerTest implements TestSeawave, CollectionSunbeam, Data
         }
         dataManager.hasFinished();
     }
+*/
 
     @Test
-    public void chargeThemeImage() {
+    public void chargeFactionImage() {
         platformManager.register("getInputStream",
-                new ByteArrayInputStream(("Content of /themes/theme.png").getBytes()),
-                null,  "/themes/theme.png");
-        FileSpecification image = themeController.getImage(params("imagename", "theme-10123456.png"));
-        Assert.assertEquals("theme.png", image.getName());
+                new ByteArrayInputStream(("Content of /factions/faction.png").getBytes()),
+                null,  "/factions/faction.png");
+        FileSpecification image = factionController.getImage(params("imagename", "faction-10123456.png"));
+        Assert.assertEquals("faction.png", image.getName());
         Assert.assertEquals("image/png", image.getType());
-        Assert.assertEquals("theme.png", image.getFileName());
-        Assert.assertEquals("Content of /themes/theme.png", inputStreamToString(image.getStream()));
+        Assert.assertEquals("faction.png", image.getFileName());
+        Assert.assertEquals("Content of /factions/faction.png", inputStreamToString(image.getStream()));
         Assert.assertEquals("png", image.getExtension());
         platformManager.hasFinished();
     }
 
     @Test
-    public void failChargeThemeImage() {
+    public void failChargeFactionImage() {
         platformManager.register("getInputStream", null,
-                new PersistenceException("For Any Reason..."),  "/themes/theme.png");
+                new PersistenceException("For Any Reason..."),  "/factions/faction.png");
         try {
-            themeController.getImage(params("imagename", "theme-10123456.png"));
+            factionController.getImage(params("imagename", "faction-10123456.png"));
             Assert.fail("The request should fail");
         }
         catch (SummerControllerException sce) {

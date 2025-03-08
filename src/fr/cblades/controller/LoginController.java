@@ -64,11 +64,11 @@ public class LoginController implements InjectorSunbeam, DataSunbeam, SecuritySu
 	
 	@REST(url="/api/login/find/:id", method=Method.POST)
 	public Json getById(Map<String, Object> params, Json request) {
+		long id = getLongParam(params, "id", "The Login ID is missing or invalid (%s)");
 		Ref<Json> result = new Ref<>();
 		ifAuthorized(user->{
 			inTransaction(em->{
-				String id = (String)params.get("id");
-				Login login = findLogin(em, new Long(id));
+				Login login = findLogin(em, id);
 				result.set(readFromLogin(login));
 			});
 		}, ADMIN);
@@ -77,11 +77,11 @@ public class LoginController implements InjectorSunbeam, DataSunbeam, SecuritySu
 	
 	@REST(url="/api/login/delete/:id", method=Method.POST)
 	public Json delete(Map<String, Object> params, Json request) {
+		long id = getLongParam(params, "id", "The Login ID is missing or invalid (%s)");
 		ifAuthorized(user->{
 			try {
 				inTransaction(em->{
-					String id = (String)params.get("id");
-					Login login = findLogin(em, new Long(id));
+					Login login = findLogin(em, id);
 					remove(em, login);
 				});
 			} catch (PersistenceException pe) {
@@ -93,12 +93,12 @@ public class LoginController implements InjectorSunbeam, DataSunbeam, SecuritySu
 	
 	@REST(url="/api/login/update/:id", method=Method.POST)
 	public Json update(Map<String, Object> params, Json request) {
+		long id = getLongParam(params, "id", "The Login ID is missing or invalid (%s)");
 		Ref<Json> result = new Ref<>();
 		ifAuthorized(user->{
 			try {
 				inTransaction(em->{
-					String id = (String)params.get("id");
-					Login login = findLogin(em, new Long(id));
+					Login login = findLogin(em, id);
 					writeToLogin(request, login, false);
 					flush(em);
 					result.set(readFromLogin(login));

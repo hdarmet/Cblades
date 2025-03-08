@@ -18,7 +18,6 @@ import org.summer.data.Synchronizer;
 import org.summer.platform.FileSunbeam;
 import org.summer.platform.PlatformManager;
 import org.summer.security.SecuritySunbeam;
-import org.summer.util.StringReplacer;
 
 import javax.persistence.EntityExistsException;
 import javax.persistence.EntityManager;
@@ -35,7 +34,7 @@ import java.util.stream.Collectors;
 @Controller
 public class AccountController implements
         InjectorSunbeam, DataSunbeam, SecuritySunbeam, ControllerSunbeam,
-        FileSunbeam, StandardUsers, CommonEntities {
+        StandardUsers, CommonEntities {
 
     /**
      * Endpoint (accessible via "/api/account/images/:imagename") permettant de télécharger depuis le navigateur
@@ -45,7 +44,7 @@ public class AccountController implements
      */
     @MIME(url="/api/account/images/:imagename")
     public FileSpecification getImage(Map<String, Object> params) {
-        return this.getImage(params, "imagename", "/avatars/");
+        return this.getFile(params, "imagename", "/avatars/");
     }
 
     /**
@@ -63,20 +62,20 @@ public class AccountController implements
         FileSpecification[] files = (FileSpecification[])params.get(MULTIPART_FILES);
         if (files!=null) {
             if (files.length!=1) throw new SummerControllerException(400, "One and only one avatar file may be loaded.");
-            String fileName = "avatar"+account.getId()+"."+files[0].getExtension();
-            String webName = "avatar"+account.getId()+"-"+PlatformManager.get().now()+"."+files[0].getExtension();
-            copyStream(files[0].getStream(), PlatformManager.get().getOutputStream("/avatars/"+fileName));
-            account.setAvatar("/api/account/images/" + webName);
+            account.setAvatar(saveFile(files[0],
+                "avatar"+account.getId(),
+                "/avatars/", "/api/account/images/"
+            ));
         }
     }
 
     @REST(url="/api/account/create", method=Method.POST)
     public Json create(Map<String, Object> params, Json request) {
+        checkJson(request, true);
         Ref<Json> result = new Ref<>();
         ifAuthorized(user->{
             try {
                 inTransaction(em -> {
-                    checkJson(request, true);
                     Account newAccount = writeToAccount(request, new Account().setAccess(new Login()));
                     persist(em, newAccount);
                     storeAvatar(params, newAccount);
@@ -172,11 +171,11 @@ public class AccountController implements
     @REST(url="/api/account/update/:id", method=Method.POST)
     public Json update(Map<String, Object> params, Json request) {
         long id = getLongParam(params, "id", "The Account ID is missing or invalid (%s)");
+        checkJson(request, false);
         Ref<Json> result = new Ref<>();
         ifAuthorized(user->{
             try {
                 inTransaction(em->{
-                    checkJson(request, false);
                     Account account = findAccount(em, id);
                     writeToAccount(request, account);
                     storeAvatar(params, account);
@@ -201,16 +200,16 @@ public class AccountController implements
     }
 
     void checkJson(Json json, boolean full) {
-        Verifier verifier = verify(json);
-        if (full) {
-            verifier
-                .checkRequired("firstName")
-                .checkRequired("lastName")
-                .checkRequired("email")
-                .checkRequired("password")
-                .checkRequired("login");
-        }
-        verifier
+        verify(json)
+            .process(v-> {
+                if (full) {v
+                    .checkRequired("firstName")
+                    .checkRequired("lastName")
+                    .checkRequired("email")
+                    .checkRequired("password")
+                    .checkRequired("login");
+                }
+            })
             .checkMinSize("firstName", 2)
             .checkMaxSize("firstName", 100)
             .checkMinSize("lastName", 2)
@@ -222,22 +221,24 @@ public class AccountController implements
             .check("status", AccountStatus.byLabels().keySet())
             .checkMinSize("login", 2)
             .checkMaxSize("login", 20)
-            .check("role", LoginRole.byLabels().keySet());
-        verifier.ensure();
+            .check("role", LoginRole.byLabels().keySet())
+            .ensure();
     }
 
     Account writeToAccount(Json json, Account account) {
-        Synchronizer synchronizer = sync(json, account)
+        sync(json, account)
             .write("version")
             .write("firstName")
             .write("lastName")
             .write("email")
             .write("status", label->AccountStatus.byLabels().get(label))
             .writeSetter("login", account::setLogin)
-            .writeSetter("role", account::setRole, label->LoginRole.byLabels().get(label));
-        if (json.get("password")!=null) {
-            synchronizer.writeSetter("password", account::setPassword, password->Login.encrypt((String)password));
-        }
+            .writeSetter("role", account::setRole, label->LoginRole.byLabels().get(label))
+            .process(s-> {
+                if (json.get("password") != null) {s
+                    .writeSetter("password", account::setPassword, password -> Login.encrypt((String) password));
+                }
+            });
         return account;
     }
 

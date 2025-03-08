@@ -28,6 +28,11 @@ public class Synchronizer implements DataSunbeam {
 		return this;
 	}
 
+	public <E extends BaseEntity> Synchronizer process(Consumer<Synchronizer> processor) {
+		processor.accept(this);
+		return this;
+	}
+
 	public <T, V> Synchronizer copy(Supplier<T> supplier, Consumer<V> consumer, Function<T, V> converter) {
 		T readValue = supplier.get();
 		if (readValue!=null) {

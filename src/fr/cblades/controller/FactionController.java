@@ -15,6 +15,7 @@ import org.summer.controller.SummerControllerException;
 import org.summer.controller.Verifier;
 import org.summer.data.DataSunbeam;
 import org.summer.data.SummerNotFoundException;
+import org.summer.data.Synchronizer;
 import org.summer.platform.FileSunbeam;
 import org.summer.platform.PlatformManager;
 import org.summer.security.SecuritySunbeam;
@@ -22,9 +23,7 @@ import org.summer.security.SecuritySunbeam;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceException;
 import javax.persistence.Query;
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 import java.util.Map;
 import java.util.function.BiPredicate;
 import java.util.logging.Logger;
@@ -34,7 +33,8 @@ import java.util.stream.Collectors;
  * Controleur permettant de manipuler des factions
  */
 @Controller
-public class FactionController implements InjectorSunbeam, DataSunbeam, SecuritySunbeam, ControllerSunbeam, FileSunbeam, StandardUsers {
+public class FactionController implements InjectorSunbeam, DataSunbeam, SecuritySunbeam, ControllerSunbeam, FileSunbeam,
+		StandardUsers, CommonEntities {
 	static final Logger log = Logger.getLogger("summer");
 
 	/**
@@ -45,62 +45,44 @@ public class FactionController implements InjectorSunbeam, DataSunbeam, Security
 	 */
 	@MIME(url="/api/faction/documents/:docname")
 	public FileSpecification getImage(Map<String, Object> params) {
-		try {
-			String webName = (String)params.get("docname");
-			int minusPos = webName.indexOf('-');
-			int pointPos = webName.indexOf('.');
-			String docName = webName.substring(0, minusPos)+webName.substring(pointPos);
-			return new FileSpecification()
-				.setName(docName)
-				.setStream(PlatformManager.get().getInputStream("/factions/"+docName));
-		} catch (PersistenceException pe) {
-			throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe);
-		}
+		return this.getFile(params, "imagename", "/factions/");
 	}
 
+	/**
+	 *
+	 * @param params
+	 * @param faction
+	 */
 	void storeFactionImages(Map<String, Object> params, Faction faction) {
 		FileSpecification[] files = (FileSpecification[]) params.get(MULTIPART_FILES);
-		for (FileSpecification file : files) {
-			int ordinalIdx = file.getName().indexOf("-");
-			if (ordinalIdx<0) {
-				String factionFileName = "faction" + faction.getId() + "." + file.getExtension();
-				String factionWebName = "faction" + faction.getId() + "-" + PlatformManager.get().now() + "." + file.getExtension();
-				copyStream(file.getStream(), PlatformManager.get().getOutputStream("/factions/" + factionFileName));
-				faction.setIllustration("/api/faction/documents/" + factionWebName);
-			}
-			else {
-				boolean isIcon = file.getName().indexOf("icon-")==0;
-				int ordinal = Integer.parseInt(file.getName().substring(ordinalIdx+1));
-				if (isIcon) {
-					String sheetFileIconName = "sheeticon" + faction.getId() + "_" + ordinal + "." + file.getExtension();
-					String sheetWebIconName = "sheeticon" + faction.getId() + "_" + ordinal + "-" + PlatformManager.get().now() + "." + file.getExtension();
-					copyStream(file.getStream(), PlatformManager.get().getOutputStream("/factions/" + sheetFileIconName));
-					faction.getSheet(ordinal).setIcon("/api/faction/documents/" + sheetWebIconName);
-				}
-				else {
-					String sheetFileName = "sheet" + faction.getId() + "_" + ordinal + "." + file.getExtension();
-					String sheetWebName = "sheet" + faction.getId() + "_" + ordinal + "-" +PlatformManager.get().now() + "." + file.getExtension();
-					copyStream(file.getStream(), PlatformManager.get().getOutputStream("/factions/" + sheetFileName));
-					faction.getSheet(ordinal).setPath("/api/faction/documents/" + sheetWebName);
-				}
-			}
+		FileSpecification factionImage = storeSheetImages(
+			files, faction.getId(), faction.getSheets(),
+			"Faction", "/factions/", "/api/faction/documents/"
+		);
+		if (factionImage != null) {
+			faction.setIllustration(saveFile(factionImage,
+				"faction" + faction.getId(),
+				"/factions/", "/api/faction/documents/"
+			));
 		}
 	}
 
 	@REST(url="/api/faction/propose", method=Method.POST)
 	public Json propose(Map<String, Object> params, Json request) {
+		checkJson(request, Usage.PROPOSE);
 		Ref<Json> result = new Ref<>();
 		inTransaction(em->{
-			Faction newFaction = writeToProposedFaction(em, request, new Faction());
 			ifAuthorized(
 				user->{
 					try {
+						Faction newFaction = writeToFaction(em, request, new Faction(), Usage.PROPOSE);
 						Account author = Account.find(em, user);
 						addComment(request, newFaction, author);
 						newFaction.setStatus(FactionStatus.PROPOSED);
 						newFaction.setAuthor(author);
 						persist(em, newFaction);
 						storeFactionImages(params, newFaction);
+						flush(em);
 						result.set(readFromFaction(newFaction));
 					} catch (PersistenceException pe) {
 						throw new SummerControllerException(409,
@@ -118,15 +100,16 @@ public class FactionController implements InjectorSunbeam, DataSunbeam, Security
 
 	@REST(url="/api/faction/amend/:id", method=Method.POST)
 	public Json amend(Map<String, Object> params, Json request) {
+		long id = getLongParam(params, "id", "The Faction ID is missing or invalid (%s)");
+		checkJson(request, Usage.AMEND);
 		Ref<Json> result = new Ref<>();
 		inTransaction(em-> {
-			String id = (String) params.get("id");
-			Faction faction = findFaction(em, new Long(id));
+			Faction faction = findFaction(em, id);
 			ifAuthorized(
 				user -> {
 					try {
 						Account author = Account.find(em, user);
-						writeToProposedFaction(em, request, faction);
+						writeToFaction(em, request, faction, Usage.AMEND);
 						addComment(request, faction, author);
 						storeFactionImages(params, faction);
 						flush(em);
@@ -145,20 +128,45 @@ public class FactionController implements InjectorSunbeam, DataSunbeam, Security
 
 	@REST(url="/api/faction/create", method=Method.POST)
 	public Json create(Map<String, Object> params, Json request) {
+		checkJson(request, Usage.CREATE);
 		Ref<Json> result = new Ref<>();
 		inTransaction(em->{
-			Faction newFaction = writeToFaction(em, request, new Faction(), true);
+			Faction newFaction = writeToFaction(em, request, new Faction(), Usage.CREATE);
 			ifAuthorized(
 				user->{
 					try {
 						persist(em, newFaction);
 						storeFactionImages(params, newFaction);
+						flush(em);
 						result.set(readFromFaction(newFaction));
 					} catch (PersistenceException pe) {
 						throw new SummerControllerException(409,
 							"Faction with name (%s) already exists",
 							request.get("name"), null
 						);
+					}
+				},
+				ADMIN
+			);
+		});
+		return result.get();
+	}
+
+	@REST(url="/api/faction/update-status/:id", method=Method.POST)
+	public Json updateStatus(Map<String, Object> params, Json request) {
+
+		long id = getLongParam(params, "id", "The Faction ID is missing or invalid (%s)");
+		Ref<Json> result = new Ref<>();
+		inTransaction(em-> {
+			Faction faction = findFaction(em, id);
+			ifAuthorized(
+				user -> {
+					try {
+						writeToFactionStatus(em, request, faction);
+						flush(em);
+						result.set(readFromFaction(faction));
+					} catch (PersistenceException pe) {
+						throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe);
 					}
 				},
 				ADMIN
@@ -177,10 +185,6 @@ public class FactionController implements InjectorSunbeam, DataSunbeam, Security
 				String countQuery = "select count(f) from Faction f";
 				String queryString = "select f from Faction f left outer join fetch f.author a left outer join fetch a.access w";
 				if (search!=null) {
-					/*
-					search = StringReplacer.replace(search,
-							"tester", "test");
-					 */
 					String whereClause =" where fts('pg_catalog.english', " +
 						"f.name||' '||" +
 						"f.description||' '||" +
@@ -209,7 +213,7 @@ public class FactionController implements InjectorSunbeam, DataSunbeam, Security
 	}
 
 	@REST(url="/api/faction/live", method=Method.GET)
-	public Json getLive(Map<String, String> params, Json request) {
+	public Json getLive(Map<String, Object> params, Json request) {
 		Ref<Json> result = new Ref<>();
 		inReadTransaction(em->{
 			Collection<Faction> factions = findFactions(em.createQuery("select f from Faction f where f.status=:status"),
@@ -246,10 +250,10 @@ public class FactionController implements InjectorSunbeam, DataSunbeam, Security
 
 	@REST(url="/api/faction/load/:id", method=Method.GET)
 	public Json getFactionWithComments(Map<String, Object> params, Json request) {
+		long id = getLongParam(params, "id", "The Faction ID is missing or invalid (%s)");
 		Ref<Json> result = new Ref<>();
 		inReadTransaction(em->{
-			String id = (String)params.get("id");
-			Faction faction = findFaction(em, new Long(id));
+			Faction faction = findFaction(em, id);
 			ifAuthorized(user->{
 				result.set(readFromFaction(faction));
 			},
@@ -260,9 +264,9 @@ public class FactionController implements InjectorSunbeam, DataSunbeam, Security
 
 	@REST(url="/api/faction/delete/:id", method=Method.GET)
 	public Json delete(Map<String, Object> params, Json request) {
+		long id = getLongParam(params, "id", "The Faction ID is missing or invalid (%s)");
 		inTransaction(em->{
-			String id = (String)params.get("id");
-			Faction faction = findFaction(em, new Long(id));
+			Faction faction = findFaction(em, id);
 			ifAuthorized(
 				user->{
 					try {
@@ -277,38 +281,17 @@ public class FactionController implements InjectorSunbeam, DataSunbeam, Security
 		return Json.createJsonObject().put("deleted", "ok");
 	}
 
-	@REST(url="/api/faction/update-status/:id", method=Method.POST)
-	public Json updateStatus(Map<String, Object> params, Json request) {
-		Ref<Json> result = new Ref<>();
-		inTransaction(em-> {
-			String id = (String) params.get("id");
-			Faction faction = findFaction(em, new Long(id));
-			ifAuthorized(
-				user -> {
-					try {
-						writeToFactionStatus(em, request, faction);
-						flush(em);
-						result.set(readFromFaction(faction));
-					} catch (PersistenceException pe) {
-						throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe);
-					}
-				},
-				ADMIN
-			);
-		});
-		return result.get();
-	}
-
 	@REST(url="/api/faction/update/:id", method=Method.POST)
 	public Json update(Map<String, Object> params, Json request) {
+		long id = getLongParam(params, "id", "The Faction ID is missing or invalid (%s)");
+		checkJson(request, Usage.UPDATE);
 		Ref<Json> result = new Ref<>();
 		inTransaction(em-> {
-			String id = (String) params.get("id");
-			Faction faction = findFaction(em, new Long(id));
+			Faction faction = findFaction(em, id);
 			ifAuthorized(
 				user -> {
 					try {
-						writeToFaction(em, request, faction, false);
+						writeToFaction(em, request, faction, Usage.UPDATE);
 						storeFactionImages(params, faction);
 						flush(em);
 						result.set(readFromFaction(faction));
@@ -324,10 +307,10 @@ public class FactionController implements InjectorSunbeam, DataSunbeam, Security
 
 	@REST(url="/api/faction/published/:id", method=Method.GET)
 	public Json getPublishedFaction(Map<String, Object> params, Json request) {
+		long id = getLongParam(params, "id", "The Faction ID is missing or invalid (%s)");
 		Ref<Json> result = new Ref<>();
 		inReadTransaction(em->{
-			String id = (String)params.get("id");
-			Faction faction = findFaction(em, new Long(id));
+			Faction faction = findFaction(em, id);
 			if (faction.getStatus() != FactionStatus.LIVE) {
 				throw new SummerControllerException(409, "Faction is not live.");
 			}
@@ -348,50 +331,6 @@ public class FactionController implements InjectorSunbeam, DataSunbeam, Security
 		};
 	}
 
-	Faction writeToProposedFaction(EntityManager em, Json json, Faction faction) {
-		try {
-			verify(json)
-				.checkRequired("name").checkMinSize("name", 2).checkMaxSize("name", 200)
-				.checkPattern("name", "[\\d\\s\\w]+")
-				.checkMinSize("newComment", 2).checkMaxSize("newComment", 200)
-				.checkRequired("illustration")
-				.checkMinSize("illustration", 2).checkMaxSize("illustration", 200)
-				.checkRequired("description")
-				.checkMinSize("description", 2)
-				.checkMaxSize("description", 19995)
-				.each("sheets", cJson->verify(cJson)
-					.checkRequired("version")
-					.checkRequired("ordinal")
-					.checkRequired("name").checkMinSize("name", 2).checkMaxSize("name", 200)
-					.checkPattern("name", "[\\d\\s\\w]+")
-					.checkRequired("description")
-					.checkMinSize("description", 2)
-					.checkMaxSize("description", 19995)
-					.checkRequired("icon")
-					.checkMinSize("icon", 2).checkMaxSize("icon", 200)
-				)
-				.ensure();
-			sync(json, faction)
-				.write("version")
-				.write("name")
-				.write("description")
-				.syncEach("sheets", (cJson, comment)->sync(cJson, comment)
-					.write("version")
-					.write("ordinal")
-					.write("name")
-					.write("description")
-					.write("icon")
-					.write("path")
-					.write("description")
-				);
-			faction.setFirstSheet(faction.getSheet(0));
-			faction.buildDocument();
-			return faction;
-		} catch (SummerNotFoundException snfe) {
-			throw new SummerControllerException(404, snfe.getMessage());
-		}
-	}
-
 	void addComment(Json json, Faction faction, Account author) {
 		String comment = json.get("newComment");
 		if (comment!=null) {
@@ -409,69 +348,46 @@ public class FactionController implements InjectorSunbeam, DataSunbeam, Security
 		return faction;
 	}
 
-	Faction writeToFaction(EntityManager em, Json json, Faction faction, boolean full) {
-		Verifier verifier = verify(json);
+	void checkJson(Json json, Usage usage) {
+		verify(json)
+			.process(v->{
+				if (usage.creation) {v
+							.checkRequired("name")
+							.checkRequired("description");
+				}
+			})
+			.checkMinSize("name", 2).checkMaxSize("name", 200)
+			.checkPattern("name", "[\\d\\s\\w]+")
+			.checkMinSize("description", 2)
+			.checkMaxSize("description", 19995)
+			.process(v->checkSheets(v))
+			.process(v->{
+				if (usage.propose) {v
+					.checkMinSize("newComment", 2).checkMaxSize("newComment", 200);
+				}
+				else {v
+					.check("status", FactionStatus.byLabels().keySet());
+					checkComments(v);
+				}
+			})
+			.ensure();
+	}
+
+	Faction writeToFaction(EntityManager em, Json json, Faction faction, Usage usage) {
 		try {
-			if (full) {
-				verifier
-					.checkRequired("name")
-					.checkRequired("illustration")
-					.checkRequired("description")
-					.each("sheets", cJson -> verify(cJson)
-						.checkRequired("version")
-						.checkRequired("ordinal")
-						.checkRequired("name")
-						.checkRequired("description")
-						.checkRequired("icon")
-						.checkRequired("path")
-					)
-					.each("comments", cJson -> verify(cJson)
-						.checkRequired("version")
-						.checkRequired("date")
-						.checkRequired("text")
-					);
-			}
-			verifier
-				.checkMinSize("name", 2).checkMaxSize("name", 200)
-				.checkPattern("name", "[\\d\\s\\w]+")
-				.check("status", ThemeStatus.byLabels().keySet())
-				.checkMinSize("illustration", 2).checkMaxSize("illustration", 200)
-				.checkMinSize("description", 2)
-				.checkMaxSize("description", 19995)
-				.each("sheets", cJson->verify(cJson)
-					.checkMinSize("name", 2).checkMaxSize("name", 200)
-					.checkPattern("name", "[\\d\\s\\w]+")
-					.checkMinSize("description", 2)
-					.checkMaxSize("description", 19995)
-					.checkMinSize("icon", 2).checkMaxSize("icon", 200)
-					.checkMinSize("path", 2).checkMaxSize("path", 200)
-				)
-				.each("comments", cJson->verify(cJson)
-					.checkMinSize("text", 2)
-					.checkMaxSize("text", 19995)
-				);
-			verifier
-				.ensure();
 			sync(json, faction)
 				.write("version")
 				.write("name")
-				.write("illustration")
 				.write("description")
 				.writeRef("author.id", "author", (Integer id)-> Account.find(em, id))
-				.write("status", label->FactionStatus.byLabels().get(label))
-				.syncEach("sheets", (cJson, comment)->sync(cJson, comment)
-					.write("version")
-					.write("ordinal")
-					.write("name")
-					.write("description")
-					.write("icon")
-					.write("path")
-				)
-				.syncEach("comments", (cJson, comment)->sync(cJson, comment)
-					.write("version")
-					.writeDate("date")
-					.write("text")
-				);
+				.process(s->{
+					if (!usage.propose) {s
+						.write("status", label -> FactionStatus.byLabels().get(label));
+						writeComments(s);
+					}
+				})
+				.process(s->writeSheets(s))
+				.process(s->writeComments(s));
 			faction.setFirstSheet(faction.getSheet(0));
 			faction.buildDocument();
 			return faction;
@@ -482,70 +398,40 @@ public class FactionController implements InjectorSunbeam, DataSunbeam, Security
 
 	Json readFromFactionSummary(Faction faction) {
 		Json json = Json.createJsonObject();
-		sync(json, faction)
+		Synchronizer synchronizer = sync(json, faction)
 			.read("id")
 			.read("version")
 			.read("name")
 			.read("illustration")
 			.read("description")
 			.read("status", FactionStatus::getLabel)
-			.readLink("author", (pJson, account)->sync(pJson, account)
-				.read("id")
-				.read("login", "access.login")
-				.read("firstName")
-				.read("lastName")
-				.read("avatar")
-			);
+			.process(s->readAuthor(s));
 		return json;
 	}
 
 	Json readFromFaction(Faction faction) {
 		Json json = Json.createJsonObject();
-		sync(json, faction)
+		Synchronizer synchronizer = sync(json, faction)
 			.read("id")
 			.read("version")
 			.read("name")
 			.read("description")
 			.read("illustration")
 			.read("status", FactionStatus::getLabel)
-			.readEach("sheets", (pJson, sheet)->sync(pJson, sheet)
-				.read("id")
-				.read("version")
-				.read("name")
-				.read("description")
-				.read("icon")
-				.read("path")
-			)
-			.readLink("author", (pJson, account)->sync(pJson, account)
-				.read("id")
-				.read("login", "access.login")
-				.read("firstName")
-				.read("lastName")
-				.read("avatar")
-			)
-			.readEach("comments", (hJson, hex)->sync(hJson, hex)
-				.read("id")
-				.read("version")
-				.readDate("date")
-				.read("text")
-			);
+			.process(s->readAuthor(s))
+			.process(s->readSheets(s))
+			.process(s->readComments(s));
 		return json;
 	}
 
 	Json readFromPublishedFaction(Faction faction) {
 		Json json = Json.createJsonObject();
-		sync(json, faction)
+		Synchronizer synchronizer = sync(json, faction)
 			.read("id")
 			.read("name")
 			.read("description")
 			.read("illustration")
-			.readEach("sheets", (pJson, sheet)->sync(pJson, sheet)
-				.read("id")
-				.read("name")
-				.read("description")
-				.read("icon")
-				.read("path")
-			);
+			.process(s->readSheets(s));
 		return json;
 	}
 

@@ -78,11 +78,11 @@ public class SequenceController implements InjectorSunbeam, CollectionSunbeam, D
 
 	@REST(url="/api/sequence/find/:id", method=Method.POST)
 	public Json getById(Map<String, Object> params, Json request) {
+		long id = getLongParam(params, "id", "The Sequence ID is missing or invalid (%s)");
 		Ref<Json> result = new Ref<>();
 		ifAuthorized(user->{
 			inReadTransaction(em->{
-				String id = (String)params.get("id");
-				Sequence sequence = findSequence(em, new Long(id));
+				Sequence sequence = findSequence(em, id);
 				result.set(readFromSequence(sequence));
 			});
 		}/*, ADMIN*/);
@@ -91,11 +91,11 @@ public class SequenceController implements InjectorSunbeam, CollectionSunbeam, D
 
 	@REST(url="/api/sequence/delete/:id", method=Method.POST)
 	public Json delete(Map<String, Object> params, Json request) {
+		long id = getLongParam(params, "id", "The Sequence ID is missing or invalid (%s)");
 		ifAuthorized(user->{
 			try {
 				inTransaction(em->{
-					String id = (String)params.get("id");
-					Sequence sequence = findSequence(em, new Long(id));
+					Sequence sequence = findSequence(em, id);
 					remove(em, sequence);
 				});
 			} catch (PersistenceException pe) {

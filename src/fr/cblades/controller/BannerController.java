@@ -40,7 +40,7 @@ public class BannerController
 	 */
 	@MIME(url="/api/banner/images/:imagename")
 	public FileSpecification getImage(Map<String, Object> params) {
-		return this.getImage(params, "imagename", "/games/");
+		return this.getFile(params, "imagename", "/games/");
 	}
 
 	/**
@@ -58,20 +58,20 @@ public class BannerController
 		FileSpecification[] files = (FileSpecification[]) params.get(MULTIPART_FILES);
 		if (files != null) {
 			if (files.length!= 1) throw new SummerControllerException(400, "One and only one banner file must be loaded.");
-			String fileName = "banner" + banner.getId() + "." + files[0].getExtension();
-			String webName = "banner" + banner.getId() + "-" + PlatformManager.get().now() + "." + files[0].getExtension();
-			copyStream(files[0].getStream(), PlatformManager.get().getOutputStream("/games/" + fileName));
-			banner.setPath("/api/banner/images/" + webName);
+			banner.setPath(saveFile(files[0],
+				"banner" + banner.getId(),
+				"/games/", "/api/banner/images/"
+			));
 		}
 	}
 
 	@REST(url="/api/banner/create", method=Method.POST)
 	public Json create(Map<String, Object> params, Json request) {
+		checkJson(request, true);
 		Ref<Json> result = new Ref<>();
 		ifAuthorized(user->{
 			try {
 				inTransaction(em->{
-					checkJson(em, request, true);
 					Banner newBanner = writeToBanner(em, request, new Banner());
 					persist(em, newBanner);
 					storeBannerImages(params, newBanner);
@@ -196,11 +196,11 @@ public class BannerController
 	@REST(url="/api/banner/update/:id", method=Method.POST)
 	public Json update(Map<String, Object> params, Json request) {
 		long id = getLongParam(params, "id", "The Banner ID is missing or invalid (%s)");
+		checkJson(request, false);
 		Ref<Json> result = new Ref<>();
 		ifAuthorized(user->{
 			try {
 				inTransaction(em->{
-					checkJson(em, request, false);
 					Banner banner = findBanner(em, id);
 					writeToBanner(em, request, banner);
 					storeBannerImages(params, banner);
@@ -216,10 +216,10 @@ public class BannerController
 
 	@REST(url="/api/banner/update-status/:id", method=Method.POST)
 	public Json updateStatus(Map<String, Object> params, Json request) {
+		long id = getLongParam(params, "id", "The Banner ID is missing or invalid (%s)");
 		Ref<Json> result = new Ref<>();
 		inTransactionUntilSuccessful(em-> {
-			String id = (String) params.get("id");
-			Banner banner = findBanner(em, new Long(id));
+			Banner banner = findBanner(em, id);
 			ifAuthorized(
 				user -> {
 					try {
@@ -246,43 +246,43 @@ public class BannerController
 		return banner;
 	}
 
-	void checkJson(EntityManager em, Json json,boolean full) {
-		Verifier verifier = verify(json);
-		if (full) {
-			verifier
-				.checkRequired("name");
-		}
-		verifier
+	void checkJson(Json json,boolean full) {
+		verify(json)
+			.process(v-> {
+				if (full) {v
+					.checkRequired("name");
+				}
+			})
 			.checkMinSize("name", 2).checkMaxSize("name", 20)
 			.checkPattern("name", "[a-zA-Z0-9_\\-]+")
 			.checkMinSize("description", 2).checkMaxSize("description", 2000)
-			.check("status", BannerStatus.byLabels().keySet());
-		checkComments(verifier, full);
-		verifier.ensure();
+			.check("status", BannerStatus.byLabels().keySet())
+			.process(this::checkComments)
+			.ensure();
 	}
 
 	Banner writeToBanner(EntityManager em, Json json, Banner banner) {
-		Synchronizer synchronizer = sync(json, banner)
+		sync(json, banner)
 			.write("version")
 			.write("name")
 			.write("description")
 			.write("status", label->BannerStatus.byLabels().get(label))
-			.writeRef("author.id", "author", (Integer id)-> Account.find(em, id));
-		writeComments(synchronizer);
+			.writeRef("author.id", "author", (Integer id)-> Account.find(em, id))
+			.process(this::writeComments);
 		return banner;
 	}
 
 	Json readFromBanner(Banner banner) {
 		Json json = Json.createJsonObject();
-		Synchronizer synchronizer = sync(json, banner)
+		sync(json, banner)
 			.read("id")
 			.read("version")
 			.read("name")
 			.read("path")
 			.read("description")
-			.read("status", BannerStatus::getLabel);
-		readAuthor(synchronizer);
-		readComments(synchronizer);
+			.read("status", BannerStatus::getLabel)
+			.process(this::readAuthor)
+			.process(this::readComments);
 		return json;
 	}
 

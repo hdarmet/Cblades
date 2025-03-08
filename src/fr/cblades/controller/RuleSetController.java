@@ -29,7 +29,8 @@ import java.util.Map;
  * Controleur permettant de manipuler des documents contenant les règles du jeu
  */
 @Controller
-public class RuleSetController implements InjectorSunbeam, DataSunbeam, SecuritySunbeam, ControllerSunbeam, FileSunbeam, StandardUsers {
+public class RuleSetController implements InjectorSunbeam, DataSunbeam, SecuritySunbeam,
+		ControllerSunbeam, StandardUsers, CommonEntities {
 
 	/**
 	 * Endpoint (accessible via "/api/ruleset/documents/:docname") permettant de télécharger depuis le navigateur
@@ -39,37 +40,17 @@ public class RuleSetController implements InjectorSunbeam, DataSunbeam, Security
 	 */
 	@MIME(url="/api/ruleset/documents/:docname")
 	public FileSpecification getImage(Map<String, Object> params) {
-		try {
-			String webName = (String)params.get("docname");
-			int minusPos = webName.indexOf('-');
-			int pointPos = webName.indexOf('.');
-			String docName = webName.substring(0, minusPos)+webName.substring(pointPos);
-			return new FileSpecification()
-				.setName(docName)
-				.setStream(PlatformManager.get().getInputStream("/rules/"+docName));
-		} catch (PersistenceException pe) {
-			throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe);
-		}
+		return this.getFile(params, "imagename", "/rules/");
 	}
 
 	void storeRuleSetImages(Map<String, Object> params, RuleSet ruleSet) {
 		FileSpecification[] files = (FileSpecification[]) params.get(MULTIPART_FILES);
-		for (FileSpecification file : files) {
-			int ordinalIdx = file.getName().indexOf("-");
-			boolean isIcon = file.getName().indexOf("icon-")==0;
-			int ordinal = Integer.parseInt(file.getName().substring(ordinalIdx+1));
-			if (isIcon) {
-				String sheetFileIconName = "sheeticon" + ruleSet.getId() + "_" + ordinal + "." + file.getExtension();
-				String sheetWebIconName = "sheeticon" + ruleSet.getId() + "_" + ordinal + "-" + PlatformManager.get().now() + "." + file.getExtension();
-				copyStream(file.getStream(), PlatformManager.get().getOutputStream("/rules/" + sheetFileIconName));
-				ruleSet.getSheet(ordinal).setIcon("/api/ruleset/documents/" + sheetWebIconName);
-			}
-			else {
-				String sheetFileName = "sheet" + ruleSet.getId() + "_" + ordinal + "." + file.getExtension();
-				String sheetWebName = "sheet" + ruleSet.getId() + "_" + ordinal + "-" + PlatformManager.get().now() + "." + file.getExtension();
-				copyStream(file.getStream(), PlatformManager.get().getOutputStream("/rules/" + sheetFileName));
-				ruleSet.getSheet(ordinal).setPath("/api/ruleset/documents/" + sheetWebName);
-			}
+		FileSpecification ruleSetImage = storeSheetImages(
+			files, ruleSet.getId(), ruleSet.getSheets(),
+			"Rule Set", "/rules/", "/api/ruleset/documents/"
+		);
+		if (ruleSetImage != null) {
+			throw new SummerControllerException(400, "This image: %s is not attached to a sheet.", ruleSetImage.getFileName());
 		}
 	}
 
@@ -106,12 +87,12 @@ public class RuleSetController implements InjectorSunbeam, DataSunbeam, Security
 	}
 
 	@REST(url="/api/ruleset/delete/:id", method=Method.GET)
-	public Json delete(Map<String, String> params, Json request) {
+	public Json delete(Map<String, Object> params, Json request) {
+		long id = getLongParam(params, "id", "The Ruleset ID is missing or invalid (%s)");
 		ifAuthorized(user->{
 			try {
 				inTransaction(em->{
-					String id = params.get("id");
-					RuleSet ruleSet = findRuleSet(em, new Long(id));
+					RuleSet ruleSet = findRuleSet(em, id);
 					if (ruleSet.isPublished()) {
 						throw new SummerControllerException(401, "Published rule set cannot be deleted");
 					}

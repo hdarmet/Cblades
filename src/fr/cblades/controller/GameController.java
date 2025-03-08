@@ -51,14 +51,13 @@ public class GameController implements InjectorSunbeam, DataSunbeam, SecuritySun
 
 	@REST(url="/api/game/play/load/:id", method=Method.POST)
 	public Json loadForPlay(Map<String, Object> params, Json request) {
+		long id = getLongParam(params, "id", "The Game ID is missing or invalid (%s)");
 		Ref<Json> result = new Ref<>();
 		ifAuthorized(user->{
 			inReadTransaction(em->{
-				String id = (String)params.get("id");
-				long gameId = Long.parseLong(id);
-				GameMatch gameMatch = GameMatch.getByGame(em, gameId);
+				GameMatch gameMatch = GameMatch.getByGame(em, id);
 				if (gameMatch == null) {
-					throw new SummerControllerException(404, "GameMatch not found for game : %d", gameId);
+					throw new SummerControllerException(404, "GameMatch not found for game : %d", id);
 				}
 				long sequenceCount = adjustGameAndReturnsSequenceCount(request, em, gameMatch);
 				Game game = gameMatch.getGame();
@@ -90,11 +89,11 @@ public class GameController implements InjectorSunbeam, DataSunbeam, SecuritySun
 
 	@REST(url="/api/game/find/:id", method=Method.GET)
 	public Json getById(Map<String, Object> params, Json request) {
+		long id = getLongParam(params, "id", "The Game ID is missing or invalid (%s)");
 		Ref<Json> result = new Ref<>();
 		ifAuthorized(user->{
 			inReadTransaction(em->{
-				String id = (String)params.get("id");
-				Game game = findGame(em, new Long(id));
+				Game game = findGame(em, id);
 				result.set(readFromGame(em, game));
 			});
 		});
@@ -103,11 +102,11 @@ public class GameController implements InjectorSunbeam, DataSunbeam, SecuritySun
 
 	@REST(url="/api/game/delete/:id", method=Method.POST)
 	public Json delete(Map<String, Object> params, Json request) {
+		long id = getLongParam(params, "id", "The Game ID is missing or invalid (%s)");
 		ifAuthorized(user->{
 			try {
 				inTransaction(em->{
-					String id = (String)params.get("id");
-					Game game = findGame(em, new Long(id));
+					Game game = findGame(em, id);
 					remove(em, game);
 				});
 			} catch (PersistenceException pe) {
@@ -119,12 +118,12 @@ public class GameController implements InjectorSunbeam, DataSunbeam, SecuritySun
 
 	@REST(url="/api/game/update/:id", method=Method.POST)
 	public Json update(Map<String, Object> params, Json request) {
+		long id = getLongParam(params, "id", "The Game ID is missing or invalid (%s)");
 		Ref<Json> result = new Ref<>();
 		ifAuthorized(user->{
 			try {
 				inTransaction(em->{
-					String id = (String)params.get("id");
-					Game game = findGame(em, new Long(id));
+					Game game = findGame(em, id);
 					writeToGame(em, request, game, false);
 					flush(em);
 					result.set(readFromGame(em, game));

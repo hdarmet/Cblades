@@ -450,7 +450,6 @@ public class ArticleControllerTest implements TestSeawave, CollectionSunbeam, Da
         dataManager.register("getSingleResult", account, null, null);
         dataManager.register("persist", null, null);
         OutputStream outputStream = new ByteArrayOutputStream();
-        platformManager.register("getOutputStream", outputStream, null);
         dataManager.register("flush", null, null);
         securityManager.doConnect("someone", 0);
         try {
@@ -631,11 +630,14 @@ public class ArticleControllerTest implements TestSeawave, CollectionSunbeam, Da
         } catch (SummerControllerException sce) {
             Assert.assertEquals(400, sce.getStatus());
             Assert.assertEquals("{" +
+                "\"comments-version\":\"required\"," +
                 "\"paragraphs-text\":\"required\"," +
+                "\"comments-date\":\"required\"," +
                 "\"themes-id\":\"required\"," +
                 "\"paragraphs-title\":\"required\"," +
                 "\"paragraphs-version\":\"required\"," +
-                "\"paragraphs-ordinal\":\"required\"" +
+                "\"paragraphs-ordinal\":\"required\"," +
+                "\"comments-text\":\"required\"" +
             "}", sce.getMessage());
         }
     }

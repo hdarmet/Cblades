@@ -166,10 +166,10 @@ public class MessageModelController implements InjectorSunbeam, DataSunbeam, Sec
 
 	@REST(url="/api/message-model/load/:id", method=Method.GET)
 	public Json getMessageModelWithComments(Map<String, Object> params, Json request) {
+		long id = getLongParam(params, "id", "The Message Model ID is missing or invalid (%s)");
 		Ref<Json> result = new Ref<>();
 		inTransaction(em->{
-			String id = (String)params.get("id");
-			MessageModel messageModel = findMessageModel(em, new Long(id));
+			MessageModel messageModel = findMessageModel(em, id);
 			ifAuthorized(user->{
 				result.set(readFromMessageModelWithComments(messageModel));
 			},
@@ -180,9 +180,9 @@ public class MessageModelController implements InjectorSunbeam, DataSunbeam, Sec
 
 	@REST(url="/api/message-model/delete/:id", method=Method.GET)
 	public Json delete(Map<String, Object> params, Json request) {
+		long id = getLongParam(params, "id", "The Message Model ID is missing or invalid (%s)");
 		inTransaction(em->{
-			String id = (String)params.get("id");
-			MessageModel messageModel = findMessageModel(em, new Long(id));
+			MessageModel messageModel = findMessageModel(em, id);
 			ifAuthorized(
 				user->{
 					try {
@@ -199,10 +199,10 @@ public class MessageModelController implements InjectorSunbeam, DataSunbeam, Sec
 
 	@REST(url="/api/message-model/update/:id", method=Method.POST)
 	public Json update(Map<String, Object> params, Json request) {
+		long id = getLongParam(params, "id", "The Message Model ID is missing or invalid (%s)");
 		Ref<Json> result = new Ref<>();
 		inTransaction(em-> {
-			String id = (String) params.get("id");
-			MessageModel messageModel = findMessageModel(em, new Long(id));
+			MessageModel messageModel = findMessageModel(em, id);
 			ifAuthorized(
 				user -> {
 					try {
@@ -221,10 +221,10 @@ public class MessageModelController implements InjectorSunbeam, DataSunbeam, Sec
 
 	@REST(url="/api/message-model/update-status/:id", method=Method.POST)
 	public Json updateStatus(Map<String, Object> params, Json request) {
+		long id = getLongParam(params, "id", "The Message Model ID is missing or invalid (%s)");
 		Ref<Json> result = new Ref<>();
 		inTransaction(em-> {
-			String id = (String) params.get("id");
-			MessageModel messageModel = findMessageModel(em, new Long(id));
+			MessageModel messageModel = findMessageModel(em, id);
 			ifAuthorized(
 				user -> {
 					try {

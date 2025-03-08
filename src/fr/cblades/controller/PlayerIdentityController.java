@@ -43,17 +43,7 @@ public class PlayerIdentityController
 	 */
 	@MIME(url="/api/player-identity/images/:imagename")
 	public FileSpecification getImage(Map<String, Object> params) {
-		try {
-			String webName = (String)params.get("imagename");
-			int minusPos = webName.indexOf('-');
-			int pointPos = webName.indexOf('.');
-			String imageName = webName.substring(0, minusPos)+webName.substring(pointPos);
-			return new FileSpecification()
-				.setName(imageName)
-				.setStream(PlatformManager.get().getInputStream("/games/"+imageName));
-		} catch (PersistenceException pe) {
-			throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe);
-		}
+		return this.getFile(params, "imagename", "/games/");
 	}
 
 	/**
@@ -71,10 +61,10 @@ public class PlayerIdentityController
 		FileSpecification[] files = (FileSpecification[]) params.get(MULTIPART_FILES);
 		if (files!=null) {
 			if (files.length!= 1) throw new SummerControllerException(400, "One and only one player identity file must be loaded.");
-			String fileName = "playeridentity" + playerIdentity.getId() + "." + files[0].getExtension();
-			String webName = "playeridentity" + playerIdentity.getId() + "-" + PlatformManager.get().now() + "." + files[0].getExtension();
-			copyStream(files[0].getStream(), PlatformManager.get().getOutputStream("/games/" + fileName));
-			playerIdentity.setPath("/api/player-identity/images/" + webName);
+			playerIdentity.setPath(saveFile(files[0],
+				"playeridentity" + playerIdentity.getId(),
+				"/games/", "/api/player-identity/images/"
+			));
 		}
 	}
 
@@ -258,7 +248,7 @@ public class PlayerIdentityController
 			verifier
 				.checkRequired("name")
 				.checkRequired("path");
-			checkComments(verifier, true);
+			checkComments(verifier);
 		}
 		verifier
 			.checkMinSize("name", 2).checkMaxSize("name", 20)

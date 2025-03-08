@@ -33,7 +33,8 @@ import java.util.stream.Collectors;
  * Controleur permettant de manipuler des évènements
  */
 @Controller
-public class EventController implements InjectorSunbeam, DataSunbeam, SecuritySunbeam, ControllerSunbeam, FileSunbeam, StandardUsers {
+public class EventController implements InjectorSunbeam, DataSunbeam, SecuritySunbeam,
+		ControllerSunbeam, StandardUsers, CommonEntities {
 
 	/**
 	 * Endpoint (accessible via "/api/event/images/:imagename") permettant de télécharger depuis le navigateur
@@ -43,17 +44,7 @@ public class EventController implements InjectorSunbeam, DataSunbeam, SecuritySu
 	 */
 	@MIME(url="/api/event/images/:imagename")
 	public FileSpecification getImage(Map<String, Object> params) {
-		try {
-			String webName = (String)params.get("imagename");
-			int minusPos = webName.indexOf('-');
-			int pointPos = webName.indexOf('.');
-			String imageName = webName.substring(0, minusPos)+webName.substring(pointPos);
-			return new FileSpecification()
-			    .setName(imageName)
-				.setStream(PlatformManager.get().getInputStream("/events/"+imageName));
-		} catch (PersistenceException pe) {
-			throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe);
-		}
+		return this.getFile(params, "imagename", "/events/");
 	}
 
 	/**
@@ -71,15 +62,16 @@ public class EventController implements InjectorSunbeam, DataSunbeam, SecuritySu
 		FileSpecification[] files = (FileSpecification[])params.get(MULTIPART_FILES);
 		if (files.length>0) {
 			if (files.length>1) throw new SummerControllerException(400, "Only one illustration file may be loaded.");
-			String fileName = "illustration"+event.getId()+"."+files[0].getExtension();
-			String webName = "illustration"+event.getId()+"-"+PlatformManager.get().now()+"."+files[0].getExtension();
-			copyStream(files[0].getStream(), PlatformManager.get().getOutputStream("/events/"+fileName));
-			event.setIllustration("/api/event/images/" + webName);
+			event.setIllustration(saveFile(files[0],
+				"illustration"+event.getId(),
+				"/events/", "/api/event/images/"
+			));
 		}
 	}
 
 	@REST(url="/api/event/create", method=Method.POST)
 	public Json create(Map<String, Object> params, Json request) {
+		checkJson(request, true);
 		Ref<Json> result = new Ref<>();
 		ifAuthorized(user->{
 			try {
@@ -179,12 +171,12 @@ public class EventController implements InjectorSunbeam, DataSunbeam, SecuritySu
 	}
 
 	@REST(url="/api/event/find/:id", method=Method.POST)
-	public Json getById(Map<String, String> params, Json request) {
+	public Json getById(Map<String, Object> params, Json request) {
+		long id = getLongParam(params, "id", "The Event ID is missing or invalid (%s)");
 		Ref<Json> result = new Ref<>();
 		ifAuthorized(user->{
 			inReadTransaction(em->{
-				String id = params.get("id");
-				Event event = findEvent(em, new Long(id));
+				Event event = findEvent(em, id);
 				result.set(readFromEvent(event));
 			});
 		}, ADMIN);
@@ -192,12 +184,12 @@ public class EventController implements InjectorSunbeam, DataSunbeam, SecuritySu
 	}
 	
 	@REST(url="/api/event/delete/:id", method=Method.GET)
-	public Json delete(Map<String, String> params, Json request) {
+	public Json delete(Map<String, Object> params, Json request) {
+		long id = getLongParam(params, "id", "The Event ID is missing or invalid (%s)");
 		ifAuthorized(user->{
 			try {
 				inTransaction(em->{
-					String id = params.get("id");
-					Event event= findEvent(em, new Long(id));
+					Event event= findEvent(em, id);
 					remove(em, event);
 				});
 			} catch (PersistenceException pe) {
@@ -209,12 +201,13 @@ public class EventController implements InjectorSunbeam, DataSunbeam, SecuritySu
 	
 	@REST(url="/api/event/update/:id", method=Method.POST)
 	public Json update(Map<String, Object> params, Json request) {
+		long id = getLongParam(params, "id", "The Event ID is missing or invalid (%s)");
+		checkJson(request, false);
 		Ref<Json> result = new Ref<>();
 		ifAuthorized(user->{
 			try {
 				inTransaction(em->{
-					String id = (String)params.get("id");
-					Event event = findEvent(em, new Long(id));
+					Event event = findEvent(em, id);
 					writeToEvent(em, request, event, false);
 					storeIllustration(params, event);
 					flush(em);
@@ -229,12 +222,12 @@ public class EventController implements InjectorSunbeam, DataSunbeam, SecuritySu
 
 	@REST(url="/api/event/update-status/:id", method=Method.POST)
 	public Json updateStatus(Map<String, Object> params, Json request) {
+		long id = getLongParam(params, "id", "The Event ID is missing or invalid (%s)");
 		Ref<Json> result = new Ref<>();
 		ifAuthorized(user->{
 			try {
 				inTransaction(em->{
-					String id = (String)params.get("id");
-					Event event = findEvent(em, new Long(id));
+					Event event = findEvent(em, id);
 					writeToEventStatus(em, request, event);
 					flush(em);
 					result.set(readFromEvent(event));
@@ -256,25 +249,28 @@ public class EventController implements InjectorSunbeam, DataSunbeam, SecuritySu
 		return event;
 	}
 
-	Event writeToEvent(EntityManager em, Json json, Event event, boolean full) {
-		try {
-			Verifier verifier = verify(json);
-			if (full) {
-				verifier
+	void checkJson(Json json, boolean full) {
+		verify(json)
+			.process(v->{
+				if (full) {v
 					.checkRequired("date")
 					.checkRequired("title")
 					.checkRequired("description");
-			}
-			verifier
-				.checkMinSize("title", 2)
-				.checkMaxSize("title", 19995)
-				.checkMinSize("description", 2)
-				.checkMaxSize("description", 19995)
-				.checkMinSize("illustration", 2)
-				.checkMaxSize("illustration", 100)
-				.check("status", EventStatus.byLabels().keySet());
-			verifier.ensure();
-			Synchronizer synchronizer = sync(json, event)
+				}
+			})
+			.checkMinSize("title", 2)
+			.checkMaxSize("title", 19995)
+			.checkMinSize("description", 2)
+			.checkMaxSize("description", 19995)
+			.checkMinSize("illustration", 2)
+			.checkMaxSize("illustration", 100)
+			.check("status", EventStatus.byLabels().keySet())
+			.ensure();
+	}
+
+	Event writeToEvent(EntityManager em, Json json, Event event, boolean full) {
+		try {
+			sync(json, event)
 				.write("version")
 				.writeDate("date")
 				.write("title")

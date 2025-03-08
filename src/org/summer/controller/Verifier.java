@@ -7,6 +7,7 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -70,6 +71,11 @@ public class Verifier {
 				this.result.putAll(thenVerifier.result);
 			}
 		}
+		return this;
+	}
+
+	public Verifier process(Consumer<Verifier> executor) {
+		executor.accept(this);
 		return this;
 	}
 
@@ -186,13 +192,13 @@ public class Verifier {
 	
 	public Verifier checkMinSize(String field, int size, String message) {
 		return check(json->json.get(field)==null||
-				(json.get(field) instanceof String) &&
+				(!(json.get(field) instanceof String)) ||
 				(((String)json.get(field)).length()>=size), field, message);
 	}
 	
 	public Verifier checkMaxSize(String field, int size, String message) {
 		return check(json->json.get(field)==null||
-				(json.get(field) instanceof String) &&
+				(!(json.get(field) instanceof String)) ||
 				(((String)json.get(field)).length()<=size), field, message);
 	}
 	
