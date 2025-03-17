@@ -389,9 +389,8 @@ public class BoardController implements InjectorSunbeam, DataSunbeam, SecuritySu
 			.checkMinSize("description", 2).checkMaxSize("description", 1000)
 			.checkPattern("name", "[\\d\\s\\w]+")
 			.process(v->{
-				if (usage.propose) {v
-					.checkMinSize("newComment", 2).checkMaxSize("newComment", 200);
-				}
+				if (usage.propose)
+					checkNewComment(v);
 				else {v
 					.check("status", BoardStatus.byLabels().keySet());
 					checkComments(v);
@@ -405,7 +404,7 @@ public class BoardController implements InjectorSunbeam, DataSunbeam, SecuritySu
 			.write("version")
 			.write("name")
 			.write("description")
-			.process(s->writeComments(s))
+			.process(this::writeComments)
 			.process(s-> {
 				if (!usage.propose) {s
 					.write("status", label -> BoardStatus.byLabels().get(label));
@@ -506,7 +505,7 @@ public class BoardController implements InjectorSunbeam, DataSunbeam, SecuritySu
 			.read("path")
 			.read("icon")
 			.read("status", BoardStatus::getLabel)
-			.process(s->readAuthor(s));
+			.process(this::readAuthor);
 		return json;
 	}
 
@@ -520,8 +519,8 @@ public class BoardController implements InjectorSunbeam, DataSunbeam, SecuritySu
 			.read("path")
 			.read("icon")
 			.read("status", BoardStatus::getLabel)
-			.process(s->readAuthor(s))
-			.process(s->readComments(s));
+			.process(this::readAuthor)
+			.process(this::readComments);
 		return json;
 	}
 

@@ -154,14 +154,13 @@ public class FactionController implements InjectorSunbeam, DataSunbeam, Security
 
 	@REST(url="/api/faction/update-status/:id", method=Method.POST)
 	public Json updateStatus(Map<String, Object> params, Json request) {
-
 		long id = getLongParam(params, "id", "The Faction ID is missing or invalid (%s)");
 		Ref<Json> result = new Ref<>();
 		inTransaction(em-> {
-			Faction faction = findFaction(em, id);
 			ifAuthorized(
 				user -> {
 					try {
+						Faction faction = findFaction(em, id);
 						writeToFactionStatus(em, request, faction);
 						flush(em);
 						result.set(readFromFaction(faction));
@@ -224,10 +223,10 @@ public class FactionController implements InjectorSunbeam, DataSunbeam, Security
 	}
 
 	@REST(url="/api/faction/by-name/:name", method=Method.GET)
-	public Json getByTitle(Map<String, Object> params, Json request) {
+	public Json getByName(Map<String, Object> params, Json request) {
+		String name = getStringParam(params, "name", null,"The Faction's name is missing or invalid (%s)");
 		Ref<Json> result = new Ref<>();
 		inReadTransaction(em->{
-			String name = (String)params.get("name");
 			Faction faction = getSingleResult(em,
 				"select f from Faction f " +
 					"join fetch f.firstSheet s " +
@@ -266,17 +265,15 @@ public class FactionController implements InjectorSunbeam, DataSunbeam, Security
 	public Json delete(Map<String, Object> params, Json request) {
 		long id = getLongParam(params, "id", "The Faction ID is missing or invalid (%s)");
 		inTransaction(em->{
-			Faction faction = findFaction(em, id);
-			ifAuthorized(
-				user->{
-					try {
-						remove(em, faction);
-					} catch (PersistenceException pe) {
-						throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe);
-					}
-				},
-				verifyIfAdminOrOwner(faction)
-			);
+			try {
+				Faction faction = findFaction(em, id);
+				ifAuthorized(
+					user->remove(em, faction),
+					verifyIfAdminOrOwner(faction)
+				);
+			} catch (PersistenceException pe) {
+				throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe);
+			}
 		});
 		return Json.createJsonObject().put("deleted", "ok");
 	}
@@ -341,7 +338,7 @@ public class FactionController implements InjectorSunbeam, DataSunbeam, Security
 	Faction writeToFactionStatus(EntityManager em, Json json, Faction faction) {
 		verify(json)
 			.checkRequired("id").checkInteger("id", "Not a valid id")
-			.check("status", FactionStatus.byLabels().keySet())
+			.checkRequired("status").check("status", FactionStatus.byLabels().keySet())
 			.ensure();
 		sync(json, faction)
 			.write("status", label->FactionStatus.byLabels().get(label));
@@ -352,19 +349,18 @@ public class FactionController implements InjectorSunbeam, DataSunbeam, Security
 		verify(json)
 			.process(v->{
 				if (usage.creation) {v
-							.checkRequired("name")
-							.checkRequired("description");
+					.checkRequired("name")
+					.checkRequired("description");
 				}
 			})
 			.checkMinSize("name", 2).checkMaxSize("name", 200)
 			.checkPattern("name", "[\\d\\s\\w]+")
 			.checkMinSize("description", 2)
 			.checkMaxSize("description", 19995)
-			.process(v->checkSheets(v))
+			.process(this::checkSheets)
 			.process(v->{
-				if (usage.propose) {v
-					.checkMinSize("newComment", 2).checkMaxSize("newComment", 200);
-				}
+				if (usage.propose)
+					checkNewComment(v);
 				else {v
 					.check("status", FactionStatus.byLabels().keySet());
 					checkComments(v);
@@ -374,26 +370,22 @@ public class FactionController implements InjectorSunbeam, DataSunbeam, Security
 	}
 
 	Faction writeToFaction(EntityManager em, Json json, Faction faction, Usage usage) {
-		try {
-			sync(json, faction)
-				.write("version")
-				.write("name")
-				.write("description")
-				.writeRef("author.id", "author", (Integer id)-> Account.find(em, id))
-				.process(s->{
-					if (!usage.propose) {s
-						.write("status", label -> FactionStatus.byLabels().get(label));
-						writeComments(s);
-					}
-				})
-				.process(s->writeSheets(s))
-				.process(s->writeComments(s));
-			faction.setFirstSheet(faction.getSheet(0));
-			faction.buildDocument();
-			return faction;
-		} catch (SummerNotFoundException snfe) {
-			throw new SummerControllerException(404, snfe.getMessage());
-		}
+		sync(json, faction)
+			.write("version")
+			.write("name")
+			.write("description")
+			.writeRef("author.id", "author", (Integer id)-> Account.find(em, id))
+			.process(s->{
+				if (!usage.propose) {s
+					.write("status", label -> FactionStatus.byLabels().get(label));
+					writeComments(s);
+				}
+			})
+			.process(this::writeSheets)
+			.process(this::writeComments);
+		faction.setFirstSheet(faction.getSheet(0));
+		faction.buildDocument();
+		return faction;
 	}
 
 	Json readFromFactionSummary(Faction faction) {
@@ -405,7 +397,7 @@ public class FactionController implements InjectorSunbeam, DataSunbeam, Security
 			.read("illustration")
 			.read("description")
 			.read("status", FactionStatus::getLabel)
-			.process(s->readAuthor(s));
+			.process(this::readAuthor);
 		return json;
 	}
 
@@ -418,9 +410,9 @@ public class FactionController implements InjectorSunbeam, DataSunbeam, Security
 			.read("description")
 			.read("illustration")
 			.read("status", FactionStatus::getLabel)
-			.process(s->readAuthor(s))
-			.process(s->readSheets(s))
-			.process(s->readComments(s));
+			.process(this::readAuthor)
+			.process(this::readSheets)
+			.process(this::readComments);
 		return json;
 	}
 
@@ -431,7 +423,7 @@ public class FactionController implements InjectorSunbeam, DataSunbeam, Security
 			.read("name")
 			.read("description")
 			.read("illustration")
-			.process(s->readSheets(s));
+			.process(this::readSheets);
 		return json;
 	}
 

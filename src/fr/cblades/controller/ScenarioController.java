@@ -375,7 +375,7 @@ public class ScenarioController implements InjectorSunbeam, DataSunbeam, Securit
 			.checkMinSize("victoryConditions", 2).checkMaxSize("victoryConditions", 2000)
 			.checkMinSize("specialRules", 2).checkMaxSize("specialRules", 2000)
 			.check("status", ScenarioStatus.byLabels().keySet())
-			.process(v->checkComments(v))
+			.process(this::checkComments)
 			.ensure();
 	}
 
@@ -422,7 +422,7 @@ public class ScenarioController implements InjectorSunbeam, DataSunbeam, Securit
 			.read("specialRules")
 			.read("illustration")
 			.read("status", ScenarioStatus::getLabel)
-			.process(s->readAuthor(s));
+			.process(this::readAuthor);
 		return json;
 	}
 
@@ -438,8 +438,8 @@ public class ScenarioController implements InjectorSunbeam, DataSunbeam, Securit
 			.read("specialRules")
 			.read("illustration")
 			.read("status", ScenarioStatus::getLabel)
-			.process(s->readAuthor(s))
-			.process(s->readComments(s));
+			.process(this::readAuthor)
+			.process(this::readComments);
 		json.put("game", scenario.getGame().getId()); // force load
 		return json;
 	}

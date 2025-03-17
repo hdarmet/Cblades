@@ -417,9 +417,8 @@ public class ArticleController
 				.checkMaxSize("text", 19995)
 			)
 			.process(v->{
-				if (usage.propose) {v
-					.checkMinSize("newComment", 2).checkMaxSize("newComment", 200);
-				}
+				if (usage.propose)
+					checkNewComment(v);
 				else {v
 					.check("status", ArticleStatus.byLabels().keySet());
 					checkComments(v);
@@ -492,7 +491,7 @@ public class ArticleController
 				.read("illustrationPosition", IllustrationPosition::getLabel)
 				.read("text")
 			)
-			.process(s->readAuthor(s));
+			.process(this::readAuthor);
 		return json;
 	}
 
@@ -515,8 +514,8 @@ public class ArticleController
 				.read("illustrationPosition", IllustrationPosition::getLabel)
 				.read("text")
 			)
-			.process(s->readAuthor(s))
-			.process(s->readComments(s));
+			.process(this::readAuthor)
+			.process(this::readComments);
 		return json;
 	}
 
@@ -532,7 +531,7 @@ public class ArticleController
 				.read("illustrationPosition", IllustrationPosition::getLabel)
 				.read("text")
 			)
-			.process(s->readAuthor(s))
+			.process(this::readAuthor)
 			.readLink("poll", (pJson, poll)->sync(pJson, poll)
 			.read("id")
 			.read("likes")

@@ -381,9 +381,8 @@ public class ThemeController implements InjectorSunbeam, DataSunbeam, SecuritySu
 			.checkMinSize("description", 2).checkMaxSize("description", 1000)
 			.check("status", ThemeStatus.byLabels().keySet())
 			.process(v->{
-				if (usage.propose) {
-					v.checkMinSize("newComment", 2).checkMaxSize("newComment", 200);
-				}
+				if (usage.propose)
+					checkNewComment(v);
 				else {
 					v.check("status", ThemeStatus.byLabels().keySet());
 					checkComments(v);
@@ -428,7 +427,7 @@ public class ThemeController implements InjectorSunbeam, DataSunbeam, SecuritySu
 			.read("description")
 			.read("illustration")
 			.read("status", ThemeStatus::getLabel)
-			.process(s->readAuthor(s));
+			.process(this::readAuthor);
 		return json;
 	}
 
@@ -452,8 +451,8 @@ public class ThemeController implements InjectorSunbeam, DataSunbeam, SecuritySu
 			.read("description")
 			.read("illustration")
 			.read("status", ThemeStatus::getLabel)
-			.process(s->readAuthor(s))
-			.process(s->readComments(s));
+			.process(this::readAuthor)
+			.process(this::readComments);
 		return json;
 	}
 

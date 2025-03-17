@@ -1,7 +1,7 @@
 package fr.cblades.controllers;
 
 import fr.cblades.StandardUsers;
-import fr.cblades.controller.FactionController;
+import fr.cblades.controller.MagicArtController;
 import fr.cblades.domain.*;
 import org.junit.Assert;
 import org.junit.Before;
@@ -21,9 +21,9 @@ import java.io.OutputStream;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
-public class FactionControllerTest implements TestSeawave, CollectionSunbeam, DataManipulatorSunbeam {
+public class MagicArtControllerTest implements TestSeawave, CollectionSunbeam, DataManipulatorSunbeam {
 
-    FactionController factionController;
+    MagicArtController magicArtController;
     MockDataManagerImpl dataManager;
     MockPlatformManagerImpl platformManager;
     MockSecurityManagerImpl securityManager;
@@ -31,7 +31,7 @@ public class FactionControllerTest implements TestSeawave, CollectionSunbeam, Da
     @Before
     public void before() {
         ApplicationManager.set(new ApplicationManagerForTestImpl());
-        factionController = new FactionController();
+        magicArtController = new MagicArtController();
         dataManager = (MockDataManagerImpl) ApplicationManager.get().getDataManager();
         dataManager.openPersistenceUnit("default");
         platformManager = (MockPlatformManagerImpl) ApplicationManager.get().getPlatformManager();
@@ -43,10 +43,10 @@ public class FactionControllerTest implements TestSeawave, CollectionSunbeam, Da
     }
 
     @Test
-    public void checkRequiredFieldsForFactionCreation() {
+    public void checkRequiredFieldsForMagicArtCreation() {
         securityManager.doConnect("admin", 0);
         try {
-            factionController.create(params(), Json.createJsonFromString(
+            magicArtController.create(params(), Json.createJsonFromString(
                     "{ 'comments': [{}], 'sheets': [{}] }"
             ));
             Assert.fail("The request should fail");
@@ -66,10 +66,10 @@ public class FactionControllerTest implements TestSeawave, CollectionSunbeam, Da
     }
 
     @Test
-    public void checkMinFieldSizesForFactionCreation() {
+    public void checkMinFieldSizesForMagicArtCreation() {
         securityManager.doConnect("admin", 0);
         try {
-            factionController.create(params(), Json.createJsonFromString("{" +
+            magicArtController.create(params(), Json.createJsonFromString("{" +
                 " 'name':'n'," +
                 " 'description':'d'," +
                 " 'sheets': [{ " +
@@ -86,15 +86,15 @@ public class FactionControllerTest implements TestSeawave, CollectionSunbeam, Da
                 "\"sheets-name\":\"must be greater of equals to 2\"," +
                 "\"name\":\"must be greater of equals to 2\"," +
                 "\"description\":\"must be greater of equals to 2\"" +
-            "}", sce.getMessage());
+                "}", sce.getMessage());
         }
     }
 
     @Test
-    public void checkMaxFieldSizesForFactionCreation() {
+    public void checkMaxFieldSizesForMagicArtCreation() {
         securityManager.doConnect("admin", 0);
         try {
-            factionController.create(params(), Json.createJsonFromString("{" +
+            magicArtController.create(params(), Json.createJsonFromString("{" +
                 " 'name':'" + generateText("n", 201) + "'," +
                 " 'description':'" + generateText("d", 20000) + "', " +
                 " 'sheets': [{ " +
@@ -116,15 +116,13 @@ public class FactionControllerTest implements TestSeawave, CollectionSunbeam, Da
     }
 
     @Test
-    public void checkFieldValidityForFactionCreation() {
+    public void checkFieldValidityForMagicArtCreation() {
         securityManager.doConnect("admin", 0);
         try {
-            factionController.create(params(), Json.createJsonFromString(
-            "{ " +
-                    "'name':'...', 'status':'???', 'description': 0, " +
-                    "'sheets': [ { 'name':'...', 'description': 0, ordinal:'un' } ] " +
-                "}"
-            ));
+            magicArtController.create(params(), Json.createJsonFromString("{ " +
+                "'name':'...', 'status':'???', 'description': 0, " +
+                "'sheets': [ { 'name':'...', 'description': 0, ordinal:'un' } ] " +
+            "}"));
             Assert.fail("The request should fail");
         }
         catch (SummerControllerException sce) {
@@ -141,107 +139,101 @@ public class FactionControllerTest implements TestSeawave, CollectionSunbeam, Da
     }
 
     @Test
-    public void createNewFactionWithIllustration() {
+    public void createNewMagicArtWithIllustration() {
         dataManager.register("persist", null, null, (Predicate) entity->{
-            Assert.assertTrue(entity instanceof Faction);
-            Faction faction = (Faction) entity;
-            Assert.assertEquals("Redneck", faction.getName());
-            Assert.assertEquals(FactionStatus.PENDING, faction.getStatus());
-            Assert.assertEquals("A skilled faction", faction.getDescription());
+            Assert.assertTrue(entity instanceof MagicArt);
+            MagicArt magicArt = (MagicArt) entity;
+            Assert.assertEquals("Arcanic", magicArt.getName());
+            Assert.assertEquals(MagicArtStatus.PENDING, magicArt.getStatus());
+            Assert.assertEquals("A skilled magic art", magicArt.getDescription());
             return true;
         });
         OutputStream sheetOutputStream = new ByteArrayOutputStream();
         platformManager.register("getOutputStream", sheetOutputStream, null);
         OutputStream iconOutputStream = new ByteArrayOutputStream();
         platformManager.register("getOutputStream", iconOutputStream, null);
-        OutputStream factionOutputStream = new ByteArrayOutputStream();
-        platformManager.register("getOutputStream", factionOutputStream, null);
+        OutputStream magicArtOutputStream = new ByteArrayOutputStream();
+        platformManager.register("getOutputStream", magicArtOutputStream, null);
         dataManager.register("flush", null, null);
         dataManager.register("flush", null, null);
         securityManager.doConnect("admin", 0);
-        Json result = factionController.create(params(
+        Json result = magicArtController.create(params(
             ControllerSunbeam.MULTIPART_FILES, new FileSpecification[] {
-                new FileSpecification("redneck", "redneck_faction.png", "png",
-                    new ByteArrayInputStream(("Content of /factions/redneck_faction.png").getBytes())),
-                new FileSpecification("redneck-0", "redneck_faction-0.png", "png",
-                    new ByteArrayInputStream(("Content of /factions/redneck_faction-0.png").getBytes())),
-                new FileSpecification("icon-redneck-0", "icon-redneck_faction-0.png", "png",
-                    new ByteArrayInputStream(("Content of /factions/icon-redneck_faction-0.png").getBytes()))
+                new FileSpecification("arcanic", "arcanic_magicArt.png", "png",
+                    new ByteArrayInputStream(("Content of /magicArts/arcanic_magicArt.png").getBytes())),
+                new FileSpecification("arcanic-0", "arcanic_magicArt-0.png", "png",
+                    new ByteArrayInputStream(("Content of /magicArts/arcanic_magicArt-0.png").getBytes())),
+                new FileSpecification("icon-arcanic-0", "icon-arcanic_magicArt-0.png", "png",
+                    new ByteArrayInputStream(("Content of /magicArts/icon-arcanic_magicArt-0.png").getBytes()))
             }
         ), Json.createJsonFromString("{" +
-                " 'name':'Redneck'," +
-                " 'status':'pnd'," +
-                " 'description':'A skilled faction', " +
-                " 'sheets': [{ " +
-                    "'ordinal':0, " +
-                    "'name':'infantry', " +
-                    "'description':'infantry units'" +
-                " }] " +
-            "}"
-        ));
+            " 'name':'Arcanic'," +
+            " 'status':'pnd'," +
+            " 'description':'A skilled magic art', " +
+            " 'sheets': [{ " +
+                "'ordinal':0, " +
+                "'name':'infantry', " +
+                "'description':'infantry units'" +
+            " }] " +
+        "}"));
         Assert.assertEquals("{" +
             "\"sheets\":[{" +
-                "\"path\":\"/api/faction/documents/sheet0_0-1739879980962.png\"," +
+                "\"path\":\"/api/magicart/documents/sheet0_0-1739879980962.png\"," +
                 "\"name\":\"infantry\"," +
-                "\"icon\":\"/api/faction/documents/sheeticon0_0-1739879980962.png\"," +
-                "\"description\":\"infantry units\"," +
-                "\"id\":0" +
+                "\"icon\":\"/api/magicart/documents/sheeticon0_0-1739879980962.png\"," +
+                "\"description\":\"infantry units\",\"id\":0" +
             "}]," +
             "\"comments\":[]," +
-            "\"name\":\"Redneck\"," +
-            "\"description\":\"A skilled faction\"," +
-            "\"illustration\":\"/api/faction/documents/faction0-1739879980962.png\"," +
-            "\"id\":0,\"version\":0," +
-            "\"status\":\"pnd\"" +
+            "\"name\":\"Arcanic\",\"description\":\"A skilled magic art\"," +
+            "\"illustration\":\"/api/magicart/documents/magicart0-1739879980962.png\"," +
+            "\"id\":0,\"version\":0,\"status\":\"pnd\"" +
         "}", result.toString());
-        Assert.assertEquals("Content of /factions/redneck_faction.png", outputStreamToString(factionOutputStream));
-        Assert.assertEquals("Content of /factions/redneck_faction-0.png", outputStreamToString(sheetOutputStream));
-        Assert.assertEquals("Content of /factions/icon-redneck_faction-0.png", outputStreamToString(iconOutputStream));
+        Assert.assertEquals("Content of /magicArts/arcanic_magicArt.png", outputStreamToString(magicArtOutputStream));
+        Assert.assertEquals("Content of /magicArts/arcanic_magicArt-0.png", outputStreamToString(sheetOutputStream));
+        Assert.assertEquals("Content of /magicArts/icon-arcanic_magicArt-0.png", outputStreamToString(iconOutputStream));
         platformManager.hasFinished();
         dataManager.hasFinished();
     }
 
     @Test
-    public void createNewFactionWithoutAnIllustration() {
+    public void createNewMagicArtWithoutAnIllustration() {
         dataManager.register("persist", null, null, (Predicate) entity->{
-            Assert.assertTrue(entity instanceof Faction);
-            Faction faction = (Faction) entity;
-            Assert.assertEquals("Redneck", faction.getName());
-            Assert.assertEquals(FactionStatus.PENDING, faction.getStatus());
-            Assert.assertEquals("A skilled faction", faction.getDescription());
+            Assert.assertTrue(entity instanceof MagicArt);
+            MagicArt magicArt = (MagicArt) entity;
+            Assert.assertEquals("Arcanic", magicArt.getName());
+            Assert.assertEquals(MagicArtStatus.PENDING, magicArt.getStatus());
+            Assert.assertEquals("A skilled magic art", magicArt.getDescription());
             return true;
         });
         dataManager.register("flush", null, null);
         dataManager.register("flush", null, null);
         securityManager.doConnect("admin", 0);
-        Json result = factionController.create(params(),
+        Json result = magicArtController.create(params(),
             Json.createJsonFromString("{" +
-                " 'name':'Redneck'," +
+                " 'name':'Arcanic'," +
                 " 'status':'pnd'," +
-                " 'description':'A skilled faction' " +
-            "}"
-        ));
+                " 'description':'A skilled magic art' " +
+                "}"
+            ));
         Assert.assertEquals("{" +
-            "\"sheets\":[]," +
-            "\"comments\":[]," +
-            "\"name\":\"Redneck\"," +
-            "\"description\":\"A skilled faction\"," +
+            "\"sheets\":[],\"comments\":[]," +
+            "\"name\":\"Arcanic\"," +
+            "\"description\":\"A skilled magic art\"," +
             "\"illustration\":\"\"," +
-            "\"id\":0," +
-            "\"version\":0," +
+            "\"id\":0,\"version\":0," +
             "\"status\":\"pnd\"" +
         "}", result.toString());
         dataManager.hasFinished();
     }
 
     @Test
-    public void tryToCreateANewFactionWithBadCredentials() {
+    public void tryToCreateANewMagicArtWithBadCredentials() {
         securityManager.doConnect("someone", 0);
         try {
-            factionController.create(params(), Json.createJsonFromString("{" +
-                    " 'name':'Redneck'," +
-                    " 'status':'pnd'," +
-                    " 'description':'A skilled faction' " +
+            magicArtController.create(params(), Json.createJsonFromString("{" +
+                " 'name':'Arcanic'," +
+                " 'status':'pnd'," +
+                " 'description':'A skilled magicArt' " +
                 "}"
             ));
             Assert.fail("The request should fail");
@@ -254,7 +246,7 @@ public class FactionControllerTest implements TestSeawave, CollectionSunbeam, Da
     }
 
     @Test
-    public void failToCreateAFactionBecauseMoreThanOneImageFileAreReceived() {
+    public void failToCreateAMagicArtBecauseMoreThanOneImageFileAreReceived() {
         dataManager.register("persist", null, null, (Predicate) entity->{
             return true;
         });
@@ -265,37 +257,37 @@ public class FactionControllerTest implements TestSeawave, CollectionSunbeam, Da
         }
         securityManager.doConnect("admin", 0);
         try {
-            factionController.create(params(
+            magicArtController.create(params(
                 ControllerSunbeam.MULTIPART_FILES, new FileSpecification[] {
-                    new FileSpecification("redneck", "redneck_faction.png", "png",
-                        new ByteArrayInputStream(("Content of /factions/redneck_faction.png").getBytes())),
-                    new FileSpecification("redneck_b", "redneck_faction_b.png", "png",
-                        new ByteArrayInputStream(("Content of /factions/redneck_faction_b.png").getBytes())),
-                    new FileSpecification("redneck-0", "redneck_faction-0.png", "png",
-                        new ByteArrayInputStream(("Content of /factions/redneck_faction-0.png").getBytes())),
-                    new FileSpecification("icon-redneck-0", "icon-redneck_faction-0.png", "png",
-                        new ByteArrayInputStream(("Content of /factions/icon-redneck_faction-0.png").getBytes())),
-                    new FileSpecification("redneck_b-0", "redneck_faction_b-0.png", "png",
-                        new ByteArrayInputStream(("Content of /factions/redneck_faction_b-0.png").getBytes())),
-                    new FileSpecification("icon-redneck_b-0", "icon-redneck_faction_b-0.png", "png",
-                        new ByteArrayInputStream(("Content of /factions/icon-redneck_faction_b-0.png").getBytes())),
-                    new FileSpecification("redneck-3", "redneck_faction-3.png", "png",
-                        new ByteArrayInputStream(("Content of /factions/redneck_faction-3.png").getBytes())),
-                    new FileSpecification("icon-redneck-3", "icon-redneck_faction-3.png", "png",
-                        new ByteArrayInputStream(("Content of /factions/icon-redneck_faction-3.png").getBytes()))
-            }), Json.createJsonFromString("{" +
-                    " 'name':'Redneck'," +
-                    " 'status':'pnd'," +
-                    " 'description':'A skilled faction', " +
-                    " 'sheets': [{ " +
-                        "'ordinal':0, " +
-                        "'name':'infantry', " +
-                        "'description':'infantry units'" +
-                    " }, {" +
-                        "'ordinal':1, " +
-                        "'name':'cavalry', " +
-                        "'description':'cavalry units'" +
-                    " }] " +
+                    new FileSpecification("arcanic", "arcanic_magicArt.png", "png",
+                        new ByteArrayInputStream(("Content of /magicArts/arcanic_magicArt.png").getBytes())),
+                    new FileSpecification("arcanic_b", "arcanic_magicArt_b.png", "png",
+                        new ByteArrayInputStream(("Content of /magicArts/arcanic_magicArt_b.png").getBytes())),
+                    new FileSpecification("arcanic-0", "arcanic_magicArt-0.png", "png",
+                        new ByteArrayInputStream(("Content of /magicArts/arcanic_magicArt-0.png").getBytes())),
+                    new FileSpecification("icon-arcanic-0", "icon-arcanic_magicArt-0.png", "png",
+                        new ByteArrayInputStream(("Content of /magicArts/icon-arcanic_magicArt-0.png").getBytes())),
+                    new FileSpecification("arcanic_b-0", "arcanic_magicArt_b-0.png", "png",
+                        new ByteArrayInputStream(("Content of /magicArts/arcanic_magicArt_b-0.png").getBytes())),
+                    new FileSpecification("icon-arcanic_b-0", "icon-arcanic_magicArt_b-0.png", "png",
+                        new ByteArrayInputStream(("Content of /magicArts/icon-arcanic_magicArt_b-0.png").getBytes())),
+                    new FileSpecification("arcanic-3", "arcanic_magicArt-3.png", "png",
+                        new ByteArrayInputStream(("Content of /magicArts/arcanic_magicArt-3.png").getBytes())),
+                    new FileSpecification("icon-arcanic-3", "icon-arcanic_magicArt-3.png", "png",
+                        new ByteArrayInputStream(("Content of /magicArts/icon-arcanic_magicArt-3.png").getBytes()))
+                }), Json.createJsonFromString("{" +
+                " 'name':'Arcanic'," +
+                " 'status':'pnd'," +
+                " 'description':'A skilled magicArt', " +
+                " 'sheets': [{ " +
+                    "'ordinal':0, " +
+                    "'name':'Magic blade', " +
+                    "'description':'gives magic to a blade'" +
+                " }, {" +
+                    "'ordinal':1, " +
+                    "'name':'Protect from magic', " +
+                    "'description':'protects from a magic attack'" +
+                " }] " +
                 "}"
             ));
             Assert.fail("The request should fail");
@@ -303,7 +295,7 @@ public class FactionControllerTest implements TestSeawave, CollectionSunbeam, Da
         catch (SummerControllerException sce) {
             Assert.assertEquals(400, sce.getStatus());
             Assert.assertEquals(
-                "Only one Faction file must be loaded.\n" +
+        "Only one MagicArt file must be loaded.\n" +
                 "Only one Icon file must be loaded for sheet 0.\n" +
                 "Only one Path file must be loaded.\n" +
                 "No sheet with number 3 found for Icon.\n" +
@@ -315,54 +307,54 @@ public class FactionControllerTest implements TestSeawave, CollectionSunbeam, Da
     }
 
     @Test
-    public void tryToCreateAnAlreadyExistingFaction() {
+    public void tryToCreateAnAlreadyExistingMagicArt() {
         dataManager.register("persist", null,
             new EntityExistsException("Entity already Exists"),
             (Predicate) entity->{
-            return (entity instanceof Faction);
+                return (entity instanceof MagicArt);
             }
         );
         securityManager.doConnect("admin", 0);
         try {
-            factionController.create(params(), Json.createJsonFromString("{" +
-                " 'name':'Redneck'," +
+            magicArtController.create(params(), Json.createJsonFromString("{" +
+                " 'name':'Arcanic'," +
                 " 'status':'pnd'," +
-                " 'description':'A skilled faction' " +
+                " 'description':'A skilled magic art' " +
             "}"));
             Assert.fail("The request should fail");
         }
         catch (SummerControllerException sce) {
             Assert.assertEquals(409, sce.getStatus());
-            Assert.assertEquals("Faction with name (Redneck) already exists", sce.getMessage());
+            Assert.assertEquals("Magic Art with name (Arcanic) already exists", sce.getMessage());
         }
         dataManager.hasFinished();
     }
 
     @Test
-    public void checkRequiredFieldsForFactionProposal() {
+    public void checkRequiredFieldsForMagicArtProposal() {
         securityManager.doConnect("admin", 0);
         try {
-            factionController.propose(params(), Json.createJsonFromString(
-                "{ 'sheets': [{}] }"
+            magicArtController.propose(params(), Json.createJsonFromString(
+                    "{ 'sheets': [{}] }"
             ));
             Assert.fail("The request should fail");
         } catch (SummerControllerException sce) {
             Assert.assertEquals(400, sce.getStatus());
             Assert.assertEquals("{" +
-                "\"sheets-description\":\"required\"," +
-                "\"sheets-name\":\"required\"," +
-                "\"name\":\"required\"," +
-                "\"description\":\"required\"," +
-                "\"sheets-ordinal\":\"required\"" +
-            "}", sce.getMessage());
+                    "\"sheets-description\":\"required\"," +
+                    "\"sheets-name\":\"required\"," +
+                    "\"name\":\"required\"," +
+                    "\"description\":\"required\"," +
+                    "\"sheets-ordinal\":\"required\"" +
+                    "}", sce.getMessage());
         }
     }
 
     @Test
-    public void checkMinFieldSizesForFactionProposal() {
+    public void checkMinFieldSizesForMagicArtProposal() {
         securityManager.doConnect("admin", 0);
         try {
-            factionController.propose(params(), Json.createJsonFromString("{" +
+            magicArtController.propose(params(), Json.createJsonFromString("{" +
                 " 'name':'n'," +
                 " 'description':'d'," +
                 " 'sheets': [{ " +
@@ -381,19 +373,19 @@ public class FactionControllerTest implements TestSeawave, CollectionSunbeam, Da
                 "\"newComment\":\"must be greater of equals to 2\"," +
                 "\"name\":\"must be greater of equals to 2\"," +
                 "\"description\":\"must be greater of equals to 2\"" +
-            "}", sce.getMessage());
+                "}", sce.getMessage());
         }
     }
 
     @Test
-    public void checkMaxFieldSizesForFactionProposal() {
+    public void checkMaxFieldSizesForMagicArtProposal() {
         securityManager.doConnect("admin", 0);
         try {
-            factionController.propose(params(), Json.createJsonFromString(  "{" +
+            magicArtController.propose(params(), Json.createJsonFromString(  "{" +
                 " 'name':'" + generateText("n", 201) + "'," +
                 " 'description':'" + generateText("d", 20000) + "', " +
                 " 'sheets': [{ " +
-                    "'ordinal':0, " +
+                "'ordinal':0, " +
                     "'name':'" + generateText("n", 201) +"', " +
                     "'description':'" + generateText("d", 20000) +"'" +
                 " }], " +
@@ -413,10 +405,10 @@ public class FactionControllerTest implements TestSeawave, CollectionSunbeam, Da
     }
 
     @Test
-    public void checkFieldValidityForFactionProposal() {
+    public void checkFieldValidityForMagicArtProposal() {
         securityManager.doConnect("admin", 0);
         try {
-            factionController.propose(params(), Json.createJsonFromString("{ " +
+            magicArtController.propose(params(), Json.createJsonFromString("{ " +
                 "'name':'...', 'status':'???', 'description': 0, " +
                 "'sheets': [ { 'name':'...', 'description': 0, ordinal:'un' } ] " +
             "}"));
@@ -434,41 +426,41 @@ public class FactionControllerTest implements TestSeawave, CollectionSunbeam, Da
     }
 
     @Test
-    public void createNewFactionProposal() {
+    public void createNewMagicArtProposal() {
         Account account = new Account().setAccess(new Login().setLogin("someone"));
         dataManager.register("createQuery", null, null,
-            "select a from Account a, Login l where a.access = l and l.login=:login");
+                "select a from Account a, Login l where a.access = l and l.login=:login");
         dataManager.register("setParameter", null, null, "login", "someone");
         dataManager.register("getSingleResult", account, null, null);
         dataManager.register("persist", null, null, (Predicate) entity->{
-            Assert.assertTrue(entity instanceof Faction);
-            Faction faction = (Faction) entity;
-            Assert.assertEquals("Redneck", faction.getName());
-            Assert.assertEquals(FactionStatus.PROPOSED, faction.getStatus());
-            Assert.assertEquals("A skilled faction", faction.getDescription());
+            Assert.assertTrue(entity instanceof MagicArt);
+            MagicArt magicArt = (MagicArt) entity;
+            Assert.assertEquals("Arcanic", magicArt.getName());
+            Assert.assertEquals(MagicArtStatus.PROPOSED, magicArt.getStatus());
+            Assert.assertEquals("A skilled magicArt", magicArt.getDescription());
             return true;
         });
         OutputStream sheetOutputStream = new ByteArrayOutputStream();
         platformManager.register("getOutputStream", sheetOutputStream, null);
         OutputStream iconOutputStream = new ByteArrayOutputStream();
         platformManager.register("getOutputStream", iconOutputStream, null);
-        OutputStream factionOutputStream = new ByteArrayOutputStream();
-        platformManager.register("getOutputStream", factionOutputStream, null);
+        OutputStream magicArtOutputStream = new ByteArrayOutputStream();
+        platformManager.register("getOutputStream", magicArtOutputStream, null);
         dataManager.register("flush", null, null);
         dataManager.register("flush", null, null);
         securityManager.doConnect("someone", 0);
-        Json result = factionController.propose(params(
+        Json result = magicArtController.propose(params(
             ControllerSunbeam.MULTIPART_FILES, new FileSpecification[] {
-                new FileSpecification("redneck", "redneck_faction.png", "png",
-                        new ByteArrayInputStream(("Content of /factions/redneck_faction.png").getBytes())),
-                new FileSpecification("redneck-0", "redneck_faction-0.png", "png",
-                        new ByteArrayInputStream(("Content of /factions/redneck_faction-0.png").getBytes())),
-                new FileSpecification("icon-redneck-0", "icon-redneck_faction-0.png", "png",
-                        new ByteArrayInputStream(("Content of /factions/icon-redneck_faction-0.png").getBytes()))
+                new FileSpecification("arcanic", "arcanic_magicArt.png", "png",
+                    new ByteArrayInputStream(("Content of /magicArts/arcanic_magicArt.png").getBytes())),
+                new FileSpecification("arcanic-0", "arcanic_magicArt-0.png", "png",
+                    new ByteArrayInputStream(("Content of /magicArts/arcanic_magicArt-0.png").getBytes())),
+                new FileSpecification("icon-arcanic-0", "icon-arcanic_magicArt-0.png", "png",
+                    new ByteArrayInputStream(("Content of /magicArts/icon-arcanic_magicArt-0.png").getBytes()))
             }
         ), Json.createJsonFromString("{" +
-            " 'name':'Redneck'," +
-            " 'description':'A skilled faction', " +
+            " 'name':'Arcanic'," +
+            " 'description':'A skilled magicArt', " +
             " 'sheets': [{ " +
                 "'ordinal':0, " +
                 "'name':'infantry', " +
@@ -478,9 +470,9 @@ public class FactionControllerTest implements TestSeawave, CollectionSunbeam, Da
         "}"));
         Assert.assertEquals("{" +
             "\"sheets\":[{" +
-                "\"path\":\"/api/faction/documents/sheet0_0-1739879980962.png\"," +
+                "\"path\":\"/api/magicart/documents/sheet0_0-1739879980962.png\"," +
                 "\"name\":\"infantry\"," +
-                "\"icon\":\"/api/faction/documents/sheeticon0_0-1739879980962.png\"," +
+                "\"icon\":\"/api/magicart/documents/sheeticon0_0-1739879980962.png\"," +
                 "\"description\":\"infantry units\",\"id\":0" +
             "}]," +
             "\"comments\":[{" +
@@ -490,61 +482,61 @@ public class FactionControllerTest implements TestSeawave, CollectionSunbeam, Da
                 "\"version\":0" +
             "}]," +
             "\"author\":{\"firstName\":\"\",\"lastName\":\"\",\"id\":0,\"login\":\"someone\"}," +
-            "\"name\":\"Redneck\"," +
-            "\"description\":\"A skilled faction\"," +
-            "\"illustration\":\"/api/faction/documents/faction0-1739879980962.png\"," +
+            "\"name\":\"Arcanic\"," +
+            "\"description\":\"A skilled magicArt\"," +
+            "\"illustration\":\"/api/magicart/documents/magicart0-1739879980962.png\"," +
             "\"id\":0,\"version\":0," +
             "\"status\":\"prp\"" +
         "}", result.toString());
-        Assert.assertEquals("Content of /factions/redneck_faction.png", outputStreamToString(factionOutputStream));
-        Assert.assertEquals("Content of /factions/redneck_faction-0.png", outputStreamToString(sheetOutputStream));
-        Assert.assertEquals("Content of /factions/icon-redneck_faction-0.png", outputStreamToString(iconOutputStream));
+        Assert.assertEquals("Content of /magicArts/arcanic_magicArt.png", outputStreamToString(magicArtOutputStream));
+        Assert.assertEquals("Content of /magicArts/arcanic_magicArt-0.png", outputStreamToString(sheetOutputStream));
+        Assert.assertEquals("Content of /magicArts/icon-arcanic_magicArt-0.png", outputStreamToString(iconOutputStream));
         platformManager.hasFinished();
         dataManager.hasFinished();
     }
 
     @Test
-    public void tryToProposeAnAlreadyExistingFaction() {
+    public void tryToProposeAnAlreadyExistingMagicArt() {
         Account account = new Account().setAccess(new Login().setLogin("someone"));
         dataManager.register("createQuery", null, null,
                 "select a from Account a, Login l where a.access = l and l.login=:login");
         dataManager.register("setParameter", null, null, "login", "someone");
         dataManager.register("getSingleResult", account, null, null);
         dataManager.register("persist", null,
-            new EntityExistsException("Entity already Exists"),
-            (Predicate) entity->{
-                return (entity instanceof Faction);
-            }
+                new EntityExistsException("Entity already Exists"),
+                (Predicate) entity->{
+                    return (entity instanceof MagicArt);
+                }
         );
         securityManager.doConnect("someone", 0);
         try {
-            factionController.propose(params(), Json.createJsonFromString("{" +
-                " 'name':'Redneck'," +
-                " 'description':'A skilled faction', " +
-                " 'newComment':'A long awaited proposal' " +
-            "}"));
+            magicArtController.propose(params(), Json.createJsonFromString("{" +
+                    " 'name':'Arcanic'," +
+                    " 'description':'A skilled magicArt', " +
+                    " 'newComment':'A long awaited proposal' " +
+                    "}"));
             Assert.fail("The request should fail");
         }
         catch (SummerControllerException sce) {
             Assert.assertEquals(409, sce.getStatus());
-            Assert.assertEquals("Faction with name (Redneck) already exists", sce.getMessage());
+            Assert.assertEquals("Magic Art with name (Arcanic) already exists", sce.getMessage());
         }
         dataManager.hasFinished();
     }
 
     @Test
-    public void tryToProposeAFactionFromAnUnknownAuthor() {
+    public void tryToProposeAMagicArtFromAnUnknownAuthor() {
         dataManager.register("createQuery", null, null,
                 "select a from Account a, Login l where a.access = l and l.login=:login");
         dataManager.register("setParameter", null, null, "login", "someone");
         dataManager.register("getSingleResult", null, new NoResultException("Account not found."), null);
         securityManager.doConnect("someone", 0);
         try {
-            factionController.propose(params(), Json.createJsonFromString("{" +
-                " 'name':'Redneck'," +
-                " 'description':'A skilled faction', " +
-                " 'newComment':'A long awaited proposal' " +
-            "}"));
+            magicArtController.propose(params(), Json.createJsonFromString("{" +
+                    " 'name':'Arcanic'," +
+                    " 'description':'A skilled magicArt', " +
+                    " 'newComment':'A long awaited proposal' " +
+                    "}"));
             Assert.fail("The request should fail");
         }
         catch (SummerControllerException sce) {
@@ -555,27 +547,27 @@ public class FactionControllerTest implements TestSeawave, CollectionSunbeam, Da
     }
 
     @Test
-    public void tryToUpdateAFactionWithoutGivingItsID() {
+    public void tryToUpdateAMagicArtWithoutGivingItsID() {
         securityManager.doConnect("admin", 0);
         try {
-            factionController.update(params(), null);
+            magicArtController.update(params(), null);
             Assert.fail("The request should fail");
         }
         catch (SummerControllerException sce) {
             Assert.assertEquals(400, sce.getStatus());
-            Assert.assertEquals("The Faction ID is missing or invalid (null)", sce.getMessage());
+            Assert.assertEquals("The Magic Art ID is missing or invalid (null)", sce.getMessage());
         }
         dataManager.hasFinished();
     }
 
     @Test
-    public void checkRequiredFieldsForFactionUpdate() {
+    public void checkRequiredFieldsForMagicArtUpdate() {
         dataManager.register("find",
-            new Faction(),  null, Faction.class, 1L);
+                new MagicArt(),  null, MagicArt.class, 1L);
         securityManager.doConnect("admin", 0);
         try {
-            factionController.update(params("id", "1"), Json.createJsonFromString(
-                "{ 'comments': [{}], 'sheets': [{}] }"
+            magicArtController.update(params("id", "1"), Json.createJsonFromString(
+                    "{ 'comments': [{}], 'sheets': [{}] }"
             ));
             Assert.fail("The request should fail");
         } catch (SummerControllerException sce) {
@@ -592,18 +584,18 @@ public class FactionControllerTest implements TestSeawave, CollectionSunbeam, Da
     }
 
     @Test
-    public void checkMinFieldSizesForFactionUpdate() {
+    public void checkMinFieldSizesForMagicArtUpdate() {
         dataManager.register("find",
-            new Faction(),  null, Faction.class, 1L);
+                new MagicArt(),  null, MagicArt.class, 1L);
         securityManager.doConnect("admin", 0);
         try {
-            factionController.update(params("id", "1"), Json.createJsonFromString("{" +
+            magicArtController.update(params("id", "1"), Json.createJsonFromString("{" +
                 " 'name':'n'," +
                 " 'description':'d'," +
                 " 'sheets': [{ " +
-                    "'ordinal':0, " +
-                    "'name':'n', " +
-                    "'description':'d'" +
+                "'ordinal':0, " +
+                "'name':'n', " +
+                "'description':'d'" +
                 "  }] " +
             "}"));
             Assert.fail("The request should fail");
@@ -619,20 +611,20 @@ public class FactionControllerTest implements TestSeawave, CollectionSunbeam, Da
     }
 
     @Test
-    public void checkMaxFieldSizesForFactionUpdate() {
+    public void checkMaxFieldSizesForMagicArtUpdate() {
         dataManager.register("find",
-                setEntityId(new Faction().setName("Magic"), 1L),
-                null, Faction.class, 1L);
+                setEntityId(new MagicArt().setName("Magic"), 1L),
+                null, MagicArt.class, 1L);
         securityManager.doConnect("admin", 0);
         dataManager.register("flush", null, null);
         try {
-            factionController.update(params("id", "1"), Json.createJsonFromString("{" +
+            magicArtController.update(params("id", "1"), Json.createJsonFromString("{" +
             " 'name':'" + generateText("n", 201) + "'," +
             " 'description':'" + generateText("d", 20000) + "', " +
             " 'sheets': [{ " +
             " 'ordinal':0, " +
-                "'name':'" + generateText("n", 201) +"', " +
-                "'description':'" + generateText("d", 20000) +"'" +
+            "'name':'" + generateText("n", 201) +"', " +
+            "'description':'" + generateText("d", 20000) +"'" +
             "  }] " +
             "}"));
             Assert.fail("The request should fail");
@@ -648,13 +640,13 @@ public class FactionControllerTest implements TestSeawave, CollectionSunbeam, Da
     }
 
     @Test
-    public void checkFieldValidityForFactionUpdate() {
+    public void checkFieldValidityForMagicArtUpdate() {
         dataManager.register("find",
-                setEntityId(new Faction().setName("Magic"), 1L),
-                null, Faction.class, 1L);
+                setEntityId(new MagicArt().setName("Magic"), 1L),
+                null, MagicArt.class, 1L);
         securityManager.doConnect("admin", 0);
         try {
-            factionController.update(params("id", "1"), Json.createJsonFromString("{ " +
+            magicArtController.update(params("id", "1"), Json.createJsonFromString("{ " +
                 "'name':'...', 'status':'???', 'description': 0, " +
                 "'sheets': [ { 'name':'...', 'description': 0, ordinal:'un' } ] " +
             "}"));
@@ -673,76 +665,74 @@ public class FactionControllerTest implements TestSeawave, CollectionSunbeam, Da
     }
 
     @Test
-    public void updateAFaction() {
-        Faction faction = (Faction)setEntityId(new Faction().setName("The Mercenaries"), 1L);
-        dataManager.register("find", faction, null, Faction.class, 1L);
+    public void updateAMagicArt() {
+        MagicArt magicArt = (MagicArt)setEntityId(new MagicArt().setName("The Mercenaries"), 1L);
+        dataManager.register("find", magicArt, null, MagicArt.class, 1L);
         OutputStream sheetOutputStream = new ByteArrayOutputStream();
         platformManager.register("getOutputStream", sheetOutputStream, null);
         OutputStream iconOutputStream = new ByteArrayOutputStream();
         platformManager.register("getOutputStream", iconOutputStream, null);
-        OutputStream factionOutputStream = new ByteArrayOutputStream();
-        platformManager.register("getOutputStream", factionOutputStream, null);
+        OutputStream magicArtOutputStream = new ByteArrayOutputStream();
+        platformManager.register("getOutputStream", magicArtOutputStream, null);
         dataManager.register("flush", null, null);
         securityManager.doConnect("admin", 0);
         platformManager.setTime(1739879980962L);
-        Json result = factionController.update(params("id", "1",
-            ControllerSunbeam.MULTIPART_FILES, new FileSpecification[] {
-                new FileSpecification("redneck", "redneck_faction.png", "png",
-                    new ByteArrayInputStream(("Content of /factions/redneck_faction.png").getBytes())),
-                new FileSpecification("redneck-0", "redneck_faction-0.png", "png",
-                    new ByteArrayInputStream(("Content of /factions/redneck_faction-0.png").getBytes())),
-                new FileSpecification("icon-redneck-0", "icon-redneck_faction-0.png", "png",
-                    new ByteArrayInputStream(("Content of /factions/icon-redneck_faction-0.png").getBytes()))
-            }
+        Json result = magicArtController.update(params("id", "1",
+                ControllerSunbeam.MULTIPART_FILES, new FileSpecification[] {
+                        new FileSpecification("arcanic", "arcanic_magicArt.png", "png",
+                                new ByteArrayInputStream(("Content of /magicArts/arcanic_magicArt.png").getBytes())),
+                        new FileSpecification("arcanic-0", "arcanic_magicArt-0.png", "png",
+                                new ByteArrayInputStream(("Content of /magicArts/arcanic_magicArt-0.png").getBytes())),
+                        new FileSpecification("icon-arcanic-0", "icon-arcanic_magicArt-0.png", "png",
+                                new ByteArrayInputStream(("Content of /magicArts/icon-arcanic_magicArt-0.png").getBytes()))
+                }
         ), Json.createJsonFromString("{" +
-            " 'name':'Redneck'," +
+            " 'name':'Arcanic'," +
             " 'status':'pnd'," +
-            " 'description':'A skilled faction', " +
+            " 'description':'A skilled magicArt', " +
             " 'sheets': [{ " +
-                " 'ordinal':0, " +
-                " 'name':'infantry', " +
-                " 'description':'infantry units'" +
+            " 'ordinal':0, " +
+            " 'name':'infantry', " +
+            " 'description':'infantry units'" +
             " }] " +
         "}"));
         Assert.assertEquals("{" +
                 "\"sheets\":[{" +
-                    "\"path\":\"/api/faction/documents/sheet1_0-1739879980962.png\"," +
+                    "\"path\":\"/api/magicart/documents/sheet1_0-1739879980962.png\"," +
                     "\"name\":\"infantry\"," +
-                    "\"icon\":\"/api/faction/documents/sheeticon1_0-1739879980962.png\"," +
-                    "\"description\":\"infantry units\"," +
-                    "\"id\":0" +
+                    "\"icon\":\"/api/magicart/documents/sheeticon1_0-1739879980962.png\"," +
+                    "\"description\":\"infantry units\",\"id\":0" +
                 "}]," +
                 "\"comments\":[]," +
-                "\"name\":\"Redneck\"," +
-                "\"description\":\"A skilled faction\"," +
-                "\"illustration\":\"/api/faction/documents/faction1-1739879980962.png\"," +
+                "\"name\":\"Arcanic\"," +
+                "\"description\":\"A skilled magicArt\"," +
+                "\"illustration\":\"/api/magicart/documents/magicart1-1739879980962.png\"," +
                 "\"id\":1,\"version\":0," +
                 "\"status\":\"pnd\"" +
             "}",
             result.toString()
         );
-        Assert.assertEquals("Content of /factions/redneck_faction.png", outputStreamToString(factionOutputStream));
-        Assert.assertEquals("Content of /factions/redneck_faction-0.png", outputStreamToString(sheetOutputStream));
-        Assert.assertEquals("Content of /factions/icon-redneck_faction-0.png", outputStreamToString(iconOutputStream));
+        Assert.assertEquals("Content of /magicArts/arcanic_magicArt.png", outputStreamToString(magicArtOutputStream));
+        Assert.assertEquals("Content of /magicArts/arcanic_magicArt-0.png", outputStreamToString(sheetOutputStream));
+        Assert.assertEquals("Content of /magicArts/icon-arcanic_magicArt-0.png", outputStreamToString(iconOutputStream));
         platformManager.hasFinished();
         dataManager.hasFinished();
     }
 
     @Test
-    public void tryToUpdateAFactionAndFailPourAnUnknownReason() {
-        Faction faction = (Faction)setEntityId(new Faction().setName("Magic"), 1L);
-        dataManager.register("find", faction, null, Faction.class, 1L);
+    public void tryToUpdateAMagicArtAndFailPourAnUnknownReason() {
+        MagicArt magicArt = (MagicArt)setEntityId(new MagicArt().setName("Magic"), 1L);
+        dataManager.register("find", magicArt, null, MagicArt.class, 1L);
         dataManager.register("flush", null, new PersistenceException("Some Reason."));
         securityManager.doConnect("admin", 0);
         try {
-            factionController.update(params("id", "1"),
+            magicArtController.update(params("id", "1"),
                 Json.createJsonFromString("{" +
-                        " 'title':'Magic'," +
-                        " 'status':'pnd'," +
-                        " 'category':'game'," +
-                        " 'description':'A powerful feature' " +
-                    "}"
-                ));
+                    " 'title':'Magic'," +
+                    " 'status':'pnd'," +
+                    " 'category':'game'," +
+                    " 'description':'A powerful feature' " +
+                "}"));
             Assert.fail("The request should fail");
         }
         catch (SummerControllerException sce) {
@@ -753,41 +743,41 @@ public class FactionControllerTest implements TestSeawave, CollectionSunbeam, Da
     }
 
     @Test
-    public void tryToUpdateAnUnknownFaction() {
-        dataManager.register("find", null, null, Faction.class, 1L);
+    public void tryToUpdateAnUnknownMagicArt() {
+        dataManager.register("find", null, null, MagicArt.class, 1L);
         securityManager.doConnect("admin", 0);
         try {
-            factionController.update(params("id", "1"), Json.createJsonFromString("{" +
-                " 'name':'Redneck'," +
+            magicArtController.update(params("id", "1"), Json.createJsonFromString("{" +
+                " 'name':'Arcanic'," +
                 " 'status':'pnd'," +
-                " 'description':'A skilled faction' " +
+                " 'description':'A skilled magicArt' " +
             "}"));
             Assert.fail("The request should fail");
         }
         catch (SummerControllerException sce) {
             Assert.assertEquals(404, sce.getStatus());
-            Assert.assertEquals("Unknown Faction with id 1", sce.getMessage());
+            Assert.assertEquals("Unknown Magic Art with id 1", sce.getMessage());
         }
         dataManager.hasFinished();
     }
 
     @Test
-    public void tryToAmendAFactionWithoutGivingItsID() {
+    public void tryToAmendAMagicArtWithoutGivingItsID() {
         securityManager.doConnect("someone", 0);
         try {
-            factionController.amend(params(), null);
+            magicArtController.amend(params(), null);
             Assert.fail("The request should fail");
         }
         catch (SummerControllerException sce) {
             Assert.assertEquals(400, sce.getStatus());
-            Assert.assertEquals("The Faction ID is missing or invalid (null)", sce.getMessage());
+            Assert.assertEquals("The Magic Art ID is missing or invalid (null)", sce.getMessage());
         }
         dataManager.hasFinished();
     }
 
-    Faction factionBelongingToSomeone() {
+    MagicArt magicArtBelongingToSomeone() {
         return setEntityId(
-            new Faction()
+            new MagicArt()
                 .setName("The Magic")
                 .setAuthor(
                     new Account()
@@ -800,13 +790,13 @@ public class FactionControllerTest implements TestSeawave, CollectionSunbeam, Da
     }
 
     @Test
-    public void checkMinFieldSizesForFactionAmend() {
+    public void checkMinFieldSizesForMagicArtAmend() {
         dataManager.register("find",
-            factionBelongingToSomeone(),
-            null, Faction.class, 1L);
+            magicArtBelongingToSomeone(),
+            null, MagicArt.class, 1L);
         securityManager.doConnect("someone", 0);
         try {
-            factionController.amend(params("id", "1"), Json.createJsonFromString("{" +
+            magicArtController.amend(params("id", "1"), Json.createJsonFromString("{" +
                 " 'name':'n'," +
                 " 'description':'d', " +
                 " 'newComment': 'c', " +
@@ -830,21 +820,21 @@ public class FactionControllerTest implements TestSeawave, CollectionSunbeam, Da
     }
 
     @Test
-    public void checkMaxFieldSizesForFactionAmend() {
+    public void checkMaxFieldSizesForMagicArtAmend() {
         dataManager.register("find",
-            factionBelongingToSomeone(),
-            null, Faction.class, 1L);
+            magicArtBelongingToSomeone(),
+            null, MagicArt.class, 1L);
         dataManager.register("flush", null, null);
         securityManager.doConnect("someone", 0);
         try {
-            factionController.amend(params("id", "1"), Json.createJsonFromString(            "{" +
+            magicArtController.amend(params("id", "1"), Json.createJsonFromString(            "{" +
                 " 'name':'" + generateText("n", 201) + "'," +
                 " 'description':'" + generateText("d", 20000) + "', " +
                 " 'newComment': '"+ generateText("c", 20000) + "', " +
                 " 'sheets': [{ " +
-                    " 'ordinal':0, " +
-                    " 'name':'" + generateText("n", 201) +"', " +
-                    " 'description':'" + generateText("d", 20000) +"'" +
+                " 'ordinal':0, " +
+                " 'name':'" + generateText("n", 201) +"', " +
+                " 'description':'" + generateText("d", 20000) +"'" +
                 "  }] " +
             "}"));
             Assert.fail("The request should fail");
@@ -863,11 +853,11 @@ public class FactionControllerTest implements TestSeawave, CollectionSunbeam, Da
     @Test
     public void checkFieldValidityForArticleAmend() {
         dataManager.register("find",
-                setEntityId(new Faction().setName("The Magic"), 1L),
-                null, Faction.class, 1L);
+            setEntityId(new MagicArt().setName("The Magic"), 1L),
+            null, MagicArt.class, 1L);
         securityManager.doConnect("admin", 0);
         try {
-            factionController.amend(params("id", "1"), Json.createJsonFromString("{ " +
+            magicArtController.amend(params("id", "1"), Json.createJsonFromString("{ " +
                 "'name':'...', 'status':'???', 'description': 0, 'newComment': 0, " +
                 "'sheets': [ { 'name':'...', 'description': 0, ordinal:'un' } ] " +
             "}"));
@@ -886,9 +876,9 @@ public class FactionControllerTest implements TestSeawave, CollectionSunbeam, Da
     }
 
     @Test
-    public void amendAFaction() {
-        Faction faction = factionBelongingToSomeone();
-        dataManager.register("find", faction, null, Faction.class, 1L);
+    public void amendAMagicArt() {
+        MagicArt magicArt = magicArtBelongingToSomeone();
+        dataManager.register("find", magicArt, null, MagicArt.class, 1L);
         Account account = new Account().setAccess(new Login().setLogin("someone"));
         dataManager.register("createQuery", null, null,
                 "select a from Account a, Login l where a.access = l and l.login=:login");
@@ -898,22 +888,22 @@ public class FactionControllerTest implements TestSeawave, CollectionSunbeam, Da
         platformManager.register("getOutputStream", sheetOutputStream, null);
         OutputStream iconOutputStream = new ByteArrayOutputStream();
         platformManager.register("getOutputStream", iconOutputStream, null);
-        OutputStream factionOutputStream = new ByteArrayOutputStream();
-        platformManager.register("getOutputStream", factionOutputStream, null);
+        OutputStream magicArtOutputStream = new ByteArrayOutputStream();
+        platformManager.register("getOutputStream", magicArtOutputStream, null);
         dataManager.register("flush", null, null);
         securityManager.doConnect("someone", 0);
-    Json result = factionController.amend(params("id", "1",
+        Json result = magicArtController.amend(params("id", "1",
             ControllerSunbeam.MULTIPART_FILES, new FileSpecification[] {
-            new FileSpecification("redneck", "redneck_faction.png", "png",
-                new ByteArrayInputStream(("Content of /factions/redneck_faction.png").getBytes())),
-            new FileSpecification("redneck-0", "redneck_faction-0.png", "png",
-                new ByteArrayInputStream(("Content of /factions/redneck_faction-0.png").getBytes())),
-            new FileSpecification("icon-redneck-0", "icon-redneck_faction-0.png", "png",
-                new ByteArrayInputStream(("Content of /factions/icon-redneck_faction-0.png").getBytes()))
-        }), Json.createJsonFromString("{" +
-            " 'name':'Redneck'," +
+                new FileSpecification("arcanic", "arcanic_magicArt.png", "png",
+                    new ByteArrayInputStream(("Content of /magicArts/arcanic_magicArt.png").getBytes())),
+                new FileSpecification("arcanic-0", "arcanic_magicArt-0.png", "png",
+                    new ByteArrayInputStream(("Content of /magicArts/arcanic_magicArt-0.png").getBytes())),
+                new FileSpecification("icon-arcanic-0", "icon-arcanic_magicArt-0.png", "png",
+                    new ByteArrayInputStream(("Content of /magicArts/icon-arcanic_magicArt-0.png").getBytes()))
+            }), Json.createJsonFromString("{" +
+            " 'name':'Arcanic'," +
             " 'status':'pnd'," +
-            " 'description':'A skilled faction', " +
+            " 'description':'A skilled magicArt', " +
             " 'sheets': [{ " +
                 " 'ordinal':0, " +
                 " 'name':'infantry', " +
@@ -922,17 +912,17 @@ public class FactionControllerTest implements TestSeawave, CollectionSunbeam, Da
         "}"));
         Assert.assertEquals("{" +
                 "\"sheets\":[{" +
-                    "\"path\":\"/api/faction/documents/sheet1_0-1739879980962.png\"," +
+                    "\"path\":\"/api/magicart/documents/sheet1_0-1739879980962.png\"," +
                     "\"name\":\"infantry\"," +
-                    "\"icon\":\"/api/faction/documents/sheeticon1_0-1739879980962.png\"," +
+                    "\"icon\":\"/api/magicart/documents/sheeticon1_0-1739879980962.png\"," +
                     "\"description\":\"infantry units\"," +
                     "\"id\":0" +
                 "}]," +
                 "\"comments\":[]," +
-                "\"name\":\"Redneck\"," +
-                "\"description\":\"A skilled faction\"," +
-                "\"illustration\":\"/api/faction/documents/faction1-1739879980962.png\"," +
-                "\"id\":1,\"version\":0" +
+                "\"name\":\"Arcanic\"," +
+                "\"description\":\"A skilled magicArt\"," +
+                "\"illustration\":\"/api/magicart/documents/magicart1-1739879980962.png\"," +
+                "\"id\":1,\"version\":0,\"status\":\"pnd\"" +
             "}",
             result.toString()
         );
@@ -941,9 +931,9 @@ public class FactionControllerTest implements TestSeawave, CollectionSunbeam, Da
     }
 
     @Test
-    public void checkThatAnAdminIsAllowedToAmendAFaction() {
-        Faction faction = factionBelongingToSomeone();
-        dataManager.register("find", faction, null, Faction.class, 1L);
+    public void checkThatAnAdminIsAllowedToAmendAMagicArt() {
+        MagicArt magicArt = magicArtBelongingToSomeone();
+        dataManager.register("find", magicArt, null, MagicArt.class, 1L);
         Account account = new Account().setAccess(new Login().setLogin("someone"));
         dataManager.register("createQuery", null, null,
                 "select a from Account a, Login l where a.access = l and l.login=:login");
@@ -952,20 +942,21 @@ public class FactionControllerTest implements TestSeawave, CollectionSunbeam, Da
         dataManager.register("flush", null, null);
         securityManager.doConnect("admin", 0);
         platformManager.setTime(1739879980962L);
-        Json result = factionController.amend(params("id", "1"),
+        magicArtController.amend(params("id", "1"),
             Json.createJsonFromString("{" +
-            " 'name':'Redneck'," +
-            " 'status':'pnd'," +
-            " 'description':'A skilled faction' " +
-            "}"));
+                " 'name':'Arcanic'," +
+                " 'status':'pnd'," +
+                " 'description':'A skilled magicArt' " +
+            "}")
+        );
         platformManager.hasFinished();
         dataManager.hasFinished();
     }
 
     @Test
-    public void tryToAmendAFactionAndFailPourAnUnknownReason() {
-        Faction faction = factionBelongingToSomeone();
-        dataManager.register("find", faction, null, Faction.class, 1L);
+    public void tryToAmendAMagicArtAndFailPourAnUnknownReason() {
+        MagicArt magicArt = magicArtBelongingToSomeone();
+        dataManager.register("find", magicArt, null, MagicArt.class, 1L);
         Account account = new Account().setAccess(new Login().setLogin("someone"));
         dataManager.register("createQuery", null, null,
                 "select a from Account a, Login l where a.access = l and l.login=:login");
@@ -974,11 +965,11 @@ public class FactionControllerTest implements TestSeawave, CollectionSunbeam, Da
         dataManager.register("flush", null, new PersistenceException("Some Reason."));
         securityManager.doConnect("someone", 0);
         try {
-            factionController.amend(params("id", "1"),
+            magicArtController.amend(params("id", "1"),
                 Json.createJsonFromString("{" +
-                " 'name':'Redneck'," +
-                " 'status':'pnd'," +
-                " 'description':'A skilled faction' " +
+                    " 'name':'Arcanic'," +
+                    " 'status':'pnd'," +
+                    " 'description':'A skilled magicArt' " +
                 "}"));
             Assert.fail("The request should fail");
         }
@@ -990,21 +981,21 @@ public class FactionControllerTest implements TestSeawave, CollectionSunbeam, Da
     }
 
     @Test
-    public void tryToAmendAFactionByAnUnknownAccount() {
-        Faction faction = factionBelongingToSomeone();
-        dataManager.register("find", faction, null, Faction.class, 1L);
+    public void tryToAmendAMagicArtByAnUnknownAccount() {
+        MagicArt magicArt = magicArtBelongingToSomeone();
+        dataManager.register("find", magicArt, null, MagicArt.class, 1L);
         Account account = new Account().setAccess(new Login().setLogin("someone"));
         dataManager.register("createQuery", null, null,
                 "select a from Account a, Login l where a.access = l and l.login=:login");
         dataManager.register("setParameter", null, null, "login", "someone");
         dataManager.register("getSingleResult", null, new NoResultException("Account not found."), null);        securityManager.doConnect("someone", 0);
         try {
-            factionController.amend(params("id", "1"),
-                Json.createJsonFromString("{" +
-                " 'name':'Redneck'," +
+            magicArtController.amend(params("id", "1"),
+            Json.createJsonFromString("{" +
+                " 'name':'Arcanic'," +
                 " 'status':'pnd'," +
-                " 'description':'A skilled faction' " +
-                "}"));
+                " 'description':'A skilled magicArt' " +
+            "}"));
             Assert.fail("The request should fail");
         }
         catch (SummerControllerException sce) {
@@ -1015,30 +1006,30 @@ public class FactionControllerTest implements TestSeawave, CollectionSunbeam, Da
     }
 
     @Test
-    public void tryToAmendAnUnknownFaction() {
-        dataManager.register("find", null, null, Faction.class, 1L);
+    public void tryToAmendAnUnknownMagicArt() {
+        dataManager.register("find", null, null, MagicArt.class, 1L);
         securityManager.doConnect("someone", 0);
         try {
-            factionController.amend(params("id", "1"),
+            magicArtController.amend(params("id", "1"),
                 Json.createJsonFromString("{" +
-                " 'name':'Redneck'," +
-                " 'status':'pnd'," +
-                " 'description':'A skilled faction' " +
+                    " 'name':'Arcanic'," +
+                    " 'status':'pnd'," +
+                    " 'description':'A skilled magicArt' " +
                 "}"));
             Assert.fail("The request should fail");
         }
         catch (SummerControllerException sce) {
             Assert.assertEquals(404, sce.getStatus());
-            Assert.assertEquals("Unknown Faction with id 1", sce.getMessage());
+            Assert.assertEquals("Unknown Magic Art with id 1", sce.getMessage());
         }
         dataManager.hasFinished();
     }
 
     @Test
-    public void tryToListFactionsWithoutGivingParameters() {
+    public void tryToListMagicArtsWithoutGivingParameters() {
         securityManager.doConnect("admin", 0);
         try {
-            factionController.getAll(params(), null);
+            magicArtController.getAll(params(), null);
             Assert.fail("The request should fail");
         }
         catch (SummerControllerException sce) {
@@ -1048,99 +1039,99 @@ public class FactionControllerTest implements TestSeawave, CollectionSunbeam, Da
         dataManager.hasFinished();
     }
 
-    Faction faction0() {
-        return setEntityId(new Faction()
-                .setName("Redneck")
-                .setStatus(FactionStatus.PROPOSED)
-                .setDescription("Description of Redneck"),
+    MagicArt magicArt0() {
+        return setEntityId(new MagicArt()
+                .setName("Arcanic")
+                .setStatus(MagicArtStatus.PROPOSED)
+                .setDescription("Description of Arcanic"),
         1L);
     }
 
-    Faction faction1() {
-        return setEntityId(new Faction()
-            .setName("Redneck")
-            .setStatus(FactionStatus.LIVE)
-            .setDescription("Description of Redneck"),
+    MagicArt magicArt1() {
+        return setEntityId(new MagicArt()
+                .setName("Arcanic")
+                .setStatus(MagicArtStatus.LIVE)
+                .setDescription("Description of Arcanic"),
         1L);
     }
 
-    Faction faction2() {
-        return setEntityId(new Faction()
-            .setName("Orc")
-            .setStatus(FactionStatus.LIVE)
-            .setDescription("Description of Orc"),
+    MagicArt magicArt2() {
+        return setEntityId(new MagicArt()
+                .setName("Orc")
+                .setStatus(MagicArtStatus.LIVE)
+                .setDescription("Description of Orc"),
         2L);
     }
 
     @Test
-    public void listAllFactions() {
+    public void listAllMagicArts() {
         dataManager.register("createQuery", null, null,
-                "select count(f) from Faction f");
+                "select count(m) from MagicArt m");
         dataManager.register("getSingleResult", 2L, null);
         dataManager.register("createQuery", null, null,
-    "select f from Faction f " +
-            "left outer join fetch f.author a " +
-            "left outer join fetch a.access w"
+        "select m from MagicArt m " +
+                "left outer join fetch m.author a " +
+                "left outer join fetch a.access w"
         );
         dataManager.register("setFirstResult", null, null, 0);
         dataManager.register("setMaxResults", null, null, 10);
         dataManager.register("getResultList", arrayList(
-                faction1(), faction2()
+                magicArt1(), magicArt2()
         ), null);
         securityManager.doConnect("admin", 0);
-        Json result = factionController.getAll(params("page", "0"), null);
+        Json result = magicArtController.getAll(params("page", "0"), null);
         Assert.assertEquals("{" +
-        "\"count\":2,\"pageSize\":10,\"page\":0," +
-        "\"factions\":[{" +
-            "\"name\":\"Redneck\",\"description\":\"Description of Redneck\",\"illustration\":\"\"," +
+        "\"count\":2,\"pageSize\":10," +
+        "\"magicArts\":[{" +
+            "\"name\":\"Arcanic\",\"description\":\"Description of Arcanic\",\"illustration\":\"\"," +
             "\"id\":1,\"version\":0,\"status\":\"live\"" +
         "},{" +
             "\"name\":\"Orc\",\"description\":\"Description of Orc\",\"illustration\":\"\"," +
             "\"id\":2,\"version\":0,\"status\":\"live\"" +
-        "}]}", result.toString());
+        "}],\"page\":0}", result.toString());
         dataManager.hasFinished();
     }
 
     @Test
-    public void listFactionsWithASearchPattern() {
+    public void listMagicArtsWithASearchPattern() {
         dataManager.register("createQuery", null, null,
-            "select count(f) from Faction f " +
-                "where fts('pg_catalog.english', f.name||' '||f.description||' '||f.document.text " +
-                    "||' '||f.status, :search) = true");
-        dataManager.register("setParameter", null, null,"search", "Redneck");
+                "select count(m) from MagicArt m " +
+                        "where fts('pg_catalog.english', m.name||' '||m.description||' '||m.document.text " +
+                        "||' '||m.status, :search) = true");
+        dataManager.register("setParameter", null, null,"search", "Arcanic");
         dataManager.register("getSingleResult", 2L, null);
         dataManager.register("createQuery", null, null,
-            "select f from Faction f " +
-                "left outer join fetch f.author a " +
-                "left outer join fetch a.access w where " +
-                "fts('pg_catalog.english', f.name||' '||f.description||' '||f.document.text " +
-                    "||' '||f.status, :search) = true");
-        dataManager.register("setParameter", null, null,"search", "Redneck");
+                "select m from MagicArt m " +
+                        "left outer join fetch m.author a " +
+                        "left outer join fetch a.access w where " +
+                        "fts('pg_catalog.english', m.name||' '||m.description||' '||m.document.text " +
+                        "||' '||m.status, :search) = true");
+        dataManager.register("setParameter", null, null,"search", "Arcanic");
         dataManager.register("setFirstResult", null, null, 0);
         dataManager.register("setMaxResults", null, null, 10);
-        Faction magicFaction = new Faction().setName("Redneck");
+        MagicArt magicMagicArt = new MagicArt().setName("Arcanic");
         dataManager.register("getResultList", arrayList(
-                faction1(), faction2()
+                magicArt1(), magicArt2()
         ), null);
         securityManager.doConnect("admin", 0);
-        Json result = factionController.getAll(params("page", "0", "search", "Redneck"), null);
+        Json result = magicArtController.getAll(params("page", "0", "search", "Arcanic"), null);
         Assert.assertEquals("{" +
-        "\"count\":2,\"pageSize\":10,\"page\":0," +
-        "\"factions\":[{" +
-            "\"name\":\"Redneck\",\"description\":\"Description of Redneck\",\"illustration\":\"\"," +
+        "\"count\":2,\"pageSize\":10," +
+        "\"magicArts\":[{" +
+            "\"name\":\"Arcanic\",\"description\":\"Description of Arcanic\",\"illustration\":\"\"," +
             "\"id\":1,\"version\":0,\"status\":\"live\"" +
         "},{" +
             "\"name\":\"Orc\",\"description\":\"Description of Orc\",\"illustration\":\"\"," +
             "\"id\":2,\"version\":0,\"status\":\"live\"" +
-        "}]}", result.toString());
+        "}],\"page\":0}", result.toString());
         dataManager.hasFinished();
     }
 
     @Test
-    public void tryToListAllFactionsWithBadCredentials() {
+    public void tryToListAllMagicArtsWithBadCredentials() {
         securityManager.doConnect("someone", 0);
         try {
-            factionController.getAll(params(), null);
+            magicArtController.getAll(params(), null);
             Assert.fail("The request should fail");
         }
         catch (SummerControllerException sce) {
@@ -1151,33 +1142,33 @@ public class FactionControllerTest implements TestSeawave, CollectionSunbeam, Da
     }
 
     @Test
-    public void tryToGetAFactionByTitleWithoutGivingTheName() {
+    public void tryToGetAMagicArtByNameWithoutGivingTheName() {
         securityManager.doConnect("admin", 0);
         try {
-            factionController.getByName(params(), null);
+            magicArtController.getByName(params(), null);
             Assert.fail("The request should fail");
         }
         catch (SummerControllerException sce) {
             Assert.assertEquals(400, sce.getStatus());
-            Assert.assertEquals("The Faction's name is missing or invalid (null)", sce.getMessage());
+            Assert.assertEquals("The Magic Art's name is missing or invalid (null)", sce.getMessage());
         }
         dataManager.hasFinished();
     }
 
     @Test
-    public void getOneFactionByName() {
+    public void getOneMagicArtByName() {
         dataManager.register("createQuery", null, null,
-            "select f from Faction f join fetch f.firstSheet s " +
-                "join fetch f.author w " +
-                "join fetch w.access where f.name=:name");
-        dataManager.register("setParameter", null, null,"name", "Redneck");
+        "select m from MagicArt m join fetch m.firstSheet s " +
+            "join fetch m.author w " +
+            "join fetch w.access where m.name=:name");
+        dataManager.register("setParameter", null, null,"name", "Arcanic");
         dataManager.register("getSingleResult",
-                faction1(), null);
+            magicArt1(), null);
         securityManager.doConnect("admin", 0);
-        Json result = factionController.getByName(params("name", "Redneck"), null);
+        Json result = magicArtController.getByName(params("name", "Arcanic"), null);
         Assert.assertEquals("{" +
                 "\"sheets\":[],\"comments\":[]," +
-                "\"name\":\"Redneck\",\"description\":\"Description of Redneck\"," +
+                "\"name\":\"Arcanic\",\"description\":\"Description of Arcanic\"," +
                 "\"illustration\":\"\"," +
                 "\"id\":1,\"version\":0,\"status\":\"live\"" +
             "}",
@@ -1187,40 +1178,40 @@ public class FactionControllerTest implements TestSeawave, CollectionSunbeam, Da
     }
 
     @Test
-    public void tryToFindByNameAnUnknownFaction() {
+    public void tryToFindByNameAnUnknownMagicArt() {
         dataManager.register("createQuery", null, null,
-    "select f from Faction f " +
-            "join fetch f.firstSheet s " +
-            "join fetch f.author w " +
+        "select m from MagicArt m " +
+            "join fetch m.firstSheet s " +
+            "join fetch m.author w " +
             "join fetch w.access " +
-            "where f.name=:name");
-        dataManager.register("setParameter", null, null,"name", "Redneck");
+            "where m.name=:name");
+        dataManager.register("setParameter", null, null,"name", "Arcanic");
         dataManager.register("getSingleResult", null, null);
         securityManager.doConnect("admin", 0);
         try {
-            factionController.getByName(params("name", "Redneck"), null);
+            magicArtController.getByName(params("name", "Arcanic"), null);
             Assert.fail("The request should fail");
         }
         catch (SummerControllerException sce) {
             Assert.assertEquals(404, sce.getStatus());
-            Assert.assertEquals("Unknown Faction with name Redneck", sce.getMessage());
+            Assert.assertEquals("Unknown Magic Art with name Arcanic", sce.getMessage());
         }
         dataManager.hasFinished();
     }
 
     @Test
-    public void tryToFindByNameAFactionWithBadCredentials() {
+    public void tryToFindByNameAMagicArtWithBadCredentials() {
         dataManager.register("createQuery", null, null,
-            "select f from Faction f join fetch f.firstSheet s " +
-            "join fetch f.author w " +
+        "select m from MagicArt m join fetch m.firstSheet s " +
+            "join fetch m.author w " +
             "join fetch w.access " +
-            "where f.name=:name");
-        dataManager.register("setParameter", null, null,"name", "Redneck");
+            "where m.name=:name");
+        dataManager.register("setParameter", null, null,"name", "Arcanic");
         dataManager.register("getSingleResult",
-                faction1(), null);
+            magicArt1(), null);
         securityManager.doConnect("someoneelse", 0);
         try {
-            factionController.getByName(params("name", "Redneck"), null);
+            magicArtController.getByName(params("name", "Arcanic"), null);
             Assert.fail("The request should fail");
         }
         catch (SummerControllerException sce) {
@@ -1231,16 +1222,16 @@ public class FactionControllerTest implements TestSeawave, CollectionSunbeam, Da
     }
 
     @Test
-    public void getLiveFactions() {
+    public void getLiveMagicArts() {
         dataManager.register("createQuery", null, null,
-                "select f from Faction f where f.status=:status");
-        dataManager.register("setParameter", null, null, "status", FactionStatus.LIVE);
+            "select m from MagicArt m where m.status=:status");
+        dataManager.register("setParameter", null, null, "status", MagicArtStatus.LIVE);
         dataManager.register("getResultList", arrayList(
-                faction1(), faction2()
+                magicArt1(), magicArt2()
         ), null);
-        Json result = factionController.getLive(params(), null);
+        Json result = magicArtController.getLive(params(), null);
         Assert.assertEquals("[{" +
-            "\"name\":\"Redneck\",\"description\":\"Description of Redneck\"," +
+            "\"name\":\"Arcanic\",\"description\":\"Description of Arcanic\"," +
             "\"illustration\":\"\"," +
             "\"id\":1,\"version\":0," +
             "\"status\":\"live\"" +
@@ -1254,28 +1245,28 @@ public class FactionControllerTest implements TestSeawave, CollectionSunbeam, Da
     }
 
     @Test
-    public void tryToGetAFactionWithoutGivingItsID() {
+    public void tryToGetAMagicArtWithoutGivingItsID() {
         securityManager.doConnect("admin", 0);
         try {
-            factionController.getFactionWithComments(params(), null);
+            magicArtController.getMagicArtWithComments(params(), null);
             Assert.fail("The request should fail");
         }
         catch (SummerControllerException sce) {
             Assert.assertEquals(400, sce.getStatus());
-            Assert.assertEquals("The Faction ID is missing or invalid (null)", sce.getMessage());
+            Assert.assertEquals("The Magic Art ID is missing or invalid (null)", sce.getMessage());
         }
         dataManager.hasFinished();
     }
 
     @Test
-    public void getOneFactionById() {
+    public void getOneMagicArtById() {
         dataManager.register("find",
-                faction1(), null, Faction.class, 1L);
+            magicArt1(), null, MagicArt.class, 1L);
         securityManager.doConnect("admin", 0);
-        Json result = factionController.getFactionWithComments(params("id", "1"), null);
+        Json result = magicArtController.getMagicArtWithComments(params("id", "1"), null);
         Assert.assertEquals("{" +
                 "\"sheets\":[],\"comments\":[]," +
-                "\"name\":\"Redneck\",\"description\":\"Description of Redneck\"," +
+                "\"name\":\"Arcanic\",\"description\":\"Description of Arcanic\"," +
                 "\"illustration\":\"\"," +
                 "\"id\":1,\"version\":0,\"status\":\"live\"" +
             "}",
@@ -1285,27 +1276,27 @@ public class FactionControllerTest implements TestSeawave, CollectionSunbeam, Da
     }
 
     @Test
-    public void tryToFindAnUnknownFaction() {
-        dataManager.register("find", null, null, Faction.class, 1L);
+    public void tryToFindAnUnknownMagicArt() {
+        dataManager.register("find", null, null, MagicArt.class, 1L);
         securityManager.doConnect("admin", 0);
         try {
-            factionController.getFactionWithComments(params("id", "1"), null);
+            magicArtController.getMagicArtWithComments(params("id", "1"), null);
             Assert.fail("The request should fail");
         }
         catch (SummerControllerException sce) {
             Assert.assertEquals(404, sce.getStatus());
-            Assert.assertEquals("Unknown Faction with id 1", sce.getMessage());
+            Assert.assertEquals("Unknown Magic Art with id 1", sce.getMessage());
         }
         dataManager.hasFinished();
     }
 
     @Test
-    public void tryToFindAFactionWithBadCredentials() {
+    public void tryToFindAMagicArtWithBadCredentials() {
         dataManager.register("find",
-                faction1(), null, Faction.class, 1L);
+                magicArt1(), null, MagicArt.class, 1L);
         securityManager.doConnect("someoneelse", 0);
         try {
-            factionController.getFactionWithComments(params("id", "1"), null);
+            magicArtController.getMagicArtWithComments(params("id", "1"), null);
             Assert.fail("The request should fail");
         }
         catch (SummerControllerException sce) {
@@ -1316,28 +1307,28 @@ public class FactionControllerTest implements TestSeawave, CollectionSunbeam, Da
     }
 
     @Test
-    public void tryToGetAPublishedFactionWithoutGivingItsID() {
+    public void tryToGetAPublishedMagicArtWithoutGivingItsID() {
         securityManager.doConnect("admin", 0);
         try {
-            factionController.getPublishedFaction(params(), null);
+            magicArtController.getPublishedMagicArt(params(), null);
             Assert.fail("The request should fail");
         }
         catch (SummerControllerException sce) {
             Assert.assertEquals(400, sce.getStatus());
-            Assert.assertEquals("The Faction ID is missing or invalid (null)", sce.getMessage());
+            Assert.assertEquals("The Magic Art ID is missing or invalid (null)", sce.getMessage());
         }
         dataManager.hasFinished();
     }
 
     @Test
-    public void getAPublishedFaction() {
+    public void getAPublishedMagicArt() {
         dataManager.register("find",
-                faction1(), null, Faction.class, 1L);
+                magicArt1(), null, MagicArt.class, 1L);
         securityManager.doConnect("admin", 0);
-        Json result = factionController.getPublishedFaction(params("id", "1"), null);
+        Json result = magicArtController.getPublishedMagicArt(params("id", "1"), null);
         Assert.assertEquals("{" +
                 "\"sheets\":[]," +
-                "\"name\":\"Redneck\",\"description\":\"Description of Redneck\"," +
+                "\"name\":\"Arcanic\",\"description\":\"Description of Arcanic\"," +
                 "\"illustration\":\"\"," +
                 "\"id\":1" +
             "}",
@@ -1347,100 +1338,100 @@ public class FactionControllerTest implements TestSeawave, CollectionSunbeam, Da
     }
 
     @Test
-    public void tryToFindAnUnknownPublishedFaction() {
-        dataManager.register("find", null, null, Faction.class, 1L);
+    public void tryToFindAnUnknownPublishedMagicArt() {
+        dataManager.register("find", null, null, MagicArt.class, 1L);
         securityManager.doConnect("admin", 0);
         try {
-            factionController.getPublishedFaction(params("id", "1"), null);
+            magicArtController.getPublishedMagicArt(params("id", "1"), null);
             Assert.fail("The request should fail");
         }
         catch (SummerControllerException sce) {
             Assert.assertEquals(404, sce.getStatus());
-            Assert.assertEquals("Unknown Faction with id 1", sce.getMessage());
+            Assert.assertEquals("Unknown Magic Art with id 1", sce.getMessage());
         }
         dataManager.hasFinished();
     }
 
     @Test
-    public void tryToFindANotLiveFactionWithAsPublished() {
+    public void tryToFindANotLiveMagicArtWithAsPublished() {
         dataManager.register("find",
-                faction0(), null, Faction.class, 1L);
+                magicArt0(), null, MagicArt.class, 1L);
         try {
-            factionController.getPublishedFaction(params("id", "1"), null);
+            magicArtController.getPublishedMagicArt(params("id", "1"), null);
             Assert.fail("The request should fail");
         }
         catch (SummerControllerException sce) {
             Assert.assertEquals(409, sce.getStatus());
-            Assert.assertEquals("Faction is not live.", sce.getMessage());
+            Assert.assertEquals("MagicArt is not live.", sce.getMessage());
         }
         dataManager.hasFinished();
     }
 
     @Test
-    public void tryToDeleteAFactionWithoutGivingItsID() {
+    public void tryToDeleteAMagicArtWithoutGivingItsID() {
         securityManager.doConnect("admin", 0);
         try {
-            factionController.delete(params(), null);
+            magicArtController.delete(params(), null);
             Assert.fail("The request should fail");
         }
         catch (SummerControllerException sce) {
             Assert.assertEquals(400, sce.getStatus());
-            Assert.assertEquals("The Faction ID is missing or invalid (null)", sce.getMessage());
+            Assert.assertEquals("The Magic Art ID is missing or invalid (null)", sce.getMessage());
         }
         dataManager.hasFinished();
     }
 
     @Test
-    public void deleteAFaction() {
-        dataManager.register("find", faction1(), null, Faction.class, 1L);
-        Ref<Faction> rFaction = new Ref<>();
-        dataManager.register("merge", (Supplier)()->rFaction.get(), null,
-                (Predicate) entity->{
-                    if (!(entity instanceof Faction)) return false;
-                    rFaction.set((Faction) entity);
-                    if (rFaction.get().getId() != 1L) return false;
-                    return true;
-                }
+    public void deleteAMagicArt() {
+        dataManager.register("find", magicArt1(), null, MagicArt.class, 1L);
+        Ref<MagicArt> rMagicArt = new Ref<>();
+        dataManager.register("merge", (Supplier)()->rMagicArt.get(), null,
+            (Predicate) entity->{
+                if (!(entity instanceof MagicArt)) return false;
+                rMagicArt.set((MagicArt) entity);
+                if (rMagicArt.get().getId() != 1L) return false;
+                return true;
+            }
         );
         dataManager.register("remove", null, null,
-                (Predicate) entity->{
-                    if (!(entity instanceof Faction)) return false;
-                    Faction faction = (Faction) entity;
-                    if (faction.getId() != 1L) return false;
-                    return true;
-                }
+            (Predicate) entity->{
+                if (!(entity instanceof MagicArt)) return false;
+                MagicArt magicArt = (MagicArt) entity;
+                if (magicArt.getId() != 1L) return false;
+                return true;
+            }
         );
         dataManager.register("flush", null, null);
         securityManager.doConnect("admin", 0);
-        Json result = factionController.delete(params("id", "1"), null);
+        Json result = magicArtController.delete(params("id", "1"), null);
         Assert.assertEquals(result.toString(),
-                "{\"deleted\":\"ok\"}"
+            "{\"deleted\":\"ok\"}"
         );
         dataManager.hasFinished();
     }
 
     @Test
-    public void tryToDeleteAnUnknownFaction() {
-        dataManager.register("find", null, null, Faction.class, 1L);
+    public void tryToDeleteAnUnknownMagicArt() {
+        dataManager.register("find", null, null, MagicArt.class, 1L);
         securityManager.doConnect("admin", 0);
         try {
-            factionController.delete(params("id", "1"), null);
+            magicArtController.delete(params("id", "1"), null);
             Assert.fail("The request should fail");
         }
         catch (SummerControllerException sce) {
             Assert.assertEquals(404, sce.getStatus());
-            Assert.assertEquals("Unknown Faction with id 1", sce.getMessage());
+            Assert.assertEquals("Unknown Magic Art with id 1", sce.getMessage());
         }
         dataManager.hasFinished();
     }
 
     @Test
-    public void tryToDeleteAFactionAndFailsForAnUnknownReason() {
+    public void tryToDeleteAMagicArtAndFailsForAnUnknownReason() {
         dataManager.register("find", null,
-                new PersistenceException("Some Reason"), Faction.class, 1L);
+                new PersistenceException("Some Reason"), MagicArt.class, 1L);
         securityManager.doConnect("admin", 0);
         try {
-            factionController.delete(params("id", "1"), null);
+            magicArtController.delete(params("id", "1"), null);
             Assert.fail("The request should fail");
         }
         catch (SummerControllerException sce) {
@@ -1451,12 +1442,12 @@ public class FactionControllerTest implements TestSeawave, CollectionSunbeam, Da
     }
 
     @Test
-    public void tryToDeleteAFactionWithBadCredentials() {
+    public void tryToDeleteAMagicArtWithBadCredentials() {
         dataManager.register("find",
-                faction1(),null);
+                magicArt1(),null);
         securityManager.doConnect("someoneelse", 0);
         try {
-            factionController.delete(params("id", "1"), null);
+            magicArtController.delete(params("id", "1"), null);
             Assert.fail("The request should fail");
         }
         catch (SummerControllerException sce) {
@@ -1467,12 +1458,12 @@ public class FactionControllerTest implements TestSeawave, CollectionSunbeam, Da
     }
 
     @Test
-    public void checkRequestedFieldsForAFactionStatusUpdate() {
+    public void checkRequestedFieldsForAMagicArtStatusUpdate() {
         dataManager.register("find",
-                faction1(), null, Faction.class, 1L);
+                magicArt1(), null, MagicArt.class, 1L);
         securityManager.doConnect("admin", 0);
         try {
-            factionController.updateStatus(params("id", "1"), Json.createJsonFromString(
+            magicArtController.updateStatus(params("id", "1"), Json.createJsonFromString(
                     "{}"
             ));
             Assert.fail("The request should fail");
@@ -1484,13 +1475,13 @@ public class FactionControllerTest implements TestSeawave, CollectionSunbeam, Da
     }
 
     @Test
-    public void checkFieldValidationsForAFactionSStatusUpdate() {
+    public void checkFieldValidationsForAMagicArtSStatusUpdate() {
         dataManager.register("find",
-                faction1(),null, Faction.class, 1L);
+                magicArt1(),null, MagicArt.class, 1L);
         securityManager.doConnect("admin", 0);
         try {
-            factionController.updateStatus(params("id", "1"), Json.createJsonFromString(
-                "{ 'id':'1234', 'status':'???'}"
+            magicArtController.updateStatus(params("id", "1"), Json.createJsonFromString(
+                    "{ 'id':'1234', 'status':'???'}"
             ));
             Assert.fail("The request should fail");
         }
@@ -1504,17 +1495,17 @@ public class FactionControllerTest implements TestSeawave, CollectionSunbeam, Da
     }
 
     @Test
-    public void upadteAFactionSStatus() {
+    public void upadteAMagicArtSStatus() {
         dataManager.register("find",
-                faction1(), null, Faction.class, 1L);
+            magicArt1(), null, MagicArt.class, 1L);
         dataManager.register("flush", null, null);
         securityManager.doConnect("admin", 0);
-        Json result = factionController.updateStatus(params("id", "1"), Json.createJsonFromString(
+        Json result = magicArtController.updateStatus(params("id", "1"), Json.createJsonFromString(
                 "{ 'id':1, 'status': 'live' }"
         ));
         Assert.assertEquals("{" +
                 "\"sheets\":[],\"comments\":[]," +
-                "\"name\":\"Redneck\",\"description\":\"Description of Redneck\"," +
+                "\"name\":\"Arcanic\",\"description\":\"Description of Arcanic\"," +
                 "\"illustration\":\"\"," +
                 "\"id\":1,\"version\":0," +
                 "\"status\":\"live\"" +
@@ -1525,10 +1516,10 @@ public class FactionControllerTest implements TestSeawave, CollectionSunbeam, Da
     }
 
     @Test
-    public void tryToUpadteAFactionSStatusWithBadCredential() {
+    public void tryToUpadteAMagicArtSStatusWithBadCredential() {
         securityManager.doConnect("someone", 0);
         try {
-            factionController.updateStatus(params("id", "1"), Json.createJsonFromString(
+            magicArtController.updateStatus(params("id", "1"), Json.createJsonFromString(
                     "{ 'id':1, 'status': 'live' }"
             ));
             Assert.fail("The request should fail");
@@ -1543,14 +1534,14 @@ public class FactionControllerTest implements TestSeawave, CollectionSunbeam, Da
     @Test
     public void failToUpdateAnArticleStatusForUnknownReason() {
         dataManager.register("find",
-                faction1(), null, Faction.class, 1L);
+            magicArt1(), null, MagicArt.class, 1L);
         dataManager.register("flush", null,
-                new PersistenceException("Some reason"), null
+            new PersistenceException("Some reason"), null
         );
         securityManager.doConnect("admin", 0);
         try {
-            factionController.updateStatus(params("id", "1"), Json.createJsonFromString(
-                    "{ 'id':1, 'status': 'live' }"
+            magicArtController.updateStatus(params("id", "1"), Json.createJsonFromString(
+                "{ 'id':1, 'status': 'live' }"
             ));
             Assert.fail("The request should fail");
         }
@@ -1562,25 +1553,25 @@ public class FactionControllerTest implements TestSeawave, CollectionSunbeam, Da
     }
 
     @Test
-    public void chargeFactionImage() {
+    public void chargeMagicArtImage() {
         platformManager.register("getInputStream",
-                new ByteArrayInputStream(("Content of /factions/faction.png").getBytes()),
-                null,  "/factions/faction.png");
-        FileSpecification image = factionController.getImage(params("imagename", "faction-10123456.png"));
-        Assert.assertEquals("faction.png", image.getName());
+                new ByteArrayInputStream(("Content of /magics/magicArt.png").getBytes()),
+                null,  "/magics/magicArt.png");
+        FileSpecification image = magicArtController.getImage(params("imagename", "magicArt-10123456.png"));
+        Assert.assertEquals("magicArt.png", image.getName());
         Assert.assertEquals("image/png", image.getType());
-        Assert.assertEquals("faction.png", image.getFileName());
-        Assert.assertEquals("Content of /factions/faction.png", inputStreamToString(image.getStream()));
+        Assert.assertEquals("magicArt.png", image.getFileName());
+        Assert.assertEquals("Content of /magics/magicArt.png", inputStreamToString(image.getStream()));
         Assert.assertEquals("png", image.getExtension());
         platformManager.hasFinished();
     }
 
     @Test
-    public void failChargeFactionImage() {
+    public void failChargeMagicArtImage() {
         platformManager.register("getInputStream", null,
-                new PersistenceException("For Any Reason..."),  "/factions/faction.png");
+                new PersistenceException("For Any Reason..."),  "/magics/magicArt.png");
         try {
-            factionController.getImage(params("imagename", "faction-10123456.png"));
+            magicArtController.getImage(params("imagename", "magicArt-10123456.png"));
             Assert.fail("The request should fail");
         }
         catch (SummerControllerException sce) {
@@ -1589,4 +1580,5 @@ public class FactionControllerTest implements TestSeawave, CollectionSunbeam, Da
         }
         platformManager.hasFinished();
     }
+
 }

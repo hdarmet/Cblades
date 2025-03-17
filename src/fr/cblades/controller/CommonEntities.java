@@ -48,29 +48,38 @@ public interface CommonEntities extends ControllerSunbeam, FileSunbeam {
         verifier.each("comments", cJson -> verify(cJson)
             .checkRequired("version")
             .checkRequired("date")
+            .checkDate("date")
             .checkRequired("text")
+            .checkString("text")
             .checkMinSize("text", 2)
             .checkMaxSize("text", 19995)
             .checkDate("date")
         );
     }
 
-     default void writeComments(Synchronizer synchronizer) {
+    default void writeComments(Synchronizer synchronizer) {
         synchronizer.syncEach("comments", (cJson, comment)->sync(cJson, comment)
              .write("version")
              .writeDate("date")
              .write("text")
          );
-     }
+    }
 
-     default void readComments(Synchronizer synchronizer) {
+    default void readComments(Synchronizer synchronizer) {
         synchronizer.readEach("comments", (hJson, hex)->sync(hJson, hex)
              .read("id")
              .read("version")
              .readDate("date")
              .read("text")
          );
-     }
+    }
+
+    default void checkNewComment(Verifier verifier) {
+        verifier
+            .checkString("newComment")
+            .checkMinSize("newComment", 2)
+            .checkMaxSize("newComment", 200);
+    }
 
     default void readAuthor(Synchronizer synchronizer) {
         synchronizer.readLink("author", (pJson, account)->sync(pJson, account)

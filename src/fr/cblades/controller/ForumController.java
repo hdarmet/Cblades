@@ -694,8 +694,8 @@ public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySu
 			.read("title")
 			.read("description")
 			.read("status", ForumStatus::getLabel)
-			.process(s->readAuthor(s))
-			.process(s->readComments(s));
+			.process(this::readAuthor)
+			.process(this::readComments);
 		return json;
 	}
 
@@ -711,7 +711,7 @@ public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySu
 			.read("status", ForumThreadStatus::getLabel)
 			.readLink("lastMessage", (lJson, message)->sync(lJson, message)
 				.readDate("publishedDate")
-				.process(s->readExtendedAuthor(s))
+				.process(this::readExtendedAuthor)
 			);
 		return json;
 	}
@@ -726,7 +726,7 @@ public class ForumController implements InjectorSunbeam, DataSunbeam, SecuritySu
 			.read("likeCount")
 			.read("messageCount")
 			.read("status", ForumThreadStatus::getLabel)
-			.process(s->readComments(s))
+			.process(this::readComments)
 			.readLink("author", (pJson, account)->sync(pJson, account)
 				.read("id")
 				.read("login", "access.login")
