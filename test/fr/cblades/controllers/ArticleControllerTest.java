@@ -29,9 +29,7 @@ public class ArticleControllerTest implements TestSeawave, CollectionSunbeam, Da
     MockDataManagerImpl dataManager;
     MockPlatformManagerImpl platformManager;
     MockSecurityManagerImpl securityManager;
-
     InjectorForTest injector;
-
     Account someone;
 
     @Before
@@ -1349,7 +1347,7 @@ public class ArticleControllerTest implements TestSeawave, CollectionSunbeam, Da
                     "join fetch a.author " +
                     "join fetch a.poll " +
                     "where a.status=:status and :theme member of a.themes");
-        Theme theme = (Theme)setEntityId(new Theme().setTitle("Power of Magic"), 101);
+        Theme theme = setEntityId(new Theme().setTitle("Power of Magic"), 101);
         dataManager.register("find", theme, null, Theme.class, 101L);
         dataManager.register("setParameter", null, null, "status", ArticleStatus.LIVE);
         dataManager.register("setParameter", null, null, "theme", theme);
@@ -1390,7 +1388,7 @@ public class ArticleControllerTest implements TestSeawave, CollectionSunbeam, Da
                 "where a.status=:status and :theme member of a.themes and " +
                 "fts('pg_catalog.english', a.title||' '||a.document.text, :search) = true");
         dataManager.register("setParameter", null, null,"search", "Magic");
-        Theme theme = (Theme)setEntityId(new Theme().setTitle("Power of Magic"), 101);
+        Theme theme = setEntityId(new Theme().setTitle("Power of Magic"), 101);
         dataManager.register("find", theme, null, Theme.class, 101L);
         dataManager.register("setParameter", null, null, "status", ArticleStatus.LIVE);
         dataManager.register("setParameter", null, null, "theme", theme);
@@ -2007,7 +2005,6 @@ public class ArticleControllerTest implements TestSeawave, CollectionSunbeam, Da
 
     @Test
     public void nonVoteOnAnExistingPoll() {
-        LikePoll likePoll = new LikePoll().setLikes(102).setDislikes(8);
         dataManager.register("find",
                 null, null, LikePoll.class, 101L);
         securityManager.doConnect("someone", 0);

@@ -109,14 +109,14 @@ public class MiscellanousWebSiteEntityTest  implements DataSunbeam {
         Report report = new Report()
             .setReason("Scam")
             .setSendDate(now)
-            .setStatus(ReportStatus.CANCELED)
+            .setStatus(ReportStatus.CANCELLED)
             .setCategory("Issue")
             .setText("Description of the issue")
             .setAuthor(account)
             .setTarget(3);
         Assert.assertEquals("Scam", report.getReason());
         Assert.assertEquals(now, report.getSendDate());
-        Assert.assertEquals(ReportStatus.CANCELED, report.getStatus());
+        Assert.assertEquals(ReportStatus.CANCELLED, report.getStatus());
         Assert.assertEquals("Issue", report.getCategory());
         Assert.assertEquals("Description of the issue", report.getText());
         Assert.assertEquals(account, report.getAuthor());

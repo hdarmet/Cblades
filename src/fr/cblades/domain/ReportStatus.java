@@ -6,7 +6,7 @@ import java.util.Map;
 public enum ReportStatus {
     IN_PROGRESS("inp"),
     PROCESSED("ok"),
-    CANCELED("ko");
+    CANCELLED("ko");
 
     String label;
     ReportStatus(String label) {

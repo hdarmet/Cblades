@@ -1317,7 +1317,6 @@ public class FactionControllerTest implements TestSeawave, CollectionSunbeam, Da
 
     @Test
     public void tryToGetAPublishedFactionWithoutGivingItsID() {
-        securityManager.doConnect("admin", 0);
         try {
             factionController.getPublishedFaction(params(), null);
             Assert.fail("The request should fail");
@@ -1333,7 +1332,6 @@ public class FactionControllerTest implements TestSeawave, CollectionSunbeam, Da
     public void getAPublishedFaction() {
         dataManager.register("find",
                 faction1(), null, Faction.class, 1L);
-        securityManager.doConnect("admin", 0);
         Json result = factionController.getPublishedFaction(params("id", "1"), null);
         Assert.assertEquals("{" +
                 "\"sheets\":[]," +
@@ -1349,7 +1347,6 @@ public class FactionControllerTest implements TestSeawave, CollectionSunbeam, Da
     @Test
     public void tryToFindAnUnknownPublishedFaction() {
         dataManager.register("find", null, null, Faction.class, 1L);
-        securityManager.doConnect("admin", 0);
         try {
             factionController.getPublishedFaction(params("id", "1"), null);
             Assert.fail("The request should fail");

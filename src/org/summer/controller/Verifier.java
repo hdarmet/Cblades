@@ -43,13 +43,12 @@ public class Verifier {
 	public Verifier inspect(String field, Function<Json, Verifier> verifyBuilder) {
 		Json json = (Json)this.json.get(field);
 		if (json!=null) {
+			this.levels.add(field);
 			Verifier verifier = verifyBuilder.apply(json);
 			if (verifier.result!=null) {
-				if (this.result==null) {
-					this.result = Json.createJsonObject();
-				}
-				this.result.putAll(verifier.result);
+				reportErrors(verifier);
 			}
+			this.levels.remove(field);
 		}
 		return this;
 	}
@@ -57,18 +56,12 @@ public class Verifier {
 	public Verifier ifThen(Function<Json, Verifier> ifBuilder, Function<Json, Verifier> thenBuilder) {
 		Verifier ifVerifier = ifBuilder.apply(json);
 		if (ifVerifier.result!=null) {
-			if (this.result == null) {
-				this.result = Json.createJsonObject();
-			}
-			this.result.putAll(ifVerifier.result);
+			reportErrors(ifVerifier);
 		}
 		else {
 			Verifier thenVerifier = thenBuilder.apply(json);
 			if (thenVerifier.result!=null) {
-				if (this.result == null) {
-					this.result = Json.createJsonObject();
-				}
-				this.result.putAll(thenVerifier.result);
+				reportErrors(thenVerifier);
 			}
 		}
 		return this;
@@ -87,23 +80,27 @@ public class Verifier {
 				Json json = value instanceof Json ? (Json)value : Json.createJsonObject().put("_", value);
 				Verifier verifier = verifyBuilder.apply(json);
 				if (verifier.result!=null) {
-					if (this.result==null) {
-						this.result = Json.createJsonObject();
-					}
-					String path = "";
-					for (String level : this.levels) {
-						path += level + "-";
-					}
-					for (String key : verifier.result.keys()) {
-						this.result.put(path+key, verifier.result.get(key));
-					}
+					reportErrors(verifier);
 				}
 			});
 		}
 		this.levels.remove(this.levels.size()-1);
 		return this;
 	}
-	
+
+	void reportErrors(Verifier verifier) {
+		if (this.result==null) {
+			this.result = Json.createJsonObject();
+		}
+		String path = "";
+		for (String level : this.levels) {
+			path += level + "-";
+		}
+		for (String key : verifier.result.keys()) {
+			this.result.put(path+key, verifier.result.get(key));
+		}
+	}
+
 	public Json get() {
 		return this.result;
 	}

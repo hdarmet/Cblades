@@ -1636,9 +1636,6 @@ public class BoardControllerTest implements TestSeawave, CollectionSunbeam, Data
 		dataManager.hasFinished();
 	}
 
-	/// /////////////////////////
-
-
 	@Test
 	public void tryToLoadABoardByIdWithoutGivingAnID() {
 		securityManager.doConnect("someone", 0);
@@ -1710,8 +1707,6 @@ public class BoardControllerTest implements TestSeawave, CollectionSunbeam, Data
 		}
 		dataManager.hasFinished();
 	}
-
-	/// //////////////////////////
 
 	@Test
 	public void tryToDeleteABoardWithoutGivingAnID() {

@@ -1308,7 +1308,6 @@ public class MagicArtControllerTest implements TestSeawave, CollectionSunbeam, D
 
     @Test
     public void tryToGetAPublishedMagicArtWithoutGivingItsID() {
-        securityManager.doConnect("admin", 0);
         try {
             magicArtController.getPublishedMagicArt(params(), null);
             Assert.fail("The request should fail");
@@ -1324,7 +1323,6 @@ public class MagicArtControllerTest implements TestSeawave, CollectionSunbeam, D
     public void getAPublishedMagicArt() {
         dataManager.register("find",
                 magicArt1(), null, MagicArt.class, 1L);
-        securityManager.doConnect("admin", 0);
         Json result = magicArtController.getPublishedMagicArt(params("id", "1"), null);
         Assert.assertEquals("{" +
                 "\"sheets\":[]," +
@@ -1340,7 +1338,6 @@ public class MagicArtControllerTest implements TestSeawave, CollectionSunbeam, D
     @Test
     public void tryToFindAnUnknownPublishedMagicArt() {
         dataManager.register("find", null, null, MagicArt.class, 1L);
-        securityManager.doConnect("admin", 0);
         try {
             magicArtController.getPublishedMagicArt(params("id", "1"), null);
             Assert.fail("The request should fail");

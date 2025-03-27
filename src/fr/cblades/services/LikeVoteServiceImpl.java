@@ -49,38 +49,39 @@ public class LikeVoteServiceImpl implements LikeVoteService, SecuritySunbeam, Da
     public Votation vote(long pollId, LikeVoteOption option, String user) {
         Ref<Votation> result = new Ref<>();
         inTransaction(em -> {
-            try {
-                LikePoll poll = LikePoll.find(em, pollId);
-                result.set(vote(em, poll, option, user));
-            } catch (PersistenceException pe) {
-                throw new SummerPersistenceException(pe);
-            }
+            LikePoll poll = LikePoll.find(em, pollId);
+            result.set(vote(em, poll, option, user));
         });
         return result.get();
     }
 
     @Override
     public Votation vote(EntityManager em, LikePoll poll, LikeVoteOption option, String user) {
-        String queryString = "select v from LikeVote v where v.poll=:poll and v.voter.access.login=:user";
-        LikeVote vote = getSingleResult(em, queryString, "poll", poll, "user", user);
-        if (vote == null) {
-            if (option !=LikeVoteOption.NONE) {
-                Account voter = Account.find(em, user);
-                vote = new LikeVote().setPoll(poll).setVoter(voter).setOption(option);
-                applyVote(poll, vote);
-                persist(em, vote);
-            }
-        } else if (option ==LikeVoteOption.NONE) {
-            remove(em, vote);
-            cancelVote(poll, vote);
-        } else {
-            if (option !=vote.getOption()) {
+        try {
+            String queryString = "select v from LikeVote v where v.poll=:poll and v.voter.access.login=:user";
+            LikeVote vote = getSingleResult(em, queryString, "poll", poll, "user", user);
+            if (vote == null) {
+                if (option !=LikeVoteOption.NONE) {
+                    Account voter = Account.find(em, user);
+                    vote = new LikeVote().setPoll(poll).setVoter(voter).setOption(option);
+                    applyVote(poll, vote);
+                    persist(em, vote);
+                }
+            } else if (option ==LikeVoteOption.NONE) {
+                remove(em, vote);
                 cancelVote(poll, vote);
-                vote.setOption(option);
-                applyVote(poll, vote);
+                vote = null;
+            } else {
+                if (option !=vote.getOption()) {
+                    cancelVote(poll, vote);
+                    vote.setOption(option);
+                    applyVote(poll, vote);
+                }
             }
+            return new Votation(poll, vote);
+        } catch (PersistenceException pe) {
+            throw new SummerPersistenceException(pe);
         }
-        return new Votation(poll, vote);
     }
 
     private void applyVote(LikePoll poll, LikeVote vote) {

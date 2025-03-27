@@ -426,14 +426,14 @@ public class EnumerationsTest {
     @Test
     public void testReportStatus() {
         Assert.assertEquals(ReportStatus.PROCESSED.getLabel(), "ok");
-        Assert.assertEquals(ReportStatus.CANCELED.getLabel(), "ko");
+        Assert.assertEquals(ReportStatus.CANCELLED.getLabel(), "ko");
         Assert.assertEquals(ReportStatus.IN_PROGRESS.getLabel(), "inp");
         Assert.assertTrue((new HashMap<String, ReportStatus>() {{
             put(ReportStatus.PROCESSED.getLabel(), ReportStatus.PROCESSED);
-            put(ReportStatus.CANCELED.getLabel(), ReportStatus.CANCELED);
+            put(ReportStatus.CANCELLED.getLabel(), ReportStatus.CANCELLED);
             put(ReportStatus.IN_PROGRESS.getLabel(), ReportStatus.IN_PROGRESS);
         }}).equals(ReportStatus.byLabels()));
-        Assert.assertEquals(ReportStatus.byLabel(ReportStatus.CANCELED.getLabel()), ReportStatus.CANCELED);
+        Assert.assertEquals(ReportStatus.byLabel(ReportStatus.CANCELLED.getLabel()), ReportStatus.CANCELLED);
         Assert.assertNull(ReportStatus.byLabel("dummy"));
     }
 

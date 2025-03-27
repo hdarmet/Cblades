@@ -28,7 +28,10 @@ public class CallRecord {
         if (any==null) {
             return null;
         }
-        if (any instanceof Supplier) {
+        if (any instanceof Ref) {
+            return ((Ref)any).get();
+        }
+        else if (any instanceof Supplier) {
         	return ((Supplier<Object>)any).get();
         }
         else {
@@ -38,7 +41,14 @@ public class CallRecord {
 	
     public Object invoke(String functionName, Object[] parameters) throws Throwable {
         Assert.assertEquals(this.functionName, functionName);
-        TestUtils.assertArrayEquals(this.parameters, parameters);
+        Object[] thisParameters = null;
+        if (this.parameters!=null) {
+            thisParameters = new Object[this.parameters.length];
+            for (int i = 0; i < thisParameters.length; i++) {
+                thisParameters[i] = valueReturned(this.parameters[i]);
+            }
+        }
+        TestUtils.assertArrayEquals(thisParameters, parameters);
         if (exception!=null) {
             throw exception;
         }
