@@ -350,26 +350,25 @@ public class ThemeControllerTest implements TestSeawave, CollectionSunbeam, Data
         Json result = themeController.propose(params(
             ControllerSunbeam.MULTIPART_FILES, new FileSpecification[] {
                 new FileSpecification("theme", "theme.png", "png",
-                        new ByteArrayInputStream(("Content of /theme/theme.png").getBytes()))
+                    new ByteArrayInputStream(("Content of /theme/theme.png").getBytes()))
             }
         ), Json.createJsonFromString("{" +
-                " 'title':'Magic'," +
-                " 'category':'game'," +
-                " 'description':'A powerful feature', " +
-                " 'newComment':'Interesting theme' " +
-            "}"
-        ));
+            " 'title':'Magic'," +
+            " 'category':'game'," +
+            " 'description':'A powerful feature', " +
+            " 'newComment':'Interesting theme' " +
+        "}"));
         Assert.assertEquals("{" +
-                "\"comments\":[{\"date\":\"2025-02-18\",\"id\":0,\"text\":\"Interesting theme\",\"version\":0}]," +
-                "\"author\":{\"firstName\":\"\",\"lastName\":\"\",\"id\":0,\"login\":\"someone\"}," +
-                "\"description\":\"A powerful feature\"," +
-                "\"illustration\":\"/api/theme/images/theme0-1739879980962.png\"," +
-                "\"id\":0," +
-                "\"category\":\"game\"," +
-                "\"title\":\"Magic\"," +
-                "\"version\":0," +
-                "\"status\":\"prp\"" +
-            "}", result.toString());
+            "\"comments\":[{\"date\":\"2025-02-18\",\"id\":0,\"text\":\"Interesting theme\",\"version\":0}]," +
+            "\"author\":{\"firstName\":\"\",\"lastName\":\"\",\"id\":0,\"login\":\"someone\"}," +
+            "\"description\":\"A powerful feature\"," +
+            "\"illustration\":\"/api/theme/images/theme0-1739879980962.png\"," +
+            "\"id\":0," +
+            "\"category\":\"game\"," +
+            "\"title\":\"Magic\"," +
+            "\"version\":0," +
+            "\"status\":\"prp\"" +
+        "}", result.toString());
         Assert.assertEquals("Content of /theme/theme.png", outputStreamToString(outputStream));
         platformManager.hasFinished();
         dataManager.hasFinished();
@@ -1058,11 +1057,6 @@ public class ThemeControllerTest implements TestSeawave, CollectionSunbeam, Data
         dataManager.hasFinished();
     }
 
-
-
-
-
-
     @Test
     public void tryToListThemesByCategoryWithoutGivingParameters() {
         securityManager.doConnect("admin", 0);
@@ -1085,7 +1079,7 @@ public class ThemeControllerTest implements TestSeawave, CollectionSunbeam, Data
     }
 
     @Test
-    public void listArticlesByTheme() {
+    public void listThemesByCategory() {
         dataManager.register("createQuery", null, null,
                 "select t from Theme t where t.category=:category and t.status=:status");
         Theme theme = (Theme)setEntityId(new Theme().setTitle("Power of Magic"), 101);
@@ -1353,9 +1347,9 @@ public class ThemeControllerTest implements TestSeawave, CollectionSunbeam, Data
         catch (SummerControllerException sce) {
             Assert.assertEquals(400, sce.getStatus());
             Assert.assertEquals("{" +
-                    "\"id\":\"Not a valid id\"," +
-                    "\"status\":\"??? must matches one of [pnd, live, prp]\"" +
-                    "}", sce.getMessage());
+                "\"id\":\"Not a valid id\"," +
+                "\"status\":\"??? must matches one of [pnd, live, prp]\"" +
+            "}", sce.getMessage());
         }
     }
 
@@ -1399,7 +1393,7 @@ public class ThemeControllerTest implements TestSeawave, CollectionSunbeam, Data
     }
 
     @Test
-    public void failToUpdateAnArticleStatusForUnknownReason() {
+    public void failToUpdateAThemeStatusForUnknownReason() {
         dataManager.register("find",
                 theme1(), null, Theme.class, 1L);
         dataManager.register("flush", null,
@@ -1448,3 +1442,4 @@ public class ThemeControllerTest implements TestSeawave, CollectionSunbeam, Data
         platformManager.hasFinished();
     }
 }
+

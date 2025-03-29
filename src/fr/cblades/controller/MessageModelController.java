@@ -58,6 +58,28 @@ public class MessageModelController implements InjectorSunbeam, DataSunbeam, Sec
 		return result.get();
 	}
 
+	@REST(url="/api/message-model/update/:id", method=Method.POST)
+	public Json update(Map<String, Object> params, Json request) {
+		long id = getLongParam(params, "id", "The Message Model ID is missing or invalid (%s)");
+		Ref<Json> result = new Ref<>();
+		inTransaction(em-> {
+			MessageModel messageModel = findMessageModel(em, id);
+			ifAuthorized(
+					user -> {
+						try {
+							writeToMessageModel(em, request, messageModel, false);
+							flush(em);
+							result.set(readFromMessageModelWithComments(messageModel));
+						} catch (PersistenceException pe) {
+							throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe);
+						}
+					},
+					ADMIN
+			);
+		});
+		return result.get();
+	}
+
 	@REST(url="/api/message-model/category/:category", method=Method.GET)
 	public Json getByCategory(Map<String, Object> params, Json request) {
 		Ref<Json> result = new Ref<>();
@@ -72,10 +94,6 @@ public class MessageModelController implements InjectorSunbeam, DataSunbeam, Sec
 					String queryString = "select m from MessageModel m " +
 							"where m.category=:category";
 					if (search!=null) {
-						/*
-						search = StringReplacer.replace(search,
-								"tester", "test");
-						 */
 						String whereClause =" and fts('pg_catalog.english', " +
 							"m.title||' '||" +
 							"m.category||' '||" +
@@ -125,10 +143,6 @@ public class MessageModelController implements InjectorSunbeam, DataSunbeam, Sec
 						" where m.category=:category" +
 						" and m.status=:status";
 					if (search!=null) {
-					/*
-					search = StringReplacer.replace(search,
-							"tester", "test");
-					 */
 						String whereClause =" and fts('pg_catalog.english', " +
 							"m.title||' '||" +
 							"m.category||' '||" +
@@ -195,28 +209,6 @@ public class MessageModelController implements InjectorSunbeam, DataSunbeam, Sec
 			);
 		});
 		return Json.createJsonObject().put("deleted", "ok");
-	}
-
-	@REST(url="/api/message-model/update/:id", method=Method.POST)
-	public Json update(Map<String, Object> params, Json request) {
-		long id = getLongParam(params, "id", "The Message Model ID is missing or invalid (%s)");
-		Ref<Json> result = new Ref<>();
-		inTransaction(em-> {
-			MessageModel messageModel = findMessageModel(em, id);
-			ifAuthorized(
-				user -> {
-					try {
-						writeToMessageModel(em, request, messageModel, false);
-						flush(em);
-						result.set(readFromMessageModelWithComments(messageModel));
-					} catch (PersistenceException pe) {
-						throw new SummerControllerException(409, "Unexpected issue. Please report : %s", pe);
-					}
-				},
-				ADMIN
-			);
-		});
-		return result.get();
 	}
 
 	@REST(url="/api/message-model/update-status/:id", method=Method.POST)
