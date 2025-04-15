@@ -5,7 +5,10 @@ import {
     Undoable, VImage, Vitamin, VMessageHandler
 } from "../vitamin/vitamins.js";
 import {
-    Div, isImageFile, isImageURL, P, requestLog, sendGet, sendPost, Span
+    sendGet, sendPost
+} from "../board/draw.js";
+import {
+    Div, isImageFile, isImageURL, P, requestLog
 } from "../vitamin/components.js";
 import {
     VContainer, VSplitterPanel

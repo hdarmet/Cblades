@@ -4,7 +4,10 @@ import {
     VTable
 } from "../vitamin/vcontainer.js";
 import {
-    Div, Img, P, requestLog, sendGet, sendPost, Span, I, Select
+    sendGet, sendPost
+} from "../board/draw.js";
+import {
+    Div, Img, P, requestLog, Span, I, Select
 } from "../vitamin/components.js";
 import {
     Undoable,

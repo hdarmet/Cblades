@@ -19,14 +19,13 @@ import {
     matchesEmail, matchesName, matchesPassword, matchesLogin, or, and, isValid, VFormContainer
 } from "../vitamin/vforms.js";
 import {
-    requestLog,
-    sendPost
+    requestLog
 } from "../vitamin/components.js";
 import {
     showMessage
 } from "../vitamin/vpage.js";
 import {
-    sendGet
+    sendGet, sendPost
 } from "../board/draw.js";
 
 export class CBSContact extends VList {

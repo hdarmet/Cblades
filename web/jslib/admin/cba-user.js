@@ -5,7 +5,10 @@ import {
     VTable
 } from "../vitamin/vcontainer.js";
 import {
-    Div, Img, P, Select, sendGet, sendPost, Span, Enum, requestLog, isImageFile
+    sendGet, sendPost
+} from "../board/draw.js";
+import {
+    Div, Img, P, Select,Span, Enum, requestLog, isImageFile
 } from "../vitamin/components.js";
 import {
     Vitamin, VModal, VSearch

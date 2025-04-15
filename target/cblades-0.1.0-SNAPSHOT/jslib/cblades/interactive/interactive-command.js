@@ -31,7 +31,7 @@ import {
 } from "../loader.js";
 import {
     WSceneAnimation, WUnitActuatorTrigger,
-    getUnitFromContext
+    getUnitFromContext, WUnitSceneAnimation
 } from "../../wargame/wunit.js";
 
 export function registerInteractiveCommand() {
@@ -690,7 +690,7 @@ export class CBTry2ChangeOrderInstructionSequenceElement extends WithLeader(With
     get delay() { return 1500; }
 
     apply(startTick) {
-        return new WSceneAnimation({
+        return new WUnitSceneAnimation({
             unit: this.unit, startTick, duration: this.delay, state: this, game: this.game,
             animation: () => new InteractiveChangeOrderInstructionAction(this.game, this.leader).replay(this.dice)
         });
@@ -779,7 +779,7 @@ export class CBTry2TakeCommandSequenceElement extends WithLeader(WithDiceRoll(WS
     get delay() { return 1500; }
 
     apply(startTick) {
-        return new WSceneAnimation({
+        return new WUnitSceneAnimation({
             unit: this.unit, startTick, duration: this.delay, state: this, game: this.game,
             animation: () => new InteractiveTakeCommandAction(this.game, this.leader).replay(this.dice)
         });
@@ -797,7 +797,7 @@ export class CBTry2DismissCommandSequenceElement extends WithLeader(WithDiceRoll
     get delay() { return 1500; }
 
     apply(startTick) {
-        return new WSceneAnimation({
+        return new WUnitSceneAnimation({
             unit: this.unit, startTick, duration: this.delay, state: this, game: this.game,
             animation: () => new InteractiveDismissCommandAction(this.game, this.leader).replay(this.dice)
         });

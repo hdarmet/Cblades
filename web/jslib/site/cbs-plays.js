@@ -4,7 +4,10 @@ import {
     VImage, Vitamin, VLoginHandler, VModal
 } from "../vitamin/vitamins.js";
 import {
-    Div, P, requestLog, sendGet, sendPost, Span
+    sendGet, sendPost
+} from "../board/draw.js";
+import {
+    Div, P, requestLog, Span
 } from "../vitamin/components.js";
 import {
     VWall, VWallWithSearch

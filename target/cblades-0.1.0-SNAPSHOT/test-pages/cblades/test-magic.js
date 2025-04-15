@@ -284,7 +284,7 @@ describe("Magic", ()=> {
 
     it("Checks fire pentacle spell", () => {
         given:
-            var {leader:wizard} = createTinyGameWithLeader();
+            var {leader:wizard, game} = createTinyGameWithLeader();
             wizard.choseSpell(CBSpell.laboratory.get("firePentacle1"));
             var spell = wizard.chosenSpell;
         when:
@@ -300,11 +300,21 @@ describe("Magic", ()=> {
             assert(wizard.carried.indexOf(spell)).equalsTo(-1);
             assert(wizard.hexLocation.playables.indexOf(spell)).notEqualsTo(-1);
             assert(spell.optionNature).isFalse();
+        given:
+            var spellModel = {"type":"fire-pentacle","level":1,"wizard":"banner-1"};
+        then:
+            assert(spell.toSpecs()).objectEqualsTo(spellModel);
+        when:
+            var context = new Map();
+            context.game = game;
+            spell = CBFirePentacleSpell.fromSpecs(spellModel, context);
+        then:
+            assert(spell.toSpecs()).objectEqualsTo(spellModel);
     });
 
     it("Checks fire circle spell", () => {
         given:
-            var {leader:wizard} = createTinyGameWithLeader();
+            var {leader:wizard, game} = createTinyGameWithLeader();
             wizard.choseSpell(CBSpell.laboratory.get("fireCircle1"));
             var spell = wizard.chosenSpell;
         when:
@@ -320,11 +330,21 @@ describe("Magic", ()=> {
             assert(wizard.carried.indexOf(spell)).equalsTo(-1);
             assert(wizard.hexLocation.playables.indexOf(spell)).notEqualsTo(-1);
             assert(spell.optionNature).isFalse();
+        given:
+            var spellModel = {"type":"fire-circle","level":1,"wizard":"banner-1"};
+        then:
+            assert(spell.toSpecs()).objectEqualsTo(spellModel);
+        when:
+            var context = new Map();
+            context.game = game;
+            spell = CBFireCircleSpell.fromSpecs(spellModel, context);
+        then:
+            assert(spell.toSpecs()).objectEqualsTo(spellModel);
     });
 
     it("Checks successful fireball spell", () => {
         given:
-            var {map, unit2:foe, leader1:wizard} = create2Players2Units2LeadersTinyGame();
+            var {map, unit2:foe, leader1:wizard, game} = create2Players2Units2LeadersTinyGame();
             wizard.hexLocation = map.getHex(5, 9);
             foe.hexLocation = map.getHex(7, 8);
             wizard.choseSpell(CBSpell.laboratory.get("fireball1"));
@@ -357,6 +377,16 @@ describe("Magic", ()=> {
             assert(foe.options.indexOf(spell)).equalsTo(-1);
             assert(foe.steps).equalsTo(1);
             assert(spell.optionNature).isTrue();
+        given:
+            var spellModel = {"type":"fire-ball","level":1,"wizard":"banner1-1"};
+        then:
+            assert(spell.toSpecs()).objectEqualsTo(spellModel);
+        when:
+            var context = new Map();
+            context.game = game;
+            spell = CBFireballSpell.fromSpecs(spellModel, context);
+        then:
+            assert(spell.toSpecs()).objectEqualsTo(spellModel);
     });
 
     it("Checks failed fireball spell", () => {
@@ -377,7 +407,7 @@ describe("Magic", ()=> {
 
     it("Checks fire sword spell", () => {
         given:
-            var {unit, leader:wizard} = createTinyGameWithLeader();
+            var {unit, leader:wizard, game} = createTinyGameWithLeader();
             wizard.choseSpell(CBSpell.laboratory.get("fireSword1"));
             var spell = wizard.chosenSpell;
         when:
@@ -400,11 +430,21 @@ describe("Magic", ()=> {
             assert(wizard.carried.indexOf(spell)).equalsTo(-1);
             assert(unit.options.indexOf(spell)).notEqualsTo(-1);
             assert(spell.optionNature).isTrue();
+        given:
+            var spellModel = {"type":"fire-sword","level":1,"wizard":"banner-1"};
+        then:
+            assert(spell.toSpecs()).objectEqualsTo(spellModel);
+        when:
+            var context = new Map();
+            context.game = game;
+            spell = CBFireswordSpell.fromSpecs(spellModel, context);
+        then:
+            assert(spell.toSpecs()).objectEqualsTo(spellModel);
     });
 
     it("Checks blaze spell", () => {
         given:
-            var {map, leader:wizard} = createTinyGameWithLeader();
+            var {map, leader:wizard, game} = createTinyGameWithLeader();
             wizard.choseSpell(CBSpell.laboratory.get("blaze1"));
             var spell = wizard.chosenSpell;
         when:
@@ -428,11 +468,21 @@ describe("Magic", ()=> {
             assert(wizard.carried.indexOf(spell)).equalsTo(-1);
             assert(hexId.playables.indexOf(spell)).notEqualsTo(-1);
             assert(spell.optionNature).isFalse();
+        given:
+            var spellModel = {"type":"blaze","level":1,"wizard":"banner-1"};
+        then:
+            assert(spell.toSpecs()).objectEqualsTo(spellModel);
+        when:
+            var context = new Map();
+            context.game = game;
+            spell = CBBlazeSpell.fromSpecs(spellModel, context);
+        then:
+            assert(spell.toSpecs()).objectEqualsTo(spellModel);
     });
 
     it("Checks rain fire spell", () => {
         given:
-            var {map, leader:wizard} = createTinyGameWithLeader();
+            var {map, leader:wizard, game} = createTinyGameWithLeader();
             wizard.choseSpell(CBSpell.laboratory.get("rainFire1"));
             var spell = wizard.chosenSpell;
         when:
@@ -456,6 +506,17 @@ describe("Magic", ()=> {
             assert(wizard.carried.indexOf(spell)).equalsTo(-1);
             assert(hexId.playables.indexOf(spell)).notEqualsTo(-1);
             assert(spell.optionNature).isFalse();
+        given:
+            var spellModel = {"type":"rain-fire","level":1,"wizard":"banner-1"};
+            //console.log(JSON.stringify(spell.toSpecs()));
+        then:
+            assert(spell.toSpecs()).objectEqualsTo(spellModel);
+        when:
+            var context = new Map();
+            context.game = game;
+            spell = CBRainFireSpell.fromSpecs(spellModel, context);
+        then:
+            assert(spell.toSpecs()).objectEqualsTo(spellModel);
     });
 
     it("Checks when arcane spell laboratory", () => {
@@ -484,7 +545,7 @@ describe("Magic", ()=> {
 
     it("Checks arcane pentacle spell", () => {
         given:
-            var {leader:wizard} = createTinyGameWithArcaneWizard();
+            var {leader:wizard, game} = createTinyGameWithArcaneWizard();
             wizard.choseSpell(CBSpell.laboratory.get("arcanePentacle1"));
             var spell = wizard.chosenSpell;
         when:
@@ -500,11 +561,21 @@ describe("Magic", ()=> {
             assert(wizard.carried.indexOf(spell)).equalsTo(-1);
             assert(wizard.hexLocation.playables.indexOf(spell)).notEqualsTo(-1);
             assert(spell.optionNature).isFalse();
+        given:
+            var spellModel = {"type":"arcane-pentacle","level":1,"wizard":"banner-1"};
+        then:
+            assert(spell.toSpecs()).objectEqualsTo(spellModel);
+        when:
+            var context = new Map();
+            context.game = game;
+            spell = CBArcanePentacleSpell.fromSpecs(spellModel, context);
+        then:
+            assert(spell.toSpecs()).objectEqualsTo(spellModel);
     });
 
     it("Checks arcane circle spell", () => {
         given:
-            var {leader:wizard} = createTinyGameWithArcaneWizard();
+            var {leader:wizard, game} = createTinyGameWithArcaneWizard();
             wizard.choseSpell(CBSpell.laboratory.get("arcaneCircle1"));
             var spell = wizard.chosenSpell;
         when:
@@ -520,11 +591,21 @@ describe("Magic", ()=> {
             assert(wizard.carried.indexOf(spell)).equalsTo(-1);
             assert(wizard.hexLocation.playables.indexOf(spell)).notEqualsTo(-1);
             assert(spell.optionNature).isFalse();
+        given:
+            var spellModel = {"type":"arcane-circle","level":1,"wizard":"banner-1"};
+        then:
+            assert(spell.toSpecs()).objectEqualsTo(spellModel);
+        when:
+            var context = new Map();
+            context.game = game;
+            spell = CBArcaneCircleSpell.fromSpecs(spellModel, context);
+        then:
+            assert(spell.toSpecs()).objectEqualsTo(spellModel);
     });
 
     it("Checks successful magic arrow spell", () => {
         given:
-            var {map, leader2:foe, leader1:wizard} = create2Players2UnitsALeaderAnArcaneWizardTinyGame();
+            var {map, leader2:foe, leader1:wizard, game} = create2Players2UnitsALeaderAnArcaneWizardTinyGame();
             wizard.hexLocation = map.getHex(5, 9);
             foe.hexLocation = map.getHex(7, 8);
             wizard.choseSpell(CBSpell.laboratory.get("magicArrow1"));
@@ -557,6 +638,16 @@ describe("Magic", ()=> {
             assert(foe.options.indexOf(spell)).equalsTo(-1);
             assert(foe.steps).equalsTo(1);
             assert(spell.optionNature).isTrue();
+        given:
+            var spellModel = {"type":"magic-arrow","level":1,"wizard":"banner1-1"};
+        then:
+            assert(spell.toSpecs()).objectEqualsTo(spellModel);
+        when:
+            var context = new Map();
+            context.game = game;
+            spell = CBMagicArrowSpell.fromSpecs(spellModel, context);
+        then:
+            assert(spell.toSpecs()).objectEqualsTo(spellModel);
     });
 
     it("Checks failed magic arrow spell", () => {
@@ -577,7 +668,7 @@ describe("Magic", ()=> {
 
     it("Checks arcane sword spell", () => {
         given:
-            var {unit, leader:wizard} = createTinyGameWithArcaneWizard();
+            var {unit, leader:wizard, game} = createTinyGameWithArcaneWizard();
             wizard.choseSpell(CBSpell.laboratory.get("arcaneSword1"));
             var spell = wizard.chosenSpell;
         when:
@@ -600,11 +691,21 @@ describe("Magic", ()=> {
             assert(wizard.carried.indexOf(spell)).equalsTo(-1);
             assert(unit.options.indexOf(spell)).notEqualsTo(-1);
             assert(spell.optionNature).isTrue();
+        given:
+            var spellModel = {"type":"arcane-sword","level":1,"wizard":"banner-1"};
+        then:
+            assert(spell.toSpecs()).objectEqualsTo(spellModel);
+        when:
+            var context = new Map();
+            context.game = game;
+            spell = CBArcaneSwordSpell.fromSpecs(spellModel, context);
+        then:
+            assert(spell.toSpecs()).objectEqualsTo(spellModel);
     });
 
     it("Checks arcane shield spell", () => {
         given:
-            var {unit, leader:wizard} = createTinyGameWithArcaneWizard();
+            var {unit, leader:wizard, game} = createTinyGameWithArcaneWizard();
             wizard.choseSpell(CBSpell.laboratory.get("arcaneShield1"));
             var spell = wizard.chosenSpell;
         when:
@@ -627,11 +728,21 @@ describe("Magic", ()=> {
             assert(wizard.carried.indexOf(spell)).equalsTo(-1);
             assert(unit.options.indexOf(spell)).notEqualsTo(-1);
             assert(spell.optionNature).isTrue();
+        given:
+            var spellModel = {"type":"arcane-shield","level":1,"wizard":"banner-1"};
+        then:
+            assert(spell.toSpecs()).objectEqualsTo(spellModel);
+        when:
+            var context = new Map();
+            context.game = game;
+            spell = CBArcaneShieldSpell.fromSpecs(spellModel, context);
+        then:
+            assert(spell.toSpecs()).objectEqualsTo(spellModel);
     });
 
     it("Checks protection from magic spell", () => {
         given:
-            var {map, leader:wizard} = createTinyGameWithArcaneWizard();
+            var {map, leader:wizard, game} = createTinyGameWithArcaneWizard();
             wizard.choseSpell(CBSpell.laboratory.get("protectionFromMagic1"));
             var spell = wizard.chosenSpell;
         when:
@@ -655,6 +766,16 @@ describe("Magic", ()=> {
             assert(wizard.carried.indexOf(spell)).equalsTo(-1);
             assert(hexId.playables.indexOf(spell)).notEqualsTo(-1);
             assert(spell.optionNature).isFalse();
+        given:
+            var spellModel = {"type":"protection-magic","level":1,"wizard":"banner-1"};
+        then:
+            assert(spell.toSpecs()).objectEqualsTo(spellModel);
+        when:
+            var context = new Map();
+            context.game = game;
+            spell = CBProtectionFromMagicSpell.fromSpecs(spellModel, context);
+        then:
+            assert(spell.toSpecs()).objectEqualsTo(spellModel);
     });
 
 });

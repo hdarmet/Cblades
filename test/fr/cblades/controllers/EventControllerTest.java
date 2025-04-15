@@ -913,7 +913,7 @@ public class EventControllerTest implements TestSeawave, CollectionSunbeam, Data
     }
 
     @Test
-    public void tryToDeleteAEventWithoutGivingItsID() {
+    public void tryToDeleteAnEventWithoutGivingItsID() {
         securityManager.doConnect("admin", 0);
         try {
             eventController.delete(params(), null);
@@ -926,7 +926,7 @@ public class EventControllerTest implements TestSeawave, CollectionSunbeam, Data
     }
 
     @Test
-    public void deleteAEvent() {
+    public void deleteAnEvent() {
         Event event = event1();
         dataManager.register("find", event, null, Event.class, 1L);
         dataManager.register("merge", event, null, event);
@@ -955,7 +955,7 @@ public class EventControllerTest implements TestSeawave, CollectionSunbeam, Data
     }
 
     @Test
-    public void tryToDeleteAEventAndFailsForAnUnknownReason() {
+    public void tryToDeleteAnEventAndFailsForAnUnknownReason() {
         dataManager.register("find", null,
                 new PersistenceException("Some Reason"), Event.class, 1L);
         securityManager.doConnect("admin", 0);
@@ -970,7 +970,7 @@ public class EventControllerTest implements TestSeawave, CollectionSunbeam, Data
     }
 
     @Test
-    public void tryToDeleteAEventWithBadCredentials() {
+    public void tryToDeleteAnEventWithBadCredentials() {
         securityManager.doConnect("someone", 0);
         try {
             eventController.delete(params("id", "1"), null);
@@ -983,7 +983,7 @@ public class EventControllerTest implements TestSeawave, CollectionSunbeam, Data
     }
 
     @Test
-    public void checkRequestedFieldsForAEventStatusUpdate() {
+    public void checkRequestedFieldsForAnEventStatusUpdate() {
         dataManager.register("find",
                 event1(), null, Event.class, 1L);
         securityManager.doConnect("admin", 0);
@@ -1018,7 +1018,7 @@ public class EventControllerTest implements TestSeawave, CollectionSunbeam, Data
     }
 
     @Test
-    public void upadteAEventSStatus() {
+    public void upadteAnEventSStatus() {
         dataManager.register("find",
             event1(), null, Event.class, 1L);
         dataManager.register("flush", null, null);
@@ -1039,7 +1039,7 @@ public class EventControllerTest implements TestSeawave, CollectionSunbeam, Data
     }
 
     @Test
-    public void tryToUpadteAEventSStatusWithBadCredential() {
+    public void tryToUpadteAnEventSStatusWithBadCredential() {
         securityManager.doConnect("someone", 0);
         try {
             eventController.updateStatus(params("id", "1"), Json.createJsonFromString(
@@ -1054,7 +1054,7 @@ public class EventControllerTest implements TestSeawave, CollectionSunbeam, Data
     }
 
     @Test
-    public void failToUpdateAEventStatusForUnknownReason() {
+    public void failToUpdateAnEventStatusForUnknownReason() {
         dataManager.register("find",
                 event1(), null, Event.class, 1L);
         dataManager.register("flush", null,

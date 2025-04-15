@@ -10,8 +10,10 @@ import {
     historize, VLoginHandler, VDisplay, VLink, VMessage, VModal
 } from "../vitamin/vitamins.js";
 import {
-    requestLog,
     sendGet, sendPost
+} from "../board/draw.js";
+import {
+    requestLog
 } from "../vitamin/components.js";
 import {
     isValid,

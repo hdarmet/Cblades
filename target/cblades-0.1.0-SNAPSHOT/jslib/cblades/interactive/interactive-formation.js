@@ -344,8 +344,8 @@ export class CBLeaveFormationSequenceElement extends CBStateSequenceElement {
 
     _fromSpecs(spec, context) {
         super._fromSpecs(spec, context);
-        let unit = WUnit.fromSpecs(this.unit.wing, spec.troop.unit);
-        setUnitToContext(context, spec.troop.unit.name, unit);
+        let unit = CBUnit.fromSpecs(this.unit.wing, spec.troop.unit);
+        setUnitToContext(context, unit);
         this.unitRecord = {
             unit,
             hexLocation: WHexLocation.fromSpecs(this.unit.game.map, {
@@ -402,15 +402,6 @@ export class CBCreateFormationSequenceElement extends WSequenceElement {
 
     get delay() { return 500; }
 
-    equalsTo(element) {
-        if (!super.equalsTo(element)) return false;
-        if (this.unitRecord.unit !== element.unitRecord.unit) return false;
-        for (let index=0; index<this.troops.length; index++) {
-            if (this.troops[index] !== element.troops[index]) return false;
-        }
-        return true;
-    }
-
     _toString() {
         let result = super._toString();
         if (this.unitRecord !== undefined) result+=", Formation: "+this.unitRecord.unit.name;
@@ -446,7 +437,7 @@ export class CBCreateFormationSequenceElement extends WSequenceElement {
         for (let troopName of spec.troops) {
             this.troops.push(getUnitFromContext(context, troopName));
         }
-        let unit = WUnit.fromSpecs(this.troops[0].wing, spec.formation.unit);
+        let unit = CBUnit.fromSpecs(this.troops[0].wing, spec.formation.unit);
         this.unitRecord = {
             unit,
             hexLocation: WHexLocation.fromSpecs(this.troops[0].game.map, {
@@ -477,16 +468,6 @@ export class CBBreakFormationSequenceElement extends WSequenceElement {
     }
 
     get delay() { return 500; }
-
-    equalsTo(element) {
-        if (!super.equalsTo(element)) return false;
-        if (this.unit !== element.unit) return false;
-        for (let index=0; index<this.unitRecords.length; index++) {
-            if (this.unitRecords[index].unit !== element.unitRecords[index].unit) return false;
-            if (this.unitRecords[index].hexLocation.equalsTo(element.unitRecords[index].hexLocation)) return false;
-        }
-        return true;
-    }
 
     _toString() {
         let result = super._toString();
@@ -521,8 +502,8 @@ export class CBBreakFormationSequenceElement extends WSequenceElement {
         this.unit = getUnitFromContext(context, spec.unit);
         this.unitRecords = [];
         for (let troopSpec of spec.troops) {
-            let unit = WUnit.fromSpecs(this.unit.wing, troopSpec.unit);
-            setUnitToContext(context, troopSpec.unit.name, unit);
+            let unit = CBUnit.fromSpecs(this.unit.wing, troopSpec.unit);
+            setUnitToContext(context, unit);
             this.unitRecords.push({
                 unit,
                 hexLocation: WHexLocation.fromSpecs(this.unit.game.map, {

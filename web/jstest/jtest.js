@@ -434,6 +434,11 @@ export class Assertor {
         return this;
     }
 
+    arraySameTo(model) {
+        this._arraySame(model, this._value);
+        return this;
+    }
+
     setContentEqualsTo(model) {
         this._setContentEquals(model, this._value);
     }
@@ -492,6 +497,10 @@ export class Assertor {
 
 export function assert(value) {
     return new Assertor(value);
+}
+
+export function fail(message) {
+    throw new AssertionError(message);
 }
 
 let _itCount = 0;

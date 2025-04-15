@@ -15,11 +15,20 @@ import {
 } from "../../jslib/board/mechanisms.js";
 import {
     CBFog,
-    CBWeather, WeatherMixin
+    CBWeather,
+    getWeatherCode, getWeather,
+    getFogCode, getFog,
+    WeatherMixin
 } from "../../jslib/cblades/weather.js";
 import {
     WAbstractGame
 } from "../../jslib/wargame/game.js";
+import {
+    WMap
+} from "../../jslib/wargame/map.js";
+import {
+    WGame
+} from "../../jslib/wargame/playable.js";
 
 describe("Weather", ()=> {
 
@@ -118,6 +127,64 @@ describe("Weather", ()=> {
             Memento.undo();
         then:
             assert(game.windDirection).equalsTo(60);
+    });
+
+    it("Checks weather specs reading and writing", () => {
+        when:
+            var GameClass = WeatherMixin(WGame);
+            var game = new GameClass("Test");
+            var map = new WMap([{path:"./../images/maps/map.png", col:0, row:0}]);
+            game.setMap(map);
+        when:
+            game.weather = CBWeather.RAIN;
+            game.windDirection = 60;
+            game.fog = CBFog.FOG;
+        then:
+            var context = new Map();
+            assert(game.toSpecs(context)).objectEqualsTo({
+                "windDirection":60,
+                "weather":"R",
+                "fog":"F"
+            });
+        when:
+            var specs = {
+                ...game.toSpecs(context),
+                "windDirection":120,
+                "weather":"O",
+                "fog":"DM"
+            }
+            game.fromSpecs(specs, context);
+        then:
+            assert(game.toSpecs(context)).objectEqualsTo({
+                "windDirection":120,
+                "weather":"O",
+                "fog":"DM"
+            });
+    });
+
+    it("Checks Weather codification functions", () => {
+        assert(getWeatherCode(CBWeather.HOT)).equalsTo("H");
+        assert(getWeatherCode(CBWeather.CLEAR)).equalsTo("C");
+        assert(getWeatherCode(CBWeather.CLOUDY)).equalsTo("N");
+        assert(getWeatherCode(CBWeather.OVERCAST)).equalsTo("O");
+        assert(getWeatherCode(CBWeather.RAIN)).equalsTo("R");
+        assert(getWeatherCode(CBWeather.STORM)).equalsTo("S");
+        assert(getWeather("H")).equalsTo(CBWeather.HOT);
+        assert(getWeather("C")).equalsTo(CBWeather.CLEAR);
+        assert(getWeather("N")).equalsTo(CBWeather.CLOUDY);
+        assert(getWeather("O")).equalsTo(CBWeather.OVERCAST);
+        assert(getWeather("R")).equalsTo(CBWeather.RAIN);
+        assert(getWeather("S")).equalsTo(CBWeather.STORM);
+        assert(getFogCode(CBFog.NO_FOG)).equalsTo("NF");
+        assert(getFogCode(CBFog.MIST)).equalsTo("M");
+        assert(getFogCode(CBFog.DENSE_MIST)).equalsTo("DM");
+        assert(getFogCode(CBFog.FOG)).equalsTo("F");
+        assert(getFogCode(CBFog.DENSE_FOG)).equalsTo("DF");
+        assert(getFog("NF")).equalsTo(CBFog.NO_FOG);
+        assert(getFog("M")).equalsTo(CBFog.MIST);
+        assert(getFog("DM")).equalsTo(CBFog.DENSE_MIST);
+        assert(getFog("F")).equalsTo(CBFog.FOG);
+        assert(getFog("DF")).equalsTo(CBFog.DENSE_FOG);
     });
 
  });

@@ -396,7 +396,6 @@ export class CBWing extends WWing {
 
     _memento() {
         let memento = {
-            ...super._memento(),
             orderInstruction : this._orderInstruction,
             moral : this._moral,
             tiredness : this._tiredness
@@ -406,7 +405,6 @@ export class CBWing extends WWing {
     }
 
     _revert(memento) {
-        super._revert();
         this._orderInstruction = memento.orderInstruction;
         this._moral = memento.moral;
         this._tiredness = memento.tiredness;
@@ -551,10 +549,12 @@ export class CBWing extends WWing {
             }
             wingSpecs.retreatZone.push(retreatHexSpecs);
         }
+        return wingSpecs;
     }
 
     fromSpecs(specs, context) {
-        super.fromSpecs(specs, context);
+        this._oid = specs.id;
+        this._oversion = specs.version;
         this.setMoral(specs.moral);
         this.setTiredness(specs.tiredness);
         let retreatZone = [];
@@ -565,7 +565,8 @@ export class CBWing extends WWing {
         this.setRetreatZone(retreatZone);
         let leader = null;
         for (let unitSpecs of specs.units) {
-            let unit =  context.pieceMap.get(unitSpecs.name);
+            let unit = CBUnit.fromSpecs(this, unitSpecs, context);
+            context.pieceMap.set(unit.name, unit);
             if (unit.name === specs.leader) {
                 leader = unit;
             }
@@ -610,8 +611,12 @@ export class CBUnit extends WUnit {
         return this._type;
     }
 
+    get maxStepCount() {
+        return this._type.getFigureStepCount();
+    }
+
     getAttackHex(type) {
-        return type ? null : this._hexLocation;
+        return !type ? null : type==="F" ? this.hexLocation : null;
     }
 
     getAttackHexType(hex) {
@@ -626,12 +631,11 @@ export class CBUnit extends WUnit {
         unit.tiredness = this.tiredness;
     }
 
-
     addToMap(hexId, stacking) {
         let nameMustBeDefined = !this._name || this._wing.hasUnitByName(this._name);
         super.addToMap(hexId, stacking);
         if (nameMustBeDefined) {
-            this._name = this._wing.getNextUnitByName();
+            this.name = this._wing.getNextUnitByName();
         }
     }
 
@@ -641,14 +645,6 @@ export class CBUnit extends WUnit {
         if (nameMustBeDefined) {
             this._name = this._wing.getNextUnitByName();
         }
-    }
-
-    removeMarkerArtifact(marker) {
-        this._element.removeArtifact(marker);
-    }
-
-    deleteMarkerArtifact(marker) {
-        this._element.deleteArtifact(marker);
     }
 
     _memento() {
@@ -665,14 +661,7 @@ export class CBUnit extends WUnit {
             engaging: this._engaging,
             charging: this._charging,
             engagingArtifact: this._engagingArtifact,
-            orderGiven: this._orderGiven,
-            disruptChecked: this._disruptChecked,
-            routChecked: this._routChecked,
-            neighborsCohesionLoss: this._neighborsCohesionLoss,
-            defenderEngagementChecking: this._defenderEngagementChecking,
-            attackerEngagementChecking: this._attackerEngagementChecking,
-            firstAttack: this._firstAttack,
-            secondAttack: this._secondAttack
+            orderGiven: this._orderGiven
         };
     }
 
@@ -690,17 +679,11 @@ export class CBUnit extends WUnit {
         this._charging = memento.charging;
         this._engagingArtifact = memento.engagingArtifact;
         this._orderGiven = memento.orderGiven;
-        this._disruptChecked = memento.disruptChecked;
-        this._routChecked = memento.routChecked;
-        this._neighborsCohesionLoss = memento.neighborsCohesionLoss;
-        this._defenderEngagementChecking = memento.defenderEngagementChecking;
-        this._attackerEngagementChecking = memento.attackerEngagementChecking;
-        this._firstAttack = memento.firstAttack;
-        this._secondAttack = memento.secondAttack;
     }
 
     setState(state) {
         super.setState(state);
+        this._extendedMovementPoints = state.extendedMovementPoints;
         this._cohesion = state.cohesion;
         this._tiredness = state.tiredness;
         this._munitions = state.munitions;
@@ -713,8 +696,6 @@ export class CBUnit extends WUnit {
         this._updatePlayedArtifact(this.setMarkerArtifact, this.removeMarkerArtifact);
         this._updateEngagementArtifact(this.setMarkerArtifact, this.setActivableMarkerArtifact, this.removeMarkerArtifact);
         this._updateCohesionArtifact(this.setMarkerArtifact, this.removeMarkerArtifact);
-        this.attrs = state.attrs;
-        super.setState(state);
     }
 
     destroy() {
@@ -724,7 +705,7 @@ export class CBUnit extends WUnit {
 
     finish() {
         super.finish();
-        WSequence.appendElement(this.game, new CBStateSequenceElement({game: this.game, unit: this}));
+        WSequence.appendElement(this.game, new CBFinishUnitSequenceElement({game: this.game, unit: this}));
     }
 
     _unselect() {
@@ -751,63 +732,6 @@ export class CBUnit extends WUnit {
 
     set extendedMovementPoints(extendedMovementPoints) {
         this._extendedMovementPoints = extendedMovementPoints;
-    }
-
-    get disruptChecked() {
-        return this._disruptChecked;
-    }
-
-    set disruptChecked(disruptChecked) {
-        console.assert(disruptChecked!==undefined);
-        this._disruptChecked = disruptChecked;
-    }
-
-    get routChecked() {
-        return this._routChecked;
-    }
-    set routChecked(routChecked) {
-        console.assert(routChecked!==undefined);
-        this._routChecked = routChecked;
-    }
-
-    get neighborsCohesionLoss() {
-        return this._neighborsCohesionLoss;
-    }
-    set neighborsCohesionLoss(neighborsCohesionLoss) {
-        console.assert(neighborsCohesionLoss!==undefined);
-        this._neighborsCohesionLoss = neighborsCohesionLoss;
-    }
-
-    get defenderEngagementChecking() {
-        return this._defenderEngagementChecking;
-    }
-    set defenderEngagementChecking(defenderEngagementChecking) {
-        console.assert(defenderEngagementChecking!==undefined);
-        this._defenderEngagementChecking = defenderEngagementChecking;
-    }
-
-    get attackerEngagementChecking() {
-        return this._attackerEngagementChecking;
-    }
-    set attackerEngagementChecking(attackerEngagementChecking) {
-        console.assert(attackerEngagementChecking!==undefined);
-        this._attackerEngagementChecking = attackerEngagementChecking;
-    }
-
-    get firstAttack() {
-        return this._firstAttack;
-    }
-    set firstAttack(firstAttack) {
-        console.assert(firstAttack!==undefined);
-        this._firstAttack = firstAttack;
-    }
-
-    get secondAttack() {
-        return this._secondAttack;
-    }
-    set secondAttack(secondAttack) {
-        console.assert(secondAttack!==undefined);
-        this._secondAttack = secondAttack;
     }
 
     receivesOrder(order) {
@@ -1036,8 +960,9 @@ export class CBUnit extends WUnit {
             if (this._charging === CBCharge.CHARGING && charging === CBCharge.NONE) {
                 this.addOneTirednessLevel();
             }
-            this._engaging = engaged;
+            this._engaging =engaged;
             this._charging = charging;
+            WSequence.appendElement(this.game, new CBEngagingSequenceElement({game: this.game, unit: this}));
             this._updateEngagementArtifact(this.createMarkerArtifact, this.createActivableMarkerArtifact, this.deleteMarkerArtifact);
         }
     }
@@ -1112,6 +1037,7 @@ export class CBUnit extends WUnit {
 
     static DIMENSION = new Dimension2D(142, 142);
 
+    /*
     setAction(actionSpec) {
         if (actionSpec.actionType) {
             let action = WAction.createAction(actionSpec.actionType, this.game, this, actionSpec.actionMode);
@@ -1127,15 +1053,16 @@ export class CBUnit extends WUnit {
             this._game.focusedPlayable = this;
         }
     }
+     */
 
     _updateTirednessArtifact(setMarkerArtifact, removeMarkerArtifact) {
         this._tirednessArtifact && removeMarkerArtifact.call(this, this._tirednessArtifact);
         delete this._tirednessArtifact;
         if (this._tiredness === CBTiredness.TIRED) {
-            this._tirednessArtifact = setMarkerArtifact.call(this, "./../images/markers/tired.png", 2);
+            this._tirednessArtifact = setMarkerArtifact.call(this, "./../images/markers/tired.png", 3);
         }
         else if (this._tiredness === CBTiredness.EXHAUSTED) {
-            this._tirednessArtifact = setMarkerArtifact.call(this, "./../images/markers/exhausted.png", 2);
+            this._tirednessArtifact = setMarkerArtifact.call(this, "./../images/markers/exhausted.png", 3);
         }
     }
 
@@ -1143,10 +1070,10 @@ export class CBUnit extends WUnit {
         this._munitionsArtifact && removeMarkerArtifact.call(this, this._munitionsArtifact);
         delete this._munitionsArtifact;
         if (this._munitions === CBMunitions.SCARCE) {
-            this._munitionsArtifact = setMarkerArtifact.call(this, "./../images/markers/scarceamno.png", 4);
+            this._munitionsArtifact = setMarkerArtifact.call(this, "./../images/markers/scarceamno.png", 5);
         }
         else if (this._munitions === CBMunitions.EXHAUSTED) {
-            this._munitionsArtifact = setMarkerArtifact.call(this, "./../images/markers/lowamno.png", 4);
+            this._munitionsArtifact = setMarkerArtifact.call(this, "./../images/markers/lowamno.png", 5);
         }
     }
 
@@ -1165,17 +1092,17 @@ export class CBUnit extends WUnit {
         this._engagingArtifact && removeMarkerArtifact.call(this, this._engagingArtifact);
         delete this._engagingArtifact;
         if (this._charging === CBCharge.CHARGING) {
-            this._engagingArtifact = setMarkerArtifact.call(this, "./../images/markers/charge.png", 1);
+            this._engagingArtifact = setMarkerArtifact.call(this, "./../images/markers/charge.png", 2);
         }
         else if (this._charging === CBCharge.CAN_CHARGE) {
             this._engagingArtifact = setActivableMarkerArtifact.call(this, [
                 "./../images/markers/possible-charge.png", "./../images/markers/charge.png"
             ], marker=>{
                 marker.setImage((marker.imageIndex+1)%2);
-            }, 1);
+            }, 2);
         }
         else if (this._engaging) {
-            this._engagingArtifact = setMarkerArtifact.call(this, "./../images/markers/contact.png", 1);
+            this._engagingArtifact = setMarkerArtifact.call(this, "./../images/markers/contact.png", 2);
         }
     }
 
@@ -1183,10 +1110,10 @@ export class CBUnit extends WUnit {
         this._cohesionArtifact && removeMarkerArtifact.call(this, this._cohesionArtifact);
         delete this._cohesionArtifact;
         if (this._cohesion === CBCohesion.DISRUPTED) {
-            this._cohesionArtifact = setMarkerArtifact.call(this, "./../images/markers/disrupted.png", 3);
+            this._cohesionArtifact = setMarkerArtifact.call(this, "./../images/markers/disrupted.png", 4);
         }
         else if (this._cohesion === CBCohesion.ROUTED) {
-            this._cohesionArtifact = setMarkerArtifact.call(this, "./../images/markers/fleeing.png", 3);
+            this._cohesionArtifact = setMarkerArtifact.call(this, "./../images/markers/fleeing.png", 4);
         }
     }
 
@@ -1210,10 +1137,16 @@ export class CBUnit extends WUnit {
 
     toReferenceSpecs(context) {
         return {
-            id: this._oid,
-            version: this._oversion || 0,
             name:this.name
         }
+    }
+
+    static fromSpecs(wing, unitSpec, context) {
+        let unitType = CBUnitType.getType(unitSpec.type);
+        let unit = unitType.createUnit(context.game, wing, unitSpec.steps);
+
+        unit.fromSpecs(unitSpec, context);
+        return unit;
     }
 
     toSpecs(context) {
@@ -1249,7 +1182,7 @@ export class CBUnit extends WUnit {
             charging: specs.charging ? CBCharge.CHARGING : CBCharge.NONE,
             engaging: specs.engaging||false,
             orderGiven: specs.orderGiven||false,
-            attrs: specs.attributes,
+            //attrs: specs.attributes,
             played: specs.played||false
         });
     }
@@ -1279,13 +1212,6 @@ export class CBUnit extends WUnit {
     }
 }
 
-WUnit.fromSpecs = function(wing, unitSpec, context) {
-    let unitType = CBUnitType.getType(unitSpec.type);
-    let unit = unitType.createUnit(context.game, wing, unitSpec.steps);
-    unit.fromSpecs(unitSpec, context);
-    return unit;
-}
-
 export class CBTroop extends CBUnit {
 
     constructor(game, type, wing) {
@@ -1309,6 +1235,7 @@ export class CBTroop extends CBUnit {
     getUnitCategoryCode(unit) {
         return "T";
     }
+
 }
 
 export class CBFormation extends TwoHexesUnit(CBUnit) {
@@ -1327,6 +1254,11 @@ export class CBFormation extends TwoHexesUnit(CBUnit) {
         return copy;
     }
 
+    turn(angle, cost = null, stacking = WStacking.TOP) {
+        this.move(this.hexLocation.turnTo(angle), cost, stacking);
+        this.reorient(this.getTurnOrientation(angle));
+    }
+
     get allowedAttackCount() {
         return 2;
     }
@@ -1340,7 +1272,7 @@ export class CBFormation extends TwoHexesUnit(CBUnit) {
     }
 
     getAttackHex(type) {
-        return type ? null : type==="T" ? this.hexLocation.fromHex : this.hexLocation.toHex;
+        return !type ? null : type==="F" ? this.hexLocation.fromHex : this.hexLocation.toHex;
     }
 
     getAttackHexType(hex) {
@@ -1428,7 +1360,7 @@ export class CBCharacter extends CBUnit {
 
     createOrderInstructionArtifact(orderInstruction) {
         let marker = new WSimpleMarkerArtifact(this, CBCharacter.ORDER_INSTRUCTION_PATHS[orderInstruction],
-            this.getMarkerPosition(6), CBCharacter.ORDER_INSTRUCTION_DIMENSION);
+            this.getMarkerPosition(7), CBCharacter.ORDER_INSTRUCTION_DIMENSION);
         return marker;
     }
 
@@ -1526,7 +1458,6 @@ export class CBStateSequenceElement extends WSequenceElement {
     }
 
     setUnit(unit) {
-        this.attrs = unit.attrs;
         this.unit = unit;
         this.steps = unit.isOnHex() ? unit.steps : 0;
         this.cohesion = unit.cohesion;
@@ -1537,40 +1468,26 @@ export class CBStateSequenceElement extends WSequenceElement {
         this.orderGiven = unit.hasReceivedOrder();
         this.movementPoints = unit.movementPoints;
         this.extendedMovementPoints = unit.extendedMovementPoints;
+        this._setUnitAction(unit);
+        this.played = unit.isPlayed();
+    }
+
+    _setUnitAction(unit) {
         if (unit.action && !unit.action.isFinished()) {
             this.actionType = unit.action.constructor.name;
             this.actionMode = unit.action.mode;
         }
-        this.played = unit.isPlayed();
     }
 
     setState(state) {
-        Object.assign(state, this);
+        Object.assign(this, state);
         return this;
-    }
-
-    equalsTo(element) {
-        if (!super.equalsTo(element)) return false;
-        if (this.steps !== element.steps) return false;
-        if (this.unit !== element.unit) return false;
-        if (this.cohesion !== element.cohesion) return false;
-        if (this.tiredness !== element.tiredness) return false;
-        if (this.munitions !== element.munitions) return false;
-        if (this.charging !== element.charging) return false;
-        if (this.engaging !== element.engaging) return false;
-        if (this.orderGiven !== element.orderGiven) return false;
-        if (this.movementPoints !== element.movementPoints) return false;
-        if (this.extendedMovementPoints !== element.extendedMovementPoints) return false;
-        if (this.actionType !== element.actionType) return false;
-        if (this.actionMode !== element.actionMode) return false;
-        if (this.played !== element.played) return false;
-        return true;
     }
 
     _toString() {
         let result = super._toString();
         if (this.unit !== undefined) result+=", Unit: "+this.unit.name;
-        if (this.steps !== undefined) result+=", Unit: "+this.unit.steps;
+        if (this.steps !== undefined) result+=", steps: "+this.unit.steps;
         if (this.cohesion !== undefined) result+=", Cohesion: "+this.cohesion;
         if (this.tiredness !== undefined) result+=", Tiredness: "+this.tiredness;
         if (this.munitions !== undefined) result+=", Munitions: "+this.munitions;
@@ -1579,8 +1496,8 @@ export class CBStateSequenceElement extends WSequenceElement {
         if (this.orderGiven !== undefined) result+=", OrderGiven: "+this.orderGiven;
         if (this.movementPoints !== undefined) result+=", MovementPoints: "+this.movementPoints;
         if (this.extendedMovementPoints !== undefined) result+=", ExtendedMovementPoints: "+this.extendedMovementPoints;
-        if (this.actionType !== undefined) result+=", ActionType: "+this.actionType;
-        if (this.actionMode !== undefined) result+=", ActionMode: "+this.actionMode;
+        if (this.actionType !== undefined && this.actionType !== null) result+=", ActionType: "+this.actionType;
+        if (this.actionMode !== undefined && this.actionMode !== null) result+=", ActionMode: "+this.actionMode;
         if (this.played !== undefined) result+=", Played: "+this.played;
         return result;
     }
@@ -1593,7 +1510,6 @@ export class CBStateSequenceElement extends WSequenceElement {
 
     _toSpecs(spec, context) {
         super._toSpecs(spec, context);
-        Object.assign(spec, this.attrs);
         spec.unit = this.unit.name;
         spec.steps = this.unit.steps;
         spec.cohesion = this.getCohesionCode(this.cohesion);
@@ -1680,9 +1596,32 @@ export class CBStateSequenceElement extends WSequenceElement {
         }
     }
 
-    static launch(specs, content) {
+}
+WSequence.register("state", CBStateSequenceElement);
+
+export class CBFinishUnitSequenceElement extends CBStateSequenceElement {
+
+    constructor({id, unit, game}) {
+        super({id, type:"finish-unit", unit, game});
+    }
+
+    _setUnitAction(unit) {
+    }
+
+    setUnit(unit) {
+        super.setUnit(unit);
+        this.played = true;
     }
 
 }
-WSequence.register("state", CBStateSequenceElement);
+WSequence.register("state", CBFinishUnitSequenceElement);
+
+export class CBEngagingSequenceElement extends CBStateSequenceElement {
+
+    constructor({id, game, unit}) {
+        super({id, type: "engaging", game, unit});
+    }
+
+}
+WSequence.register("engaging", CBEngagingSequenceElement);
 

@@ -725,7 +725,6 @@ public class ThemeControllerTest implements TestSeawave, CollectionSunbeam, Data
             "\"id\":1," +
             "\"category\":\"game\"," +
             "\"title\":\"Magic\"," +
-//                "\"version\":0," +
             "\"newComment\":\"Interesting theme\"" +
         "}"));
         Assert.assertEquals("{" +
@@ -788,7 +787,6 @@ public class ThemeControllerTest implements TestSeawave, CollectionSunbeam, Data
                     "\"id\":1," +
                     "\"category\":\"game\"," +
                     "\"title\":\"Magic\"," +
-//                "\"version\":0," +
                     "\"newComment\":\"Interesting theme\"" +
                 "}"));
             Assert.fail("The request should fail");
@@ -817,7 +815,6 @@ public class ThemeControllerTest implements TestSeawave, CollectionSunbeam, Data
                     "\"id\":1," +
                     "\"category\":\"game\"," +
                     "\"title\":\"Magic\"," +
-//                "\"version\":0," +
                     "\"newComment\":\"Interesting theme\"" +
                 "}"));
             Assert.fail("The request should fail");
@@ -1441,5 +1438,7 @@ public class ThemeControllerTest implements TestSeawave, CollectionSunbeam, Data
         }
         platformManager.hasFinished();
     }
+
+
 }
 

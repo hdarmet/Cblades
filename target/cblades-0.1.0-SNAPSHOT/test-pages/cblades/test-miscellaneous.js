@@ -60,12 +60,13 @@ describe("Miscellaneous", ()=> {
             fire.addToMap(hexId);
             repaint(game);
         then:
+            assert(fire.getPosition()).objectEqualsTo({col:7, row:8});
             assert(fire.isFire()).isFalse();
             assert(hexId.playables[0]).equalsTo(fire);
             assert(getDirectives(groundLayer, 4)).arrayEqualsTo([
                 "save()",
                     "setTransform(0.4888, 0, 0, 0.4888, 583.3333, 361.663)",
-                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "shadowBlur = 0",
                     "drawImage(./../images/counters/start-fire.png, -71, -71, 142, 142)",
                 "restore()"
             ]);
@@ -78,7 +79,7 @@ describe("Miscellaneous", ()=> {
             assert(getDirectives(groundLayer, 4)).arrayEqualsTo([
                 "save()",
                     "setTransform(0.4888, 0, 0, 0.4888, 583.3333, 361.663)",
-                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "shadowBlur = 0",
                     "drawImage(./../images/counters/fire.png, -71, -71, 142, 142)",
                 "restore()"
             ]);
@@ -90,10 +91,27 @@ describe("Miscellaneous", ()=> {
             assert(getDirectives(groundLayer, 4)).arrayEqualsTo([
                 "save()",
                     "setTransform(0.4888, 0, 0, 0.4888, 583.3333, 361.663)",
-                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "shadowBlur = 0",
                     "drawImage(./../images/counters/start-fire.png, -71, -71, 142, 142)",
                 "restore()"
             ]);
+        then:
+            assert(fire.toSpecs()).objectEqualsTo({
+                "version":0,"angle":0,
+                "positionCol":7,"positionRow":8,
+                "type":"fire","fire":false
+            });
+        when:
+            var context = new Map();
+            fire.fromSpecs({
+                "id": 1, "version":2,"angle":60,
+                "type":"fire","fire":true, "played": true
+            }, context);
+        then:
+            assert(fire.toSpecs()).objectEqualsTo({
+                "id": 1, "version":2,"angle":60,
+                "type":"fire","fire":true, "played": true
+            });
     });
 
     it("Checks smoke counter", () => {
@@ -111,7 +129,7 @@ describe("Miscellaneous", ()=> {
             assert(getDirectives(groundLayer, 4)).arrayEqualsTo([
                 "save()",
                     "setTransform(0.4888, 0, 0, 0.4888, 583.3333, 361.663)",
-                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "shadowBlur = 0",
                     "drawImage(./../images/counters/light-smoke.png, -71, -71, 142, 142)",
                 "restore()"
             ]);
@@ -124,7 +142,7 @@ describe("Miscellaneous", ()=> {
             assert(getDirectives(groundLayer, 4)).arrayEqualsTo([
                 "save()",
                     "setTransform(0.4888, 0, 0, 0.4888, 583.3333, 361.663)",
-                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "shadowBlur = 0",
                     "drawImage(./../images/counters/heavy-smoke.png, -71, -71, 142, 142)",
                 "restore()"
             ]);
@@ -137,7 +155,7 @@ describe("Miscellaneous", ()=> {
             assert(getDirectives(groundLayer, 4)).arrayEqualsTo([
                 "save()",
                     "setTransform(0.4888, 0, 0, 0.4888, 583.3333, 361.663)",
-                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "shadowBlur = 0",
                     "drawImage(./../images/counters/light-smoke.png, -71, -71, 142, 142)",
                 "restore()"
             ]);
@@ -149,6 +167,23 @@ describe("Miscellaneous", ()=> {
             Memento.undo();
         then:
             assert(smoke.isDense()).isFalse();
+        then:
+            assert(smoke.toSpecs()).objectEqualsTo({
+                "version":0,"angle":0,
+                "positionCol":7,"positionRow":8,
+                "type":"smoke","density":false
+            });
+        when:
+            var context = new Map();
+            smoke.fromSpecs({
+                "id": 1, "version":2,"angle":60,
+                "type":"smoke","density":true, "played": true
+            }, context);
+        then:
+            assert(smoke.toSpecs()).objectEqualsTo({
+                "id": 1, "version":2,"angle":60,
+                "type":"smoke","density":true, "played": true
+            });
     });
 
     it("Checks playing burning counter", () => {
@@ -165,7 +200,7 @@ describe("Miscellaneous", ()=> {
                 Mechanisms.fire(burning, CBBurningCounter.PLAYED_EVENT);
                 game.changeFirePlayed();
             }
-            burning1.onMouseClick({});
+            burning1.onMouseClick();
             repaint(game);
         then:
             assert(burning1.isPlayed()).isFalse();
@@ -173,7 +208,7 @@ describe("Miscellaneous", ()=> {
             assert(getDirectives(groundMarkerLayer, 4)).arrayEqualsTo([
                 'save()',
                     'setTransform(0.4888, 0, 0, 0.4888, 701.3685, 375.0733)',
-                    'shadowColor = #000000', 'shadowBlur = 10',
+                    'shadowColor = #000000','shadowBlur = 10',
                     'drawImage(./../images/markers/actiondone.png, -32, -32, 64, 64)',
                 'restore()'
             ]);
@@ -233,7 +268,7 @@ describe("Miscellaneous", ()=> {
             assert(getDirectives(groundLayer, 4)).arrayEqualsTo([
                 'save()',
                     'setTransform(0.4888, 0, 0, 0.4888, 583.3333, 361.663)',
-                    'shadowColor = #00FFFF', 'shadowBlur = 10',
+                    'shadowBlur = 0',
                     'drawImage(./../images/counters/start-fire.png, -71, -71, 142, 142)',
                 'restore()'
             ]);
@@ -251,13 +286,13 @@ describe("Miscellaneous", ()=> {
             var [groundLayer] = getLayers(game.board,"hex-0");
             var hexId = map.getHex(7,8);
         when:
-            var fireStart = new CBStakesCounter();
+            var stakesCounter = new CBStakesCounter(game);
             resetDirectives(groundLayer);
-            fireStart.addToMap(hexId);
+            stakesCounter.addToMap(hexId);
             paint(game);
             loadAllImages();
         then:
-            assert(hexId.playables[0]).equalsTo(fireStart);
+            assert(hexId.playables[0]).equalsTo(stakesCounter);
             assert(getDirectives(groundLayer, 4)).arrayEqualsTo([
                 "save()",
                     "setTransform(0.4888, 0, 0, 0.4888, 583.3333, 361.663)",
@@ -265,6 +300,24 @@ describe("Miscellaneous", ()=> {
                     "drawImage(./../images/counters/stakes.png, -71, -71, 142, 142)",
                 "restore()"
             ]);
+        then:
+            assert(stakesCounter.isFinishable()).isTrue();
+            assert(stakesCounter.toSpecs()).objectEqualsTo({
+                "version":0,"angle":0,
+                "positionCol":7,"positionRow":8,
+                "type":"stakes"
+            });
+        when:
+            var context = new Map();
+            stakesCounter.fromSpecs({
+                "id": 1, "version":2,"angle":60,
+                "type":"stakes"
+            }, context);
+        then:
+            assert(stakesCounter.toSpecs()).objectEqualsTo({
+                "id": 1, "version":2,"angle":60,
+                "type":"stakes"
+            });
     });
 
     it("Checks memorize/revert displayable counter", () => {
@@ -272,8 +325,8 @@ describe("Miscellaneous", ()=> {
             var {game, player} = createTinyGame();
             var [counterMarkersLayer] = getLayers(game.board,"counter-markers");
         when:
-            var weather = new CBWeatherCounter();
-            weather.setOnGame(game);
+            var weather = new CBWeatherCounter(game);
+            weather.setOnGame();
             repaint(game);
             loadAllImages();
         then:
@@ -323,15 +376,15 @@ describe("Miscellaneous", ()=> {
             var {game, player} = create1PlayerBaseGame();
             var [countersLayer, counterMarkersLayer] = getLayers(game.board,"counters", "counter-markers");
         when:
-            var weather = new CBWeatherCounter();
-            weather.setOnGame(game);
+            var weather = new CBWeatherCounter(game);
+            weather.setOnGame();
             repaint(game);
             loadAllImages();
         then:
             assert(getDirectives(countersLayer, 4)).arrayEqualsTo([
                 "save()",
                     "setTransform(0.4888, 0, 0, 0.4888, 61.0948, 61.0948)",
-                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "shadowBlur = 0",
                     "drawImage(./../images/counters/meteo2.png, -71, -71, 142, 142)",
                 "restore()"
             ]);
@@ -376,15 +429,15 @@ describe("Miscellaneous", ()=> {
             var {game, player} = create1PlayerBaseGame();
             var [countersLayer, counterMarkersLayer] = getLayers(game.board,"counters", "counter-markers");
         when:
-            var fog = new CBFogCounter();
-            fog.setOnGame(game);
+            var fog = new CBFogCounter(game);
+            fog.setOnGame();
             repaint(game);
             loadAllImages();
         then:
             assert(getDirectives(countersLayer, 4)).arrayEqualsTo([
                 "save()",
                     "setTransform(0.4888, 0, 0, 0.4888, 61.0948, 61.0948)",
-                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "shadowBlur = 0",
                     "drawImage(./../images/counters/fog1.png, -71, -71, 142, 142)",
                 "restore()"
             ]);
@@ -429,15 +482,15 @@ describe("Miscellaneous", ()=> {
             var {game, player} = create1PlayerBaseGame();
             var [countersLayer, counterMarkersLayer] = getLayers(game.board,"counters", "counter-markers");
         when:
-            var windDirection = new CBWindDirectionCounter();
-            windDirection.setOnGame(game);
+            var windDirection = new CBWindDirectionCounter(game);
+            windDirection.setOnGame();
             repaint(game);
             loadAllImages();
         then:
             assert(getDirectives(countersLayer, 4)).arrayEqualsTo([
                 "save()",
                     "setTransform(0.4888, 0, 0, 0.4888, 61.0948, 61.0948)",
-                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "shadowBlur = 0",
                     "drawImage(./../images/counters/wind-direction.png, -71, -71, 142, 142)",
                 "restore()"
             ]);
@@ -496,7 +549,7 @@ describe("Miscellaneous", ()=> {
             assert(getDirectives(countersLayer, 4)).arrayEqualsTo([
                 "save()",
                     "setTransform(0.4888, 0, 0, 0.4888, 61.0948, 61.0948)",
-                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "shadowBlur = 0",
                     "drawImage(./../images/counters/moral11.png, -71, -71, 142, 142)",
                 "restore()",
                 "save()",
@@ -520,7 +573,7 @@ describe("Miscellaneous", ()=> {
         when:
             var wingMoral = new CBWingMoralCounter(wing);
             var moralPlayer = false;
-            wingMoral.setOnGame(game);
+            wingMoral.setOnGame();
             repaint(game);
             loadAllImages();
         then:
@@ -528,7 +581,7 @@ describe("Miscellaneous", ()=> {
             assert(getDirectives(countersLayer, 4)).arrayEqualsTo([
                 "save()",
                     "setTransform(0.4888, 0, 0, 0.4888, 61.0948, 61.0948)",
-                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "shadowBlur = 0",
                     "drawImage(./../images/counters/moral11.png, -71, -71, 142, 142)",
                 "restore()",
                 "save()",
@@ -603,7 +656,7 @@ describe("Miscellaneous", ()=> {
         when:
             var wingTiredness = new CBWingTirednessCounter(wing);
             var tirednessPlayer = false;
-            wingTiredness.setOnGame(game);
+            wingTiredness.setOnGame();
             repaint(game);
             loadAllImages();
         then:
@@ -611,7 +664,7 @@ describe("Miscellaneous", ()=> {
             assert(getDirectives(countersLayer, 4)).arrayEqualsTo([
                 "save()",
                     "setTransform(0.4888, 0, 0, 0.4888, 61.0948, 61.0948)",
-                    "shadowColor = #00FFFF", "shadowBlur = 10",
+                    "shadowBlur = 0",
                     "drawImage(./../images/counters/tiredness11.png, -71, -71, 142, 142)",
                 "restore()",
                 "save()",
@@ -685,14 +738,14 @@ describe("Miscellaneous", ()=> {
             var [countersLayer] = getLayers(game.board,"counters");
         when:
             var wingTiredness = new CBWingTirednessCounter(wing);
-            wingTiredness.setOnGame(game);
+            wingTiredness.setOnGame();
             repaint(game);
         then:
             assert(Mechanisms.manager.listeners).contains(wingTiredness);
             assert(getDirectives(countersLayer, 4)).arrayEqualsTo([
                 'save()',
                     'setTransform(0.4888, 0, 0, 0.4888, 61.0948, 61.0948)',
-                    'shadowColor = #00FFFF', 'shadowBlur = 10',
+                    'shadowBlur = 0',
                     'drawImage(./../images/counters/tiredness11.png, -71, -71, 142, 142)',
                 'restore()',
                 'save()',

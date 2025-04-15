@@ -4,7 +4,7 @@ import {
     DImage
 } from "../../jslib/board/draw.js";
 import {
-    assert
+    assert, fail
 } from "../../jstest/jtest.js";
 import {
     Dimension2D
@@ -20,9 +20,32 @@ function write(context, directive) {
     }
 }
 
+class DOMElement {
+
+    constructor(tagName) {
+        this.tagName = tagName;
+        this.style = {};
+        this.children = [];
+    }
+
+    getAttribute(attrName) {
+        return this[attrName];
+    }
+
+    setAttribute(attrName, attrValue) {
+        this[attrName] = attrValue;
+    }
+
+    removeAttribute(attrName) {
+        delete this[attrName];
+    }
+}
+
 export let mockPlatform = {
 
     _init() {
+        this._document = new DOMElement("document");
+        this._document.body = new DOMElement("body");
         this._pixel = [255, 255, 255, 255];
         this._defaultContext = this.getContext();
         this._time = 100;
@@ -102,7 +125,7 @@ export let mockPlatform = {
     },
 
     createElement(tagName) {
-        return {tagName, style:{}, children:[]};
+        return new DOMElement(tagName);
     },
 
     getAttribute(element, attrName) {
@@ -119,6 +142,25 @@ export let mockPlatform = {
 
     appendChild(parent, child) {
         parent.children.push(child);
+        child.parentNode = parent;
+    },
+
+    removeChild(parent, child) {
+        let index = parent.children.indexOf(child);
+        if(index>=0) {
+            parent.children.splice(index, 1);
+            delete child.parentNode;
+        }
+    },
+
+    replaceChildren(parent, children) {
+        for(let child of parent.children) {
+            delete child.parentNode;
+        }
+        parent.children = children || [];
+        for(let child of parent.children) {
+            child.parentNode = parent;
+        }
     },
 
     insertBefore(parent, newChild, nextChild) {
@@ -223,6 +265,14 @@ export let mockPlatform = {
         write(context, `resetTransform()`);
     },
 
+    setText(element, text) {
+        element._text = text;
+    },
+
+    getText(element) {
+        return element._text || "";
+    },
+
     setTimeout(handler, timeout, ...args) {
         return window.setTimeout(handler, timeout, ...args);
     },
@@ -239,6 +289,13 @@ export let mockPlatform = {
             element.listeners[event] = [];
         }
         element.listeners[event].push(func);
+    },
+
+    removeEventListener(element, event, func) {
+        if (!element.listeners || !element.listeners[event] ||!element.listeners[event].contains(func)) {
+            fail("no listener for event: "+event);
+        }
+        element.listeners[event].remove(func);
     },
 
     dispatchEvent(element, eventType, event) {
@@ -283,7 +340,68 @@ export let mockPlatform = {
 
     requestFails(text, status) {
         this._request.failure(text, status);
+    },
+
+    innerHtml(element) {
+        return this._innerHtml(element, "");
+    },
+
+    _innerHtml(element, indent) {
+        let result = indent + "<" + element.tagName;
+        for (let attrName in element) {
+            if (attrName !== "children" && attrName !== "tagName"
+                && attrName !== "_component" && attrName !== "_text" && attrName !== "parentNode"
+                && attrName !== "onload") {
+                if (attrName==="style") {
+                    result += " style='"
+                    for (let styleName in element[attrName]) {
+                        result += `${styleName}:${element[attrName][styleName]};`;
+                    }
+                    result += "'"
+                }
+                else result += ` ${attrName}='${element[attrName]}'`;
+            }
+        }
+        result += ">\n";
+        for (let child of element.children) {
+            result += this._innerHtml(child, indent + "\t");
+        }
+        if (element._text && element._text.length) {
+            result += indent + "\t" + element._text + "\n";
+        }
+        result += indent + "</" + element.tagName +">\n";
+        return result;
+    },
+
+    createObjectURL(obj) {
+        return {
+            URL:obj
+        };
+    },
+
+    createFile(filename, obj) {
+        return {
+            File:obj,
+            filename
+        };
+    },
+
+    toDataURL(canvas, type) {
+        return "URL:"+type+";,"+btoa(JSON.stringify(canvas));
+    },
+
+    getDocument() {
+        return this._document;
+    },
+
+    setSelection(selection) {
+        this._selection = selection;
+    },
+
+    getSelection() {
+        return this._selection;
     }
+
 }
 
 export function getContextDirectives(context, start=0, end=-1) {

@@ -34,10 +34,14 @@ import {
 import {
     banner, banner1, banner2, banner3
 } from "./game-elements.js";
+import {
+    WSequence
+} from "../../jslib/wargame/sequences.js";
 
 export * from "./game-elements.js";
 export function createBaseGame() {
     let game = new (BurningMixin(WeatherMixin(WGame)))("Game");
+    WSequence.setCount(game, 1);
     let arbitrator = new CBTestArbitrator();
     game.setArbitrator(arbitrator);
     var map = new WMap([{path: "./../images/maps/map.png", col: 0, row: 0}]);

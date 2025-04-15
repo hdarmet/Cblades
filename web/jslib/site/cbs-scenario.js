@@ -9,7 +9,10 @@ import {
     VButton, VButtons, VFileLoaderField, VInputField, VInputTextArea
 } from "../vitamin/vforms.js";
 import {
-    Div, isImageFile, P, requestLog, sendGet, sendPost
+    sendGet, sendPost
+} from "../board/draw.js";
+import {
+    Div, isImageFile, P, requestLog
 } from "../vitamin/components.js";
 import {
     showMessage

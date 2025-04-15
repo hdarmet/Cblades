@@ -4,7 +4,7 @@ import {
 } from "../vitamin/vitamins.js";
 import {
     sendGet
-} from "../vitamin/components.js";
+} from "../board/draw.js";
 import {
     VFormContainer
 } from "../vitamin/vforms.js";

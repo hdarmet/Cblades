@@ -1757,24 +1757,23 @@ public class ForumControllerTest implements TestSeawave, CollectionSunbeam, Data
         dataManager.register("flush", null, null);
         securityManager.doConnect("admin", 0);
         Json result = forumController.amendThread(params("id", "1"), Json.createJsonFromString("{" +
-                "'title':'Origin of Amarys', " +
-                "'forum':1, " +
-                "'description':'History of Origin of Amarys'" +
-                "}"));
+            "'title':'Origin of Amarys', " +
+            "'forum':1, " +
+            "'description':'History of Origin of Amarys'" +
+        "}"));
         Assert.assertEquals("{" +
-                        "\"messageCount\":4," +
-                        "\"lastMessage\":{" +
-                        "\"author\":{\"firstName\":\"\",\"lastName\":\"\",\"messageCount\":0,\"rating\":\"Squire\"}," +
-                        "\"publishedDate\":\"2025-02-18\"" +
-                        "}," +
-                        "\"description\":\"History of Origin of Amarys\"," +
-                        "\"likeCount\":0,\"id\":1," +
-                        "\"title\":\"Origin of Amarys\"," +
-                        "\"version\":0," +
-                        "\"status\":\"live\"" +
-                        "}",
-                result.toString()
-        );
+            "\"messageCount\":4," +
+            "\"lastMessage\":{" +
+                "\"author\":{\"firstName\":\"\",\"lastName\":\"\",\"messageCount\":0,\"rating\":\"Squire\"}," +
+                "\"publishedDate\":\"2025-02-18\"" +
+            "}," +
+            "\"description\":\"History of Origin of Amarys\"," +
+            "\"likeCount\":0,\"id\":1," +
+            "\"title\":\"Origin of Amarys\"," +
+            "\"version\":0," +
+            "\"status\":\"live\"" +
+        "}",
+        result.toString());
         dataManager.hasFinished();
     }
 

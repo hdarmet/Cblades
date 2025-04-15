@@ -5,7 +5,10 @@ import {
     VTable
 } from "../vitamin/vcontainer.js";
 import {
-    Div, Img, P, requestLog, Select, sendGet, sendPost, Span
+    sendGet, sendPost
+} from "../board/draw.js";
+import {
+    Div, Img, P, requestLog, Select, Span
 } from "../vitamin/components.js";
 import {
     Undoable,
@@ -636,8 +639,6 @@ export var vForumList = new CBAForumListPage({
     saveForumStatus
 });
 
-///////////////////////////////////////
-
 export class CBAEditForumThread extends Undoable(VModal) {
 
     constructor({ref, kind, saveForumThread, deleteForumThread, create, thread}) {
@@ -1107,8 +1108,6 @@ export var vForumThreadList = new CBAForumThreadListPage({
     saveForumThread,
     saveForumThreadStatus
 });
-
-//////////////////////////////////////////////////////////////////////////////////////
 
 export class CBAForumMessageList extends VTable {
 

@@ -43,6 +43,9 @@ import {
 import {
     banner, banner1, banner2
 } from "../game-examples.js";
+import {
+    WSequence
+} from "../../../jslib/wargame/sequences.js";
 
 describe("Units teacher", ()=> {
 
@@ -66,6 +69,7 @@ describe("Units teacher", ()=> {
 
     function create2Players4UnitsTinyGame() {
         let game = new (WeatherMixin(WGame))("Test");
+        WSequence.setCount(game, 1);
         let arbitrator = new Arbitrator();
         game.setArbitrator(arbitrator);
         let player1 = new CBUnitPlayer("player1", "/players/player1.png");
@@ -99,6 +103,7 @@ describe("Units teacher", ()=> {
 
     function create2PlayersTinyFormationGame() {
         let game = new WGame(1);
+        WSequence.setCount(game, 1);
         let arbitrator = new Arbitrator();
         game.setArbitrator(arbitrator);
         let player1 = new CBUnitPlayer("player1", "/players/player1.png");

@@ -21,8 +21,10 @@ import {
     CBSSocialRow
 } from "./cbs-page.js";
 import {
-    requestLog,
     sendGet
+} from "../board/draw.js";
+import {
+    requestLog
 } from "../vitamin/components.js";
 import {
     vNewArticlesWall,

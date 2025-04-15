@@ -2,14 +2,14 @@ import {
     download, VMagnifiedImage
 } from "../vitamin/vitamins.js";
 import {
-    sendGet
-} from "../vitamin/components.js";
-import {
     showMessage
 } from "../vitamin/vpage.js";
 import {
     CBSGallery
 } from "./cbs-container.js";
+import {
+    sendGet
+} from "../board/draw.js";
 
 function parseRuleSet(text) {
     return JSON.parse(text);

@@ -1,11 +1,13 @@
 'use strict';
 
 import {
+    sendGet, sendPost
+} from "../board/draw.js";
+import {
     VForum, VForums, VForumThread
 } from "../vitamin/vforum.js";
 import {
-    requestLog,
-    sendGet, sendPost
+    requestLog
 } from "../vitamin/components.js";
 import {
     showMessage

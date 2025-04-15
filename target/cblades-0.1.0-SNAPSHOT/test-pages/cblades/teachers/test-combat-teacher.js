@@ -41,6 +41,9 @@ import {
 import {
     createTroop, createCharacter, createFormation, banner1, banner2
 } from "../game-examples.js";
+import {
+    WSequence
+} from "../../../jslib/wargame/sequences.js";
 
 describe("Combat teacher", ()=> {
 
@@ -85,6 +88,7 @@ describe("Combat teacher", ()=> {
 
     function createTinyGame() {
         let game = new WGame(1);
+        WSequence.setCount(game, 1);
         var map = new WMap([{path:"./../images/maps/map.png", col:0, row:0}]);
         let arbitrator = new Arbitrator();
         game.setArbitrator(arbitrator);

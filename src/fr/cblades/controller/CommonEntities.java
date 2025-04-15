@@ -1,5 +1,6 @@
 package fr.cblades.controller;
 
+import fr.cblades.domain.Account;
 import fr.cblades.domain.Faction;
 import fr.cblades.domain.Sheet;
 import org.summer.FileSpecification;
@@ -11,6 +12,7 @@ import org.summer.data.Synchronizer;
 import org.summer.platform.FileSunbeam;
 import org.summer.platform.PlatformManager;
 
+import javax.persistence.EntityManager;
 import javax.persistence.PersistenceException;
 import java.util.HashSet;
 import java.util.List;
@@ -79,6 +81,16 @@ public interface CommonEntities extends ControllerSunbeam, FileSunbeam {
             .checkString("newComment")
             .checkMinSize("newComment", 2)
             .checkMaxSize("newComment", 200);
+    }
+
+    default void writeAuthor(Synchronizer synchronizer, EntityManager em) {
+        synchronizer.writeRef("author.id", "author", (Integer id) -> {
+            Account account = Account.find(em, id);
+            if (account == null) {
+                throw new SummerControllerException(404, "Unknown Account with id %d", id);
+            }
+            return account;
+        });
     }
 
     default void readAuthor(Synchronizer synchronizer) {

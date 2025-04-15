@@ -172,7 +172,7 @@ describe("Magic teacher", ()=> {
 
     class TestSpell extends WPiece {
         constructor(wizard) {
-            super("units", ["./../images/magic/red/redspell.png"], new Dimension2D(142, 142));
+            super("units", wizard.player.game, ["./../images/magic/red/redspell.png"], new Dimension2D(142, 142));
             this.wizard = wizard;
         }
         _rotate(angle) {}

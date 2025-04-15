@@ -99,9 +99,9 @@
     game.addPlayer(player1);
     game.addPlayer(player2);
     /*
-    new CBWeatherCounter().setOnGame(game);
-    new CBWindDirectionCounter().setOnGame(game);
-    new CBFogCounter().setOnGame(game);
+    new CBWeatherCounter(game).setOnGame();
+    new CBWindDirectionCounter(game).setOnGame();
+    new CBFogCounter(game).setOnGame();
 */
     let wing1 = new CBWing(player1, GoblinBanner1);
     wing1.setTiredness(10);

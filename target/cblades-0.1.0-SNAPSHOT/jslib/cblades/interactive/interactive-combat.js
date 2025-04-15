@@ -54,7 +54,7 @@ import {
     HexLocated,
     WDisplaceAnimation,
     WUnitActuatorTrigger,
-    getUnitFromContext
+    getUnitFromContext, WUnitSceneAnimation
 } from "../../wargame/wunit.js";
 
 export function registerInteractiveCombat() {
@@ -1669,7 +1669,7 @@ export class CBShockAttackSequenceElement extends WithCombat(WithDiceRoll(CBStat
     get delay() { return 1500; }
 
     apply(startTick) {
-        return new WSceneAnimation({
+        return new WUnitSceneAnimation({
             unit: this.unit, startTick, duration: this.delay, state: this, game: this.game,
             animation: () => {
                 let action = new InteractiveShockAttackAction(this.game, this.unit);
@@ -1727,7 +1727,7 @@ export class CBFireAttackSequenceElement extends WithCombat(WithDiceRoll(CBState
     get delay() { return 1500; }
 
     apply(startTick) {
-        return new WSceneAnimation({
+        return new WUnitSceneAnimation({
             unit: this.unit, startTick, duration: this.delay, state: this, game: this.game,
             animation: () => {
                 let action = new InteractiveFireAttackAction(this.game, this.unit);

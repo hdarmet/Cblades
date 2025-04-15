@@ -3,7 +3,10 @@ import {
     Undoable, Vitamin, VMagnifiedImage, VMessageHandler
 } from "../vitamin/vitamins.js";
 import {
-    Div, isImageFile, P, requestLog, sendGet, sendPost
+    sendGet, sendPost
+} from "../board/draw.js";
+import {
+    Div, isImageFile, P, requestLog
 } from "../vitamin/components.js";
 import {
     VSplitterPanel

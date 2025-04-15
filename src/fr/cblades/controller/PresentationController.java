@@ -26,11 +26,11 @@ import java.util.Map;
 public class PresentationController implements InjectorSunbeam, DataSunbeam, SecuritySunbeam, ControllerSunbeam, StandardUsers {
 	
 	@REST(url="/api/presentation/by-category/:category", method=Method.GET)
-	public Json getByCategory(Map<String, String> params, Json request) {
+	public Json getByCategory(Map<String, Object> params, Json request) {
+		String name = getStringParam(params, "category", null, "The category is missing or invalid (%s)");
 		Ref<Json> result = new Ref<>();
 		ifAuthorized(user->{
 			inReadTransaction(em->{
-				String name = params.get("category");
 				List<Presentation> presentations = getResultList(em,
 						"select p from Presentation p where p.category = :category",
 						"category", name);
@@ -41,7 +41,7 @@ public class PresentationController implements InjectorSunbeam, DataSunbeam, Sec
 	}
 
 	@REST(url="/api/presentation/published", method=Method.GET)
-	public Json getPublished(Map<String, String> params, Json request) {
+	public Json getPublished(Map<String, Object> params, Json request) {
 		Ref<Json> result = new Ref<>();
 		inReadTransaction(em->{
 			List<Presentation> presentations = getResultList(em,

@@ -54,10 +54,9 @@ export class CBInteractivePlayer extends CBUnitPlayer {
     }
 
     _doDisruptChecking(unit, processing, cancellable) {
-        if (!unit.attrs.routChecked && this.game.arbitrator.doesANonRoutedUnitHaveRoutedNeighbors(unit)) {
+        if (this.game.arbitrator.doesANonRoutedUnitHaveRoutedNeighbors(unit)) {
             new CBLoseCohesionChecking(this.game, unit).play(
             () => {
-                unit.attrs.routChecked = true;
                 this._selectAndFocusPlayable(unit);
             },
             processing,
@@ -99,7 +98,7 @@ export class CBInteractivePlayer extends CBUnitPlayer {
             let neighbor = neighbors.pop();
             new CBLoseCohesionChecking(this.game, neighbor).play(
                 () => {
-                    neighbor.attrs.routChecked = true;
+                    // rout checking ?
                 },
                 ()=>this._checkIfANonRoutedNeighborLoseCohesion(unit, neighbors, processing, false),
                 CBNeighborRoutCheckingSequenceElement,
@@ -111,18 +110,13 @@ export class CBInteractivePlayer extends CBUnitPlayer {
     }
 
     _checkIfAFirstNonRoutedNeighborLoseCohesion(unit, neighbors, processing, cancellable) {
-        neighbors = neighbors.filter(neighbor=>!neighbor.attrs.routChecked);
-        if (!unit.attrs.neighborsCohesionLoss && neighbors.length) {
+        if (neighbors.length) {
             let neighbor = neighbors.pop();
             new CBLoseCohesionChecking(this.game, neighbor).play(
             () => {
-                neighbor.attrs.routChecked = true;
-                if (!unit.attrs.neighborsRootChecked) {
-                    unit.attrs.neighborsRootChecked = true;
-                    WSequence.appendElement(this.game, new CBRootNeighborsCohesionSequenceElement({
-                        unit, game: this.game, neighbors
-                    }));
-                }
+                WSequence.appendElement(this.game, new CBRootNeighborsCohesionSequenceElement({
+                    unit, game: this.game, neighbors
+                }));
                 this._selectAndFocusPlayable(unit);
             },
             ()=>this._checkIfANonRoutedNeighborLoseCohesion(unit, neighbors, processing, false),
@@ -135,17 +129,13 @@ export class CBInteractivePlayer extends CBUnitPlayer {
     }
 
     _checkIfNeighborsLoseCohesion(unit, hexLocation, processing, cancellable) {
-        if (!unit.attrs.neighborsRootChecked) {
-            let neighbors = this.game.arbitrator.getFriendNonRoutedNeighbors(unit, hexLocation);
-            this._checkIfAFirstNonRoutedNeighborLoseCohesion(unit, neighbors, processing, cancellable);
-        }
+        let neighbors = this.game.arbitrator.getFriendNonRoutedNeighbors(unit, hexLocation);
+        this._checkIfAFirstNonRoutedNeighborLoseCohesion(unit, neighbors, processing, cancellable);
     }
 
     _doEngagementChecking(unit, processing) {
-        if (!unit.attrs.defenderEngagementChecking && this.game.arbitrator.isUnitEngaged(unit, true)) {
+        if (this.game.arbitrator.isUnitEngaged(unit, true)) {
             new CBDefenderEngagementChecking(this.game, unit).play(() => {
-                unit.setEngaging(false);
-                unit.attrs.defenderEngagementChecking = true;
                 let hexLocation = unit.hexLocation;
                 if (unit.isOnHex()) {
                     this._selectAndFocusPlayable(unit);
@@ -161,10 +151,10 @@ export class CBInteractivePlayer extends CBUnitPlayer {
 
     _doPreliminaryActions(unit, processing) {
         this._doEngagementChecking(unit, processing);
+        unit.setEngaging(false);
     }
 
     _selectAndFocusPlayable(playable) {
-        playable.attrs.focused = true;
         this.game.setSelectedPlayable(playable);
         this.game.setFocusedPlayable(playable);
     }
@@ -202,7 +192,7 @@ export class CBInteractivePlayer extends CBUnitPlayer {
         }
         if (playable) {
             this.afterActivation(playable, () => {
-                playable.finish();
+                playable.setPlayed();
                 finishTurn();
             });
         }
@@ -661,7 +651,7 @@ export class CBRootNeighborsCohesionSequenceElement extends CBStateSequenceEleme
     get delay() { return 0; }
 
     apply(startTick) {
-        this.unit.setAttr("neighborsRootChecked", true);
+        //this.unit.setAttr("neighborsRootChecked", true);
         /*
         return new CBRootNeighborsCohesionAnimation({
             unit: this.unit, startTick, duration: this.delay,

@@ -1,7 +1,10 @@
 'use strict'
 
 import {
-    Div, Img, P, requestLog, sendGet, sendPost
+    sendGet, sendPost
+} from "../board/draw.js";
+import {
+    Div, Img, P, requestLog
 } from "../vitamin/components.js";
 import {
     Undoable,

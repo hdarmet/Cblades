@@ -410,6 +410,26 @@ let _targetPlatform = {
 
     requestServer(uri, requestContent, success, failure, files, method='POST') {
         return requestServer(uri, requestContent, success, failure, files, method);
+    },
+
+    createObjectURL(obj) {
+        return URL.createObjectURL(obj);
+    },
+
+    createFile(filename, obj) {
+        return new File([obj], fileName);
+    },
+
+    toDataURL(canvas, type) {
+        return canvas.toDataURL(type)
+    },
+
+    getDocument() {
+        return window.document;
+    },
+
+    getSelection() {
+        return window.getSelection();
     }
 }
 
